@@ -1,0 +1,417 @@
+{
+  "schema": 1,
+  "language": "ja",
+  "messages": {
+    "help.help": {
+      "template": "：ヘルプを表示"
+    },
+    "help.identify": {
+      "template": "：記号の意味を調べる"
+    },
+    "help.left": {
+      "template": "：左へ移動"
+    },
+    "help.down": {
+      "template": "：下へ移動"
+    },
+    "help.up": {
+      "template": "：上へ移動"
+    },
+    "help.right": {
+      "template": "：右へ移動"
+    },
+    "help.up_left": {
+      "template": "：左上へ移動"
+    },
+    "help.up_right": {
+      "template": "：右上へ移動"
+    },
+    "help.down_left": {
+      "template": "：左下へ移動"
+    },
+    "help.down_right": {
+      "template": "：右下へ移動"
+    },
+    "help.run_left": {
+      "template": "：左へ走る"
+    },
+    "help.run_down": {
+      "template": "：下へ走る"
+    },
+    "help.run_up": {
+      "template": "：上へ走る"
+    },
+    "help.run_right": {
+      "template": "：右へ走る"
+    },
+    "help.run_up_left": {
+      "template": "：左上へ走る"
+    },
+    "help.run_up_right": {
+      "template": "：右上へ走る"
+    },
+    "help.run_down_left": {
+      "template": "：左下へ走る"
+    },
+    "help.run_down_right": {
+      "template": "：右下へ走る"
+    },
+    "help.adjacent_left": {
+      "template": "：隣接するものが現れるまで左へ走る"
+    },
+    "help.adjacent_down": {
+      "template": "：隣接するものが現れるまで下へ走る"
+    },
+    "help.adjacent_up": {
+      "template": "：隣接するものが現れるまで上へ走る"
+    },
+    "help.adjacent_right": {
+      "template": "：隣接するものが現れるまで右へ走る"
+    },
+    "help.adjacent_up_left": {
+      "template": "：隣接するものが現れるまで左上へ走る"
+    },
+    "help.adjacent_up_right": {
+      "template": "：隣接するものが現れるまで右上へ走る"
+    },
+    "help.adjacent_down_left": {
+      "template": "：隣接するものが現れるまで左下へ走る"
+    },
+    "help.adjacent_down_right": {
+      "template": "：隣接するものが現れるまで右下へ走る"
+    },
+    "help.run": {
+      "template": "Shift＋方向キー：その方向へ走る"
+    },
+    "help.run_adjacent": {
+      "template": "Ctrl＋方向キー：隣接するものが現れるまで走る"
+    },
+    "help.fight_carefully": {
+      "template": "＋方向キー：倒すか瀕死になるまで戦う"
+    },
+    "help.throw": {
+      "template": "＋方向キー：品物を投げる"
+    },
+    "help.move_without_pickup": {
+      "template": "＋方向キー：品物を拾わずに移動"
+    },
+    "help.zap": {
+      "template": "＋方向キー：杖を使う"
+    },
+    "help.trap": {
+      "template": "＋方向キー：罠の種類を調べる"
+    },
+    "help.search": {
+      "template": "：罠と隠し扉を探す"
+    },
+    "help.downstairs": {
+      "template": "：階段を下りる"
+    },
+    "help.upstairs": {
+      "template": "：階段を上る"
+    },
+    "help.rest": {
+      "template": "：1ターン休む"
+    },
+    "help.pickup": {
+      "template": "：足元の品物を拾う"
+    },
+    "help.inventory": {
+      "template": "：所持品を一覧表示"
+    },
+    "help.inventory_one": {
+      "template": "：所持品を1つ調べる"
+    },
+    "help.quaff": {
+      "template": "：薬を飲む"
+    },
+    "help.read": {
+      "template": "：巻物を読む"
+    },
+    "help.eat": {
+      "template": "：食べる"
+    },
+    "help.wield": {
+      "template": "：武器を構える"
+    },
+    "help.wear": {
+      "template": "：鎧を着る"
+    },
+    "help.take_off": {
+      "template": "：鎧を脱ぐ"
+    },
+    "help.put_ring": {
+      "template": "：指輪をはめる"
+    },
+    "help.remove_ring": {
+      "template": "：指輪を外す"
+    },
+    "help.drop": {
+      "template": "：品物を置く"
+    },
+    "help.call": {
+      "template": "：品物に名前を付ける"
+    },
+    "help.again": {
+      "template": "：直前のコマンドを繰り返す"
+    },
+    "help.weapon": {
+      "template": "：現在の武器を表示"
+    },
+    "help.armor": {
+      "template": "：現在の鎧を表示"
+    },
+    "help.rings": {
+      "template": "：現在の指輪を表示"
+    },
+    "help.stats": {
+      "template": "：現在の能力値を表示"
+    },
+    "help.discoveries": {
+      "template": "：発見した品物を一覧表示"
+    },
+    "help.options": {
+      "template": "：設定を確認・変更"
+    },
+    "help.redraw": {
+      "template": "：画面を描き直す"
+    },
+    "help.recall": {
+      "template": "：直前のメッセージを表示"
+    },
+    "help.cancel": {
+      "template": "：操作を取り消す"
+    },
+    "help.save": {
+      "template": "：ゲームを保存"
+    },
+    "help.quit": {
+      "template": "：ゲームを終了"
+    },
+    "help.shell": {
+      "template": "：シェルを起動"
+    },
+    "help.fight_to_death": {
+      "template": "＋方向キー：どちらかが死ぬまで戦う"
+    },
+    "help.version": {
+      "template": "：バージョンを表示"
+    },
+    "ui.help.entry": {
+      "template": "{0}{1}"
+    },
+    "ui.text": {
+      "template": "{0}"
+    },
+    "ui.inventory.entry": {
+      "template": "{0}) {1}"
+    },
+    "ui.continue": {
+      "template": "スペースキーで続ける"
+    },
+    "input.wait_space": {
+      "template": "スペースキーで続ける"
+    },
+    "input.option_bool": {
+      "template": "T：有効／F：無効／Enter：変更しない／-：前へ／Esc：終了"
+    },
+    "input.option_inventory": {
+      "template": "O：重ねて表示／S：1行ずつ表示／C：画面を切り替え／Enter：変更しない／-：前へ／Esc：終了"
+    },
+    "options.value.true": {
+      "template": "有効"
+    },
+    "options.value.false": {
+      "template": "無効"
+    },
+    "options.value.overlay": {
+      "template": "重ねて表示"
+    },
+    "options.value.slow": {
+      "template": "1行ずつ表示"
+    },
+    "options.value.clear": {
+      "template": "画面を切り替え"
+    },
+    "options.hint.bool": {
+      "template": "T：有効／F：無効"
+    },
+    "options.hint.inventory": {
+      "template": "O：重ねる／S：1行ずつ／C：切り替え"
+    },
+    "input.choose_item": {
+      "template": "品物のキーを入力。*：一覧／Esc：取消"
+    },
+    "input.choose_direction": {
+      "template": "方向キーを入力。Esc：取消"
+    },
+    "prompt.direction": {
+      "template": "どの方向？ "
+    },
+    "prompt.direction.short": {
+      "template": "方向："
+    },
+    "equipment.wielding": {
+      "template": "構えている"
+    },
+    "equipment.wearing": {
+      "template": "身に着けている"
+    },
+    "equipment.left_hand": {
+      "template": "左手に"
+    },
+    "equipment.right_hand": {
+      "template": "右手に"
+    },
+    "equipment.left_short": {
+      "template": "（左手）"
+    },
+    "equipment.right_short": {
+      "template": "（右手）"
+    },
+    "action.wear": {
+      "template": "着る"
+    },
+    "action.charge": {
+      "template": "充填する"
+    },
+    "action.call": {
+      "template": "名付ける"
+    },
+    "action.eat": {
+      "template": "食べる"
+    },
+    "action.quaff": {
+      "template": "飲む"
+    },
+    "action.put_ring": {
+      "template": "はめる"
+    },
+    "action.read": {
+      "template": "読む"
+    },
+    "action.zap": {
+      "template": "使う"
+    },
+    "action.drop": {
+      "template": "置く"
+    },
+    "action.throw": {
+      "template": "投げる"
+    },
+    "action.wield": {
+      "template": "構える"
+    },
+    "action.identify": {
+      "template": "識別する"
+    },
+    "options.terse": {
+      "template": "簡潔な表示："
+    },
+    "options.flush": {
+      "template": "戦闘中の入力待ちを消去："
+    },
+    "options.jump": {
+      "template": "走り終わった位置だけを表示："
+    },
+    "options.seefloor": {
+      "template": "ランプで照らした床を表示："
+    },
+    "options.passgo": {
+      "template": "通路の曲がり角に沿って走る："
+    },
+    "options.tombstone": {
+      "template": "死亡時に墓石を表示："
+    },
+    "options.inven": {
+      "template": "所持品の表示方法："
+    },
+    "options.name": {
+      "template": "名前："
+    },
+    "options.fruit": {
+      "template": "好きな果物："
+    },
+    "options.file": {
+      "template": "保存ファイル："
+    },
+    "identify.wall": {
+      "template": "部屋の壁"
+    },
+    "identify.gold": {
+      "template": "金貨"
+    },
+    "identify.stairs": {
+      "template": "階段"
+    },
+    "identify.door": {
+      "template": "扉"
+    },
+    "identify.floor": {
+      "template": "部屋の床"
+    },
+    "identify.player": {
+      "template": "あなた"
+    },
+    "identify.passage": {
+      "template": "通路"
+    },
+    "identify.trap": {
+      "template": "罠"
+    },
+    "identify.potion": {
+      "template": "薬"
+    },
+    "identify.scroll": {
+      "template": "巻物"
+    },
+    "identify.food": {
+      "template": "食べ物"
+    },
+    "identify.weapon": {
+      "template": "武器"
+    },
+    "identify.rock": {
+      "template": "岩盤"
+    },
+    "identify.armor": {
+      "template": "鎧"
+    },
+    "identify.amulet": {
+      "template": "イェンダーの魔除け"
+    },
+    "identify.ring": {
+      "template": "指輪"
+    },
+    "identify.stick": {
+      "template": "杖"
+    },
+    "identify.unknown": {
+      "template": "不明な記号"
+    },
+    "discoveries.none.potion": {
+      "template": "薬についてはまだ何も分かっていない"
+    },
+    "discoveries.none_short.potion": {
+      "template": "薬の発見なし"
+    },
+    "discoveries.none.scroll": {
+      "template": "巻物についてはまだ何も分かっていない"
+    },
+    "discoveries.none_short.scroll": {
+      "template": "巻物の発見なし"
+    },
+    "discoveries.none.ring": {
+      "template": "指輪についてはまだ何も分かっていない"
+    },
+    "discoveries.none_short.ring": {
+      "template": "指輪の発見なし"
+    },
+    "discoveries.none.stick": {
+      "template": "杖についてはまだ何も分かっていない"
+    },
+    "discoveries.none_short.stick": {
+      "template": "杖の発見なし"
+    }
+  }
+}

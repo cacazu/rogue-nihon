@@ -1,0 +1,458 @@
+{
+  "schema": 1,
+  "original_source": "C:\\Users\\kit\\gameme\\jnethack\\jrouge\\investigation-20261002-original-rogue\\sources\\rogue5.4.4",
+  "original_version": "Rogue 5.4.4",
+  "preparation_script_sha256": "3a491bffd304ff8a2313811b213a78d4b00f96e1af0ba9738551fae8fa0c3deb",
+  "compiler_required": [
+    "-DROGUE_LAYERED",
+    "-std=gnu11",
+    "-fwrapv",
+    "-fno-strict-aliasing"
+  ],
+  "original_files": [
+    {
+      "file": "armor.c",
+      "category": "completion-counter observation only",
+      "original_sha256": "b3da15b55f6b6033b35311920373e41d32be3f7ebb63adae421b0261edcf4a08",
+      "baseline_sha256": "9b8135e463384fc7fafe9b54af08683be281e39036c0b1387172b1d12e2a8d39",
+      "byte_identical": false,
+      "diff": "baseline-diffs/armor.c.diff"
+    },
+    {
+      "file": "chase.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "e10438a05eab60cab7ede1db2bf07d21ce6f8d0768e3491313e181cff1cca4ff",
+      "baseline_sha256": "e10438a05eab60cab7ede1db2bf07d21ce6f8d0768e3491313e181cff1cca4ff",
+      "byte_identical": true,
+      "diff": "baseline-diffs/chase.c.diff"
+    },
+    {
+      "file": "command.c",
+      "category": "persistent-static accessors and completion-counter observation only",
+      "original_sha256": "398c1fc84575791ab1fbe3112c3e23c33bb1d70c68e381f6cbe406e15aa4b361",
+      "baseline_sha256": "17f4f4e2618fd08dfef8263c633485b28e23e51e1ce653f36806248ad99f74c8",
+      "byte_identical": false,
+      "diff": "baseline-diffs/command.c.diff"
+    },
+    {
+      "file": "daemon.c",
+      "category": "Wasm callback signature adapter; scheduling/body unchanged",
+      "original_sha256": "38228d2e27a85fa68b222d6f96471b286e19f3a4317ed7a3815ff48730d7eb4d",
+      "baseline_sha256": "ea4157181251ac8dbef4650e0d4929150deadc0cd148259fcc741413458d5d43",
+      "byte_identical": false,
+      "diff": "baseline-diffs/daemon.c.diff"
+    },
+    {
+      "file": "daemons.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "199b836ce9ce3bf766b0510e61184922a132a227e92c2e32673a384efca24622",
+      "baseline_sha256": "199b836ce9ce3bf766b0510e61184922a132a227e92c2e32673a384efca24622",
+      "byte_identical": true,
+      "diff": "baseline-diffs/daemons.c.diff"
+    },
+    {
+      "file": "extern.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "0eb6af17635a9488cf93235cb62c4aa45c80cbdceb7b314e1a4b13634fca073a",
+      "baseline_sha256": "0eb6af17635a9488cf93235cb62c4aa45c80cbdceb7b314e1a4b13634fca073a",
+      "byte_identical": true,
+      "diff": "baseline-diffs/extern.c.diff"
+    },
+    {
+      "file": "extern.h",
+      "category": "original RN expression retained; platform feature/prototype adaptation",
+      "original_sha256": "4ae2320fcd1cbf1a981c3b0879679bde727708645be546de33493ea2006133e7",
+      "baseline_sha256": "890743aca31eaa1edf4fc62518d8f2385215ee30412d8fcb4b57a23c36a65fbf",
+      "byte_identical": false,
+      "diff": "baseline-diffs/extern.h.diff"
+    },
+    {
+      "file": "fight.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "9d5f4f4706156167563d8f5e7557046128b9d629dbe16ffcf356a9b6dece8948",
+      "baseline_sha256": "9d5f4f4706156167563d8f5e7557046128b9d629dbe16ffcf356a9b6dece8948",
+      "byte_identical": true,
+      "diff": "baseline-diffs/fight.c.diff"
+    },
+    {
+      "file": "init.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "092916322d3f2e44654f2ac85230a864ae7e1f85b0acb5f44f0e477ae67aded6",
+      "baseline_sha256": "092916322d3f2e44654f2ac85230a864ae7e1f85b0acb5f44f0e477ae67aded6",
+      "byte_identical": true,
+      "diff": "baseline-diffs/init.c.diff"
+    },
+    {
+      "file": "io.c",
+      "category": "original msg/doadd/More; pure host notification and runtime accessors",
+      "original_sha256": "01d24e08a31975d3cedc19dbd3323319f3e39cb93aadebb852b58834d822c916",
+      "baseline_sha256": "e92a09e9043a410c2699abb517e54a058283dfbaca406761a4dc5bd101689c25",
+      "byte_identical": false,
+      "diff": "baseline-diffs/io.c.diff"
+    },
+    {
+      "file": "LICENSE.TXT",
+      "category": "original bytes unchanged",
+      "original_sha256": "c44793b39e8b9f7d73c41fd0f0257c025988fa80b7d6afebda801b72e6660043",
+      "baseline_sha256": "c44793b39e8b9f7d73c41fd0f0257c025988fa80b7d6afebda801b72e6660043",
+      "byte_identical": true,
+      "diff": "baseline-diffs/LICENSE.TXT.diff"
+    },
+    {
+      "file": "list.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "e354c695ac2d1ff92fe2eeb7da3f066620804cd7e500c2e71a077ab9f10ab84c",
+      "baseline_sha256": "e354c695ac2d1ff92fe2eeb7da3f066620804cd7e500c2e71a077ab9f10ab84c",
+      "byte_identical": true,
+      "diff": "baseline-diffs/list.c.diff"
+    },
+    {
+      "file": "mach_dep.c",
+      "category": "replace terminal/platform services with shared host adapter",
+      "original_sha256": "a1896a322e70b2c47d00524c9a4f5677b93fa942dc651413d335752a1e64eb39",
+      "baseline_sha256": "dbfae0459289c05985a428dceff8c674f591bd9540774a89ddda85ec4e84b9c0",
+      "byte_identical": false,
+      "diff": "baseline-diffs/mach_dep.c.diff"
+    },
+    {
+      "file": "main.c",
+      "category": "portable entry, outer checkpoint, OS shell/TTY exclusion, outcome observation",
+      "original_sha256": "8e3af15fc72ec1d86026efc9117a31f3bd51ceb704ca74d2e6f4962d7f0a2a1a",
+      "baseline_sha256": "226c9b38bf3052e2279a9b556eaaea125dedcc6074e5c3efbed3c6f94c1b0353",
+      "byte_identical": false,
+      "diff": "baseline-diffs/main.c.diff"
+    },
+    {
+      "file": "mdport.c",
+      "category": "replace terminal/platform services with shared host adapter",
+      "original_sha256": "3242de34d79c1d9e4684cb7ae1ce2781486d1d50567d0b1bca78bbb7e0ff0ee2",
+      "baseline_sha256": "3ca5fe40c1f40ced6bceb624bdab8a60ac69043e031cd43582d0c13d4b75a83b",
+      "byte_identical": false,
+      "diff": "baseline-diffs/mdport.c.diff"
+    },
+    {
+      "file": "misc.c",
+      "category": "persistent last direction static accessors only",
+      "original_sha256": "65800383516c1ef4bee7cbc48e74dacde2867384f944bb3f355b569ddc85876c",
+      "baseline_sha256": "c1b7afbef7f90d3e5cba6ec902b6bed6766c2aa2d76ca138107d506837c340c0",
+      "byte_identical": false,
+      "diff": "baseline-diffs/misc.c.diff"
+    },
+    {
+      "file": "monsters.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "0f033406dc9b34421e2296c553f71c55698f2bac401364261d86a6fa545da9fe",
+      "baseline_sha256": "0f033406dc9b34421e2296c553f71c55698f2bac401364261d86a6fa545da9fe",
+      "byte_identical": true,
+      "diff": "baseline-diffs/monsters.c.diff"
+    },
+    {
+      "file": "move.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "d6faecd2ff4aca955b31b7d134b6c499551a0aaa42f5ff1fce1748b66644f1d0",
+      "baseline_sha256": "d6faecd2ff4aca955b31b7d134b6c499551a0aaa42f5ff1fce1748b66644f1d0",
+      "byte_identical": true,
+      "diff": "baseline-diffs/move.c.diff"
+    },
+    {
+      "file": "new_level.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "f042cec22f90cbb91ab7142b6d8d42ddf5ca4e5e3e5377deeca6061c8f95f67b",
+      "baseline_sha256": "f042cec22f90cbb91ab7142b6d8d42ddf5ca4e5e3e5377deeca6061c8f95f67b",
+      "byte_identical": true,
+      "diff": "baseline-diffs/new_level.c.diff"
+    },
+    {
+      "file": "options.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "6e9d36dc6889ae42fe366ace64c9f399cc0772e145710834e5fb9947908ebbcc",
+      "baseline_sha256": "6e9d36dc6889ae42fe366ace64c9f399cc0772e145710834e5fb9947908ebbcc",
+      "byte_identical": true,
+      "diff": "baseline-diffs/options.c.diff"
+    },
+    {
+      "file": "pack.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "7b2158a7d75a698208b3841d12ed982f1f0a306301008a6adacd8d759c62c0c4",
+      "baseline_sha256": "7b2158a7d75a698208b3841d12ed982f1f0a306301008a6adacd8d759c62c0c4",
+      "byte_identical": true,
+      "diff": "baseline-diffs/pack.c.diff"
+    },
+    {
+      "file": "passages.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "33e81e80e77b5d528ade4c913707d48a2a0b6bd1709b56c7aaa0b205052f567a",
+      "baseline_sha256": "33e81e80e77b5d528ade4c913707d48a2a0b6bd1709b56c7aaa0b205052f567a",
+      "byte_identical": true,
+      "diff": "baseline-diffs/passages.c.diff"
+    },
+    {
+      "file": "potions.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "60bcfbc89a7f9d7f15b2e1f0b61942d0b110ff205785d6a6501d976fcb70cb42",
+      "baseline_sha256": "60bcfbc89a7f9d7f15b2e1f0b61942d0b110ff205785d6a6501d976fcb70cb42",
+      "byte_identical": true,
+      "diff": "baseline-diffs/potions.c.diff"
+    },
+    {
+      "file": "rings.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "89121898d2cd0ba297e4cadbefebb779691a6612a68b1dafd9374ae9f73253f7",
+      "baseline_sha256": "89121898d2cd0ba297e4cadbefebb779691a6612a68b1dafd9374ae9f73253f7",
+      "byte_identical": true,
+      "diff": "baseline-diffs/rings.c.diff"
+    },
+    {
+      "file": "rip.c",
+      "category": "outcome observation and libc prototype compatibility only",
+      "original_sha256": "f385286c82698a1281c912bc6c1565cbca165e965eeecc4d21d71fcd78210d79",
+      "baseline_sha256": "d87c16d1a79cbbeb37112b0d7f2dc3a2d5a7fabb572e0d08f45a32777f643267",
+      "byte_identical": false,
+      "diff": "baseline-diffs/rip.c.diff"
+    },
+    {
+      "file": "rogue.h",
+      "category": "shared console/exit routing; original msg/addmsg names retained",
+      "original_sha256": "bad47c721a3fbd1029c6370ef3829521097c998609a30c4f413cd396192ebd77",
+      "baseline_sha256": "853b3591ba9bebffa5a258f2015bcc31cbecf5db83ffd3c425adb2234a054f8d",
+      "byte_identical": false,
+      "diff": "baseline-diffs/rogue.h.diff"
+    },
+    {
+      "file": "rooms.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "754cdfbadbd17adad6d71a33f118d7fa692d0d396fb38be0a9e17e76bf4a7f47",
+      "baseline_sha256": "754cdfbadbd17adad6d71a33f118d7fa692d0d396fb38be0a9e17e76bf4a7f47",
+      "byte_identical": true,
+      "diff": "baseline-diffs/rooms.c.diff"
+    },
+    {
+      "file": "save.c",
+      "category": "shared browser checkpoint infrastructure; legacy file path excluded",
+      "original_sha256": "67e2fba1684fcf178cb4eeb869f351421bda81909430636366640f4dad38c51a",
+      "baseline_sha256": "e0398532764b61174a27192104060f7b228b5e7404640bcc7892fd0ae423b3f8",
+      "byte_identical": false,
+      "diff": "baseline-diffs/save.c.diff"
+    },
+    {
+      "file": "score.h",
+      "category": "original bytes unchanged",
+      "original_sha256": "f38f9f1e2196d42181c739e54e64f5d36191c1fee9d3a0ca1b1a65d8a571f070",
+      "baseline_sha256": "f38f9f1e2196d42181c739e54e64f5d36191c1fee9d3a0ca1b1a65d8a571f070",
+      "byte_identical": true,
+      "diff": "baseline-diffs/score.h.diff"
+    },
+    {
+      "file": "scrolls.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "f3b6ed2ca8aca5a72a82ab7208d1979f7cf46d0adca8c437aba77fb50c60fe17",
+      "baseline_sha256": "f3b6ed2ca8aca5a72a82ab7208d1979f7cf46d0adca8c437aba77fb50c60fe17",
+      "byte_identical": true,
+      "diff": "baseline-diffs/scrolls.c.diff"
+    },
+    {
+      "file": "state.c",
+      "category": "shared hardened serializer; not an independent old-save baseline",
+      "original_sha256": "c58d76d2a7cb260ca014e24c34a59110f99b16c89488e2672c510e1d3f6426bd",
+      "baseline_sha256": "bfb6b6bfd554d249d6039ef22d8f7b2cf6ee37bbb7dde2fcb84cf517e6d9a27d",
+      "byte_identical": false,
+      "diff": "baseline-diffs/state.c.diff"
+    },
+    {
+      "file": "sticks.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "2ae39b1244daa71f4da527875f8e7832f72ebb4bbf149336e87f02d656763d55",
+      "baseline_sha256": "2ae39b1244daa71f4da527875f8e7832f72ebb4bbf149336e87f02d656763d55",
+      "byte_identical": true,
+      "diff": "baseline-diffs/sticks.c.diff"
+    },
+    {
+      "file": "things.c",
+      "category": "persistent pagination static accessors only",
+      "original_sha256": "2cd25aae96054aa252c3c797ba1e4bb533f984c3335a3bf3222d1a5536ee63ce",
+      "baseline_sha256": "1469ec5a35532b38525be836a6fa39f56b6628c2bd90a3a8bf927e059e1c3826",
+      "byte_identical": false,
+      "diff": "baseline-diffs/things.c.diff"
+    },
+    {
+      "file": "vers.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "c9eca0909b23f3cd8b048cbeed30db66c4d41fa6fddbb10f3760e5874325ff66",
+      "baseline_sha256": "c9eca0909b23f3cd8b048cbeed30db66c4d41fa6fddbb10f3760e5874325ff66",
+      "byte_identical": true,
+      "diff": "baseline-diffs/vers.c.diff"
+    },
+    {
+      "file": "weapons.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "db4bd8337bf8c60fe8042e2142112610fa473babc2321bd9f5cffe8a728d74ed",
+      "baseline_sha256": "db4bd8337bf8c60fe8042e2142112610fa473babc2321bd9f5cffe8a728d74ed",
+      "byte_identical": true,
+      "diff": "baseline-diffs/weapons.c.diff"
+    },
+    {
+      "file": "wizard.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "1a5482788f37e684fc447a90307be58f6bfad3979c334e50d27bbc3079a54f79",
+      "baseline_sha256": "1a5482788f37e684fc447a90307be58f6bfad3979c334e50d27bbc3079a54f79",
+      "byte_identical": true,
+      "diff": "baseline-diffs/wizard.c.diff"
+    },
+    {
+      "file": "xcrypt.c",
+      "category": "original bytes unchanged",
+      "original_sha256": "446810ef5461614b77010f71add64412e2e702e9c77579d55313d3f9f2bb0069",
+      "baseline_sha256": "446810ef5461614b77010f71add64412e2e702e9c77579d55313d3f9f2bb0069",
+      "byte_identical": true,
+      "diff": "baseline-diffs/xcrypt.c.diff"
+    }
+  ],
+  "shared_infrastructure": [
+    {
+      "file": "core.c",
+      "source": "logic/core.c",
+      "shared_sha256": "db2c18d82ccb0ff2da0657693dbdecfff13aaa1fb3f319d59a1f622723964be7",
+      "baseline_sha256": "4bd8a9b5d7b264f2a9269ab0af397a0dab84ed40d87671042f3f4ac4977b659f",
+      "include_path_only_change": true
+    },
+    {
+      "file": "core.h",
+      "source": "logic/core.h",
+      "shared_sha256": "2dc417b16b02d358f4ce90b389d35f1f399f9574af93a53220b44bdad1176f31",
+      "baseline_sha256": "86f03b37e25b853a29a08b20af0da557d3fcd173ddcff14f5c8ceb816ae192b7",
+      "include_path_only_change": true
+    },
+    {
+      "file": "knowledge.c",
+      "source": "logic/knowledge.c",
+      "shared_sha256": "4c06f3c9beab76f761396f4be6c2add05865d636c1c1ea71856b3282556e3a78",
+      "baseline_sha256": "da64a57137eb9b0cc5fc6c65ede9daf7535bec824dc683509fc9a06e0484569c",
+      "include_path_only_change": true
+    },
+    {
+      "file": "knowledge.h",
+      "source": "logic/knowledge.h",
+      "shared_sha256": "9cded40ed54b270d7e3aa8c8db16e8523b03279626d8f77fbe0c8d62f47c84cb",
+      "baseline_sha256": "9cded40ed54b270d7e3aa8c8db16e8523b03279626d8f77fbe0c8d62f47c84cb",
+      "include_path_only_change": false
+    },
+    {
+      "file": "curses.h",
+      "source": "logic/curses.h",
+      "shared_sha256": "7edc45a5b97e66d330f4cf9736bdd252554e9ab97d0a2981b88b7755a9c38702",
+      "baseline_sha256": "7edc45a5b97e66d330f4cf9736bdd252554e9ab97d0a2981b88b7755a9c38702",
+      "include_path_only_change": false
+    },
+    {
+      "file": "platform_md.h",
+      "source": "logic/platform_md.h",
+      "shared_sha256": "9be24b226df875d08b227486f548ca99b6481e5ab51d3227615992d2eb814f59",
+      "baseline_sha256": "9be24b226df875d08b227486f548ca99b6481e5ab51d3227615992d2eb814f59",
+      "include_path_only_change": false
+    },
+    {
+      "file": "platform_system.h",
+      "source": "logic/platform_system.h",
+      "shared_sha256": "1a197f78aab241837e9805339101de1e1ce9c69372420fba2ffe03075b3dfc62",
+      "baseline_sha256": "1a197f78aab241837e9805339101de1e1ce9c69372420fba2ffe03075b3dfc62",
+      "include_path_only_change": false
+    },
+    {
+      "file": "layer_config.h",
+      "source": "logic/layer_config.h",
+      "shared_sha256": "3db483c12d0786d5c1361b438345d93463fdfc722188aac4deec5170398d347f",
+      "baseline_sha256": "3db483c12d0786d5c1361b438345d93463fdfc722188aac4deec5170398d347f",
+      "include_path_only_change": false
+    },
+    {
+      "file": "save_adapter.c",
+      "source": "logic/save_adapter.c",
+      "shared_sha256": "1df5367eba3169af250315c48f418c4f8e3d70dfc263776b2fdabc1bf2338668",
+      "baseline_sha256": "125d6845736edf76fc9c47117eb11f911621e1d79deb54bfae17db5b6978e37c",
+      "include_path_only_change": true
+    },
+    {
+      "file": "state_codec.h",
+      "source": "logic/state_codec.h",
+      "shared_sha256": "8c99e11acc3faf10d7a515adbd7909177edb8ac2e4ac79c1ac88f22c6add45fe",
+      "baseline_sha256": "8c99e11acc3faf10d7a515adbd7909177edb8ac2e4ac79c1ac88f22c6add45fe",
+      "include_path_only_change": false
+    },
+    {
+      "file": "io_state.h",
+      "source": "logic/io_state.h",
+      "shared_sha256": "8eb60063699bfaa72d9316453f31b2bb22f052bb791d28dea9abd45997c814bd",
+      "baseline_sha256": "8eb60063699bfaa72d9316453f31b2bb22f052bb791d28dea9abd45997c814bd",
+      "include_path_only_change": false
+    },
+    {
+      "file": "message.c",
+      "source": "logic/message.c",
+      "shared_sha256": "8c9513d35b705f2368c8a739164f34f926d71d9df89f0e297e41122ea0a175c7",
+      "baseline_sha256": "7ed1b95bdcf59223524050e427269c9299976fd21cca708c73754a54a72cf311",
+      "include_path_only_change": true
+    },
+    {
+      "file": "message.h",
+      "source": "logic/message.h",
+      "shared_sha256": "52495fb0f31f2c1fd44793a8fb808564a08b23779e0da5d34237d50644818000",
+      "baseline_sha256": "52495fb0f31f2c1fd44793a8fb808564a08b23779e0da5d34237d50644818000",
+      "include_path_only_change": false
+    },
+    {
+      "file": "message_catalog.inc",
+      "source": "logic/message_catalog.inc",
+      "shared_sha256": "9fbbc261f65639c796b29a2851727fefdd63d5fb85cca7bdfd82c096fe2a8677",
+      "baseline_sha256": "9fbbc261f65639c796b29a2851727fefdd63d5fb85cca7bdfd82c096fe2a8677",
+      "include_path_only_change": false
+    },
+    {
+      "file": "sources.txt",
+      "source": "logic/sources.txt",
+      "shared_sha256": "b3cc593053e734a69415304a742fd08113359d2634fb72d76e3fda3b5c854909",
+      "baseline_sha256": "b3cc593053e734a69415304a742fd08113359d2634fb72d76e3fda3b5c854909",
+      "include_path_only_change": false
+    },
+    {
+      "file": "semantic.c",
+      "source": "logic/semantic.c",
+      "shared_sha256": "87ec4f955e3922c285ca75249be44d728bf12495e4e7f12c45f15b5a1d340a81",
+      "baseline_sha256": "87ec4f955e3922c285ca75249be44d728bf12495e4e7f12c45f15b5a1d340a81",
+      "include_path_only_change": false
+    },
+    {
+      "file": "semantic.h",
+      "source": "logic/semantic.h",
+      "shared_sha256": "25e1d8818afa5da1e6ee86bb495b767598e877700a5450ce0ea64f76c7841e7c",
+      "baseline_sha256": "25e1d8818afa5da1e6ee86bb495b767598e877700a5450ce0ea64f76c7841e7c",
+      "include_path_only_change": false
+    }
+  ],
+  "split_only_safety_changes": [
+    {
+      "file": "pack.c",
+      "original_sha256": "7b2158a7d75a698208b3841d12ed982f1f0a306301008a6adacd8d759c62c0c4",
+      "split_sha256": "8f3f200493ff5dde6f9ece20e0a5739b2e0c1a0155f2302d81fd8667c5052a4d",
+      "reason": "Split item labels have independent ownership; original shallow-label alias can become dangling after rename.",
+      "comparison_limit": "Original-UB label split/rename cases are tested only against the safe split module."
+    },
+    {
+      "file": "command.c",
+      "original_sha256": "398c1fc84575791ab1fbe3112c3e23c33bb1d70c68e381f6cbe406e15aa4b361",
+      "split_sha256": "4b353d1a9b7f7bedb6b8736904d41b8ec9aa5d48d5615b8f37ab9a8b7a7f1a74",
+      "reason": "Recall uses a literal %s format so percent-bearing user text cannot be interpreted as variadic directives.",
+      "comparison_limit": "Percent-bearing recall is a split-only safety regression; baseline retains original msg(huh)."
+    }
+  ],
+  "limits": [
+    "Shared startup, knowledge/curses emulation, host, observation/hash and save infrastructure are not independently validated by this comparison.",
+    "Native original curses and OS startup are not executed or verified.",
+    "Original RN is tested with 32-bit signed int, -fwrapv, Wasm arithmetic right shift.",
+    "Original vsprintf/strcat is retained only for bounded ASCII English regression fixtures; hostile/oversized names are outside this baseline.",
+    "Message IDs differ; compare C state/RNG/input/knowledge and English cells, not translated metadata.",
+    "Baseline pack.c retains original shallow-copy labels; label split/rename ownership regression belongs to split-only tests because the original has undefined behavior.",
+    "Baseline command.c retains original msg(huh); recalling percent-bearing user text is an original undefined-behavior case and is tested split-only.",
+    "Japanese UI and semantic observers are stripped from baseline rule files; translated metadata is verified separately from original ASCII cells/state.",
+    "Baseline options.c retains original ASCII byte editing. UTF-8 scalar editing and Japanese labels are split-only features, not an original-rule equivalence claim."
+  ]
+}

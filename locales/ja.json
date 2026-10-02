@@ -1,0 +1,4764 @@
+{
+  "schema": 1,
+  "language": "ja",
+  "fallbacks": [
+    {
+      "id": "message.legacy",
+      "reason": "登録されていない実行時メッセージは原語を表示する。意味IDへの移行対象をcoverage.jsonで監査する。"
+    }
+  ],
+  "messages": {
+    "armor.take_off.not_wearing_armor": {
+      "template": "防具を身につけていない。",
+      "source_template": "not wearing armor",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "armor.c:63",
+      "function": "take_off"
+    },
+    "armor.take_off.was": {
+      "template": "外した防具：",
+      "source_template": "was",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "armor.c:72",
+      "function": "take_off"
+    },
+    "armor.take_off.wearing": {
+      "template": "{1}（{0}）",
+      "source_template": " wearing %c) %s",
+      "argument_types": [
+        "signed",
+        "string"
+      ],
+      "conversions": [
+        "c",
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "display_key",
+        "1": "item"
+      },
+      "argument_sources": {
+        "1": "inv_name(obj,TRUE)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "armor.c:75",
+      "function": "take_off",
+      "notation_only": true
+    },
+    "armor.take_off.you_arent_wearing_any_armor": {
+      "template": "防具を身につけていない。",
+      "source_template": "you aren't wearing any armor",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "armor.c:65",
+      "function": "take_off"
+    },
+    "armor.take_off.you_used_to_be": {
+      "template": "外した防具：",
+      "source_template": "you used to be",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "armor.c:74",
+      "function": "take_off"
+    },
+    "armor.wear.wearing": {
+      "template": "{0}を身につけた。",
+      "source_template": "wearing %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "item"
+      },
+      "argument_sources": {
+        "0": "sp"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "armor.c:47",
+      "function": "wear"
+    },
+    "armor.wear.you_are_already_wearing_some": {
+      "template": "すでに防具を身につけている。",
+      "source_template": "you are already wearing some",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "armor.c:29",
+      "function": "wear"
+    },
+    "armor.wear.you_are_now": {
+      "template": "あなたは",
+      "source_template": "you are now ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "armor.c:46",
+      "function": "wear"
+    },
+    "armor.wear.you_cant_wear_that": {
+      "template": "それは身につけられない。",
+      "source_template": "you can't wear that",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "armor.c:38",
+      "function": "wear"
+    },
+    "armor.wear.youll_have_to_take_it_off_first": {
+      "template": "先に今の防具を脱ぐ必要がある。",
+      "source_template": ".  You'll have to take it off first",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "armor.c:31",
+      "function": "wear"
+    },
+    "chase.roomin.in_some_bizarre_place": {
+      "template": "奇妙な場所にいる（{0}, {1}）。",
+      "source_template": "in some bizarre place (%d, %d)",
+      "argument_types": [
+        "signed",
+        "signed"
+      ],
+      "conversions": [
+        "d",
+        "d"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "chase.c:440",
+      "function": "roomin"
+    },
+    "chase.runto.couldnt_find_monster_in_runto_at": {
+      "template": "座標（{0}, {1}）の怪物が見つからない（runto）。",
+      "source_template": "couldn't find monster in runto at (%d,%d)",
+      "argument_types": [
+        "signed",
+        "signed"
+      ],
+      "conversions": [
+        "d",
+        "d"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "chase.c:295",
+      "function": "runto"
+    },
+    "command.call.call_it": {
+      "template": "名前：",
+      "source_template": "call it: ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:789",
+      "function": "call"
+    },
+    "command.call.called": {
+      "template": "「{0}」という名前だった。",
+      "source_template": "called \"%s\"",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "appearance_or_user_label"
+      },
+      "argument_sources": {
+        "0": "elsewise"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:786",
+      "function": "call"
+    },
+    "command.call.that_has_already_been_identified": {
+      "template": "それはすでに鑑定済みだ。",
+      "source_template": "that has already been identified",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:779",
+      "function": "call"
+    },
+    "command.call.was": {
+      "template": "以前は",
+      "source_template": "Was ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:785",
+      "function": "call"
+    },
+    "command.call.what_do_you_want_to_call_it": {
+      "template": "どんな名前をつける？ ",
+      "source_template": "what do you want to call it? ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:791",
+      "function": "call"
+    },
+    "command.call.you_cant_call_that_anything": {
+      "template": "それに名前をつけることはできない。",
+      "source_template": "you can't call that anything",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:770",
+      "function": "call"
+    },
+    "command.command.food_left": {
+      "template": "食糧の残り：{0}",
+      "source_template": "food left: %d",
+      "argument_types": [
+        "signed"
+      ],
+      "conversions": [
+        "d"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:382",
+      "function": "command"
+    },
+    "command.command.i_see": {
+      "template": "見渡してみたが、",
+      "source_template": "I see ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:231",
+      "function": "command"
+    },
+    "command.command.inpack": {
+      "template": "持ち物の数：{0}",
+      "source_template": "inpack = %d",
+      "argument_types": [
+        "signed"
+      ],
+      "conversions": [
+        "d"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:375",
+      "function": "command"
+    },
+    "command.command.no_monster_there": {
+      "template": "そこには怪物がいない。",
+      "source_template": "no monster there",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:232",
+      "function": "command"
+    },
+    "command.command.no_trap_there": {
+      "template": "そこには罠がない。",
+      "source_template": "no trap there",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:311",
+      "function": "command"
+    },
+    "command.command.not_wizard_any_more": {
+      "template": "魔法使いモードを終了した。",
+      "source_template": "not wizard any more",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:326",
+      "function": "command"
+    },
+    "command.command.nothing_here": {
+      "template": "ここには何もない",
+      "source_template": "nothing here",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:176",
+      "function": "command"
+    },
+    "command.command.number_number": {
+      "template": "現在位置：{0}, {1}",
+      "source_template": "@ %d,%d",
+      "argument_types": [
+        "signed",
+        "signed"
+      ],
+      "conversions": [
+        "d",
+        "d"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:373",
+      "function": "command"
+    },
+    "command.command.sorry": {
+      "template": "その操作はできない。",
+      "source_template": "sorry",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:338",
+      "function": "command"
+    },
+    "command.command.string": {
+      "template": "{0}",
+      "source_template": "%s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "message_recall"
+      },
+      "argument_sources": {
+        "0": "huh"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:289",
+      "function": "command",
+      "notation_only": true
+    },
+    "command.command.there_is": {
+      "template": "拾おうとしたが、",
+      "source_template": "there is ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:175",
+      "function": "command"
+    },
+    "command.command.to_pick_up": {
+      "template": "。拾える物は見当たらない。",
+      "source_template": " to pick up",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:178",
+      "function": "command"
+    },
+    "command.command.version_mctesq_was_here": {
+      "template": "バージョン {0}（mctesq の署名）",
+      "source_template": "version %s. (mctesq was here)",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "version"
+      },
+      "argument_sources": {
+        "0": "release"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:296",
+      "function": "command"
+    },
+    "command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon": {
+      "template": "ダンジョン番号{0}で、突然ケン・アーノルドのように物知りになった。",
+      "source_template": "you are suddenly as smart as Ken Arnold in dungeon #%d",
+      "argument_types": [
+        "signed"
+      ],
+      "conversions": [
+        "d"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:335",
+      "function": "command"
+    },
+    "command.command.you_can_move_again": {
+      "template": "また動けるようになった。",
+      "source_template": "you can move again",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:94",
+      "function": "command"
+    },
+    "command.command.you_have_found": {
+      "template": "見つけた罠：",
+      "source_template": "You have found ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:309",
+      "function": "command"
+    },
+    "command.command.you_havent_typed_a_command_yet": {
+      "template": "まだ繰り返せるコマンドを入力していない。",
+      "source_template": "you haven't typed a command yet",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:251",
+      "function": "command"
+    },
+    "command.current.character_string": {
+      "template": "{0}）{1}",
+      "source_template": "%c) %s",
+      "argument_types": [
+        "signed",
+        "string"
+      ],
+      "conversions": [
+        "c",
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "display_key",
+        "1": "item"
+      },
+      "argument_sources": {
+        "1": "inv_name(cur,TRUE)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:819",
+      "function": "current",
+      "notation_only": true
+    },
+    "command.current.nothing": {
+      "template": "{0}物はない。",
+      "source_template": "%s nothing",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "token"
+      },
+      "argument_sources": {
+        "0": "how"
+      },
+      "argument_values": {
+        "0": {
+          "wielding": {
+            "id": "equipment.action.wielding",
+            "text": "構えている"
+          },
+          "wearing": {
+            "id": "equipment.action.wearing",
+            "text": "身につけている"
+          }
+        }
+      },
+      "unresolved": [],
+      "source": "command.c:829",
+      "function": "current"
+    },
+    "command.current.string": {
+      "template": "{0}",
+      "source_template": " %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "token"
+      },
+      "argument_sources": {
+        "0": "where"
+      },
+      "argument_values": {
+        "0": {
+          "(L)": {
+            "id": "equipment.hand.left",
+            "text": "（左手）"
+          },
+          "(R)": {
+            "id": "equipment.hand.right",
+            "text": "（右手）"
+          },
+          "on left hand": {
+            "id": "equipment.hand.left",
+            "text": "（左手）"
+          },
+          "on right hand": {
+            "id": "equipment.hand.right",
+            "text": "（右手）"
+          }
+        }
+      },
+      "unresolved": [],
+      "source": "command.c:822",
+      "function": "current",
+      "notation_only": true
+    },
+    "command.current.you_are": {
+      "template": "{0}：",
+      "source_template": "you are %s (",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "token"
+      },
+      "argument_sources": {
+        "0": "how"
+      },
+      "argument_values": {
+        "0": {
+          "wielding": {
+            "id": "equipment.action.wielding",
+            "text": "構えている物"
+          },
+          "wearing": {
+            "id": "equipment.action.wearing",
+            "text": "身につけている物"
+          }
+        }
+      },
+      "unresolved": [],
+      "source": "command.c:817",
+      "function": "current",
+      "notation_only": true
+    },
+    "command.current.you_are_trailing_space": {
+      "template": "現在、",
+      "source_template": "you are ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:828",
+      "function": "current"
+    },
+    "command.d_level.i_see_no_way_down": {
+      "template": "下へ降りる階段が見当たらない。",
+      "source_template": "I see no way down",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:682",
+      "function": "d_level"
+    },
+    "command.help.character_you_want_help_for_for_all": {
+      "template": "説明を見たいキーは？（* ですべて表示）：",
+      "source_template": "character you want help for (* for all): ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:557",
+      "function": "help"
+    },
+    "command.help.string_string": {
+      "template": "{0}：{1}",
+      "source_template": "%s%s",
+      "argument_types": [
+        "string",
+        "string"
+      ],
+      "conversions": [
+        "s",
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "display_key",
+        "1": "help_description"
+      },
+      "argument_sources": {
+        "0": "unctrl(strp->h_ch)",
+        "1": "strp->h_desc"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:571",
+      "function": "help",
+      "notation_only": true
+    },
+    "command.help.unknown_character": {
+      "template": "「{0}」というキーは知らない。",
+      "source_template": "unknown character '%s'",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "display_key"
+      },
+      "argument_sources": {
+        "0": "unctrl(helpch)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:575",
+      "function": "help"
+    },
+    "command.identify.string_string": {
+      "template": "「{0}」：{1}",
+      "source_template": "'%s': %s",
+      "argument_types": [
+        "string",
+        "string"
+      ],
+      "conversions": [
+        "s",
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "display_key",
+        "1": "glyph_description"
+      },
+      "argument_sources": {
+        "0": "unctrl(ch)",
+        "1": "str"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:669",
+      "function": "identify",
+      "notation_only": true
+    },
+    "command.identify.what_do_you_want_identified": {
+      "template": "何の記号を調べる？ ",
+      "source_template": "what do you want identified? ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:649",
+      "function": "identify"
+    },
+    "command.illcom.illegal_command": {
+      "template": "「{0}」は使えないコマンドだ。",
+      "source_template": "illegal command '%s'",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "display_key"
+      },
+      "argument_sources": {
+        "0": "unctrl(ch)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:479",
+      "function": "illcom"
+    },
+    "command.levit_check.you_cant_youre_floating_off_the_ground": {
+      "template": "今はできない。体が地面から浮いている！",
+      "source_template": "You can't.  You're floating off the ground!",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:725",
+      "function": "levit_check"
+    },
+    "command.search.a_secret_door": {
+      "template": "隠し扉を見つけた。",
+      "source_template": "a secret door",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:515",
+      "function": "search"
+    },
+    "command.search.you_found": {
+      "template": "見つけた罠：",
+      "source_template": "you found ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:527",
+      "function": "search"
+    },
+    "command.u_level.i_see_no_way_up": {
+      "template": "上へ登る階段が見当たらない。",
+      "source_template": "I see no way up",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:712",
+      "function": "u_level"
+    },
+    "command.u_level.you_feel_a_wrenching_sensation_in_your_gut": {
+      "template": "腹の奥がねじれるような感覚がした。",
+      "source_template": "you feel a wrenching sensation in your gut",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:707",
+      "function": "u_level"
+    },
+    "command.u_level.your_way_is_magically_blocked": {
+      "template": "魔法の力で行く手がふさがれている。",
+      "source_template": "your way is magically blocked",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "command.c:710",
+      "function": "u_level"
+    },
+    "daemon.d_slot.ran_out_of_fuse_slots": {
+      "template": "遅延効果を登録する枠が足りない。",
+      "source_template": "Ran out of fuse slots",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemon.c:58",
+      "function": "d_slot"
+    },
+    "daemons.come_down.everything_looks_so_boring_now": {
+      "template": "何もかもすっかり退屈に見える。",
+      "source_template": "Everything looks SO boring now.",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemons.c:234",
+      "function": "come_down"
+    },
+    "daemons.land.bummer_youve_hit_the_ground": {
+      "template": "ああ、地面に落ちてしまった",
+      "source_template": "bummer!  You've hit the ground",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemons.c:293",
+      "function": "land"
+    },
+    "daemons.land.you_float_gently_to_the_ground": {
+      "template": "ゆっくりと地面に降り立った",
+      "source_template": "you float gently to the ground",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemons.c:293",
+      "function": "land"
+    },
+    "daemons.nohaste.you_feel_yourself_slowing_down": {
+      "template": "動きが遅くなってきた",
+      "source_template": "you feel yourself slowing down",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemons.c:131",
+      "function": "nohaste"
+    },
+    "daemons.sight.far_out_everything_is_all_cosmic_again": {
+      "template": "すごい！また世界が宇宙のように見える",
+      "source_template": "far out!  Everything is all cosmic again",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemons.c:118",
+      "function": "sight"
+    },
+    "daemons.sight.the_veil_of_darkness_lifts": {
+      "template": "闇の帳が晴れた",
+      "source_template": "the veil of darkness lifts",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemons.c:118",
+      "function": "sight"
+    },
+    "daemons.stomach.getting_hungry": {
+      "template": "お腹が空いてきた",
+      "source_template": "getting hungry",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemons.c:175",
+      "function": "stomach"
+    },
+    "daemons.stomach.getting_the_munchies": {
+      "template": "無性に何か食べたくなってきた",
+      "source_template": "getting the munchies",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemons.c:175",
+      "function": "stomach"
+    },
+    "daemons.stomach.the_munchies_are_interfering_with_your_motor_capabilites": {
+      "template": "食べたい気持ちが強すぎて、体が思うように動かない",
+      "source_template": "the munchies are interfering with your motor capabilites",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemons.c:168",
+      "function": "stomach"
+    },
+    "daemons.stomach.the_munchies_overpower_your_motor_capabilities": {
+      "template": "食べたい気持ちが強すぎて、体が動かない。",
+      "source_template": "the munchies overpower your motor capabilities.  ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemons.c:156",
+      "function": "stomach"
+    },
+    "daemons.stomach.you_are_getting_the_munchies": {
+      "template": "無性に何か食べたくなってきた",
+      "source_template": "you are getting the munchies",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemons.c:177",
+      "function": "stomach"
+    },
+    "daemons.stomach.you_are_starting_to_feel_weak": {
+      "template": "力が抜けてきた",
+      "source_template": "you are starting to feel weak",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemons.c:168",
+      "function": "stomach"
+    },
+    "daemons.stomach.you_are_starting_to_get_hungry": {
+      "template": "お腹が空いてきた",
+      "source_template": "you are starting to get hungry",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemons.c:177",
+      "function": "stomach"
+    },
+    "daemons.stomach.you_faint": {
+      "template": "気を失った",
+      "source_template": "You faint",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemons.c:158",
+      "function": "stomach"
+    },
+    "daemons.stomach.you_feel_too_weak_from_lack_of_food": {
+      "template": "空腹で力が出ない。",
+      "source_template": "you feel too weak from lack of food.  ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemons.c:156",
+      "function": "stomach"
+    },
+    "daemons.stomach.you_freak_out": {
+      "template": "取り乱してしまった",
+      "source_template": "You freak out",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "daemons.c:158",
+      "function": "stomach"
+    },
+    "daemons.unconfuse.you_feel_less_now": {
+      "template": "{0}感じが薄れてきた",
+      "source_template": "you feel less %s now",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "token"
+      },
+      "argument_sources": {
+        "0": "choose_str(\"trippy\", \"confused\") [daemons.c:87; ISHALU ? trippy : confused via misc.c:600]"
+      },
+      "argument_values": {
+        "0": {
+          "trippy": {
+            "id": "state.feeling.trippy",
+            "text": "浮ついた"
+          },
+          "confused": {
+            "id": "state.feeling.confused",
+            "text": "混乱した"
+          }
+        }
+      },
+      "unresolved": [],
+      "source": "daemons.c:87",
+      "function": "unconfuse"
+    },
+    "fight.attack.a_bite_has_weakened_you": {
+      "template": "噛まれて力が弱まった。",
+      "source_template": "a bite has weakened you",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:222",
+      "function": "attack"
+    },
+    "fight.attack.a_bite_momentarily_weakens_you": {
+      "template": "噛まれて一瞬、力が弱まった。",
+      "source_template": "a bite momentarily weakens you",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:227",
+      "function": "attack"
+    },
+    "fight.attack.bite_has_no_effect": {
+      "template": "噛みつきの毒は効かなかった。",
+      "source_template": "bite has no effect",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:229",
+      "function": "attack"
+    },
+    "fight.attack.by_the": {
+      "template": "（{0}に凍らされた）",
+      "source_template": " by the %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "monster"
+      },
+      "argument_sources": {
+        "0": "mname"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:204",
+      "function": "attack"
+    },
+    "fight.attack.sentence_separator": {
+      "template": "。",
+      "source_template": ".  ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:170",
+      "function": "attack",
+      "notation_only": true
+    },
+    "fight.attack.she_stole": {
+      "template": "{0}を盗まれた！",
+      "source_template": "she stole %s!",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "item"
+      },
+      "argument_sources": {
+        "0": "inv_name(steal,TRUE)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:311",
+      "function": "attack"
+    },
+    "fight.attack.you_are_frozen": {
+      "template": "体が凍りついて動けない",
+      "source_template": "you are frozen",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:202",
+      "function": "attack"
+    },
+    "fight.attack.you_feel_a_bite_in_your_leg_and_now_feel_weaker": {
+      "template": "脚を噛まれ、体から力が抜けていく。",
+      "source_template": "you feel a bite in your leg and now feel weaker",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:220",
+      "function": "attack"
+    },
+    "fight.attack.you_suddenly_feel_weaker": {
+      "template": "突然、力が弱まった。",
+      "source_template": "you suddenly feel weaker",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:263",
+      "function": "attack"
+    },
+    "fight.attack.your_purse_feels_lighter": {
+      "template": "財布が軽くなった気がする。",
+      "source_template": "your purse feels lighter",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:289",
+      "function": "attack"
+    },
+    "fight.bounce.the_misses": {
+      "template": "{0}の攻撃は外れた。標的：",
+      "source_template": "the %s misses ",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "item"
+      },
+      "argument_sources": {
+        "0": "weap_info[weap->o_which].oi_name"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:584",
+      "function": "bounce"
+    },
+    "fight.bounce.you_missed": {
+      "template": "攻撃は外れた。標的：",
+      "source_template": "you missed ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:586",
+      "function": "bounce"
+    },
+    "fight.fight.appears_confused": {
+      "template": "{0}は混乱しているようだ。",
+      "source_template": "%s appears confused",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "monster"
+      },
+      "argument_sources": {
+        "0": "mname"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:124",
+      "function": "fight"
+    },
+    "fight.fight.fight_what": {
+      "template": "座標（{0}, {1}）には攻撃する相手がいない。",
+      "source_template": "Fight what @ %d,%d",
+      "argument_types": [
+        "signed",
+        "signed"
+      ],
+      "conversions": [
+        "d",
+        "d"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:75",
+      "function": "fight"
+    },
+    "fight.fight.heavy_thats_a_nasty_critter": {
+      "template": "うわっ、なんて嫌な生き物だ！",
+      "source_template": "heavy!  That's a nasty critter!",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:97",
+      "function": "fight"
+    },
+    "fight.fight.wait_thats_a_xeroc": {
+      "template": "待て、あれはゼロックだ！",
+      "source_template": "wait!  That's a xeroc!",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:97",
+      "function": "fight"
+    },
+    "fight.fight.your_hands_stop_glowing": {
+      "template": "手から{0}の光が消えた。",
+      "source_template": "your hands stop glowing %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "color"
+      },
+      "argument_sources": {
+        "0": "pick_color(\"red\")"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:119",
+      "function": "fight"
+    },
+    "fight.killed.defeated": {
+      "template": "。倒した敵：",
+      "source_template": ".  Defeated ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:669",
+      "function": "killed"
+    },
+    "fight.killed.defeated_trailing_space": {
+      "template": "倒した敵：",
+      "source_template": "defeated ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:676",
+      "function": "killed"
+    },
+    "fight.killed.you_have": {
+      "template": "あなたが",
+      "source_template": "you have ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:675",
+      "function": "killed"
+    },
+    "fight.miss.string": {
+      "template": "（相手：{0}）",
+      "source_template": " %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "monster"
+      },
+      "argument_sources": {
+        "0": "prname(ee,FALSE)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:569",
+      "function": "miss"
+    },
+    "fight.roll_em.damage_for_x_came_out_dplus_add_dam_def_arm": {
+      "template": "{0}個の{1}面ダイスでダメージ{2}、武器補正{3}、腕力補正{4}、相手の防御{5}",
+      "source_template": "Damage for %dx%d came out %d, dplus = %d, add_dam = %d, def_arm = %d",
+      "argument_types": [
+        "signed",
+        "signed",
+        "signed",
+        "signed",
+        "signed",
+        "signed"
+      ],
+      "conversions": [
+        "d",
+        "d",
+        "d",
+        "d",
+        "d",
+        "d"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:467",
+      "function": "roll_em"
+    },
+    "fight.thunk.string": {
+      "template": "{0}",
+      "source_template": "%s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "monster"
+      },
+      "argument_sources": {
+        "0": "mname"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:512",
+      "function": "thunk",
+      "notation_only": true
+    },
+    "fight.thunk.the_hits": {
+      "template": "{0}が命中した。相手：",
+      "source_template": "the %s hits ",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "item"
+      },
+      "argument_sources": {
+        "0": "weap_info[weap->o_which].oi_name"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:509",
+      "function": "thunk"
+    },
+    "fight.thunk.you_hit": {
+      "template": "攻撃が命中した。相手：",
+      "source_template": "you hit ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "fight.c:511",
+      "function": "thunk"
+    },
+    "io.status.level_gold_hp_str_arm_exp": {
+      "template": "階層：{0}  所持金：{1}  HP：{3}（{5}）  腕力：{6}（{7}）  防御：{8}  経験：{9}/{10}  {11}",
+      "source_template": "Level: %d  Gold: %-5d  Hp: %*d(%*d)  Str: %2d(%d)  Arm: %-2d  Exp: %d/%ld  %s",
+      "argument_types": [
+        "signed",
+        "signed",
+        "signed",
+        "signed",
+        "signed",
+        "signed",
+        "signed",
+        "signed",
+        "signed",
+        "signed",
+        "signed",
+        "string"
+      ],
+      "conversions": [
+        "d",
+        "d",
+        "width",
+        "d",
+        "width",
+        "d",
+        "d",
+        "d",
+        "d",
+        "d",
+        "d",
+        "s"
+      ],
+      "control_indexes": [
+        2,
+        4
+      ],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "11": "token"
+      },
+      "argument_sources": {
+        "11": "state_name[hungry_state]"
+      },
+      "argument_values": {
+        "11": {
+          "": {
+            "id": "hunger.normal",
+            "text": ""
+          },
+          "Hungry": {
+            "id": "hunger.hungry",
+            "text": "空腹"
+          },
+          "Weak": {
+            "id": "hunger.weak",
+            "text": "衰弱"
+          },
+          "Faint": {
+            "id": "hunger.faint",
+            "text": "餓死寸前"
+          }
+        }
+      },
+      "unresolved": [],
+      "source": "io.c:295",
+      "function": "status"
+    },
+    "list.new_item.ran_out_of_memory_after_items": {
+      "template": "{0}個のアイテムを確保したところでメモリが足りなくなった。",
+      "source_template": "ran out of memory after %d items",
+      "argument_types": [
+        "signed"
+      ],
+      "conversions": [
+        "d"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "list.c:104",
+      "function": "new_item"
+    },
+    "main.quit.really_quit": {
+      "template": "本当に終了する？（y/n）",
+      "source_template": "really quit?",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "main.c:322",
+      "function": "quit"
+    },
+    "main.shell.the_browser_has_no_operating_system_shell": {
+      "template": "このブラウザ版ではOSシェルを開けない。",
+      "source_template": "The browser has no operating-system shell.",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "main.c:383",
+      "function": "shell"
+    },
+    "message.clear": {
+      "template": "",
+      "source_template": "",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "control": "clear"
+    },
+    "message.legacy": {
+      "template": "",
+      "source_template": "",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "control": "legacy"
+    },
+    "message.sequence": {
+      "template": "",
+      "source_template": "",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "control": "sequence"
+    },
+    "misc.add_haste.you_faint_from_exhaustion": {
+      "template": "疲労のあまり気を失った。",
+      "source_template": "you faint from exhaustion",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "misc.c:390",
+      "function": "add_haste"
+    },
+    "misc.call_it.call_it": {
+      "template": "名前：",
+      "source_template": "call it: ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "misc.c:564",
+      "function": "call_it"
+    },
+    "misc.call_it.what_do_you_want_to_call_it": {
+      "template": "どんな名前をつける？ ",
+      "source_template": "what do you want to call it? ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "misc.c:564",
+      "function": "call_it"
+    },
+    "misc.check_level.welcome_to_level": {
+      "template": "レベル{0}になった！",
+      "source_template": "welcome to level %d",
+      "argument_types": [
+        "signed"
+      ],
+      "conversions": [
+        "d"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "misc.c:338",
+      "function": "check_level"
+    },
+    "misc.eat.my_that_was_a_yummy": {
+      "template": "この{0}はとてもおいしかった。",
+      "source_template": "my, that was a yummy %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "fruit_or_user_name"
+      },
+      "argument_sources": {
+        "0": "fruit"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "misc.c:304",
+      "function": "eat"
+    },
+    "misc.eat.that_tasted_good": {
+      "template": "{0}、おいしかった。",
+      "source_template": "%s, that tasted good",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "token"
+      },
+      "argument_sources": {
+        "0": "choose_str(\"oh, wow\",\"yum\")"
+      },
+      "argument_values": {
+        "0": {
+          "oh, wow": {
+            "id": "food.reaction.delighted",
+            "text": "おお"
+          },
+          "yum": {
+            "id": "food.reaction.delicious",
+            "text": "うまい"
+          }
+        }
+      },
+      "unresolved": [],
+      "source": "misc.c:313",
+      "function": "eat"
+    },
+    "misc.eat.thats_inedible": {
+      "template": "それは食べられない！",
+      "source_template": "that's Inedible!",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "misc.c:293",
+      "function": "eat"
+    },
+    "misc.eat.this_food_tastes_awful": {
+      "template": "{0}、ひどい味だ。",
+      "source_template": "%s, this food tastes awful",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "token"
+      },
+      "argument_sources": {
+        "0": "choose_str(\"bummer\",\"yuk\")"
+      },
+      "argument_values": {
+        "0": {
+          "bummer": {
+            "id": "food.reaction.disappointed",
+            "text": "しまった"
+          },
+          "yuk": {
+            "id": "food.reaction.disgusted",
+            "text": "うえっ"
+          }
+        }
+      },
+      "unresolved": [],
+      "source": "misc.c:309",
+      "function": "eat"
+    },
+    "misc.eat.ugh_you_would_get_ill_if_you_ate_that": {
+      "template": "うえっ、それを食べたら具合が悪くなる。",
+      "source_template": "ugh, you would get ill if you ate that",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "misc.c:291",
+      "function": "eat"
+    },
+    "misc.get_dir.which_direction": {
+      "template": "どの方向？ ",
+      "source_template": "which direction? ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "misc.c:479",
+      "function": "get_dir"
+    },
+    "misc.is_current.in_use": {
+      "template": "使っている。",
+      "source_template": "in use",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "misc.c:451",
+      "function": "is_current"
+    },
+    "misc.is_current.thats_already": {
+      "template": "それはすでに",
+      "source_template": "That's already ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "misc.c:450",
+      "function": "is_current"
+    },
+    "monsters.wake_monster.cant_find_monster_in_wake_monster": {
+      "template": "wake_monsterでモンスターが見つからない",
+      "source_template": "can't find monster in wake_monster",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "monsters.c:159",
+      "function": "wake_monster"
+    },
+    "monsters.wake_monster.possessive_apostrophe": {
+      "template": "",
+      "source_template": "'",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "monsters.c:193",
+      "function": "wake_monster",
+      "intentional_empty_reason": "英語の所有格または動詞の単数語尾は、日本語の後続断片で表現する。"
+    },
+    "monsters.wake_monster.s_gaze_has_confused_you": {
+      "template": "の視線で混乱してしまった",
+      "source_template": "s gaze has confused you",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "monsters.c:194",
+      "function": "wake_monster"
+    },
+    "monsters.wake_monster.string": {
+      "template": "{0}",
+      "source_template": "%s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "monster"
+      },
+      "argument_sources": {
+        "0": "mname = set_mname(tp) [monsters.c:190-191; fight.c:349 returns it/something or the + monsters[].m_name]"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "monsters.c:191",
+      "function": "wake_monster",
+      "notation_only": true
+    },
+    "monsters.wanderer.started_a_wandering": {
+      "template": "徘徊する{0}を出現させた",
+      "source_template": "started a wandering %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "monster"
+      },
+      "argument_sources": {
+        "0": "monsters[tp->t_type-'A'].m_name [monsters.c:142]"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "monsters.c:142",
+      "function": "wanderer"
+    },
+    "move.be_trapped.a_gush_of_water_hits_you_on_the_head": {
+      "template": "頭に勢いよく水が降りかかった",
+      "source_template": "a gush of water hits you on the head",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:349",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.a_light_flashes_in_your_eyes": {
+      "template": "目の前で{0}の光がひらめいた",
+      "source_template": "a %s light flashes in your eyes",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "color"
+      },
+      "argument_sources": {
+        "0": "rainbow[rnd(cNCOLORS)] [move.c:293; rainbow defined at init.c:81]"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:293",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.a_poisoned_dart_killed_you": {
+      "template": "毒の吹き矢に命を奪われた",
+      "source_template": "a poisoned dart killed you",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:341",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.a_small_dart_just_hit_you_in_the_shoulder": {
+      "template": "小さな吹き矢が肩に刺さった",
+      "source_template": "a small dart just hit you in the shoulder",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:346",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.a_small_dart_whizzes_by_your_ear_and_vanishes": {
+      "template": "小さな吹き矢が耳元をかすめて消えた",
+      "source_template": "a small dart whizzes by your ear and vanishes",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:335",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.a_spike_shoots_past_your_ear": {
+      "template": "とがった針が耳元をかすめた！",
+      "source_template": "a spike shoots past your ear!",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:294",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.a_strange_white_mist_envelops_you_and_you_fall_asleep": {
+      "template": "不思議な白い霧に包まれ、眠りに落ちた",
+      "source_template": "a strange white mist envelops you and you fall asleep",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:304",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.an_arrow_killed_you": {
+      "template": "矢に命を奪われた",
+      "source_template": "an arrow killed you",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:311",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.an_arrow_shoots_past_you": {
+      "template": "矢がすぐそばをかすめた",
+      "source_template": "an arrow shoots past you",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:324",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.multi_colored_lines_swirl_around_you_then_fade": {
+      "template": "色とりどりの線が周囲を渦巻き、やがて消えた",
+      "source_template": "multi-colored lines swirl around you, then fade",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:292",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.oh_no_an_arrow_shot_you": {
+      "template": "しまった！矢が刺さった",
+      "source_template": "oh no! An arrow shot you",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:315",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.sparks_dance_across_your_armor": {
+      "template": "{0}の火花が鎧の上で踊った",
+      "source_template": "%s sparks dance across your armor",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "color"
+      },
+      "argument_sources": {
+        "0": "rainbow[rnd(cNCOLORS)] [move.c:295; rainbow defined at init.c:81]"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:295",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.the_light_in_here_suddenly_seems": {
+      "template": "辺りの光が突然{0}に見える",
+      "source_template": "the light in here suddenly seems %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "color"
+      },
+      "argument_sources": {
+        "0": "rainbow[rnd(cNCOLORS)] [move.c:290; rainbow defined at init.c:81]"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:290",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.time_now_seems_to_be_going_slower": {
+      "template": "時間の流れが遅くなったように感じる",
+      "source_template": "time now seems to be going slower",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:298",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.you_are_caught_in_a_bear_trap": {
+      "template": "トラバサミに捕まった",
+      "source_template": "you are caught in a bear trap",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:285",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.you_are_suddenly_in_a_parallel_dimension": {
+      "template": "突然、別の次元に入り込んだ",
+      "source_template": "you are suddenly in a parallel dimension",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:289",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.you_feel_a_sting_in_the_side_of_your_neck": {
+      "template": "首筋にちくりと痛みを感じた",
+      "source_template": "you feel a sting in the side of your neck",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:291",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.you_feel_time_speed_up_suddenly": {
+      "template": "突然、時間の流れが速くなったように感じる",
+      "source_template": "you feel time speed up suddenly",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:297",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.you_fell_into_a_trap": {
+      "template": "落とし穴に落ちた！",
+      "source_template": "you fell into a trap!",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:282",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.you_pack_turns": {
+      "template": "荷物が{0}に変わった！",
+      "source_template": "you pack turns %s!",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "color"
+      },
+      "argument_sources": {
+        "0": "rainbow[rnd(cNCOLORS)] [move.c:299; rainbow defined at init.c:81]"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:299",
+      "function": "be_trapped"
+    },
+    "move.be_trapped.you_suddenly_feel_very_thirsty": {
+      "template": "突然、ひどく喉が渇いた",
+      "source_template": "you suddenly feel very thirsty",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:296",
+      "function": "be_trapped"
+    },
+    "move.do_move.you_are_being_held": {
+      "template": "捕らえられて動けない",
+      "source_template": "you are being held",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:101",
+      "function": "do_move"
+    },
+    "move.do_move.you_are_still_stuck_in_the_bear_trap": {
+      "template": "まだトラバサミから抜け出せない",
+      "source_template": "you are still stuck in the bear trap",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:51",
+      "function": "do_move"
+    },
+    "move.rust_armor.the_rust_vanishes_instantly": {
+      "template": "錆がたちまち消えた",
+      "source_template": "the rust vanishes instantly",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:415",
+      "function": "rust_armor"
+    },
+    "move.rust_armor.your_armor_appears_to_be_weaker_now_oh_my": {
+      "template": "ああ、鎧が弱くなってしまったようだ！",
+      "source_template": "your armor appears to be weaker now. Oh my!",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:421",
+      "function": "rust_armor"
+    },
+    "move.rust_armor.your_armor_weakens": {
+      "template": "鎧が弱くなった",
+      "source_template": "your armor weakens",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "move.c:423",
+      "function": "rust_armor"
+    },
+    "pack.add_pack.string_character": {
+      "template": "{0}（{1}）を手に入れた。",
+      "source_template": "%s (%c)",
+      "argument_types": [
+        "string",
+        "signed"
+      ],
+      "conversions": [
+        "s",
+        "c"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "1": "display_key",
+        "0": "item"
+      },
+      "argument_sources": {
+        "0": "inv_name(obj,!terse)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:156",
+      "function": "add_pack"
+    },
+    "pack.add_pack.the_scroll_turns_to_dust_as_you_pick_it_up": {
+      "template": "巻物は拾った途端に塵になった。",
+      "source_template": "the scroll turns to dust as you pick it up",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:49",
+      "function": "add_pack"
+    },
+    "pack.add_pack.you_now_have": {
+      "template": "新しい持ち物：",
+      "source_template": "you now have ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:155",
+      "function": "add_pack"
+    },
+    "pack.get_item.for_list": {
+      "template": "？（* で一覧）：",
+      "source_template": "? (* for list): ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:425",
+      "function": "get_item"
+    },
+    "pack.get_item.is_not_a_valid_item": {
+      "template": "「{0}」に対応する持ち物はない。",
+      "source_template": "'%s' is not a valid item",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "display_key"
+      },
+      "argument_sources": {
+        "0": "unctrl(ch)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:454",
+      "function": "get_item"
+    },
+    "pack.get_item.what": {
+      "template": "対象は",
+      "source_template": " what",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:424",
+      "function": "get_item"
+    },
+    "pack.get_item.which_object_do_you_want_to": {
+      "template": "どれを",
+      "source_template": "which object do you want to ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:421",
+      "function": "get_item"
+    },
+    "pack.get_item.you_arent_carrying_anything": {
+      "template": "何も持っていない。",
+      "source_template": "you aren't carrying anything",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:410",
+      "function": "get_item"
+    },
+    "pack.get_item.you_ran_out": {
+      "template": "その持ち物はもうない。",
+      "source_template": "you ran out",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:415",
+      "function": "get_item"
+    },
+    "pack.inventory.empty_handed": {
+      "template": "何も持っていない。",
+      "source_template": "empty handed",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:297",
+      "function": "inventory"
+    },
+    "pack.inventory.nothing_appropriate": {
+      "template": "使える持ち物はない。",
+      "source_template": "nothing appropriate",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:297",
+      "function": "inventory"
+    },
+    "pack.inventory.you_are_empty_handed": {
+      "template": "何も持っていない。",
+      "source_template": "you are empty handed",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:300",
+      "function": "inventory"
+    },
+    "pack.inventory.you_dont_have_anything_appropriate": {
+      "template": "この操作に使える持ち物はない。",
+      "source_template": "you don't have anything appropriate",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:300",
+      "function": "inventory"
+    },
+    "pack.money.gold_pieces": {
+      "template": "{0}枚の金貨を手に入れた。",
+      "source_template": "%d gold pieces",
+      "argument_types": [
+        "signed"
+      ],
+      "conversions": [
+        "d"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:479",
+      "function": "money"
+    },
+    "pack.money.you_found": {
+      "template": "見つけた財宝：",
+      "source_template": "you found ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:478",
+      "function": "money"
+    },
+    "pack.move_msg.moved_onto": {
+      "template": "{0}の上に移動した。",
+      "source_template": "moved onto %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "item"
+      },
+      "argument_sources": {
+        "0": "inv_name(obj,TRUE)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:362",
+      "function": "move_msg"
+    },
+    "pack.move_msg.you": {
+      "template": "あなたは",
+      "source_template": "you ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:361",
+      "function": "move_msg"
+    },
+    "pack.pack_room.in_your_pack": {
+      "template": "。持ち物がいっぱいだ。",
+      "source_template": " in your pack",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:174",
+      "function": "pack_room"
+    },
+    "pack.pack_room.no_room": {
+      "template": "これ以上持てない",
+      "source_template": "no room",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:172",
+      "function": "pack_room"
+    },
+    "pack.pack_room.theres": {
+      "template": "残念だが、",
+      "source_template": "there's ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:171",
+      "function": "pack_room"
+    },
+    "pack.pick_up.where_did_you_pick_a_up": {
+      "template": "「{0}」をどこで拾ったのだろう？",
+      "source_template": "Where did you pick a '%s' up???",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "display_key"
+      },
+      "argument_sources": {
+        "0": "unctrl(ch)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:337",
+      "function": "pick_up"
+    },
+    "pack.picky_inven.a": {
+      "template": "a）{0}",
+      "source_template": "a) %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "item"
+      },
+      "argument_sources": {
+        "0": "inv_name(pack,FALSE)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:379",
+      "function": "picky_inven",
+      "notation_only": true
+    },
+    "pack.picky_inven.character_string": {
+      "template": "{0}）{1}",
+      "source_template": "%c) %s",
+      "argument_types": [
+        "signed",
+        "string"
+      ],
+      "conversions": [
+        "c",
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "display_key",
+        "1": "item"
+      },
+      "argument_sources": {
+        "1": "inv_name(obj,FALSE)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:392",
+      "function": "picky_inven",
+      "notation_only": true
+    },
+    "pack.picky_inven.item": {
+      "template": "持ち物のキー：",
+      "source_template": "item: ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:382",
+      "function": "picky_inven"
+    },
+    "pack.picky_inven.not_in_pack": {
+      "template": "「{0}」に対応する物は持っていない。",
+      "source_template": "'%s' not in pack",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "display_key"
+      },
+      "argument_sources": {
+        "0": "unctrl(mch)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:395",
+      "function": "picky_inven"
+    },
+    "pack.picky_inven.which_item_do_you_wish_to_inventory": {
+      "template": "どの持ち物を確認する？ ",
+      "source_template": "which item do you wish to inventory: ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:382",
+      "function": "picky_inven"
+    },
+    "pack.picky_inven.you_arent_carrying_anything": {
+      "template": "何も持っていない。",
+      "source_template": "you aren't carrying anything",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "pack.c:377",
+      "function": "picky_inven"
+    },
+    "passages.conn.error_in_connection_tables": {
+      "template": "部屋の接続表に誤りがある。",
+      "source_template": "error in connection tables",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "passages.c:217",
+      "function": "conn"
+    },
+    "passages.conn.warning_connectivity_problem_on_this_level": {
+      "template": "この階の通路のつながりに問題がある。",
+      "source_template": "warning, connectivity problem on this level",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "passages.c:265",
+      "function": "conn"
+    },
+    "potions.quaff.hey_this_tastes_great_it_make_you_feel_warm_all_over": {
+      "template": "これはおいしい。体中が温かくなってきた",
+      "source_template": "hey, this tastes great.  It make you feel warm all over",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "potions.c:204",
+      "function": "quaff"
+    },
+    "potions.quaff.thats_undrinkable": {
+      "template": "それは飲めない",
+      "source_template": "that's undrinkable",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "potions.c:76",
+      "function": "quaff"
+    },
+    "potions.quaff.what_an_odd_tasting_potion": {
+      "template": "なんて奇妙な味の薬だ！",
+      "source_template": "what an odd tasting potion!",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "potions.c:211",
+      "function": "quaff"
+    },
+    "potions.quaff.you_begin_to_feel_better": {
+      "template": "体の調子がよくなってきた",
+      "source_template": "you begin to feel better",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "potions.c:107",
+      "function": "quaff"
+    },
+    "potions.quaff.you_begin_to_feel_much_better": {
+      "template": "体の調子がぐっとよくなってきた",
+      "source_template": "you begin to feel much better",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "potions.c:187",
+      "function": "quaff"
+    },
+    "potions.quaff.you_feel_momentarily_sick": {
+      "template": "一瞬、気分が悪くなった",
+      "source_template": "you feel momentarily sick",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "potions.c:95",
+      "function": "quaff"
+    },
+    "potions.quaff.you_feel_stronger_now_what_bulging_muscles": {
+      "template": "力がみなぎってきた。筋肉が盛り上がっている！",
+      "source_template": "you feel stronger, now.  What bulging muscles!",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "potions.c:111",
+      "function": "quaff"
+    },
+    "potions.quaff.you_feel_very_sick_now": {
+      "template": "ひどく気分が悪くなった",
+      "source_template": "you feel very sick now",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "potions.c:99",
+      "function": "quaff"
+    },
+    "potions.quaff.you_feel_yourself_moving_much_faster": {
+      "template": "動きがずっと速くなった",
+      "source_template": "you feel yourself moving much faster",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "potions.c:192",
+      "function": "quaff"
+    },
+    "potions.quaff.you_have_a_feeling_for_a_moment_then_it_passes": {
+      "template": "{0}感覚が一瞬よぎり、すぐに消えた",
+      "source_template": "you have a %s feeling for a moment, then it passes",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "token"
+      },
+      "argument_sources": {
+        "0": "choose_str(\"normal\", \"strange\") [potions.c:116-117 and 155-156; ISHALU ? normal : strange via misc.c:600]"
+      },
+      "argument_values": {
+        "0": {
+          "normal": {
+            "id": "state.feeling.normal",
+            "text": "普通の"
+          },
+          "strange": {
+            "id": "state.feeling.strange",
+            "text": "奇妙な"
+          }
+        }
+      },
+      "unresolved": [],
+      "source": "potions.c:116",
+      "function": "quaff"
+    },
+    "potions.quaff.you_suddenly_feel_much_more_skillful": {
+      "template": "突然、腕前が格段に上がった気がする",
+      "source_template": "you suddenly feel much more skillful",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "potions.c:175",
+      "function": "quaff"
+    },
+    "potions.quaff.yuk_why_would_you_want_to_drink_that": {
+      "template": "うえっ！そんなものを飲むつもり？",
+      "source_template": "yuk! Why would you want to drink that?",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "potions.c:74",
+      "function": "quaff"
+    },
+    "rings.gethand.l_or_r": {
+      "template": "L（左）かR（右）",
+      "source_template": "L or R",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "rings.c:148",
+      "function": "gethand"
+    },
+    "rings.gethand.left_hand_or_right_hand": {
+      "template": "左手（L）と右手（R）、どちらにする？ ",
+      "source_template": "left hand or right hand? ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "rings.c:139",
+      "function": "gethand"
+    },
+    "rings.gethand.left_or_right_ring": {
+      "template": "左（L）と右（R）、どちらの指輪？ ",
+      "source_template": "left or right ring? ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "rings.c:137",
+      "function": "gethand"
+    },
+    "rings.gethand.please_type_l_or_r": {
+      "template": "L（左）かR（右）を入力して",
+      "source_template": "please type L or R",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "rings.c:150",
+      "function": "gethand"
+    },
+    "rings.ring_off.no_rings": {
+      "template": "指輪をつけていない",
+      "source_template": "no rings",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "rings.c:102",
+      "function": "ring_off"
+    },
+    "rings.ring_off.not_wearing_such_a_ring": {
+      "template": "その指輪はつけていない",
+      "source_template": "not wearing such a ring",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "rings.c:118",
+      "function": "ring_off"
+    },
+    "rings.ring_off.was_wearing": {
+      "template": "外した指輪：{0} ({1})",
+      "source_template": "was wearing %s(%c)",
+      "argument_types": [
+        "string",
+        "signed"
+      ],
+      "conversions": [
+        "s",
+        "c"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "item",
+        "1": "display_key"
+      },
+      "argument_sources": {
+        "0": "inv_name(obj, TRUE) [rings.c:122; promoted argument 1 is %c obj->o_packch]"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "rings.c:122",
+      "function": "ring_off"
+    },
+    "rings.ring_off.you_arent_wearing_any_rings": {
+      "template": "指輪は何もつけていない",
+      "source_template": "you aren't wearing any rings",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "rings.c:104",
+      "function": "ring_off"
+    },
+    "rings.ring_on.it_would_be_difficult_to_wrap_that_around_a_finger": {
+      "template": "それを指にはめるのは難しそうだ",
+      "source_template": "it would be difficult to wrap that around a finger",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "rings.c:36",
+      "function": "ring_on"
+    },
+    "rings.ring_on.not_a_ring": {
+      "template": "指輪ではない",
+      "source_template": "not a ring",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "rings.c:38",
+      "function": "ring_on"
+    },
+    "rings.ring_on.string_character": {
+      "template": "{0} ({1})",
+      "source_template": "%s (%c)",
+      "argument_types": [
+        "string",
+        "signed"
+      ],
+      "conversions": [
+        "s",
+        "c"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "item",
+        "1": "display_key"
+      },
+      "argument_sources": {
+        "0": "inv_name(obj, TRUE) [rings.c:85; promoted argument 1 is %c obj->o_packch]"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "rings.c:85",
+      "function": "ring_on",
+      "notation_only": true
+    },
+    "rings.ring_on.wearing_two": {
+      "template": "指輪はすでに2つつけている",
+      "source_template": "wearing two",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "rings.c:62",
+      "function": "ring_on"
+    },
+    "rings.ring_on.you_already_have_a_ring_on_each_hand": {
+      "template": "両手にすでに指輪をつけている",
+      "source_template": "you already have a ring on each hand",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "rings.c:60",
+      "function": "ring_on"
+    },
+    "rings.ring_on.you_are_now_wearing": {
+      "template": "つけた指輪：",
+      "source_template": "you are now wearing ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "rings.c:84",
+      "function": "ring_on"
+    },
+    "save.restore.file_name": {
+      "template": "ファイル名：{0}",
+      "source_template": "file name: %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "file_name"
+      },
+      "argument_sources": {
+        "0": "file"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "save.c:279",
+      "function": "restore"
+    },
+    "save.save_game.file_exists_do_you_wish_to_overwrite_it": {
+      "template": "ファイルがすでにある。上書きする？（y/n）",
+      "source_template": "File exists.  Do you wish to overwrite it?",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "save.c:94",
+      "function": "save_game"
+    },
+    "save.save_game.file_name": {
+      "template": "ファイル名：",
+      "source_template": "file name: ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "save.c:77",
+      "function": "save_game"
+    },
+    "save.save_game.file_name_plain": {
+      "template": "ファイル名：{0}",
+      "source_template": "file name: %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "file_name"
+      },
+      "argument_sources": {
+        "0": "buf"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "save.c:105",
+      "function": "save_game"
+    },
+    "save.save_game.please_answer_y_or_n": {
+      "template": "y または n を入力してほしい。",
+      "source_template": "please answer Y or N",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "save.c:63",
+      "function": "save_game"
+    },
+    "save.save_game.please_answer_y_or_n_capitalized": {
+      "template": "y または n を入力してほしい。",
+      "source_template": "Please answer Y or N",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "save.c:103",
+      "function": "save_game"
+    },
+    "save.save_game.save_file": {
+      "template": "「{0}」に保存する？（y/n）",
+      "source_template": "save file (%s)? ",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "file_name"
+      },
+      "argument_sources": {
+        "0": "file_name"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "save.c:52",
+      "function": "save_game"
+    },
+    "save.save_game.string": {
+      "template": "{0}",
+      "source_template": "%s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "system_error"
+      },
+      "argument_sources": {
+        "0": "strerror(errno)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "save.c:110",
+      "function": "save_game",
+      "notation_only": true
+    },
+    "scrolls.read_scroll.freeze": {
+      "template": "の動きが止まった",
+      "source_template": " freeze",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:95",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.nothing_to_read": {
+      "template": "読むものがない",
+      "source_template": "nothing to read",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:43",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.oh_now_this_scroll_has_a_map_on_it": {
+      "template": "巻物に地図が現れた",
+      "source_template": "oh, now this scroll has a map on it",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:166",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.s": {
+      "template": "",
+      "source_template": "s",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:97",
+      "function": "read_scroll",
+      "intentional_empty_reason": "英語の所有格または動詞の単数語尾は、日本語の後続断片で表現する。"
+    },
+    "scrolls.read_scroll.s_around_you": {
+      "template": "たち",
+      "source_template": "s around you",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:94",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.the_monster": {
+      "template": "周囲のモンスター",
+      "source_template": "the monster",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:92",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.there_is_nothing_on_it_to_read": {
+      "template": "そこには読むものが何もない",
+      "source_template": "there is nothing on it to read",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:41",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.this_scroll_is_an_scroll": {
+      "template": "これは{0}の巻物だ",
+      "source_template": "this scroll is an %s scroll",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "item"
+      },
+      "argument_sources": {
+        "0": "scr_info[obj->o_which].oi_name [scrolls.c:158; S_ID_POTION/S_ID_SCROLL/S_ID_WEAPON/S_ID_ARMOR/S_ID_R_OR_S cases]"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:158",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.what_a_puzzling_scroll": {
+      "template": "なんて不可解な巻物だ！",
+      "source_template": "what a puzzling scroll!",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:305",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.you_fall_asleep": {
+      "template": "眠りに落ちた",
+      "source_template": "you fall asleep",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:110",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.you_feel_a_strange_sense_of_loss": {
+      "template": "奇妙な喪失感を覚えた",
+      "source_template": "you feel a strange sense of loss",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:102",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.you_feel_as_if_somebody_is_watching_over_you": {
+      "template": "誰かに見守られているような気がする",
+      "source_template": "you feel as if somebody is watching over you",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:285",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.you_feel_in_touch_with_the_universal_onenes": {
+      "template": "宇宙と一つになったような気がする",
+      "source_template": "you feel in touch with the Universal Onenes",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:285",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.you_hear_a_faint_cry_of_anguish_in_the_distance": {
+      "template": "遠くからかすかな苦悶の叫びが聞こえた",
+      "source_template": "you hear a faint cry of anguish in the distance",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:140",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.you_hear_a_high_pitched_humming_noise": {
+      "template": "甲高い唸り声が聞こえた",
+      "source_template": "you hear a high pitched humming noise",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:293",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.you_hear_maniacal_laughter_in_the_distance": {
+      "template": "遠くから狂ったような笑い声が聞こえた",
+      "source_template": "you hear maniacal laughter in the distance",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:279",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.your_armor_glows_for_a_moment": {
+      "template": "鎧が一瞬、{0}の光を放った",
+      "source_template": "your armor glows %s for a moment",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "color"
+      },
+      "argument_sources": {
+        "0": "pick_color(\"silver\") [scrolls.c:71; init.c:444 returns ISHALU ? rainbow[rnd(NCOLORS)] : silver]"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:71",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.your_armor_is_covered_by_a_shimmering_shield": {
+      "template": "鎧がきらめく{0}の障壁に包まれた",
+      "source_template": "your armor is covered by a shimmering %s shield",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "color"
+      },
+      "argument_sources": {
+        "0": "pick_color(\"gold\") [scrolls.c:298-299; init.c:444 returns ISHALU ? rainbow[rnd(NCOLORS)] : gold]"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:298",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.your_glows_for_a_moment": {
+      "template": "{0}が一瞬、{1}の光を放った",
+      "source_template": "your %s glows %s for a moment",
+      "argument_types": [
+        "string",
+        "string"
+      ],
+      "conversions": [
+        "s",
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "item",
+        "1": "color"
+      },
+      "argument_sources": {
+        "0": "weap_info[cur_weapon->o_which].oi_name [scrolls.c:271-272]",
+        "1": "pick_color(\"blue\") [scrolls.c:272; init.c:444 returns ISHALU ? rainbow[rnd(NCOLORS)] : blue]"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:271",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.your_hands_begin_to_glow": {
+      "template": "両手が{0}の光を放ち始めた",
+      "source_template": "your hands begin to glow %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "color"
+      },
+      "argument_sources": {
+        "0": "pick_color(\"red\") [scrolls.c:65; init.c:444 returns ISHALU ? rainbow[rnd(NCOLORS)] : red]"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:65",
+      "function": "read_scroll"
+    },
+    "scrolls.read_scroll.your_nose_tingles": {
+      "template": "鼻がむずむずした",
+      "source_template": "your nose tingles",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "scrolls.c:249",
+      "function": "read_scroll"
+    },
+    "sticks.do_zap.by_a_shimmering_light": {
+      "template": "。きらめく{0}の光が広がっている",
+      "source_template": " by a shimmering %s light",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "color"
+      },
+      "argument_sources": {
+        "0": "pick_color(\"blue\") [sticks.c:87; init.c:444 returns ISHALU ? rainbow[rnd(NCOLORS)] : blue]"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "sticks.c:87",
+      "function": "do_zap"
+    },
+    "sticks.do_zap.missle_vanishes": {
+      "template": "魔法の矢が消えた",
+      "source_template": "missle vanishes",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "sticks.c:189",
+      "function": "do_zap"
+    },
+    "sticks.do_zap.nothing_happens": {
+      "template": "何も起こらなかった",
+      "source_template": "nothing happens",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "sticks.c:66",
+      "function": "do_zap"
+    },
+    "sticks.do_zap.the_corridor_glows_and_then_fades": {
+      "template": "通路が光り、やがて元に戻った",
+      "source_template": "the corridor glows and then fades",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "sticks.c:77",
+      "function": "do_zap"
+    },
+    "sticks.do_zap.the_missle_vanishes_with_a_puff_of_smoke": {
+      "template": "魔法の矢が煙とともに消えた",
+      "source_template": "the missle vanishes with a puff of smoke",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "sticks.c:191",
+      "function": "do_zap"
+    },
+    "sticks.do_zap.the_room_is_lit": {
+      "template": "部屋が明るくなった",
+      "source_template": "the room is lit",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "sticks.c:85",
+      "function": "do_zap"
+    },
+    "sticks.do_zap.what_a_bizarre_schtick": {
+      "template": "なんて奇妙な杖だ！",
+      "source_template": "what a bizarre schtick!",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "sticks.c:237",
+      "function": "do_zap"
+    },
+    "sticks.do_zap.you_are_too_weak_to_use_it": {
+      "template": "力が足りず、それを使えない",
+      "source_template": "you are too weak to use it",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "sticks.c:98",
+      "function": "do_zap"
+    },
+    "sticks.do_zap.you_cant_zap_with_that": {
+      "template": "それでは魔法を放てない！",
+      "source_template": "you can't zap with that!",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "sticks.c:61",
+      "function": "do_zap"
+    },
+    "sticks.drain.you_have_a_tingling_feeling": {
+      "template": "体がぴりぴりした",
+      "source_template": "you have a tingling feeling",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "sticks.c:275",
+      "function": "drain"
+    },
+    "sticks.fire_bolt.misses": {
+      "template": "{0}は外れた",
+      "source_template": "%s misses",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "token"
+      },
+      "argument_sources": {
+        "0": "name [sticks.c:380; fire_bolt parameter from do_zap name=bolt/flame/ice at sticks.c:225-231 or chase.c:177 literal flame]"
+      },
+      "argument_values": {
+        "0": {
+          "bolt": {
+            "id": "projectile.bolt",
+            "text": "稲妻"
+          },
+          "flame": {
+            "id": "projectile.flame",
+            "text": "炎"
+          },
+          "ice": {
+            "id": "projectile.ice",
+            "text": "氷"
+          }
+        }
+      },
+      "unresolved": [],
+      "source": "sticks.c:380",
+      "function": "fire_bolt"
+    },
+    "sticks.fire_bolt.off_the_dragon": {
+      "template": "。ドラゴンの体に弾かれた",
+      "source_template": " off the dragon",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "sticks.c:369",
+      "function": "fire_bolt"
+    },
+    "sticks.fire_bolt.the_bounces": {
+      "template": "{0}が跳ね返った",
+      "source_template": "the %s bounces",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "token"
+      },
+      "argument_sources": {
+        "0": "name [sticks.c:352; fire_bolt parameter from do_zap name=bolt/flame/ice at sticks.c:225-231 or chase.c:177 literal flame]"
+      },
+      "argument_values": {
+        "0": {
+          "bolt": {
+            "id": "projectile.bolt",
+            "text": "稲妻"
+          },
+          "flame": {
+            "id": "projectile.flame",
+            "text": "炎"
+          },
+          "ice": {
+            "id": "projectile.ice",
+            "text": "氷"
+          }
+        }
+      },
+      "unresolved": [],
+      "source": "sticks.c:352",
+      "function": "fire_bolt"
+    },
+    "sticks.fire_bolt.the_flame_bounces": {
+      "template": "炎が跳ね返った",
+      "source_template": "the flame bounces",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "sticks.c:367",
+      "function": "fire_bolt"
+    },
+    "sticks.fire_bolt.the_hits": {
+      "template": "{0}が命中した",
+      "source_template": "the %s hits",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "token"
+      },
+      "argument_sources": {
+        "0": "name [sticks.c:400; fire_bolt parameter from do_zap name=bolt/flame/ice at sticks.c:225-231 or chase.c:177 literal flame]"
+      },
+      "argument_values": {
+        "0": {
+          "bolt": {
+            "id": "projectile.bolt",
+            "text": "稲妻"
+          },
+          "flame": {
+            "id": "projectile.flame",
+            "text": "炎"
+          },
+          "ice": {
+            "id": "projectile.ice",
+            "text": "氷"
+          }
+        }
+      },
+      "unresolved": [],
+      "source": "sticks.c:400",
+      "function": "fire_bolt"
+    },
+    "sticks.fire_bolt.the_whizzes_by_you": {
+      "template": "{0}がすぐそばをかすめた",
+      "source_template": "the %s whizzes by you",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "token"
+      },
+      "argument_sources": {
+        "0": "name [sticks.c:405; fire_bolt parameter from do_zap name=bolt/flame/ice at sticks.c:225-231 or chase.c:177 literal flame]"
+      },
+      "argument_values": {
+        "0": {
+          "bolt": {
+            "id": "projectile.bolt",
+            "text": "稲妻"
+          },
+          "flame": {
+            "id": "projectile.flame",
+            "text": "炎"
+          },
+          "ice": {
+            "id": "projectile.ice",
+            "text": "氷"
+          }
+        }
+      },
+      "unresolved": [],
+      "source": "sticks.c:405",
+      "function": "fire_bolt"
+    },
+    "sticks.fire_bolt.the_whizzes_past": {
+      "template": "{0}が{1}のそばをかすめた",
+      "source_template": "the %s whizzes past %s",
+      "argument_types": [
+        "string",
+        "string"
+      ],
+      "conversions": [
+        "s",
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "token",
+        "1": "monster"
+      },
+      "argument_sources": {
+        "0": "name [sticks.c:382; fire_bolt parameter from do_zap name=bolt/flame/ice at sticks.c:225-231 or chase.c:177 literal flame]",
+        "1": "set_mname(tp) [sticks.c:382; fight.c:349 returns it/something or the + monsters[].m_name]"
+      },
+      "argument_values": {
+        "0": {
+          "bolt": {
+            "id": "projectile.bolt",
+            "text": "稲妻"
+          },
+          "flame": {
+            "id": "projectile.flame",
+            "text": "炎"
+          },
+          "ice": {
+            "id": "projectile.ice",
+            "text": "氷"
+          }
+        }
+      },
+      "unresolved": [],
+      "source": "sticks.c:382",
+      "function": "fire_bolt"
+    },
+    "sticks.fire_bolt.you_are_hit_by_the": {
+      "template": "{0}を浴びた",
+      "source_template": "you are hit by the %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "token"
+      },
+      "argument_sources": {
+        "0": "name [sticks.c:402; fire_bolt parameter from do_zap name=bolt/flame/ice at sticks.c:225-231 or chase.c:177 literal flame]"
+      },
+      "argument_values": {
+        "0": {
+          "bolt": {
+            "id": "projectile.bolt",
+            "text": "稲妻"
+          },
+          "flame": {
+            "id": "projectile.flame",
+            "text": "炎"
+          },
+          "ice": {
+            "id": "projectile.ice",
+            "text": "氷"
+          }
+        }
+      },
+      "unresolved": [],
+      "source": "sticks.c:402",
+      "function": "fire_bolt"
+    },
+    "things.discovered.for": {
+      "template": "発見した物の一覧：",
+      "source_template": "for ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:363",
+      "function": "discovered"
+    },
+    "things.discovered.for_all": {
+      "template": "？（* ですべて表示）",
+      "source_template": "? (* for all)",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:367",
+      "function": "discovered"
+    },
+    "things.discovered.not_a_type": {
+      "template": "その種類は選べない。",
+      "source_template": "Not a type",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:383",
+      "function": "discovered"
+    },
+    "things.discovered.of_object_do_you_want_a_list": {
+      "template": "を表示する",
+      "source_template": " of object do you want a list",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:366",
+      "function": "discovered"
+    },
+    "things.discovered.please_type_one_of_escape_to_quit": {
+      "template": "{0}{1}{2}{3}のいずれかを入力（Esc で中止）",
+      "source_template": "Please type one of %c%c%c%c (ESCAPE to quit)",
+      "argument_types": [
+        "signed",
+        "signed",
+        "signed",
+        "signed"
+      ],
+      "conversions": [
+        "c",
+        "c",
+        "c",
+        "c"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "display_key",
+        "1": "display_key",
+        "2": "display_key",
+        "3": "display_key"
+      },
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:385",
+      "function": "discovered"
+    },
+    "things.discovered.what_type": {
+      "template": "どの種類",
+      "source_template": "what type",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:364",
+      "function": "discovered"
+    },
+    "things.drop.dropped": {
+      "template": "{0}を置いた。",
+      "source_template": "dropped %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "item"
+      },
+      "argument_sources": {
+        "0": "inv_name(obj,TRUE)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:168",
+      "function": "drop"
+    },
+    "things.drop.there_is_something_there_already": {
+      "template": "そこにはすでに物がある。",
+      "source_template": "there is something there already",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:151",
+      "function": "drop"
+    },
+    "things.dropcheck.you_cant_it_appears_to_be_cursed": {
+      "template": "外せない。呪われているようだ。",
+      "source_template": "you can't.  It appears to be cursed",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:185",
+      "function": "dropcheck"
+    },
+    "things.inv_name.picked_up_something_funny": {
+      "template": "奇妙な物を拾った：{0}",
+      "source_template": "Picked up something funny %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "item_symbol"
+      },
+      "argument_sources": {
+        "0": "unctrl(obj->o_type)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:113",
+      "function": "inv_name"
+    },
+    "things.new_thing.picked_a_bad_kind_of_object": {
+      "template": "不正な種類のアイテムが選ばれた。",
+      "source_template": "Picked a bad kind of object",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:294",
+      "function": "new_thing"
+    },
+    "things.pick_one.bad_pick_one_from_items": {
+      "template": "{1}種類からの選択に失敗した（残り確率：{0}）。",
+      "source_template": "bad pick_one: %d from %d items",
+      "argument_types": [
+        "signed",
+        "signed"
+      ],
+      "conversions": [
+        "d",
+        "d"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:321",
+      "function": "pick_one"
+    },
+    "things.pick_one.string_number": {
+      "template": "{0}：{1}%",
+      "source_template": "%s: %d%%",
+      "argument_types": [
+        "string",
+        "signed"
+      ],
+      "conversions": [
+        "s",
+        "d"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "item"
+      },
+      "argument_sources": {
+        "0": "info->oi_name"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:323",
+      "function": "pick_one",
+      "notation_only": true
+    },
+    "things.pr_list.for": {
+      "template": "アイテム一覧：",
+      "source_template": "for ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:675",
+      "function": "pr_list"
+    },
+    "things.pr_list.of_object_do_you_want_a_list": {
+      "template": "を表示する",
+      "source_template": " of object do you want a list",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:678",
+      "function": "pr_list"
+    },
+    "things.pr_list.question_prompt": {
+      "template": "？ ",
+      "source_template": "? ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:679",
+      "function": "pr_list",
+      "notation_only": true
+    },
+    "things.pr_list.what_type": {
+      "template": "どの種類",
+      "source_template": "what type",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "things.c:676",
+      "function": "pr_list"
+    },
+    "weapons.fall.the_vanishes_as_it_hits_the_ground": {
+      "template": "{0}は地面に落ちた途端に消えた。",
+      "source_template": "the %s vanishes as it hits the ground",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "item"
+      },
+      "argument_sources": {
+        "0": "weap_info[obj->o_which].oi_name"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "weapons.c:149",
+      "function": "fall"
+    },
+    "weapons.wield.wielding": {
+      "template": "{0}（{1}）を構えた。",
+      "source_template": "wielding %s (%c)",
+      "argument_types": [
+        "string",
+        "signed"
+      ],
+      "conversions": [
+        "s",
+        "c"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "1": "display_key",
+        "0": "item"
+      },
+      "argument_sources": {
+        "0": "sp"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "weapons.c:257",
+      "function": "wield"
+    },
+    "weapons.wield.you_are_now": {
+      "template": "あなたは",
+      "source_template": "you are now ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "weapons.c:256",
+      "function": "wield"
+    },
+    "weapons.wield.you_cant_wield_armor": {
+      "template": "防具を武器として構えることはできない。",
+      "source_template": "you can't wield armor",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "weapons.c:247",
+      "function": "wield"
+    },
+    "wizard.create_obj.blessing_n": {
+      "template": "祝福は？（+：祝福、-：呪い、n：なし）",
+      "source_template": "blessing? (+,-,n)",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "wizard.c:144",
+      "function": "create_obj"
+    },
+    "wizard.create_obj.how_much": {
+      "template": "金貨は何枚？ ",
+      "source_template": "how much?",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "wizard.c:187",
+      "function": "create_obj"
+    },
+    "wizard.create_obj.type_of_item": {
+      "template": "アイテムの種類：",
+      "source_template": "type of item: ",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "wizard.c:134",
+      "function": "create_obj"
+    },
+    "wizard.create_obj.which_do_you_want_f": {
+      "template": "{0}のどれを作る？（0-f）",
+      "source_template": "which %c do you want? (0-f)",
+      "argument_types": [
+        "signed"
+      ],
+      "conversions": [
+        "c"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "display_key"
+      },
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "wizard.c:137",
+      "function": "create_obj"
+    },
+    "wizard.passwd.wizards_password": {
+      "template": "魔法使いの合言葉：",
+      "source_template": "wizard's Password:",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "wizard.c:244",
+      "function": "passwd"
+    },
+    "wizard.whatis.you_dont_have_anything_in_your_pack_to_identify": {
+      "template": "鑑定できる持ち物がない。",
+      "source_template": "you don't have anything in your pack to identify",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "wizard.c:32",
+      "function": "whatis"
+    },
+    "wizard.whatis.you_must_identify_a": {
+      "template": "{0}を鑑定しなければならない。",
+      "source_template": "you must identify a %s",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "item"
+      },
+      "argument_sources": {
+        "0": "type_name(type)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "wizard.c:47",
+      "function": "whatis"
+    },
+    "wizard.whatis.you_must_identify_something": {
+      "template": "何かを鑑定しなければならない。",
+      "source_template": "you must identify something",
+      "argument_types": [],
+      "conversions": [],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {},
+      "argument_sources": {},
+      "argument_values": {},
+      "unresolved": [],
+      "source": "wizard.c:44",
+      "function": "whatis"
+    }
+  }
+}

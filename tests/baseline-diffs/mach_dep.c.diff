@@ -1,0 +1,15 @@
+--- acquired/mach_dep.c
++++ baseline-src/mach_dep.c
+@@ -1,3 +1,6 @@
++#if defined(ROGUE_LAYERED)
++#include "platform_system.h"
++#else
+ /*
+  * Various installation dependent routines
+  *
+@@ -455,3 +458,5 @@
+ {
+     flushinp();
+ }
++
++#endif /* ROGUE_LAYERED */

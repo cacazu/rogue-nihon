@@ -1,0 +1,56 @@
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const harness = fileURLToPath(new URL('../build/semantic-capture.cjs', import.meta.url));
+const values = execFileSync(process.execPath, [harness], { encoding: 'utf8' }).trim().split(/\r?\n/).map(JSON.parse);
+const [unknownPotion, knownPotion, unknownRing, calledRing, unknownWeapon, knownWeapon, armor,
+  hallucinated, subject, player, trap, weaponName, projectile, color, fruit, playerName, copiedName,
+  term, message, checks] = values;
+assert.equal(unknownPotion.which, null);
+assert.equal(unknownPotion.type_known, false);
+assert.equal(unknownPotion.identified, true);
+assert.equal(unknownPotion.count, 2);
+assert.equal(unknownPotion.appearance.id, 2);
+assert.equal(unknownPotion.flags, 2); // ISCURSED remains private.
+for (const key of ['hplus', 'dplus', 'charges', 'bonus', 'ac']) assert.equal(Object.hasOwn(unknownPotion, key), false);
+assert.equal(knownPotion.which, 5);
+assert.equal(knownPotion.type_known, true);
+assert.equal(knownPotion.drop, true);
+assert.equal(unknownRing.which, null);
+assert.equal(unknownRing.visible_fields.ring_bonus, false);
+assert.equal(Object.hasOwn(unknownRing, 'bonus'), false);
+assert.equal(calledRing.which, null);
+assert.equal(calledRing.bonus, 7);
+assert.equal(calledRing.called, '自作 %s%n');
+assert.equal(unknownWeapon.which, 0);
+assert.equal(unknownWeapon.equipped, 'weapon');
+assert.equal(unknownWeapon.label, '名前 %s%n%%');
+assert.equal(Object.hasOwn(unknownWeapon, 'hplus'), false);
+assert.equal(knownWeapon.hplus, 3);
+assert.equal(knownWeapon.dplus, 4);
+assert.equal(armor.ac, 5);
+assert.equal(armor.protection, 5);
+assert.equal(armor.enchantment, 3);
+assert.equal(armor.equipped, 'armor');
+assert.equal(hallucinated.index, 7);
+assert.equal(hallucinated.hallucinated, true);
+assert.equal(subject.index, 7);
+assert.equal(subject.role, 'subject');
+assert.equal(player.display, 'you');
+assert.equal(player.role, 'object');
+assert.equal(Object.hasOwn(player, 'index'), false);
+assert.deepEqual(trap, { type: 'trap', index: 5 });
+assert.equal(weaponName.which, 3);
+assert.equal(weaponName.form, 'base');
+assert.deepEqual(projectile, { type: 'term', id: 'projectile.flame' });
+assert.equal(color.kind, 'color');
+assert.equal(color.id, 2);
+assert.equal(fruit.type, 'fruit');
+assert.equal(fruit.default, true);
+assert.deepEqual(playerName, { type: 'player_name' });
+assert.deepEqual(copiedName, playerName);
+assert.deepEqual(term, { type: 'term', id: 'term.direction' });
+assert.equal(message.args[0].value, '自由名 %n');
+assert.deepEqual(checks, { checks: 'pass', seed_unchanged: true });
+console.log(JSON.stringify({ hiddenInformation: 'pass', visibilityRules: 'pass', utf8AndLabels: 'pass', pointerLifetime: 'pass', sourceTerms: 'pass', pureMetadata: 'pass' }));

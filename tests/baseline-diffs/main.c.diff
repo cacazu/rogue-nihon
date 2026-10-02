@@ -1,0 +1,103 @@
+--- acquired/main.c
++++ baseline-src/main.c
+@@ -19,6 +19,7 @@
+  * main:
+  *	The main program, of course
+  */
++#ifndef ROGUE_LAYERED
+ int
+ main(int argc, char **argv, char **envp)
+ {
+@@ -151,6 +152,7 @@
+     playit();
+     return(0);
+ }
++#endif /* ROGUE_LAYERED: portable entry is rg_core_start in core.c. */
+ 
+ /*
+  * endit:
+@@ -210,6 +212,9 @@
+ void
+ tstp(int ignored)
+ {
++#ifdef ROGUE_LAYERED
++    (void)ignored;
++#else
+     int y, x;
+     int oy, ox;
+ 
+@@ -240,6 +245,7 @@
+     fflush(stdout);
+     curscr->_cury = oy;
+     curscr->_curx = ox;
++#endif
+ }
+ 
+ /*
+@@ -270,14 +276,28 @@
+     /*
+      * parse environment declaration of options
+      */
++#ifndef ROGUE_LAYERED
+     if ((opts = getenv("ROGUEOPTS")) != NULL)
+ 	parse_opts(opts);
+-
+-
+-    oldpos = hero;
+-    oldrp = roomin(&hero);
++#else
++    (void)opts;
++#endif
++
++
++#ifdef ROGUE_LAYERED
++    if (!rg_core_was_restored())
++#endif
++    {
++        oldpos = hero;
++        oldrp = roomin(&hero);
++    }
+     while (playing)
++    {
++#ifdef ROGUE_LAYERED
++        rg_host_checkpoint();
++#endif
+ 	command();			/* Command execution */
++    }
+     endit(0);
+ }
+ 
+@@ -302,6 +322,9 @@
+     msg("really quit?");
+     if (readchar() == 'y')
+     {
++#ifdef ROGUE_LAYERED
++        rg_core_set_outcome(3, "quit");
++#endif
+ 	signal(SIGINT, leave);
+ 	clear();
+ 	mvprintw(LINES - 2, 0, "You quit with %d gold pieces", purse);
+@@ -355,6 +378,10 @@
+ void
+ shell()
+ {
++#ifdef ROGUE_LAYERED
++    after = FALSE;
++    msg("The browser has no operating-system shell.");
++#else
+     /*
+      * Set the terminal back to original mode
+      */
+@@ -380,6 +407,7 @@
+     in_shell = FALSE;
+     wait_for('\n');
+     clearok(stdscr, TRUE);
++#endif
+ }
+ 
+ /*
+@@ -393,4 +421,3 @@
+     resetltchars();
+     exit(st);
+ }
+-

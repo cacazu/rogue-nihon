@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "language": "ja",
+  "messages": {
+    "ui.ending.return": {"template": "Enterで続ける", "conversions": []},
+    "ui.score.heading": {
+      "template": "上位{0}件の{1}", "conversions": ["s", "s"],
+      "argument_values": {
+        "0": {"Ten": {"id": "ui.score.number.ten", "text": "10"}},
+        "1": {
+          "Scores": {"id": "ui.score.kind.scores", "text": "得点"},
+          "Rogueists": {"id": "ui.score.kind.rogueists", "text": "冒険者"}
+        }
+      },
+      "argument_sources": {"0": "platform_system.h:Numname=Ten", "1": "rip.c:score allscore selects Scores/Rogueists"}
+    },
+    "ui.score.columns": {"template": "順位　得点　名前・結果", "conversions": []},
+    "ui.score.reason.killed": {"template": "倒された", "conversions": []},
+    "ui.score.reason.quit": {"template": "冒険を終えた", "conversions": []},
+    "ui.score.reason.winner": {"template": "生還した", "conversions": []},
+    "ui.score.reason.amulet": {"template": "アミュレットを持って倒された", "conversions": []},
+    "ui.score.entry": {"template": "{0}位　{1}点　{2}：{3}（地下{4}階）", "conversions": ["d", "d", "s", "s", "d"]},
+    "ui.score.entry_death": {"template": "{0}位　{1}点　{2}：{3}（地下{4}階、原因：{5}）", "conversions": ["d", "d", "s", "s", "d", "s"]},
+    "ui.ending.death_summary": {
+      "template": "{1}に倒された（所持金：{2}G）", "conversions": ["s", "s", "d"],
+      "grammar_indexes": [0],
+      "argument_sources": {"0": "rip.c:death monst/vowel select empty/a/an English indefinite article"},
+      "grammar_reason": "日本語は英語の不定冠詞を使わないため、その文法用引数だけ表示しない。死因と金額は保持する。"
+    },
+    "ui.ending.cause": {"template": "{0}", "conversions": ["s"], "notation_only": true},
+    "ui.ending.name": {"template": "{0}", "conversions": ["s"], "notation_only": true},
+    "ui.ending.gold": {"template": "所持金：{0}G", "conversions": ["d"]},
+    "ui.ending.year": {"template": "{0}年", "conversions": ["d"]},
+    "ui.ending.rest": {"template": "ここに", "conversions": []},
+    "ui.ending.in": {"template": "安らかに", "conversions": []},
+    "ui.ending.peace": {"template": "眠る", "conversions": []},
+    "ui.ending.killed_by": {"template": "死因：", "conversions": []},
+    "ui.ending.victory_title": {"template": "生還！", "conversions": []},
+    "ui.ending.congratulations": {"template": "おめでとう！　無事に地上へ帰還した！", "conversions": []},
+    "ui.ending.elite": {"template": "運命の洞窟から生きて脱出した者の", "conversions": []},
+    "ui.ending.home": {"template": "仲間入りを果たした。家へ帰って戦利品を売り、", "conversions": []},
+    "ui.ending.guild": {"template": "大きな利益を得て戦士ギルドへ迎え入れられた。", "conversions": []},
+    "ui.ending.space": {"template": "Spaceで続ける", "conversions": []},
+    "ui.ending.loot_columns": {"template": "価値　戦利品", "conversions": []},
+    "ui.ending.loot_item": {"template": "{0}) {2}　価値：{1}G", "conversions": ["s", "d", "s"]},
+    "ui.ending.gold_value": {"template": "所持金：{0}G", "conversions": ["d"]}
+  }
+}

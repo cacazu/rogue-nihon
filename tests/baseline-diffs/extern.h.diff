@@ -1,0 +1,41 @@
+--- acquired/extern.h
++++ baseline-src/extern.h
+@@ -11,7 +11,9 @@
+  */
+ 
+ 
+-#ifdef HAVE_CONFIG_H
++#ifdef ROGUE_LAYERED
++/* Machine-specific services are provided by platform_md/system adapters. */
++#elif defined(HAVE_CONFIG_H)
+ #ifdef PDCURSES
+ #undef HAVE_UNISTD_H
+ #undef HAVE_LIMITS_H
+@@ -131,11 +133,11 @@
+ void	doctor();
+ void	end_line();
+ void    endit(int sig);
+-void	fatal();
++void	fatal(char *message);
+ void	getltchars();
+ void	land();
+ void    leave(int);
+-void	my_exit();
++void	my_exit(int code);
+ void	nohaste();
+ void	playit();
+ void    playltchars(void);
+@@ -144,7 +146,7 @@
+ void    resetltchars(void);
+ void	rollwand();
+ void	runners();
+-void	set_order();
++void	set_order(int *order, int count);
+ void	sight();
+ void	stomach();
+ void	swander();
+@@ -194,4 +196,3 @@
+ void md_onsignal_exit();
+ void md_onsignal_default();
+ int md_issymlink(char *sp);
+-

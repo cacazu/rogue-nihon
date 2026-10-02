@@ -1,0 +1,337 @@
+--- acquired/options.c
++++ logic/options.c
+@@ -17,6 +17,15 @@
+ #include <ctype.h>
+ #include <string.h>
+ #include "rogue.h"
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++#include "../contract/rogue_abi.h"
++
++static void rg_option_value(WINDOW *win, int row, int column, const char *id, const char *english)
++{
++    if (win == hw)
++        rg_ui_line("options", row, column, id, "[]", english);
++}
++#endif
+ 
+ #define	EQSTR(a, b, c)	(strncmp(a, b, c) == 0)
+ 
+@@ -73,6 +82,9 @@
+     OPTION	*op;
+     int		retval;
+ 
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++    rg_ui_clear("options");
++#endif
+     wclear(hw);
+     /*
+      * Display current values of options
+@@ -112,8 +124,16 @@
+      */
+     wmove(hw, LINES - 1, 0);
+     waddstr(hw, "--Press space to continue--");
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++    rg_ui_line("options", LINES - 1, 0, "ui.continue", "[]", "--Press space to continue--");
++    rg_ui_line("input", -2, 0, "input.wait_space", "[]", "");
++#endif
+     wrefresh(hw);
+     wait_for(' ');
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++    rg_ui_clear("options");
++    rg_ui_clear("input");
++#endif
+     clearok(curscr, TRUE);
+     touchwin(stdscr);
+     after = FALSE;
+@@ -127,6 +147,15 @@
+ void
+ pr_optname(OPTION *op)
+ {
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++    static const char *const ids[] = {
++        "options.terse", "options.flush", "options.jump", "options.seefloor", "options.passgo",
++        "options.tombstone", "options.inven", "options.name", "options.fruit", "options.file"
++    };
++    int row, column;
++    getyx(hw, row, column);
++    rg_ui_line("options", row, column, ids[op - optlist], "[]", op->o_prompt);
++#endif
+     wprintw(hw, "%s (\"%s\"): ", op->o_prompt, op->o_name);
+ }
+ 
+@@ -138,6 +167,12 @@
+ void
+ put_bool(void *b)
+ {
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++    int row, column;
++    getyx(hw, row, column);
++    rg_option_value(hw, row, column, *(bool *)b ? "options.value.true" : "options.value.false",
++                    *(bool *)b ? "True" : "False");
++#endif
+     waddstr(hw, *(bool *) b ? "True" : "False");
+ }
+ 
+@@ -149,6 +184,11 @@
+ void
+ put_str(void *str)
+ {
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++    int row, column;
++    getyx(hw, row, column);
++    rg_ui_printf("options", row, column, __FILE__, __LINE__, "%s", (char *)str);
++#endif
+     waddstr(hw, (char *) str);
+ }
+ 
+@@ -160,6 +200,12 @@
+ void
+ put_inv_t(void *ip)
+ {
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++    int row, column;
++    static const char *const ids[] = {"options.value.overlay", "options.value.slow", "options.value.clear"};
++    getyx(hw, row, column);
++    rg_option_value(hw, row, column, ids[*(int *)ip], inv_t_name[*(int *)ip]);
++#endif
+     waddstr(hw, inv_t_name[*(int *) ip]);
+ }
+ 
+@@ -179,6 +225,10 @@
+     waddstr(win, *bp ? "True" : "False");
+     while (op_bad)	
+     {
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++        rg_option_value(win, oy, ox, *bp ? "options.value.true" : "options.value.false", *bp ? "True" : "False");
++        rg_ui_line("input", -2, 0, "input.option_bool", "[]", "");
++#endif
+ 	wmove(win, oy, ox);
+ 	wrefresh(win);
+ 	switch (readchar())
+@@ -204,11 +254,18 @@
+ 	    default:
+ 		wmove(win, oy, ox + 10);
+ 		waddstr(win, "(T or F)");
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++        rg_option_value(win, oy, ox + 10, "options.hint.bool", "(T or F)");
++#endif
+ 	}
+     }
+     wmove(win, oy, ox);
+     waddstr(win, *bp ? "True" : "False");
+     waddch(win, '\n');
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++    rg_option_value(win, oy, ox, *bp ? "options.value.true" : "options.value.false", *bp ? "True" : "False");
++    rg_ui_clear("input");
++#endif
+     return NORM;
+ }
+ 
+@@ -253,25 +310,48 @@
+     char *sp;
+     int oy, ox;
+     int i;
++#ifdef ROGUE_LAYERED /* RG_UTF8_TEXT */
++    int c;
++#else
+     signed char c;
++#endif
+     static char buf[MAXSTR];
+ 
+     getyx(win, oy, ox);
++#ifdef ROGUE_LAYERED /* RG_UTF8_TEXT */
++    buf[0] = '\0';
++    rg_host_text_mode(opt == whoami ? 2 : opt == fruit ? 3 : 1, MAXINP, opt);
++#endif
+     wrefresh(win);
+     /*
+      * loop reading in the string, and put it in a temporary buffer
+      */
+-    for (sp = buf; (c = readchar()) != '\n' && c != '\r' && c != ESCAPE;
++    for (sp = buf; (c =
++#ifdef ROGUE_LAYERED /* RG_UTF8_TEXT */
++        (unsigned char)
++#endif
++        readchar()) != '\n' && c != '\r' && c != ESCAPE;
+ 	wclrtoeol(win), wrefresh(win))
+     {
+-	if (c == -1)
++	if (c == -1
++#ifdef ROGUE_LAYERED /* RG_UTF8_TEXT */
++        || c == 255
++#endif
++        )
+ 	    continue;
+ 	else if (c == erasechar())	/* process erase character */
+ 	{
+ 	    if (sp > buf)
+ 	    {
++#ifdef ROGUE_LAYERED /* RG_UTF8_TEXT */
++        char *end = sp;
++        do { --sp; } while (sp > buf && ((unsigned char)*sp & 0xc0) == 0x80);
++        i = (unsigned char)*sp >= 128 ? (int)(end - sp) : (int)strlen(unctrl(*sp));
++#else
+ 		sp--;
+-		for (i = (int) strlen(unctrl(*sp)); i; i--)
++        i = (int) strlen(unctrl(*sp));
++#endif
++		for (; i; i--)
+ 		    waddch(win, '\b');
+ 	    }
+ 	    continue;
+@@ -288,23 +368,42 @@
+ 		break;
+ 	    else if (c == '~')
+ 	    {
++#ifdef ROGUE_LAYERED /* RG_UTF8_TEXT */
++        strucpy(buf, home, (int)strlen(home));
++#else
+ 		strcpy(buf, home);
+-		waddstr(win, home);
+-		sp += strlen(home);
++#endif
++		waddstr(win, buf);
++		sp += strlen(buf);
+ 		continue;
+ 	    }
+ 	}
+-	if (sp >= &buf[MAXINP] || !(isprint(c) || c == ' '))
++	if (sp >= &buf[MAXINP] || !(isprint((unsigned char)c) || c == ' '
++#ifdef ROGUE_LAYERED /* RG_UTF8_TEXT */
++        || (c >= 128 && c <= 255)
++#endif
++        ))
+ 	    putchar(CTRL('G'));
+ 	else
+ 	{
+ 	    *sp++ = c;
++#ifdef ROGUE_LAYERED /* RG_UTF8_TEXT */
++        if (c >= 128) {
++            char byte[2] = {(char)c, '\0'};
++            waddstr(win, byte);
++        } else
++#endif
+ 	    waddstr(win, unctrl(c));
+ 	}
+     }
+     *sp = '\0';
+     if (sp > buf)	/* only change option if something has been typed */
+ 	strucpy(opt, buf, (int) strlen(buf));
++#ifdef ROGUE_LAYERED /* RG_UTF8_TEXT */
++    rg_host_text_mode(0, 0, opt);
++    if (opt == whoami) rg_host_player_name(whoami);
++    if (win == hw) rg_ui_printf("options", oy, ox, __FILE__, __LINE__, "%s", opt);
++#endif
+     mvwprintw(win, oy, ox, "%s\n", opt);
+     wrefresh(win);
+     if (win == stdscr)
+@@ -333,6 +432,11 @@
+     waddstr(win, inv_t_name[*ip]);
+     while (op_bad)	
+     {
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++        static const char *const ids[] = {"options.value.overlay", "options.value.slow", "options.value.clear"};
++        rg_option_value(win, oy, ox, ids[*ip], inv_t_name[*ip]);
++        rg_ui_line("input", -2, 0, "input.option_inventory", "[]", "");
++#endif
+ 	wmove(win, oy, ox);
+ 	wrefresh(win);
+ 	switch (readchar())
+@@ -363,9 +467,19 @@
+ 	    default:
+ 		wmove(win, oy, ox + 15);
+ 		waddstr(win, "(O, S, or C)");
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++        rg_option_value(win, oy, ox + 15, "options.hint.inventory", "(O, S, or C)");
++#endif
+ 	}
+     }
+     mvwprintw(win, oy, ox, "%s\n", inv_t_name[*ip]);
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++    {
++        static const char *const ids[] = {"options.value.overlay", "options.value.slow", "options.value.clear"};
++        rg_option_value(win, oy, ox, ids[*ip], inv_t_name[*ip]);
++        rg_ui_clear("input");
++    }
++#endif
+     return NORM;
+ }
+ 	
+@@ -411,7 +525,7 @@
+ 	/*
+ 	 * Get option name
+ 	 */
+-	for (sp = str; isalpha(*sp); sp++)
++	for (sp = str; isalpha((unsigned char)*sp); sp++)
+ 	    continue;
+ 	len = (int)(sp - str);
+ 	/*
+@@ -448,8 +562,8 @@
+ 		     */
+ 		    if (op->o_putfunc == put_inv_t)
+ 		    {
+-			if (islower(*str))
+-			    *str = (char) toupper(*str);
++			if (islower((unsigned char)*str))
++			    *str = (char) toupper((unsigned char)*str);
+ 			for (i = inv_t_name; i <= &inv_t_name[INV_CLEAR]; i++)
+ 			    if (strncmp(str, *i, sp - str) == 0)
+ 			    {
+@@ -475,7 +589,7 @@
+ 	/*
+ 	 * skip to start of next option name
+ 	 */
+-	while (*sp && !isalpha(*sp))
++	while (*sp && !isalpha((unsigned char)*sp))
+ 	    sp++;
+ 	str = sp;
+     }
+@@ -486,16 +600,47 @@
+  *	Copy string using unctrl for things
+  */
+ 
++#ifdef ROGUE_LAYERED /* RG_UTF8_TEXT */
++/* Return a complete Unicode scalar's byte length; reject overlong encodings,
++ * surrogate halves and values outside Unicode. Never read beyond len. */
++static int rg_utf8_size(const unsigned char *text, int len)
++{
++    unsigned char a;
++    int size, i;
++    if (len < 1) return 0;
++    a = text[0];
++    size = a < 0x80 ? 1 : a >= 0xc2 && a <= 0xdf ? 2 :
++        a >= 0xe0 && a <= 0xef ? 3 : a >= 0xf0 && a <= 0xf4 ? 4 : 0;
++    if (!size || size > len) return 0;
++    for (i = 1; i < size; ++i) if ((text[i] & 0xc0) != 0x80) return 0;
++    if ((a == 0xe0 && text[1] < 0xa0) || (a == 0xed && text[1] >= 0xa0) ||
++        (a == 0xf0 && text[1] < 0x90) || (a == 0xf4 && text[1] >= 0x90)) return 0;
++    return size;
++}
++#endif
++
+ void
+ strucpy(char *s1, char *s2, int len)
+ {
+     if (len > MAXINP)
+ 	len = MAXINP;
++#ifdef ROGUE_LAYERED /* RG_UTF8_TEXT */
++    while (len > 0) {
++        unsigned char byte = (unsigned char)*s2;
++        int size = rg_utf8_size((const unsigned char *)s2, len), i;
++        if (!size) { ++s2; --len; continue; }
++        if (size > 1 || isprint(byte) || byte == ' ')
++            for (i = 0; i < size; ++i) *s1++ = s2[i];
++        s2 += size;
++        len -= size;
++    }
++#else
+     while (len--)
+     {
+-	if (isprint(*s2) || *s2 == ' ')
++	if (isprint((unsigned char)*s2) || *s2 == ' ')
+ 	    *s1++ = *s2;
+ 	s2++;
+     }
++#endif
+     *s1 = '\0';
+ }

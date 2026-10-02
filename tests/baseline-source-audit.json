@@ -1,0 +1,148 @@
+{
+  "schema": 1,
+  "checks_passed": true,
+  "files": [
+    {
+      "file": "chase.c",
+      "byte_identical": true
+    },
+    {
+      "file": "daemons.c",
+      "byte_identical": true
+    },
+    {
+      "file": "extern.c",
+      "byte_identical": true
+    },
+    {
+      "file": "fight.c",
+      "byte_identical": true
+    },
+    {
+      "file": "init.c",
+      "byte_identical": true
+    },
+    {
+      "file": "LICENSE.TXT",
+      "byte_identical": true
+    },
+    {
+      "file": "list.c",
+      "byte_identical": true
+    },
+    {
+      "file": "monsters.c",
+      "byte_identical": true
+    },
+    {
+      "file": "move.c",
+      "byte_identical": true
+    },
+    {
+      "file": "new_level.c",
+      "byte_identical": true
+    },
+    {
+      "file": "options.c",
+      "byte_identical": true
+    },
+    {
+      "file": "pack.c",
+      "byte_identical": true
+    },
+    {
+      "file": "passages.c",
+      "byte_identical": true
+    },
+    {
+      "file": "potions.c",
+      "byte_identical": true
+    },
+    {
+      "file": "rings.c",
+      "byte_identical": true
+    },
+    {
+      "file": "rooms.c",
+      "byte_identical": true
+    },
+    {
+      "file": "score.h",
+      "byte_identical": true
+    },
+    {
+      "file": "scrolls.c",
+      "byte_identical": true
+    },
+    {
+      "file": "sticks.c",
+      "byte_identical": true
+    },
+    {
+      "file": "vers.c",
+      "byte_identical": true
+    },
+    {
+      "file": "weapons.c",
+      "byte_identical": true
+    },
+    {
+      "file": "wizard.c",
+      "byte_identical": true
+    },
+    {
+      "file": "xcrypt.c",
+      "byte_identical": true
+    },
+    {
+      "file": "command.c",
+      "rule_text_after_undo": "identical to acquisition"
+    },
+    {
+      "file": "misc.c",
+      "rule_text_after_undo": "identical to acquisition"
+    },
+    {
+      "file": "things.c",
+      "rule_text_after_undo": "identical to acquisition"
+    },
+    {
+      "file": "rip.c",
+      "rule_text_after_undo": "identical to acquisition"
+    },
+    {
+      "file": "armor.c",
+      "rule_text_after_undo": "identical to acquisition"
+    },
+    {
+      "file": "daemon.c",
+      "rule_text_after_undo": "identical to acquisition"
+    },
+    {
+      "file": "io.c",
+      "rule_text_after_undo": "identical to acquisition"
+    },
+    {
+      "file": "mdport.c",
+      "rule_text_after_undo": "identical to acquisition"
+    },
+    {
+      "file": "mach_dep.c",
+      "rule_text_after_undo": "identical to acquisition"
+    },
+    {
+      "file": "extern.h",
+      "original_RN": true
+    },
+    {
+      "file": "io.c",
+      "original_doadd": true
+    }
+  ],
+  "not_independently_audited": [
+    "shared startup/main portability",
+    "shared serializer",
+    "shared knowledge/curses",
+    "host observation/hashes"
+  ]
+}

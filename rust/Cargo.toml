@@ -1,0 +1,23 @@
+[package]
+name = "rogue-layers"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.98"
+publish = false
+
+[lib]
+crate-type = ["staticlib", "rlib"]
+# The game library links against C/JS imports. Pure modules are tested by the
+# standalone layer-check/entity-check targets; actual FFI is tested in Wasm.
+test = false
+
+[dependencies]
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.151"
+
+[profile.release]
+opt-level = 1
+panic = "abort"
+
+[lints.clippy]
+undocumented_unsafe_blocks = "deny"

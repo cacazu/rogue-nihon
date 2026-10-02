@@ -1,0 +1,298 @@
+{
+  "schema": 1,
+  "original_source": "C:\\Users\\kit\\gameme\\jnethack\\jrouge\\investigation-20261002-original-rogue\\sources\\rogue5.4.4",
+  "original_c_files": [
+    {
+      "file": "armor.c",
+      "original_sha256": "b3da15b55f6b6033b35311920373e41d32be3f7ebb63adae421b0261edcf4a08",
+      "split_sha256": "9b8135e463384fc7fafe9b54af08683be281e39036c0b1387172b1d12e2a8d39",
+      "byte_identical": false,
+      "review_scope": "Observe completion counters; original armor action/time operations remain.",
+      "diff": "split-diffs/armor.c.diff"
+    },
+    {
+      "file": "chase.c",
+      "original_sha256": "e10438a05eab60cab7ede1db2bf07d21ce6f8d0768e3491313e181cff1cca4ff",
+      "split_sha256": "e10438a05eab60cab7ede1db2bf07d21ce6f8d0768e3491313e181cff1cca4ff",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/chase.c.diff"
+    },
+    {
+      "file": "command.c",
+      "original_sha256": "398c1fc84575791ab1fbe3112c3e23c33bb1d70c68e381f6cbe406e15aa4b361",
+      "split_sha256": "4b353d1a9b7f7bedb6b8736904d41b8ec9aa5d48d5615b8f37ab9a8b7a7f1a74",
+      "byte_identical": false,
+      "review_scope": "Persist command statics; observe ticks; literal-format safe recall; semantic help/identify/equipment UI.",
+      "diff": "split-diffs/command.c.diff"
+    },
+    {
+      "file": "daemon.c",
+      "original_sha256": "38228d2e27a85fa68b222d6f96471b286e19f3a4317ed7a3815ff48730d7eb4d",
+      "split_sha256": "ea4157181251ac8dbef4650e0d4929150deadc0cd148259fcc741413458d5d43",
+      "byte_identical": false,
+      "review_scope": "Use exact Wasm callback signatures; original daemon/fuse schedule retained.",
+      "diff": "split-diffs/daemon.c.diff"
+    },
+    {
+      "file": "daemons.c",
+      "original_sha256": "199b836ce9ce3bf766b0510e61184922a132a227e92c2e32673a384efca24622",
+      "split_sha256": "199b836ce9ce3bf766b0510e61184922a132a227e92c2e32673a384efca24622",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/daemons.c.diff"
+    },
+    {
+      "file": "extern.c",
+      "original_sha256": "0eb6af17635a9488cf93235cb62c4aa45c80cbdceb7b314e1a4b13634fca073a",
+      "split_sha256": "0eb6af17635a9488cf93235cb62c4aa45c80cbdceb7b314e1a4b13634fca073a",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/extern.c.diff"
+    },
+    {
+      "file": "fight.c",
+      "original_sha256": "9d5f4f4706156167563d8f5e7557046128b9d629dbe16ffcf356a9b6dece8948",
+      "split_sha256": "092b52a76c8ac58c3e8742539e31557f3845ae6bceeb52be80abbfda1de75ca6",
+      "byte_identical": false,
+      "review_scope": "Observe the already selected monster/combat verb for semantic translation.",
+      "diff": "split-diffs/fight.c.diff"
+    },
+    {
+      "file": "init.c",
+      "original_sha256": "092916322d3f2e44654f2ac85230a864ae7e1f85b0acb5f44f0e477ae67aded6",
+      "split_sha256": "092916322d3f2e44654f2ac85230a864ae7e1f85b0acb5f44f0e477ae67aded6",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/init.c.diff"
+    },
+    {
+      "file": "io.c",
+      "original_sha256": "01d24e08a31975d3cedc19dbd3323319f3e39cb93aadebb852b58834d822c916",
+      "split_sha256": "ab3aba93bf9aba47126db44c64ab396d2058bee4c1d0894e8579c9b59dcb87a5",
+      "byte_identical": false,
+      "review_scope": "Catalog message arguments and UTF-8 UI; bounded buffers; private paging/status runtime accessors.",
+      "diff": "split-diffs/io.c.diff"
+    },
+    {
+      "file": "list.c",
+      "original_sha256": "e354c695ac2d1ff92fe2eeb7da3f066620804cd7e500c2e71a077ab9f10ab84c",
+      "split_sha256": "e354c695ac2d1ff92fe2eeb7da3f066620804cd7e500c2e71a077ab9f10ab84c",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/list.c.diff"
+    },
+    {
+      "file": "mach_dep.c",
+      "original_sha256": "a1896a322e70b2c47d00524c9a4f5677b93fa942dc651413d335752a1e64eb39",
+      "split_sha256": "dbfae0459289c05985a428dceff8c674f591bd9540774a89ddda85ec4e84b9c0",
+      "byte_identical": false,
+      "review_scope": "Dispatch platform operations to virtual screen and host adapters.",
+      "diff": "split-diffs/mach_dep.c.diff"
+    },
+    {
+      "file": "main.c",
+      "original_sha256": "8e3af15fc72ec1d86026efc9117a31f3bd51ceb704ca74d2e6f4962d7f0a2a1a",
+      "split_sha256": "bf9264757a0baee476aa94d91c62f6264eca9f5fe7ee8a3b8f3452505726b20a",
+      "byte_identical": false,
+      "review_scope": "Portable startup, command checkpoints and outcomes; terminal/OS process operations excluded.",
+      "diff": "split-diffs/main.c.diff"
+    },
+    {
+      "file": "mdport.c",
+      "original_sha256": "3242de34d79c1d9e4684cb7ae1ce2781486d1d50567d0b1bca78bbb7e0ff0ee2",
+      "split_sha256": "3ca5fe40c1f40ced6bceb624bdab8a60ac69043e031cd43582d0c13d4b75a83b",
+      "byte_identical": false,
+      "review_scope": "Dispatch platform operations to virtual screen and host adapters.",
+      "diff": "split-diffs/mdport.c.diff"
+    },
+    {
+      "file": "misc.c",
+      "original_sha256": "65800383516c1ef4bee7cbc48e74dacde2867384f944bb3f355b569ddc85876c",
+      "split_sha256": "e5e07ef7cdab68847b7c1415eb5a86a36d343f62609531e2d94859188e280ab3",
+      "byte_identical": false,
+      "review_scope": "Persist last direction; observe direction prompt/input state.",
+      "diff": "split-diffs/misc.c.diff"
+    },
+    {
+      "file": "monsters.c",
+      "original_sha256": "0f033406dc9b34421e2296c553f71c55698f2bac401364261d86a6fa545da9fe",
+      "split_sha256": "0f033406dc9b34421e2296c553f71c55698f2bac401364261d86a6fa545da9fe",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/monsters.c.diff"
+    },
+    {
+      "file": "move.c",
+      "original_sha256": "d6faecd2ff4aca955b31b7d134b6c499551a0aaa42f5ff1fce1748b66644f1d0",
+      "split_sha256": "d6faecd2ff4aca955b31b7d134b6c499551a0aaa42f5ff1fce1748b66644f1d0",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/move.c.diff"
+    },
+    {
+      "file": "new_level.c",
+      "original_sha256": "f042cec22f90cbb91ab7142b6d8d42ddf5ca4e5e3e5377deeca6061c8f95f67b",
+      "split_sha256": "f042cec22f90cbb91ab7142b6d8d42ddf5ca4e5e3e5377deeca6061c8f95f67b",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/new_level.c.diff"
+    },
+    {
+      "file": "options.c",
+      "original_sha256": "6e9d36dc6889ae42fe366ace64c9f399cc0772e145710834e5fb9947908ebbcc",
+      "split_sha256": "efc276572e521ffada121534d73f7f13c2df214fad0e20ec0579bcaf381d1b13",
+      "byte_identical": false,
+      "review_scope": "Semantic settings UI; unsigned ctype; UTF-8 scalar editing within original 50-byte budget.",
+      "diff": "split-diffs/options.c.diff"
+    },
+    {
+      "file": "pack.c",
+      "original_sha256": "7b2158a7d75a698208b3841d12ed982f1f0a306301008a6adacd8d759c62c0c4",
+      "split_sha256": "8f3f200493ff5dde6f9ece20e0a5739b2e0c1a0155f2302d81fd8667c5052a4d",
+      "byte_identical": false,
+      "review_scope": "Deep-copy labels on stack splitting; observe item selection purpose/input state.",
+      "diff": "split-diffs/pack.c.diff"
+    },
+    {
+      "file": "passages.c",
+      "original_sha256": "33e81e80e77b5d528ade4c913707d48a2a0b6bd1709b56c7aaa0b205052f567a",
+      "split_sha256": "33e81e80e77b5d528ade4c913707d48a2a0b6bd1709b56c7aaa0b205052f567a",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/passages.c.diff"
+    },
+    {
+      "file": "potions.c",
+      "original_sha256": "60bcfbc89a7f9d7f15b2e1f0b61942d0b110ff205785d6a6501d976fcb70cb42",
+      "split_sha256": "a8f466fe0139ac0686a33c66793e9e6c7f21b6dae7917c717a1eabf6d7538a55",
+      "byte_identical": false,
+      "review_scope": "Observe the already selected effect text and fruit argument for semantic translation.",
+      "diff": "split-diffs/potions.c.diff"
+    },
+    {
+      "file": "rings.c",
+      "original_sha256": "89121898d2cd0ba297e4cadbefebb779691a6612a68b1dafd9374ae9f73253f7",
+      "split_sha256": "89121898d2cd0ba297e4cadbefebb779691a6612a68b1dafd9374ae9f73253f7",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/rings.c.diff"
+    },
+    {
+      "file": "rip.c",
+      "original_sha256": "f385286c82698a1281c912bc6c1565cbca165e965eeecc4d21d71fcd78210d79",
+      "split_sha256": "d466804253012f882a51fa44cd407c88587c2a77299ea98baa0f80ffb05ecef6",
+      "byte_identical": false,
+      "review_scope": "Observe outcomes/death cause; semantic ending UI and browser score adapter.",
+      "diff": "split-diffs/rip.c.diff"
+    },
+    {
+      "file": "rooms.c",
+      "original_sha256": "754cdfbadbd17adad6d71a33f118d7fa692d0d396fb38be0a9e17e76bf4a7f47",
+      "split_sha256": "754cdfbadbd17adad6d71a33f118d7fa692d0d396fb38be0a9e17e76bf4a7f47",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/rooms.c.diff"
+    },
+    {
+      "file": "save.c",
+      "original_sha256": "67e2fba1684fcf178cb4eeb869f351421bda81909430636366640f4dad38c51a",
+      "split_sha256": "c6afc856976c2706ca8cf529f2a2b4b15765ca8b9120ade46f2ec7e6a95d4ed2",
+      "byte_identical": false,
+      "review_scope": "Dispatch browser checkpoint serialization instead of native file/process restoration.",
+      "diff": "split-diffs/save.c.diff"
+    },
+    {
+      "file": "scrolls.c",
+      "original_sha256": "f3b6ed2ca8aca5a72a82ab7208d1979f7cf46d0adca8c437aba77fb50c60fe17",
+      "split_sha256": "f3b6ed2ca8aca5a72a82ab7208d1979f7cf46d0adca8c437aba77fb50c60fe17",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/scrolls.c.diff"
+    },
+    {
+      "file": "state.c",
+      "original_sha256": "c58d76d2a7cb260ca014e24c34a59110f99b16c89488e2672c510e1d3f6426bd",
+      "split_sha256": "bfb6b6bfd554d249d6039ef22d8f7b2cf6ee37bbb7dde2fcb84cf517e6d9a27d",
+      "byte_identical": false,
+      "review_scope": "Fixed-width portable serializer, bounded counts/IDs, atomic load and graph ownership cleanup.",
+      "diff": "split-diffs/state.c.diff"
+    },
+    {
+      "file": "sticks.c",
+      "original_sha256": "2ae39b1244daa71f4da527875f8e7832f72ebb4bbf149336e87f02d656763d55",
+      "split_sha256": "2ae39b1244daa71f4da527875f8e7832f72ebb4bbf149336e87f02d656763d55",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/sticks.c.diff"
+    },
+    {
+      "file": "things.c",
+      "original_sha256": "2cd25aae96054aa252c3c797ba1e4bb533f984c3335a3bf3222d1a5536ee63ce",
+      "split_sha256": "697ceb4925af34ee8236395f9cd1e84f9f528cd10068b0a1b10dc29f10e1a494",
+      "byte_identical": false,
+      "review_scope": "Observe item descriptors, discovery/menu rows and waits; persist pagination state.",
+      "diff": "split-diffs/things.c.diff"
+    },
+    {
+      "file": "vers.c",
+      "original_sha256": "c9eca0909b23f3cd8b048cbeed30db66c4d41fa6fddbb10f3760e5874325ff66",
+      "split_sha256": "c9eca0909b23f3cd8b048cbeed30db66c4d41fa6fddbb10f3760e5874325ff66",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/vers.c.diff"
+    },
+    {
+      "file": "weapons.c",
+      "original_sha256": "db4bd8337bf8c60fe8042e2142112610fa473babc2321bd9f5cffe8a728d74ed",
+      "split_sha256": "db4bd8337bf8c60fe8042e2142112610fa473babc2321bd9f5cffe8a728d74ed",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/weapons.c.diff"
+    },
+    {
+      "file": "wizard.c",
+      "original_sha256": "1a5482788f37e684fc447a90307be58f6bfad3979c334e50d27bbc3079a54f79",
+      "split_sha256": "1a5482788f37e684fc447a90307be58f6bfad3979c334e50d27bbc3079a54f79",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/wizard.c.diff"
+    },
+    {
+      "file": "xcrypt.c",
+      "original_sha256": "446810ef5461614b77010f71add64412e2e702e9c77579d55313d3f9f2bb0069",
+      "split_sha256": "446810ef5461614b77010f71add64412e2e702e9c77579d55313d3f9f2bb0069",
+      "byte_identical": true,
+      "review_scope": "original bytes unchanged",
+      "diff": "split-diffs/xcrypt.c.diff"
+    }
+  ],
+  "new_c_files": [
+    {
+      "file": "core.c",
+      "sha256": "db2c18d82ccb0ff2da0657693dbdecfff13aaa1fb3f319d59a1f622723964be7"
+    },
+    {
+      "file": "knowledge.c",
+      "sha256": "4c06f3c9beab76f761396f4be6c2add05865d636c1c1ea71856b3282556e3a78"
+    },
+    {
+      "file": "message.c",
+      "sha256": "8c9513d35b705f2368c8a739164f34f926d71d9df89f0e297e41122ea0a175c7"
+    },
+    {
+      "file": "save_adapter.c",
+      "sha256": "1df5367eba3169af250315c48f418c4f8e3d70dfc263776b2fdabc1bf2338668"
+    },
+    {
+      "file": "semantic.c",
+      "sha256": "87ec4f955e3922c285ca75249be44d728bf12495e4e7f12c45f15b5a1d340a81"
+    }
+  ],
+  "limits": [
+    "Hashes and diffs record the source boundary; runtime equivalence is demonstrated only for explicitly executed regression cases.",
+    "Japanese presentation is outside the original English screen comparison.",
+    "UTF-8 editing, safe label ownership and safe percent recall are intentional split-only behavior/extensions.",
+    "Native curses, OS shell/process startup and native score/save file operations have not been executed."
+  ]
+}

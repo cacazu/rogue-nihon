@@ -1,0 +1,24 @@
+# Keep only the playable build and reviewed translation authoring inputs.
+/build/*
+!/build/game.js
+!/build/game.wasm
+!/build/build-manifest.json
+!/build/assemble-ja.py
+!/build/ja-main-translations.json
+!/build/ja-message-subset.json
+!/build/ja-message-subset-values.json
+
+# Regenerated detailed test output; source/diffs/provenance remain tracked.
+/tests/actual-results/
+/tests/fixture-results/
+/tests/localization-results/
+/tests/more-localization-results/
+/tests/ui-results/
+/tests/browser-smoke/output/
+/tests/browser-smoke/output-ja/
+/tests/*-result.json
+/tests/*-run.txt
+
+# Local delivery inventory, not a source checkout manifest.
+/artifacts-manifest.json
+/delivery.json

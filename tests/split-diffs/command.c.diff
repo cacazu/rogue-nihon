@@ -1,0 +1,168 @@
+--- acquired/command.c
++++ logic/command.c
+@@ -16,6 +16,9 @@
+ #include <ctype.h>
+ #include "rogue.h"
+ 
++/* Persistent command state; accessors permit exact outer-boundary restore. */
++static char countch, direction, newcount = FALSE;
++
+ /*
+  * command:
+  *	Process the user commands
+@@ -27,7 +30,6 @@
+     register int ntimes = 1;			/* Number of player moves */
+     char *fp;
+     THING *mp;
+-    static char countch, direction, newcount = FALSE;
+ 
+     if (on(player, ISHASTE))
+ 	ntimes++;
+@@ -284,7 +286,7 @@
+ 		    else
+ 			after = FALSE;
+ 		when 'D': after = FALSE; discovered();
+-		when CTRL('P'): after = FALSE; msg(huh);
++		when CTRL('P'): after = FALSE; msg("%s", huh);
+ 		when CTRL('R'):
+ 		    after = FALSE;
+ 		    clearok(curscr,TRUE);
+@@ -451,7 +453,19 @@
+ 	search();
+     else if (ISRING(RIGHT, R_TELEPORT) && rnd(50) == 0)
+ 	teleport();
+-}
++#ifdef ROGUE_LAYERED
++    rg_core_tick_complete();
++#endif
++}
++
++#ifdef ROGUE_LAYERED
++void rg_command_state_get(uint32_t *out) {
++    out[0]=(unsigned char)countch;out[1]=(unsigned char)direction;out[2]=(unsigned char)newcount;
++}
++void rg_command_state_set(const uint32_t *in) {
++    countch=(char)in[0];direction=(char)in[1];newcount=(char)in[2];
++}
++#endif
+ 
+ /*
+  * illcom:
+@@ -534,6 +548,31 @@
+  * help:
+  *	Give single character help, or the whole mess if he wants it
+  */
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++#include "semantic.h"
++/* Indexes follow the unchanged English help table, including hidden run keys. */
++static const char *const rg_help_ids[] = {
++    "help.help", "help.identify", "help.left", "help.down", "help.up", "help.right",
++    "help.up_left", "help.up_right", "help.down_left", "help.down_right",
++    "help.run_left", "help.run_down", "help.run_up", "help.run_right",
++    "help.run_up_left", "help.run_up_right", "help.run_down_left", "help.run_down_right",
++    "help.adjacent_left", "help.adjacent_down", "help.adjacent_up", "help.adjacent_right",
++    "help.adjacent_up_left", "help.adjacent_up_right", "help.adjacent_down_left", "help.adjacent_down_right",
++    "help.run", "help.run_adjacent", "help.fight_carefully", "help.throw", "help.move_without_pickup",
++    "help.zap", "help.trap", "help.search", "help.downstairs", "help.upstairs", "help.rest",
++    "help.pickup", "help.inventory", "help.inventory_one", "help.quaff", "help.read", "help.eat",
++    "help.wield", "help.wear", "help.take_off", "help.put_ring", "help.remove_ring", "help.drop",
++    "help.call", "help.again", "help.weapon", "help.armor", "help.rings", "help.stats",
++    "help.discoveries", "help.options", "help.redraw", "help.recall", "help.cancel", "help.save",
++    "help.quit", "help.shell", "help.fight_to_death", "help.version"
++};
++static const char *rg_help_id(const struct h_list *entry)
++{
++    size_t index = (size_t)(entry - helpstr);
++    return index < sizeof rg_help_ids / sizeof rg_help_ids[0] ? rg_help_ids[index] : "ui.untranslated";
++}
++#endif
++
+ void
+ help()
+ {
+@@ -554,6 +593,9 @@
+ 	    if (strp->h_ch == helpch)
+ 	    {
+ 		lower_msg = TRUE;
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++        rg_semantic_register_term(strp->h_desc, rg_help_id(strp));
++#endif
+ 		msg("%s%s", unctrl(strp->h_ch), strp->h_desc);
+ 		lower_msg = FALSE;
+ 		return;
+@@ -575,11 +617,24 @@
+     if (numprint > LINES - 1)
+ 	numprint = LINES - 1;
+ 
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++    rg_ui_clear("help");
++#endif
+     wclear(hw);
+     cnt = 0;
+     for (strp = helpstr; strp->h_desc != NULL; strp++)
+ 	if (strp->h_print)
+ 	{
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++        char arguments[256], english[MAXSTR];
++        const char *key = strp->h_ch ? unctrl(strp->h_ch) : "";
++        snprintf(arguments, sizeof arguments,
++            "[{\"kind\":\"string\",\"value\":\"%s\"},{\"kind\":\"term\",\"value\":\"%s\"}]",
++            key, rg_help_id(strp));
++        snprintf(english, sizeof english, "%s%s", key, strp->h_desc);
++        rg_ui_line("help", cnt % numprint, cnt >= numprint ? COLS / 2 : 0,
++                   "ui.help.entry", arguments, english);
++#endif
+ 	    wmove(hw, cnt % numprint, cnt >= numprint ? COLS / 2 : 0);
+ 	    if (strp->h_ch)
+ 		waddstr(hw, unctrl(strp->h_ch));
+@@ -589,8 +644,16 @@
+ 	}
+     wmove(hw, LINES - 1, 0);
+     waddstr(hw, "--Press space to continue--");
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++    rg_ui_line("help", LINES - 1, 0, "ui.continue", "[]", "--Press space to continue--");
++    rg_ui_line("input", -2, 0, "input.wait_space", "[]", "");
++#endif
+     wrefresh(hw);
+     wait_for(' ');
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++    rg_ui_clear("help");
++    rg_ui_clear("input");
++#endif
+     clearok(stdscr, TRUE);
+ /*
+     refresh();
+@@ -652,6 +715,20 @@
+ 		break;
+ 	    }
+     }
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++    if (!isupper((unsigned char)ch)) {
++        static const char *const ids[] = {
++            "identify.wall", "identify.wall", "identify.gold", "identify.stairs", "identify.door",
++            "identify.floor", "identify.player", "identify.passage", "identify.trap", "identify.potion",
++            "identify.scroll", "identify.food", "identify.weapon", "identify.rock", "identify.armor",
++            "identify.amulet", "identify.ring", "identify.stick"
++        };
++        const char *id = "identify.unknown";
++        for (hp = ident_list; hp->h_ch != '\0'; hp++)
++            if (hp->h_ch == ch) { id = ids[hp - ident_list]; break; }
++        rg_semantic_register_term(str, id);
++    }
++#endif
+     msg("'%s': %s", unctrl(ch), str);
+ }
+ 
+@@ -796,6 +873,12 @@
+ void
+ current(THING *cur, char *how, char *where)
+ {
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++    rg_semantic_register_term(how, !strcmp(how, "wielding") ? "equipment.wielding" : "equipment.wearing");
++    if (where) rg_semantic_register_term(where,
++        !strcmp(where, "(L)") ? "equipment.left_short" : !strcmp(where, "(R)") ? "equipment.right_short" :
++        !strcmp(where, "on left hand") ? "equipment.left_hand" : "equipment.right_hand");
++#endif
+     after = FALSE;
+     if (cur != NULL)
+     {

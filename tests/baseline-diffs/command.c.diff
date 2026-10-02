@@ -1,0 +1,41 @@
+--- acquired/command.c
++++ baseline-src/command.c
+@@ -16,6 +16,9 @@
+ #include <ctype.h>
+ #include "rogue.h"
+ 
++/* Persistent command state; accessors permit exact outer-boundary restore. */
++static char countch, direction, newcount = FALSE;
++
+ /*
+  * command:
+  *	Process the user commands
+@@ -27,7 +30,6 @@
+     register int ntimes = 1;			/* Number of player moves */
+     char *fp;
+     THING *mp;
+-    static char countch, direction, newcount = FALSE;
+ 
+     if (on(player, ISHASTE))
+ 	ntimes++;
+@@ -451,7 +453,19 @@
+ 	search();
+     else if (ISRING(RIGHT, R_TELEPORT) && rnd(50) == 0)
+ 	teleport();
+-}
++#ifdef ROGUE_LAYERED
++    rg_core_tick_complete();
++#endif
++}
++
++#ifdef ROGUE_LAYERED
++void rg_command_state_get(uint32_t *out) {
++    out[0]=(unsigned char)countch;out[1]=(unsigned char)direction;out[2]=(unsigned char)newcount;
++}
++void rg_command_state_set(const uint32_t *in) {
++    countch=(char)in[0];direction=(char)in[1];newcount=(char)in[2];
++}
++#endif
+ 
+ /*
+  * illcom:

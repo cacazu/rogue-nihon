@@ -1,0 +1,141 @@
+--- acquired/io.c
++++ baseline-src/io.c
+@@ -8,7 +8,12 @@
+ #include <curses.h>
+ #include <ctype.h>
+ #include <string.h>
++#include <stdint.h>
++#include <stdlib.h>
++#include <stdio.h>
+ #include "rogue.h"
++#include "io_state.h"
++#include "rogue_abi.h"
+ 
+ /*
+  * msg:
+@@ -33,6 +38,7 @@
+ 	move(0, 0);
+ 	clrtoeol();
+ 	mpos = 0;
++	rg_host_message("message.clear", "[]", "");
+ 	return ~ESCAPE;
+     }
+     /*
+@@ -99,6 +105,7 @@
+ 	msgbuf[0] = (char) toupper(msgbuf[0]);
+     mvaddstr(0, 0, msgbuf);
+     clrtoeol();
++    rg_host_message("message.legacy", "[]", msgbuf);
+     mpos = newpos;
+     newpos = 0;
+     msgbuf[0] = '\0';
+@@ -123,6 +130,63 @@
+         endmsg(); 
+     strcat(msgbuf, buf);
+     newpos = (int) strlen(msgbuf);
++}
++
++/* Private logical paging state affects --More--, look(FALSE), and therefore
++ * the RNG. The global mpos is serialized by state.c; this section owns only
++ * msgbuf/newpos. Presentation metadata is transient and may fall back to
++ * legacy English if a checkpoint contains a partially accumulated message. */
++#define RG_MESSAGE_STATE_BYTES (8u + (uint32_t)sizeof msgbuf)
++
++static uint32_t rg_io_read_u32(const uint8_t *bytes)
++{
++    return (uint32_t)bytes[0] | ((uint32_t)bytes[1] << 8)
++        | ((uint32_t)bytes[2] << 16) | ((uint32_t)bytes[3] << 24);
++}
++
++static void rg_io_write_u32(uint8_t *bytes, uint32_t value)
++{
++    bytes[0] = (uint8_t)value;
++    bytes[1] = (uint8_t)(value >> 8);
++    bytes[2] = (uint8_t)(value >> 16);
++    bytes[3] = (uint8_t)(value >> 24);
++}
++
++int rg_message_state_export(uint8_t **out, uint32_t *length)
++{
++    uint8_t *bytes;
++    if (!out || !length) return -1;
++    *out = NULL;
++    *length = 0;
++    bytes = (uint8_t *)malloc(RG_MESSAGE_STATE_BYTES);
++    if (!bytes) return -1;
++    rg_io_write_u32(bytes, 1);
++    rg_io_write_u32(bytes + 4, (uint32_t)newpos);
++    memcpy(bytes + 8, msgbuf, sizeof msgbuf);
++    *out = bytes;
++    *length = RG_MESSAGE_STATE_BYTES;
++    return 0;
++}
++
++int rg_message_state_validate(const uint8_t *bytes, uint32_t length)
++{
++    const uint8_t *terminator;
++    uint32_t position;
++    if (!bytes || length != RG_MESSAGE_STATE_BYTES || rg_io_read_u32(bytes) != 1)
++        return -1;
++    position = rg_io_read_u32(bytes + 4);
++    if (position >= sizeof msgbuf) return -1;
++    terminator = (const uint8_t *)memchr(bytes + 8, '\0', sizeof msgbuf);
++    if (!terminator || (uint32_t)(terminator - (bytes + 8)) != position) return -1;
++    return 0;
++}
++
++int rg_message_state_import(const uint8_t *bytes, uint32_t length)
++{
++    if (rg_message_state_validate(bytes, length) != 0) return -1;
++    newpos = (int)rg_io_read_u32(bytes + 4);
++    memcpy(msgbuf, bytes + 8, sizeof msgbuf);
++    return 0;
+ }
+ 
+ /*
+@@ -167,18 +231,19 @@
+  * status:
+  *	Display the important stats line.  Keep the cursor where it was.
+  */
++static int hpwidth = 0;
++static int s_hungry = 0;
++static int s_lvl = 0;
++static int s_pur = -1;
++static int s_hp = 0;
++static int s_arm = 0;
++static str_t s_str = 0;
++static int s_exp = 0;
++
+ void
+ status()
+ {
+     register int oy, ox, temp;
+-    static int hpwidth = 0;
+-    static int s_hungry = 0;
+-    static int s_lvl = 0;
+-    static int s_pur = -1;
+-    static int s_hp = 0;
+-    static int s_arm = 0;
+-    static str_t s_str = 0;
+-    static int s_exp = 0;
+     static char *state_name[] =
+     {
+ 	"", "Hungry", "Weak", "Faint"
+@@ -238,6 +303,17 @@
+     clrtoeol();
+     move(oy, ox);
+ }
++
++#ifdef ROGUE_LAYERED
++void rg_status_state_get(uint32_t *out) {
++    out[0]=(uint32_t)hpwidth;out[1]=(uint32_t)s_hungry;out[2]=(uint32_t)s_lvl;out[3]=(uint32_t)s_pur;
++    out[4]=(uint32_t)s_hp;out[5]=(uint32_t)s_arm;out[6]=(uint32_t)s_str;out[7]=(uint32_t)s_exp;
++}
++void rg_status_state_set(const uint32_t *in) {
++    hpwidth=(int32_t)in[0];s_hungry=(int32_t)in[1];s_lvl=(int32_t)in[2];s_pur=(int32_t)in[3];
++    s_hp=(int32_t)in[4];s_arm=(int32_t)in[5];s_str=(str_t)in[6];s_exp=(int32_t)in[7];
++}
++#endif
+ 
+ /*
+  * wait_for

@@ -1,0 +1,1662 @@
+{
+  "schema": 1,
+  "language": "en",
+  "messages": {
+    "armor.take_off.not_wearing_armor": {
+      "template": "not wearing armor",
+      "source": "armor.c:63",
+      "function": "take_off",
+      "note": "original English printf format"
+    },
+    "armor.take_off.was": {
+      "template": "was",
+      "source": "armor.c:72",
+      "function": "take_off",
+      "note": "original English printf format"
+    },
+    "armor.take_off.wearing": {
+      "template": " wearing %c) %s",
+      "source": "armor.c:75",
+      "function": "take_off",
+      "note": "original English printf format"
+    },
+    "armor.take_off.you_arent_wearing_any_armor": {
+      "template": "you aren't wearing any armor",
+      "source": "armor.c:65",
+      "function": "take_off",
+      "note": "original English printf format"
+    },
+    "armor.take_off.you_used_to_be": {
+      "template": "you used to be",
+      "source": "armor.c:74",
+      "function": "take_off",
+      "note": "original English printf format"
+    },
+    "armor.wear.wearing": {
+      "template": "wearing %s",
+      "source": "armor.c:47",
+      "function": "wear",
+      "note": "original English printf format"
+    },
+    "armor.wear.you_are_already_wearing_some": {
+      "template": "you are already wearing some",
+      "source": "armor.c:29",
+      "function": "wear",
+      "note": "original English printf format"
+    },
+    "armor.wear.you_are_now": {
+      "template": "you are now ",
+      "source": "armor.c:46",
+      "function": "wear",
+      "note": "original English printf format"
+    },
+    "armor.wear.you_cant_wear_that": {
+      "template": "you can't wear that",
+      "source": "armor.c:38",
+      "function": "wear",
+      "note": "original English printf format"
+    },
+    "armor.wear.youll_have_to_take_it_off_first": {
+      "template": ".  You'll have to take it off first",
+      "source": "armor.c:31",
+      "function": "wear",
+      "note": "original English printf format"
+    },
+    "chase.roomin.in_some_bizarre_place": {
+      "template": "in some bizarre place (%d, %d)",
+      "source": "chase.c:440",
+      "function": "roomin",
+      "note": "original English printf format"
+    },
+    "chase.runto.couldnt_find_monster_in_runto_at": {
+      "template": "couldn't find monster in runto at (%d,%d)",
+      "source": "chase.c:295",
+      "function": "runto",
+      "note": "original English printf format"
+    },
+    "command.call.call_it": {
+      "template": "call it: ",
+      "source": "command.c:852",
+      "function": "call",
+      "note": "original English printf format"
+    },
+    "command.call.called": {
+      "template": "called \"%s\"",
+      "source": "command.c:849",
+      "function": "call",
+      "note": "original English printf format"
+    },
+    "command.call.that_has_already_been_identified": {
+      "template": "that has already been identified",
+      "source": "command.c:842",
+      "function": "call",
+      "note": "original English printf format"
+    },
+    "command.call.was": {
+      "template": "Was ",
+      "source": "command.c:848",
+      "function": "call",
+      "note": "original English printf format"
+    },
+    "command.call.what_do_you_want_to_call_it": {
+      "template": "what do you want to call it? ",
+      "source": "command.c:854",
+      "function": "call",
+      "note": "original English printf format"
+    },
+    "command.call.you_cant_call_that_anything": {
+      "template": "you can't call that anything",
+      "source": "command.c:833",
+      "function": "call",
+      "note": "original English printf format"
+    },
+    "command.command.food_left": {
+      "template": "food left: %d",
+      "source": "command.c:382",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.command.i_see": {
+      "template": "I see ",
+      "source": "command.c:231",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.command.inpack": {
+      "template": "inpack = %d",
+      "source": "command.c:375",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.command.no_monster_there": {
+      "template": "no monster there",
+      "source": "command.c:232",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.command.no_trap_there": {
+      "template": "no trap there",
+      "source": "command.c:311",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.command.not_wizard_any_more": {
+      "template": "not wizard any more",
+      "source": "command.c:326",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.command.nothing_here": {
+      "template": "nothing here",
+      "source": "command.c:176",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.command.number_number": {
+      "template": "@ %d,%d",
+      "source": "command.c:373",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.command.sorry": {
+      "template": "sorry",
+      "source": "command.c:338",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.command.string": {
+      "template": "%s",
+      "source": "command.c:289",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.command.there_is": {
+      "template": "there is ",
+      "source": "command.c:175",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.command.to_pick_up": {
+      "template": " to pick up",
+      "source": "command.c:178",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.command.version_mctesq_was_here": {
+      "template": "version %s. (mctesq was here)",
+      "source": "command.c:296",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon": {
+      "template": "you are suddenly as smart as Ken Arnold in dungeon #%d",
+      "source": "command.c:335",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.command.you_can_move_again": {
+      "template": "you can move again",
+      "source": "command.c:94",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.command.you_have_found": {
+      "template": "You have found ",
+      "source": "command.c:309",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.command.you_havent_typed_a_command_yet": {
+      "template": "you haven't typed a command yet",
+      "source": "command.c:251",
+      "function": "command",
+      "note": "original English printf format"
+    },
+    "command.current.character_string": {
+      "template": "%c) %s",
+      "source": "command.c:888",
+      "function": "current",
+      "note": "original English printf format"
+    },
+    "command.current.nothing": {
+      "template": "%s nothing",
+      "source": "command.c:898",
+      "function": "current",
+      "note": "original English printf format"
+    },
+    "command.current.string": {
+      "template": " %s",
+      "source": "command.c:891",
+      "function": "current",
+      "note": "original English printf format"
+    },
+    "command.current.you_are": {
+      "template": "you are %s (",
+      "source": "command.c:886",
+      "function": "current",
+      "note": "original English printf format"
+    },
+    "command.current.you_are_trailing_space": {
+      "template": "you are ",
+      "source": "command.c:897",
+      "function": "current",
+      "note": "original English printf format"
+    },
+    "command.d_level.i_see_no_way_down": {
+      "template": "I see no way down",
+      "source": "command.c:745",
+      "function": "d_level",
+      "note": "original English printf format"
+    },
+    "command.help.character_you_want_help_for_for_all": {
+      "template": "character you want help for (* for all): ",
+      "source": "command.c:582",
+      "function": "help",
+      "note": "original English printf format"
+    },
+    "command.help.string_string": {
+      "template": "%s%s",
+      "source": "command.c:599",
+      "function": "help",
+      "note": "original English printf format"
+    },
+    "command.help.unknown_character": {
+      "template": "unknown character '%s'",
+      "source": "command.c:603",
+      "function": "help",
+      "note": "original English printf format"
+    },
+    "command.identify.string_string": {
+      "template": "'%s': %s",
+      "source": "command.c:732",
+      "function": "identify",
+      "note": "original English printf format"
+    },
+    "command.identify.what_do_you_want_identified": {
+      "template": "what do you want identified? ",
+      "source": "command.c:698",
+      "function": "identify",
+      "note": "original English printf format"
+    },
+    "command.illcom.illegal_command": {
+      "template": "illegal command '%s'",
+      "source": "command.c:479",
+      "function": "illcom",
+      "note": "original English printf format"
+    },
+    "command.levit_check.you_cant_youre_floating_off_the_ground": {
+      "template": "You can't.  You're floating off the ground!",
+      "source": "command.c:788",
+      "function": "levit_check",
+      "note": "original English printf format"
+    },
+    "command.search.a_secret_door": {
+      "template": "a secret door",
+      "source": "command.c:515",
+      "function": "search",
+      "note": "original English printf format"
+    },
+    "command.search.you_found": {
+      "template": "you found ",
+      "source": "command.c:527",
+      "function": "search",
+      "note": "original English printf format"
+    },
+    "command.u_level.i_see_no_way_up": {
+      "template": "I see no way up",
+      "source": "command.c:775",
+      "function": "u_level",
+      "note": "original English printf format"
+    },
+    "command.u_level.you_feel_a_wrenching_sensation_in_your_gut": {
+      "template": "you feel a wrenching sensation in your gut",
+      "source": "command.c:770",
+      "function": "u_level",
+      "note": "original English printf format"
+    },
+    "command.u_level.your_way_is_magically_blocked": {
+      "template": "your way is magically blocked",
+      "source": "command.c:773",
+      "function": "u_level",
+      "note": "original English printf format"
+    },
+    "daemon.d_slot.ran_out_of_fuse_slots": {
+      "template": "Ran out of fuse slots",
+      "source": "daemon.c:58",
+      "function": "d_slot",
+      "note": "original English printf format"
+    },
+    "daemons.come_down.everything_looks_so_boring_now": {
+      "template": "Everything looks SO boring now.",
+      "source": "daemons.c:234",
+      "function": "come_down",
+      "note": "original English printf format"
+    },
+    "daemons.land.bummer_youve_hit_the_ground": {
+      "template": "bummer!  You've hit the ground",
+      "source": "daemons.c:293",
+      "function": "land",
+      "note": "original English printf format"
+    },
+    "daemons.land.you_float_gently_to_the_ground": {
+      "template": "you float gently to the ground",
+      "source": "daemons.c:293",
+      "function": "land",
+      "note": "original English printf format"
+    },
+    "daemons.nohaste.you_feel_yourself_slowing_down": {
+      "template": "you feel yourself slowing down",
+      "source": "daemons.c:131",
+      "function": "nohaste",
+      "note": "original English printf format"
+    },
+    "daemons.sight.far_out_everything_is_all_cosmic_again": {
+      "template": "far out!  Everything is all cosmic again",
+      "source": "daemons.c:118",
+      "function": "sight",
+      "note": "original English printf format"
+    },
+    "daemons.sight.the_veil_of_darkness_lifts": {
+      "template": "the veil of darkness lifts",
+      "source": "daemons.c:118",
+      "function": "sight",
+      "note": "original English printf format"
+    },
+    "daemons.stomach.getting_hungry": {
+      "template": "getting hungry",
+      "source": "daemons.c:175",
+      "function": "stomach",
+      "note": "original English printf format"
+    },
+    "daemons.stomach.getting_the_munchies": {
+      "template": "getting the munchies",
+      "source": "daemons.c:175",
+      "function": "stomach",
+      "note": "original English printf format"
+    },
+    "daemons.stomach.the_munchies_are_interfering_with_your_motor_capabilites": {
+      "template": "the munchies are interfering with your motor capabilites",
+      "source": "daemons.c:168",
+      "function": "stomach",
+      "note": "original English printf format"
+    },
+    "daemons.stomach.the_munchies_overpower_your_motor_capabilities": {
+      "template": "the munchies overpower your motor capabilities.  ",
+      "source": "daemons.c:156",
+      "function": "stomach",
+      "note": "original English printf format"
+    },
+    "daemons.stomach.you_are_getting_the_munchies": {
+      "template": "you are getting the munchies",
+      "source": "daemons.c:177",
+      "function": "stomach",
+      "note": "original English printf format"
+    },
+    "daemons.stomach.you_are_starting_to_feel_weak": {
+      "template": "you are starting to feel weak",
+      "source": "daemons.c:168",
+      "function": "stomach",
+      "note": "original English printf format"
+    },
+    "daemons.stomach.you_are_starting_to_get_hungry": {
+      "template": "you are starting to get hungry",
+      "source": "daemons.c:177",
+      "function": "stomach",
+      "note": "original English printf format"
+    },
+    "daemons.stomach.you_faint": {
+      "template": "You faint",
+      "source": "daemons.c:158",
+      "function": "stomach",
+      "note": "original English printf format"
+    },
+    "daemons.stomach.you_feel_too_weak_from_lack_of_food": {
+      "template": "you feel too weak from lack of food.  ",
+      "source": "daemons.c:156",
+      "function": "stomach",
+      "note": "original English printf format"
+    },
+    "daemons.stomach.you_freak_out": {
+      "template": "You freak out",
+      "source": "daemons.c:158",
+      "function": "stomach",
+      "note": "original English printf format"
+    },
+    "daemons.unconfuse.you_feel_less_now": {
+      "template": "you feel less %s now",
+      "source": "daemons.c:87",
+      "function": "unconfuse",
+      "note": "original English printf format"
+    },
+    "fight.attack.a_bite_has_weakened_you": {
+      "template": "a bite has weakened you",
+      "source": "fight.c:223",
+      "function": "attack",
+      "note": "original English printf format"
+    },
+    "fight.attack.a_bite_momentarily_weakens_you": {
+      "template": "a bite momentarily weakens you",
+      "source": "fight.c:228",
+      "function": "attack",
+      "note": "original English printf format"
+    },
+    "fight.attack.bite_has_no_effect": {
+      "template": "bite has no effect",
+      "source": "fight.c:230",
+      "function": "attack",
+      "note": "original English printf format"
+    },
+    "fight.attack.by_the": {
+      "template": " by the %s",
+      "source": "fight.c:205",
+      "function": "attack",
+      "note": "original English printf format"
+    },
+    "fight.attack.sentence_separator": {
+      "template": ".  ",
+      "source": "fight.c:171",
+      "function": "attack",
+      "note": "original English printf format"
+    },
+    "fight.attack.she_stole": {
+      "template": "she stole %s!",
+      "source": "fight.c:312",
+      "function": "attack",
+      "note": "original English printf format"
+    },
+    "fight.attack.you_are_frozen": {
+      "template": "you are frozen",
+      "source": "fight.c:203",
+      "function": "attack",
+      "note": "original English printf format"
+    },
+    "fight.attack.you_feel_a_bite_in_your_leg_and_now_feel_weaker": {
+      "template": "you feel a bite in your leg and now feel weaker",
+      "source": "fight.c:221",
+      "function": "attack",
+      "note": "original English printf format"
+    },
+    "fight.attack.you_suddenly_feel_weaker": {
+      "template": "you suddenly feel weaker",
+      "source": "fight.c:264",
+      "function": "attack",
+      "note": "original English printf format"
+    },
+    "fight.attack.your_purse_feels_lighter": {
+      "template": "your purse feels lighter",
+      "source": "fight.c:290",
+      "function": "attack",
+      "note": "original English printf format"
+    },
+    "fight.bounce.the_misses": {
+      "template": "the %s misses ",
+      "source": "fight.c:597",
+      "function": "bounce",
+      "note": "original English printf format"
+    },
+    "fight.bounce.you_missed": {
+      "template": "you missed ",
+      "source": "fight.c:599",
+      "function": "bounce",
+      "note": "original English printf format"
+    },
+    "fight.fight.appears_confused": {
+      "template": "%s appears confused",
+      "source": "fight.c:125",
+      "function": "fight",
+      "note": "original English printf format"
+    },
+    "fight.fight.fight_what": {
+      "template": "Fight what @ %d,%d",
+      "source": "fight.c:76",
+      "function": "fight",
+      "note": "original English printf format"
+    },
+    "fight.fight.heavy_thats_a_nasty_critter": {
+      "template": "heavy!  That's a nasty critter!",
+      "source": "fight.c:98",
+      "function": "fight",
+      "note": "original English printf format"
+    },
+    "fight.fight.wait_thats_a_xeroc": {
+      "template": "wait!  That's a xeroc!",
+      "source": "fight.c:98",
+      "function": "fight",
+      "note": "original English printf format"
+    },
+    "fight.fight.your_hands_stop_glowing": {
+      "template": "your hands stop glowing %s",
+      "source": "fight.c:120",
+      "function": "fight",
+      "note": "original English printf format"
+    },
+    "fight.killed.defeated": {
+      "template": ".  Defeated ",
+      "source": "fight.c:682",
+      "function": "killed",
+      "note": "original English printf format"
+    },
+    "fight.killed.defeated_trailing_space": {
+      "template": "defeated ",
+      "source": "fight.c:689",
+      "function": "killed",
+      "note": "original English printf format"
+    },
+    "fight.killed.you_have": {
+      "template": "you have ",
+      "source": "fight.c:688",
+      "function": "killed",
+      "note": "original English printf format"
+    },
+    "fight.miss.string": {
+      "template": " %s",
+      "source": "fight.c:582",
+      "function": "miss",
+      "note": "original English printf format"
+    },
+    "fight.roll_em.damage_for_x_came_out_dplus_add_dam_def_arm": {
+      "template": "Damage for %dx%d came out %d, dplus = %d, add_dam = %d, def_arm = %d",
+      "source": "fight.c:474",
+      "function": "roll_em",
+      "note": "original English printf format"
+    },
+    "fight.thunk.string": {
+      "template": "%s",
+      "source": "fight.c:520",
+      "function": "thunk",
+      "note": "original English printf format"
+    },
+    "fight.thunk.the_hits": {
+      "template": "the %s hits ",
+      "source": "fight.c:517",
+      "function": "thunk",
+      "note": "original English printf format"
+    },
+    "fight.thunk.you_hit": {
+      "template": "you hit ",
+      "source": "fight.c:519",
+      "function": "thunk",
+      "note": "original English printf format"
+    },
+    "io.status.level_gold_hp_str_arm_exp": {
+      "template": "Level: %d  Gold: %-5d  Hp: %*d(%*d)  Str: %2d(%d)  Arm: %-2d  Exp: %d/%ld  %s",
+      "source": "io.c:311",
+      "function": "status",
+      "note": "original English printf format"
+    },
+    "list.new_item.ran_out_of_memory_after_items": {
+      "template": "ran out of memory after %d items",
+      "source": "list.c:104",
+      "function": "new_item",
+      "note": "original English printf format"
+    },
+    "main.quit.really_quit": {
+      "template": "really quit?",
+      "source": "main.c:322",
+      "function": "quit",
+      "note": "original English printf format"
+    },
+    "main.shell.the_browser_has_no_operating_system_shell": {
+      "template": "The browser has no operating-system shell.",
+      "source": "main.c:388",
+      "function": "shell",
+      "note": "original English printf format"
+    },
+    "message.clear": {
+      "template": "",
+      "note": "clear the current message"
+    },
+    "message.legacy": {
+      "template": "",
+      "note": "runtime-composed English fallback; not a translated template"
+    },
+    "message.sequence": {
+      "template": "",
+      "note": "structured sequence of message_part values"
+    },
+    "misc.add_haste.you_faint_from_exhaustion": {
+      "template": "you faint from exhaustion",
+      "source": "misc.c:393",
+      "function": "add_haste",
+      "note": "original English printf format"
+    },
+    "misc.call_it.call_it": {
+      "template": "call it: ",
+      "source": "misc.c:580",
+      "function": "call_it",
+      "note": "original English printf format"
+    },
+    "misc.call_it.what_do_you_want_to_call_it": {
+      "template": "what do you want to call it? ",
+      "source": "misc.c:580",
+      "function": "call_it",
+      "note": "original English printf format"
+    },
+    "misc.check_level.welcome_to_level": {
+      "template": "welcome to level %d",
+      "source": "misc.c:341",
+      "function": "check_level",
+      "note": "original English printf format"
+    },
+    "misc.eat.my_that_was_a_yummy": {
+      "template": "my, that was a yummy %s",
+      "source": "misc.c:307",
+      "function": "eat",
+      "note": "original English printf format"
+    },
+    "misc.eat.that_tasted_good": {
+      "template": "%s, that tasted good",
+      "source": "misc.c:316",
+      "function": "eat",
+      "note": "original English printf format"
+    },
+    "misc.eat.thats_inedible": {
+      "template": "that's Inedible!",
+      "source": "misc.c:296",
+      "function": "eat",
+      "note": "original English printf format"
+    },
+    "misc.eat.this_food_tastes_awful": {
+      "template": "%s, this food tastes awful",
+      "source": "misc.c:312",
+      "function": "eat",
+      "note": "original English printf format"
+    },
+    "misc.eat.ugh_you_would_get_ill_if_you_ate_that": {
+      "template": "ugh, you would get ill if you ate that",
+      "source": "misc.c:294",
+      "function": "eat",
+      "note": "original English printf format"
+    },
+    "misc.get_dir.which_direction": {
+      "template": "which direction? ",
+      "source": "misc.c:482",
+      "function": "get_dir",
+      "note": "original English printf format"
+    },
+    "misc.is_current.in_use": {
+      "template": "in use",
+      "source": "misc.c:454",
+      "function": "is_current",
+      "note": "original English printf format"
+    },
+    "misc.is_current.thats_already": {
+      "template": "That's already ",
+      "source": "misc.c:453",
+      "function": "is_current",
+      "note": "original English printf format"
+    },
+    "monsters.wake_monster.cant_find_monster_in_wake_monster": {
+      "template": "can't find monster in wake_monster",
+      "source": "monsters.c:159",
+      "function": "wake_monster",
+      "note": "original English printf format"
+    },
+    "monsters.wake_monster.possessive_apostrophe": {
+      "template": "'",
+      "source": "monsters.c:193",
+      "function": "wake_monster",
+      "note": "original English printf format"
+    },
+    "monsters.wake_monster.s_gaze_has_confused_you": {
+      "template": "s gaze has confused you",
+      "source": "monsters.c:194",
+      "function": "wake_monster",
+      "note": "original English printf format"
+    },
+    "monsters.wake_monster.string": {
+      "template": "%s",
+      "source": "monsters.c:191",
+      "function": "wake_monster",
+      "note": "original English printf format"
+    },
+    "monsters.wanderer.started_a_wandering": {
+      "template": "started a wandering %s",
+      "source": "monsters.c:142",
+      "function": "wanderer",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.a_gush_of_water_hits_you_on_the_head": {
+      "template": "a gush of water hits you on the head",
+      "source": "move.c:349",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.a_light_flashes_in_your_eyes": {
+      "template": "a %s light flashes in your eyes",
+      "source": "move.c:293",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.a_poisoned_dart_killed_you": {
+      "template": "a poisoned dart killed you",
+      "source": "move.c:341",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.a_small_dart_just_hit_you_in_the_shoulder": {
+      "template": "a small dart just hit you in the shoulder",
+      "source": "move.c:346",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.a_small_dart_whizzes_by_your_ear_and_vanishes": {
+      "template": "a small dart whizzes by your ear and vanishes",
+      "source": "move.c:335",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.a_spike_shoots_past_your_ear": {
+      "template": "a spike shoots past your ear!",
+      "source": "move.c:294",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.a_strange_white_mist_envelops_you_and_you_fall_asleep": {
+      "template": "a strange white mist envelops you and you fall asleep",
+      "source": "move.c:304",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.an_arrow_killed_you": {
+      "template": "an arrow killed you",
+      "source": "move.c:311",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.an_arrow_shoots_past_you": {
+      "template": "an arrow shoots past you",
+      "source": "move.c:324",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.multi_colored_lines_swirl_around_you_then_fade": {
+      "template": "multi-colored lines swirl around you, then fade",
+      "source": "move.c:292",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.oh_no_an_arrow_shot_you": {
+      "template": "oh no! An arrow shot you",
+      "source": "move.c:315",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.sparks_dance_across_your_armor": {
+      "template": "%s sparks dance across your armor",
+      "source": "move.c:295",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.the_light_in_here_suddenly_seems": {
+      "template": "the light in here suddenly seems %s",
+      "source": "move.c:290",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.time_now_seems_to_be_going_slower": {
+      "template": "time now seems to be going slower",
+      "source": "move.c:298",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.you_are_caught_in_a_bear_trap": {
+      "template": "you are caught in a bear trap",
+      "source": "move.c:285",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.you_are_suddenly_in_a_parallel_dimension": {
+      "template": "you are suddenly in a parallel dimension",
+      "source": "move.c:289",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.you_feel_a_sting_in_the_side_of_your_neck": {
+      "template": "you feel a sting in the side of your neck",
+      "source": "move.c:291",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.you_feel_time_speed_up_suddenly": {
+      "template": "you feel time speed up suddenly",
+      "source": "move.c:297",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.you_fell_into_a_trap": {
+      "template": "you fell into a trap!",
+      "source": "move.c:282",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.you_pack_turns": {
+      "template": "you pack turns %s!",
+      "source": "move.c:299",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.be_trapped.you_suddenly_feel_very_thirsty": {
+      "template": "you suddenly feel very thirsty",
+      "source": "move.c:296",
+      "function": "be_trapped",
+      "note": "original English printf format"
+    },
+    "move.do_move.you_are_being_held": {
+      "template": "you are being held",
+      "source": "move.c:101",
+      "function": "do_move",
+      "note": "original English printf format"
+    },
+    "move.do_move.you_are_still_stuck_in_the_bear_trap": {
+      "template": "you are still stuck in the bear trap",
+      "source": "move.c:51",
+      "function": "do_move",
+      "note": "original English printf format"
+    },
+    "move.rust_armor.the_rust_vanishes_instantly": {
+      "template": "the rust vanishes instantly",
+      "source": "move.c:415",
+      "function": "rust_armor",
+      "note": "original English printf format"
+    },
+    "move.rust_armor.your_armor_appears_to_be_weaker_now_oh_my": {
+      "template": "your armor appears to be weaker now. Oh my!",
+      "source": "move.c:421",
+      "function": "rust_armor",
+      "note": "original English printf format"
+    },
+    "move.rust_armor.your_armor_weakens": {
+      "template": "your armor weakens",
+      "source": "move.c:423",
+      "function": "rust_armor",
+      "note": "original English printf format"
+    },
+    "pack.add_pack.string_character": {
+      "template": "%s (%c)",
+      "source": "pack.c:159",
+      "function": "add_pack",
+      "note": "original English printf format"
+    },
+    "pack.add_pack.the_scroll_turns_to_dust_as_you_pick_it_up": {
+      "template": "the scroll turns to dust as you pick it up",
+      "source": "pack.c:52",
+      "function": "add_pack",
+      "note": "original English printf format"
+    },
+    "pack.add_pack.you_now_have": {
+      "template": "you now have ",
+      "source": "pack.c:158",
+      "function": "add_pack",
+      "note": "original English printf format"
+    },
+    "pack.get_item.for_list": {
+      "template": "? (* for list): ",
+      "source": "pack.c:444",
+      "function": "get_item",
+      "note": "original English printf format"
+    },
+    "pack.get_item.is_not_a_valid_item": {
+      "template": "'%s' is not a valid item",
+      "source": "pack.c:476",
+      "function": "get_item",
+      "note": "original English printf format"
+    },
+    "pack.get_item.what": {
+      "template": " what",
+      "source": "pack.c:443",
+      "function": "get_item",
+      "note": "original English printf format"
+    },
+    "pack.get_item.which_object_do_you_want_to": {
+      "template": "which object do you want to ",
+      "source": "pack.c:440",
+      "function": "get_item",
+      "note": "original English printf format"
+    },
+    "pack.get_item.you_arent_carrying_anything": {
+      "template": "you aren't carrying anything",
+      "source": "pack.c:426",
+      "function": "get_item",
+      "note": "original English printf format"
+    },
+    "pack.get_item.you_ran_out": {
+      "template": "you ran out",
+      "source": "pack.c:431",
+      "function": "get_item",
+      "note": "original English printf format"
+    },
+    "pack.inventory.empty_handed": {
+      "template": "empty handed",
+      "source": "pack.c:300",
+      "function": "inventory",
+      "note": "original English printf format"
+    },
+    "pack.inventory.nothing_appropriate": {
+      "template": "nothing appropriate",
+      "source": "pack.c:300",
+      "function": "inventory",
+      "note": "original English printf format"
+    },
+    "pack.inventory.you_are_empty_handed": {
+      "template": "you are empty handed",
+      "source": "pack.c:303",
+      "function": "inventory",
+      "note": "original English printf format"
+    },
+    "pack.inventory.you_dont_have_anything_appropriate": {
+      "template": "you don't have anything appropriate",
+      "source": "pack.c:303",
+      "function": "inventory",
+      "note": "original English printf format"
+    },
+    "pack.money.gold_pieces": {
+      "template": "%d gold pieces",
+      "source": "pack.c:501",
+      "function": "money",
+      "note": "original English printf format"
+    },
+    "pack.money.you_found": {
+      "template": "you found ",
+      "source": "pack.c:500",
+      "function": "money",
+      "note": "original English printf format"
+    },
+    "pack.move_msg.moved_onto": {
+      "template": "moved onto %s",
+      "source": "pack.c:365",
+      "function": "move_msg",
+      "note": "original English printf format"
+    },
+    "pack.move_msg.you": {
+      "template": "you ",
+      "source": "pack.c:364",
+      "function": "move_msg",
+      "note": "original English printf format"
+    },
+    "pack.pack_room.in_your_pack": {
+      "template": " in your pack",
+      "source": "pack.c:177",
+      "function": "pack_room",
+      "note": "original English printf format"
+    },
+    "pack.pack_room.no_room": {
+      "template": "no room",
+      "source": "pack.c:175",
+      "function": "pack_room",
+      "note": "original English printf format"
+    },
+    "pack.pack_room.theres": {
+      "template": "there's ",
+      "source": "pack.c:174",
+      "function": "pack_room",
+      "note": "original English printf format"
+    },
+    "pack.pick_up.where_did_you_pick_a_up": {
+      "template": "Where did you pick a '%s' up???",
+      "source": "pack.c:340",
+      "function": "pick_up",
+      "note": "original English printf format"
+    },
+    "pack.picky_inven.a": {
+      "template": "a) %s",
+      "source": "pack.c:382",
+      "function": "picky_inven",
+      "note": "original English printf format"
+    },
+    "pack.picky_inven.character_string": {
+      "template": "%c) %s",
+      "source": "pack.c:395",
+      "function": "picky_inven",
+      "note": "original English printf format"
+    },
+    "pack.picky_inven.item": {
+      "template": "item: ",
+      "source": "pack.c:385",
+      "function": "picky_inven",
+      "note": "original English printf format"
+    },
+    "pack.picky_inven.not_in_pack": {
+      "template": "'%s' not in pack",
+      "source": "pack.c:398",
+      "function": "picky_inven",
+      "note": "original English printf format"
+    },
+    "pack.picky_inven.which_item_do_you_wish_to_inventory": {
+      "template": "which item do you wish to inventory: ",
+      "source": "pack.c:385",
+      "function": "picky_inven",
+      "note": "original English printf format"
+    },
+    "pack.picky_inven.you_arent_carrying_anything": {
+      "template": "you aren't carrying anything",
+      "source": "pack.c:380",
+      "function": "picky_inven",
+      "note": "original English printf format"
+    },
+    "passages.conn.error_in_connection_tables": {
+      "template": "error in connection tables",
+      "source": "passages.c:217",
+      "function": "conn",
+      "note": "original English printf format"
+    },
+    "passages.conn.warning_connectivity_problem_on_this_level": {
+      "template": "warning, connectivity problem on this level",
+      "source": "passages.c:265",
+      "function": "conn",
+      "note": "original English printf format"
+    },
+    "potions.quaff.hey_this_tastes_great_it_make_you_feel_warm_all_over": {
+      "template": "hey, this tastes great.  It make you feel warm all over",
+      "source": "potions.c:205",
+      "function": "quaff",
+      "note": "original English printf format"
+    },
+    "potions.quaff.thats_undrinkable": {
+      "template": "that's undrinkable",
+      "source": "potions.c:77",
+      "function": "quaff",
+      "note": "original English printf format"
+    },
+    "potions.quaff.what_an_odd_tasting_potion": {
+      "template": "what an odd tasting potion!",
+      "source": "potions.c:212",
+      "function": "quaff",
+      "note": "original English printf format"
+    },
+    "potions.quaff.you_begin_to_feel_better": {
+      "template": "you begin to feel better",
+      "source": "potions.c:108",
+      "function": "quaff",
+      "note": "original English printf format"
+    },
+    "potions.quaff.you_begin_to_feel_much_better": {
+      "template": "you begin to feel much better",
+      "source": "potions.c:188",
+      "function": "quaff",
+      "note": "original English printf format"
+    },
+    "potions.quaff.you_feel_momentarily_sick": {
+      "template": "you feel momentarily sick",
+      "source": "potions.c:96",
+      "function": "quaff",
+      "note": "original English printf format"
+    },
+    "potions.quaff.you_feel_stronger_now_what_bulging_muscles": {
+      "template": "you feel stronger, now.  What bulging muscles!",
+      "source": "potions.c:112",
+      "function": "quaff",
+      "note": "original English printf format"
+    },
+    "potions.quaff.you_feel_very_sick_now": {
+      "template": "you feel very sick now",
+      "source": "potions.c:100",
+      "function": "quaff",
+      "note": "original English printf format"
+    },
+    "potions.quaff.you_feel_yourself_moving_much_faster": {
+      "template": "you feel yourself moving much faster",
+      "source": "potions.c:193",
+      "function": "quaff",
+      "note": "original English printf format"
+    },
+    "potions.quaff.you_have_a_feeling_for_a_moment_then_it_passes": {
+      "template": "you have a %s feeling for a moment, then it passes",
+      "source": "potions.c:117",
+      "function": "quaff",
+      "note": "original English printf format"
+    },
+    "potions.quaff.you_suddenly_feel_much_more_skillful": {
+      "template": "you suddenly feel much more skillful",
+      "source": "potions.c:176",
+      "function": "quaff",
+      "note": "original English printf format"
+    },
+    "potions.quaff.yuk_why_would_you_want_to_drink_that": {
+      "template": "yuk! Why would you want to drink that?",
+      "source": "potions.c:75",
+      "function": "quaff",
+      "note": "original English printf format"
+    },
+    "rings.gethand.l_or_r": {
+      "template": "L or R",
+      "source": "rings.c:148",
+      "function": "gethand",
+      "note": "original English printf format"
+    },
+    "rings.gethand.left_hand_or_right_hand": {
+      "template": "left hand or right hand? ",
+      "source": "rings.c:139",
+      "function": "gethand",
+      "note": "original English printf format"
+    },
+    "rings.gethand.left_or_right_ring": {
+      "template": "left or right ring? ",
+      "source": "rings.c:137",
+      "function": "gethand",
+      "note": "original English printf format"
+    },
+    "rings.gethand.please_type_l_or_r": {
+      "template": "please type L or R",
+      "source": "rings.c:150",
+      "function": "gethand",
+      "note": "original English printf format"
+    },
+    "rings.ring_off.no_rings": {
+      "template": "no rings",
+      "source": "rings.c:102",
+      "function": "ring_off",
+      "note": "original English printf format"
+    },
+    "rings.ring_off.not_wearing_such_a_ring": {
+      "template": "not wearing such a ring",
+      "source": "rings.c:118",
+      "function": "ring_off",
+      "note": "original English printf format"
+    },
+    "rings.ring_off.was_wearing": {
+      "template": "was wearing %s(%c)",
+      "source": "rings.c:122",
+      "function": "ring_off",
+      "note": "original English printf format"
+    },
+    "rings.ring_off.you_arent_wearing_any_rings": {
+      "template": "you aren't wearing any rings",
+      "source": "rings.c:104",
+      "function": "ring_off",
+      "note": "original English printf format"
+    },
+    "rings.ring_on.it_would_be_difficult_to_wrap_that_around_a_finger": {
+      "template": "it would be difficult to wrap that around a finger",
+      "source": "rings.c:36",
+      "function": "ring_on",
+      "note": "original English printf format"
+    },
+    "rings.ring_on.not_a_ring": {
+      "template": "not a ring",
+      "source": "rings.c:38",
+      "function": "ring_on",
+      "note": "original English printf format"
+    },
+    "rings.ring_on.string_character": {
+      "template": "%s (%c)",
+      "source": "rings.c:85",
+      "function": "ring_on",
+      "note": "original English printf format"
+    },
+    "rings.ring_on.wearing_two": {
+      "template": "wearing two",
+      "source": "rings.c:62",
+      "function": "ring_on",
+      "note": "original English printf format"
+    },
+    "rings.ring_on.you_already_have_a_ring_on_each_hand": {
+      "template": "you already have a ring on each hand",
+      "source": "rings.c:60",
+      "function": "ring_on",
+      "note": "original English printf format"
+    },
+    "rings.ring_on.you_are_now_wearing": {
+      "template": "you are now wearing ",
+      "source": "rings.c:84",
+      "function": "ring_on",
+      "note": "original English printf format"
+    },
+    "save.restore.file_name": {
+      "template": "file name: %s",
+      "source": "save.c:279",
+      "function": "restore",
+      "note": "original English printf format"
+    },
+    "save.save_game.file_exists_do_you_wish_to_overwrite_it": {
+      "template": "File exists.  Do you wish to overwrite it?",
+      "source": "save.c:94",
+      "function": "save_game",
+      "note": "original English printf format"
+    },
+    "save.save_game.file_name": {
+      "template": "file name: ",
+      "source": "save.c:77",
+      "function": "save_game",
+      "note": "original English printf format"
+    },
+    "save.save_game.file_name_plain": {
+      "template": "file name: %s",
+      "source": "save.c:105",
+      "function": "save_game",
+      "note": "original English printf format"
+    },
+    "save.save_game.please_answer_y_or_n": {
+      "template": "please answer Y or N",
+      "source": "save.c:63",
+      "function": "save_game",
+      "note": "original English printf format"
+    },
+    "save.save_game.please_answer_y_or_n_capitalized": {
+      "template": "Please answer Y or N",
+      "source": "save.c:103",
+      "function": "save_game",
+      "note": "original English printf format"
+    },
+    "save.save_game.save_file": {
+      "template": "save file (%s)? ",
+      "source": "save.c:52",
+      "function": "save_game",
+      "note": "original English printf format"
+    },
+    "save.save_game.string": {
+      "template": "%s",
+      "source": "save.c:110",
+      "function": "save_game",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.freeze": {
+      "template": " freeze",
+      "source": "scrolls.c:95",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.nothing_to_read": {
+      "template": "nothing to read",
+      "source": "scrolls.c:43",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.oh_now_this_scroll_has_a_map_on_it": {
+      "template": "oh, now this scroll has a map on it",
+      "source": "scrolls.c:166",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.s": {
+      "template": "s",
+      "source": "scrolls.c:97",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.s_around_you": {
+      "template": "s around you",
+      "source": "scrolls.c:94",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.the_monster": {
+      "template": "the monster",
+      "source": "scrolls.c:92",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.there_is_nothing_on_it_to_read": {
+      "template": "there is nothing on it to read",
+      "source": "scrolls.c:41",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.this_scroll_is_an_scroll": {
+      "template": "this scroll is an %s scroll",
+      "source": "scrolls.c:158",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.what_a_puzzling_scroll": {
+      "template": "what a puzzling scroll!",
+      "source": "scrolls.c:305",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.you_fall_asleep": {
+      "template": "you fall asleep",
+      "source": "scrolls.c:110",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.you_feel_a_strange_sense_of_loss": {
+      "template": "you feel a strange sense of loss",
+      "source": "scrolls.c:102",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.you_feel_as_if_somebody_is_watching_over_you": {
+      "template": "you feel as if somebody is watching over you",
+      "source": "scrolls.c:285",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.you_feel_in_touch_with_the_universal_onenes": {
+      "template": "you feel in touch with the Universal Onenes",
+      "source": "scrolls.c:285",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.you_hear_a_faint_cry_of_anguish_in_the_distance": {
+      "template": "you hear a faint cry of anguish in the distance",
+      "source": "scrolls.c:140",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.you_hear_a_high_pitched_humming_noise": {
+      "template": "you hear a high pitched humming noise",
+      "source": "scrolls.c:293",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.you_hear_maniacal_laughter_in_the_distance": {
+      "template": "you hear maniacal laughter in the distance",
+      "source": "scrolls.c:279",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.your_armor_glows_for_a_moment": {
+      "template": "your armor glows %s for a moment",
+      "source": "scrolls.c:71",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.your_armor_is_covered_by_a_shimmering_shield": {
+      "template": "your armor is covered by a shimmering %s shield",
+      "source": "scrolls.c:298",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.your_glows_for_a_moment": {
+      "template": "your %s glows %s for a moment",
+      "source": "scrolls.c:271",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.your_hands_begin_to_glow": {
+      "template": "your hands begin to glow %s",
+      "source": "scrolls.c:65",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "scrolls.read_scroll.your_nose_tingles": {
+      "template": "your nose tingles",
+      "source": "scrolls.c:249",
+      "function": "read_scroll",
+      "note": "original English printf format"
+    },
+    "sticks.do_zap.by_a_shimmering_light": {
+      "template": " by a shimmering %s light",
+      "source": "sticks.c:87",
+      "function": "do_zap",
+      "note": "original English printf format"
+    },
+    "sticks.do_zap.missle_vanishes": {
+      "template": "missle vanishes",
+      "source": "sticks.c:189",
+      "function": "do_zap",
+      "note": "original English printf format"
+    },
+    "sticks.do_zap.nothing_happens": {
+      "template": "nothing happens",
+      "source": "sticks.c:66",
+      "function": "do_zap",
+      "note": "original English printf format"
+    },
+    "sticks.do_zap.the_corridor_glows_and_then_fades": {
+      "template": "the corridor glows and then fades",
+      "source": "sticks.c:77",
+      "function": "do_zap",
+      "note": "original English printf format"
+    },
+    "sticks.do_zap.the_missle_vanishes_with_a_puff_of_smoke": {
+      "template": "the missle vanishes with a puff of smoke",
+      "source": "sticks.c:191",
+      "function": "do_zap",
+      "note": "original English printf format"
+    },
+    "sticks.do_zap.the_room_is_lit": {
+      "template": "the room is lit",
+      "source": "sticks.c:85",
+      "function": "do_zap",
+      "note": "original English printf format"
+    },
+    "sticks.do_zap.what_a_bizarre_schtick": {
+      "template": "what a bizarre schtick!",
+      "source": "sticks.c:237",
+      "function": "do_zap",
+      "note": "original English printf format"
+    },
+    "sticks.do_zap.you_are_too_weak_to_use_it": {
+      "template": "you are too weak to use it",
+      "source": "sticks.c:98",
+      "function": "do_zap",
+      "note": "original English printf format"
+    },
+    "sticks.do_zap.you_cant_zap_with_that": {
+      "template": "you can't zap with that!",
+      "source": "sticks.c:61",
+      "function": "do_zap",
+      "note": "original English printf format"
+    },
+    "sticks.drain.you_have_a_tingling_feeling": {
+      "template": "you have a tingling feeling",
+      "source": "sticks.c:275",
+      "function": "drain",
+      "note": "original English printf format"
+    },
+    "sticks.fire_bolt.misses": {
+      "template": "%s misses",
+      "source": "sticks.c:380",
+      "function": "fire_bolt",
+      "note": "original English printf format"
+    },
+    "sticks.fire_bolt.off_the_dragon": {
+      "template": " off the dragon",
+      "source": "sticks.c:369",
+      "function": "fire_bolt",
+      "note": "original English printf format"
+    },
+    "sticks.fire_bolt.the_bounces": {
+      "template": "the %s bounces",
+      "source": "sticks.c:352",
+      "function": "fire_bolt",
+      "note": "original English printf format"
+    },
+    "sticks.fire_bolt.the_flame_bounces": {
+      "template": "the flame bounces",
+      "source": "sticks.c:367",
+      "function": "fire_bolt",
+      "note": "original English printf format"
+    },
+    "sticks.fire_bolt.the_hits": {
+      "template": "the %s hits",
+      "source": "sticks.c:400",
+      "function": "fire_bolt",
+      "note": "original English printf format"
+    },
+    "sticks.fire_bolt.the_whizzes_by_you": {
+      "template": "the %s whizzes by you",
+      "source": "sticks.c:405",
+      "function": "fire_bolt",
+      "note": "original English printf format"
+    },
+    "sticks.fire_bolt.the_whizzes_past": {
+      "template": "the %s whizzes past %s",
+      "source": "sticks.c:382",
+      "function": "fire_bolt",
+      "note": "original English printf format"
+    },
+    "sticks.fire_bolt.you_are_hit_by_the": {
+      "template": "you are hit by the %s",
+      "source": "sticks.c:402",
+      "function": "fire_bolt",
+      "note": "original English printf format"
+    },
+    "things.discovered.for": {
+      "template": "for ",
+      "source": "things.c:365",
+      "function": "discovered",
+      "note": "original English printf format"
+    },
+    "things.discovered.for_all": {
+      "template": "? (* for all)",
+      "source": "things.c:369",
+      "function": "discovered",
+      "note": "original English printf format"
+    },
+    "things.discovered.not_a_type": {
+      "template": "Not a type",
+      "source": "things.c:385",
+      "function": "discovered",
+      "note": "original English printf format"
+    },
+    "things.discovered.of_object_do_you_want_a_list": {
+      "template": " of object do you want a list",
+      "source": "things.c:368",
+      "function": "discovered",
+      "note": "original English printf format"
+    },
+    "things.discovered.please_type_one_of_escape_to_quit": {
+      "template": "Please type one of %c%c%c%c (ESCAPE to quit)",
+      "source": "things.c:387",
+      "function": "discovered",
+      "note": "original English printf format"
+    },
+    "things.discovered.what_type": {
+      "template": "what type",
+      "source": "things.c:366",
+      "function": "discovered",
+      "note": "original English printf format"
+    },
+    "things.drop.dropped": {
+      "template": "dropped %s",
+      "source": "things.c:170",
+      "function": "drop",
+      "note": "original English printf format"
+    },
+    "things.drop.there_is_something_there_already": {
+      "template": "there is something there already",
+      "source": "things.c:153",
+      "function": "drop",
+      "note": "original English printf format"
+    },
+    "things.dropcheck.you_cant_it_appears_to_be_cursed": {
+      "template": "you can't.  It appears to be cursed",
+      "source": "things.c:187",
+      "function": "dropcheck",
+      "note": "original English printf format"
+    },
+    "things.inv_name.picked_up_something_funny": {
+      "template": "Picked up something funny %s",
+      "source": "things.c:114",
+      "function": "inv_name",
+      "note": "original English printf format"
+    },
+    "things.new_thing.picked_a_bad_kind_of_object": {
+      "template": "Picked a bad kind of object",
+      "source": "things.c:296",
+      "function": "new_thing",
+      "note": "original English printf format"
+    },
+    "things.pick_one.bad_pick_one_from_items": {
+      "template": "bad pick_one: %d from %d items",
+      "source": "things.c:323",
+      "function": "pick_one",
+      "note": "original English printf format"
+    },
+    "things.pick_one.string_number": {
+      "template": "%s: %d%%",
+      "source": "things.c:325",
+      "function": "pick_one",
+      "note": "original English printf format"
+    },
+    "things.pr_list.for": {
+      "template": "for ",
+      "source": "things.c:711",
+      "function": "pr_list",
+      "note": "original English printf format"
+    },
+    "things.pr_list.of_object_do_you_want_a_list": {
+      "template": " of object do you want a list",
+      "source": "things.c:714",
+      "function": "pr_list",
+      "note": "original English printf format"
+    },
+    "things.pr_list.question_prompt": {
+      "template": "? ",
+      "source": "things.c:715",
+      "function": "pr_list",
+      "note": "original English printf format"
+    },
+    "things.pr_list.what_type": {
+      "template": "what type",
+      "source": "things.c:712",
+      "function": "pr_list",
+      "note": "original English printf format"
+    },
+    "weapons.fall.the_vanishes_as_it_hits_the_ground": {
+      "template": "the %s vanishes as it hits the ground",
+      "source": "weapons.c:149",
+      "function": "fall",
+      "note": "original English printf format"
+    },
+    "weapons.wield.wielding": {
+      "template": "wielding %s (%c)",
+      "source": "weapons.c:257",
+      "function": "wield",
+      "note": "original English printf format"
+    },
+    "weapons.wield.you_are_now": {
+      "template": "you are now ",
+      "source": "weapons.c:256",
+      "function": "wield",
+      "note": "original English printf format"
+    },
+    "weapons.wield.you_cant_wield_armor": {
+      "template": "you can't wield armor",
+      "source": "weapons.c:247",
+      "function": "wield",
+      "note": "original English printf format"
+    },
+    "wizard.create_obj.blessing_n": {
+      "template": "blessing? (+,-,n)",
+      "source": "wizard.c:144",
+      "function": "create_obj",
+      "note": "original English printf format"
+    },
+    "wizard.create_obj.how_much": {
+      "template": "how much?",
+      "source": "wizard.c:187",
+      "function": "create_obj",
+      "note": "original English printf format"
+    },
+    "wizard.create_obj.type_of_item": {
+      "template": "type of item: ",
+      "source": "wizard.c:134",
+      "function": "create_obj",
+      "note": "original English printf format"
+    },
+    "wizard.create_obj.which_do_you_want_f": {
+      "template": "which %c do you want? (0-f)",
+      "source": "wizard.c:137",
+      "function": "create_obj",
+      "note": "original English printf format"
+    },
+    "wizard.passwd.wizards_password": {
+      "template": "wizard's Password:",
+      "source": "wizard.c:244",
+      "function": "passwd",
+      "note": "original English printf format"
+    },
+    "wizard.whatis.you_dont_have_anything_in_your_pack_to_identify": {
+      "template": "you don't have anything in your pack to identify",
+      "source": "wizard.c:32",
+      "function": "whatis",
+      "note": "original English printf format"
+    },
+    "wizard.whatis.you_must_identify_a": {
+      "template": "you must identify a %s",
+      "source": "wizard.c:47",
+      "function": "whatis",
+      "note": "original English printf format"
+    },
+    "wizard.whatis.you_must_identify_something": {
+      "template": "you must identify something",
+      "source": "wizard.c:44",
+      "function": "whatis",
+      "note": "original English printf format"
+    }
+  }
+}

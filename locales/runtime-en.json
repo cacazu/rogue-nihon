@@ -1,0 +1,203 @@
+{
+  "schema": 1,
+  "language": "en",
+  "messages": {
+    "message.entity": {
+      "template": "{0}",
+      "conversions": [
+        "s"
+      ],
+      "notation_only": true
+    },
+    "ui.text": {
+      "template": "{0}",
+      "conversions": [
+        "s"
+      ],
+      "notation_only": true
+    },
+    "ui.inventory.entry": {
+      "template": "{0}) {1}",
+      "conversions": [
+        "c",
+        "s"
+      ],
+      "notation_only": true
+    },
+    "ui.status": {
+      "template": "Level: {0} Gold: {1} HP: {2}({3}) Str: {4}({5}) Arm: {6} Exp: {7}/{8} {9}",
+      "conversions": [
+        "d",
+        "d",
+        "d",
+        "d",
+        "d",
+        "d",
+        "d",
+        "d",
+        "d",
+        "s"
+      ]
+    },
+    "ui.more": {
+      "template": "--More--",
+      "conversions": []
+    },
+    "input.wait_enter": {
+      "template": "Press Enter to continue",
+      "conversions": []
+    },
+    "ui.detect_magic": {
+      "template": "You sense the presence of magic on this level.--More--",
+      "conversions": []
+    },
+    "ui.detect_food": {
+      "template": "Your nose tingles and you smell food.--More--",
+      "conversions": []
+    },
+    "ui.level_map": {
+      "template": "---More (level map)---",
+      "conversions": []
+    },
+    "ui.quit_gold": {
+      "template": "You quit with {0} gold pieces",
+      "conversions": [
+        "d"
+      ]
+    },
+    "ui.untranslated": {
+      "template": "{0}",
+      "conversions": [
+        "s"
+      ],
+      "notation_only": true
+    },
+    "platform.save_error": {
+      "template": "Save unavailable",
+      "conversions": []
+    },
+    "platform.restore_error": {
+      "template": "Restore unavailable",
+      "conversions": []
+    },
+    "platform.input_limit": {
+      "template": "Input journal limit reached",
+      "conversions": []
+    },
+    "platform.name_error": {
+      "template": "Invalid player name",
+      "conversions": []
+    },
+    "platform.error": {
+      "template": "Game system error",
+      "conversions": []
+    },
+    "outcome.ended": {
+      "template": "ended",
+      "conversions": []
+    },
+    "outcome.input_ended": {
+      "template": "input ended",
+      "conversions": []
+    },
+    "outcome.quit": {
+      "template": "quit",
+      "conversions": []
+    },
+    "outcome.died": {
+      "template": "died",
+      "conversions": []
+    },
+    "outcome.won": {
+      "template": "won",
+      "conversions": []
+    },
+    "outcome.invalid_state": {
+      "template": "invalid game state",
+      "conversions": []
+    },
+    "outcome.restore_error": {
+      "template": "invalid restore checkpoint",
+      "conversions": []
+    },
+    "outcome.allocation_error": {
+      "template": "knowledge allocation failed",
+      "conversions": []
+    },
+    "outcome.fatal": {
+      "template": "Okay, bye bye!",
+      "conversions": []
+    },
+    "potion.effect.confused": {
+      "template": "wait, what's going on here. Huh? What? Who?",
+      "conversions": []
+    },
+    "potion.effect.confused.high": {
+      "template": "what a tripy feeling!",
+      "conversions": []
+    },
+    "potion.effect.hallucinating": {
+      "template": "Oh, wow!  Everything seems so cosmic!",
+      "conversions": []
+    },
+    "potion.effect.blind": {
+      "template": "a cloak of darkness falls around you",
+      "conversions": []
+    },
+    "potion.effect.blind.high": {
+      "template": "oh, bummer!  Everything is dark!  Help!",
+      "conversions": []
+    },
+    "potion.effect.levitating": {
+      "template": "you start to float in the air",
+      "conversions": []
+    },
+    "potion.effect.levitating.high": {
+      "template": "oh, wow!  You're floating in the air!",
+      "conversions": []
+    },
+    "potion.effect.see_invisible": {
+      "template": "this potion tastes like {0} juice",
+      "conversions": [
+        "s"
+      ]
+    },
+    "status.hunger.0": {
+      "template": "",
+      "conversions": [],
+      "intentional_empty_reason": "通常の空腹状態には追加ラベルを表示しない"
+    },
+    "status.hunger.1": {
+      "template": "Hungry",
+      "conversions": []
+    },
+    "status.hunger.2": {
+      "template": "Weak",
+      "conversions": []
+    },
+    "status.hunger.3": {
+      "template": "Faint",
+      "conversions": []
+    },
+    "projectile.bolt": {
+      "template": "bolt",
+      "argument_types": [],
+      "conversions": []
+    },
+    "projectile.flame": {
+      "template": "flame",
+      "argument_types": [],
+      "conversions": []
+    },
+    "projectile.ice": {
+      "template": "ice",
+      "argument_types": [],
+      "conversions": []
+    },
+    "input.default_fruit": {
+      "template": "slime-mold (default; leave blank to keep)",
+      "argument_types": [],
+      "conversions": []
+    }
+  }
+}

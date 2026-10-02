@@ -1,0 +1,29 @@
+--- acquired/misc.c
++++ baseline-src/misc.c
+@@ -459,12 +459,13 @@
+  *      Set up the direction co_ordinate for use in varios "prefix"
+  *	commands
+  */
++static coord last_delt = {0,0};
++
+ bool
+ get_dir()
+ {
+     char *prompt;
+     bool gotit;
+-    static coord last_delt= {0,0};
+ 
+     if (again && last_dir != '\0')
+     {
+@@ -514,6 +515,11 @@
+     return TRUE;
+ }
+ 
++#ifdef ROGUE_LAYERED
++void rg_direction_state_get(uint32_t *out) {out[0]=(uint32_t)last_delt.x;out[1]=(uint32_t)last_delt.y;}
++void rg_direction_state_set(const uint32_t *in) {last_delt.x=(int32_t)in[0];last_delt.y=(int32_t)in[1];}
++#endif
++
+ /*
+  * sign:
+  *	Return the sign of the number

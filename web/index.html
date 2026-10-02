@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title data-i18n="app.title"></title>
+  <link rel="stylesheet" href="/web/style.css">
+</head>
+<body>
+  <main>
+    <header class="heading"><div><span class="eyebrow" data-i18n="app.version"></span><h1 data-i18n="app.heading"></h1><p data-i18n="app.introduction"></p></div><span id="connection" class="badge"></span></header>
+    <section class="toolbar" data-i18n-aria="app.toolbar">
+      <label><span data-i18n="form.seed"></span><input id="seed" type="number" min="0" max="4294967295" value="12345" inputmode="numeric"></label>
+      <label><span data-i18n="form.name"></span><input id="name" value="Player" maxlength="49" autocomplete="off"></label>
+      <label><span data-i18n="form.language"></span><select id="language"><option value="ja" data-i18n="language.ja"></option><option value="en" data-i18n="language.en"></option></select></label>
+      <button id="new-game" class="primary" data-i18n="action.new"></button>
+      <button id="save" disabled data-i18n="action.save"></button>
+      <button id="load" disabled data-i18n="action.load"></button>
+      <button id="download-save" disabled data-i18n="action.download"></button>
+    </section>
+    <p id="notice" role="status" aria-live="polite"></p>
+    <section class="game-panel" data-i18n-aria="app.game_screen">
+      <div id="player-status" class="player-status" hidden><span id="player-name"></span><span id="status-text"></span></div>
+      <div class="board-scroll"><canvas id="board" tabindex="0" role="img" data-i18n-aria="app.board"></canvas></div>
+      <pre id="accessible-screen" class="sr-only" aria-live="off"></pre>
+      <p id="game-message" class="message" role="status" aria-live="polite"></p>
+      <section id="presentation" class="presentation" hidden>
+        <header><h2 id="presentation-title"></h2><span id="presentation-hint" data-i18n="instruction.selection"></span></header>
+        <div id="presentation-lines" class="presentation-lines" tabindex="0"></div>
+        <div id="more-prompt" class="more-prompt" hidden></div>
+        <form id="text-prompt" class="text-prompt" hidden>
+          <label><span data-i18n="input.text"></span><input id="prompt-text" type="text" autocomplete="off"></label>
+          <button type="submit" data-i18n="action.submit"></button>
+          <button id="cancel-text" type="button" data-i18n="action.cancel"></button>
+        </form>
+      </section>
+      <div class="board-footer"><span id="screen-status"></span><span data-i18n="instruction.mouse"></span></div>
+    </section>
+    <section class="controls" data-i18n-aria="app.controls">
+      <div class="direction-pad" data-i18n-aria="app.directions">
+        <button data-key="Home" data-i18n-aria="direction.nw">↖</button><button data-key="ArrowUp" data-i18n-aria="direction.n">↑</button><button data-key="PageUp" data-i18n-aria="direction.ne">↗</button>
+        <button data-key="ArrowLeft" data-i18n-aria="direction.w">←</button><button data-character="." data-i18n-aria="direction.wait">·</button><button data-key="ArrowRight" data-i18n-aria="direction.e">→</button>
+        <button data-key="End" data-i18n-aria="direction.sw">↙</button><button data-key="ArrowDown" data-i18n-aria="direction.s">↓</button><button data-key="PageDown" data-i18n-aria="direction.se">↘</button>
+      </div>
+      <div class="action-buttons">
+        <button data-character="i"><span data-i18n="action.inventory"></span> <kbd>i</kbd></button>
+        <button data-character="?"><span data-i18n="action.help"></span> <kbd>?</kbd></button>
+        <button data-character=">"><span data-i18n="action.descend"></span> <kbd>&gt;</kbd></button>
+        <button data-character=" "><span data-i18n="action.continue"></span> <kbd>Space</kbd></button>
+        <button data-key="Escape"><span data-i18n="action.cancel"></span> <kbd>Esc</kbd></button>
+      </div>
+      <div class="instructions"><p data-i18n="instruction.movement"></p><p data-i18n="instruction.prompts"></p></div>
+    </section>
+    <details class="credits"><summary data-i18n="credits.title"></summary><p data-i18n="credits.description"></p><a href="/logic/LICENSE.TXT" target="_blank" rel="noopener" data-i18n="credits.license"></a></details>
+  </main>
+  <script src="/web/abi.js"></script>
+  <script src="/web/event-queue.js"></script>
+  <script src="/web/localization.js"></script>
+  <script src="/web/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+--- acquired/daemon.c
++++ logic/daemon.c
+@@ -25,6 +25,23 @@
+     _X_, _X_, _X_, _X_, _X_, _X_, _X_, _X_, _X_, _X_, 
+ };
+ 
++#ifdef ROGUE_LAYERED
++/* Historical C drops an int for zero-argument callbacks. Wasm requires the
++ * actual signature. All registered callbacks are void(void), except turn_see. */
++static void invoke_action(void (*function)(),int argument)
++{
++    if (function == (void(*)())turn_see)
++        (void)turn_see((bool)argument);
++    else if (function == runners || function == doctor || function == stomach ||
++             function == swander || function == rollwand || function == unconfuse ||
++             function == unsee || function == sight || function == nohaste ||
++             function == come_down || function == visuals || function == land)
++        function();
++    else
++        rg_core_abort();
++}
++#endif
++
+ /*
+  * d_slot:
+  *	Find an empty slot in the daemon/fuse list
+@@ -109,7 +126,13 @@
+ 	 * Executing each one, giving it the proper arguments
+ 	 */
+ 	if (dev->d_type == flag && dev->d_time == DAEMON)
++        {
++#ifdef ROGUE_LAYERED
++            invoke_action(dev->d_func,dev->d_arg);
++#else
+ 	    (*dev->d_func)(dev->d_arg);
++#endif
++        }
+ }
+ 
+ /*
+@@ -176,6 +199,10 @@
+ 	if (flag == wire->d_type && wire->d_time > 0 && --wire->d_time == 0)
+ 	{
+ 	    wire->d_type = EMPTY;
++#ifdef ROGUE_LAYERED
++            invoke_action(wire->d_func,wire->d_arg);
++#else
+ 	    (*wire->d_func)(wire->d_arg);
++#endif
+ 	}
+ }

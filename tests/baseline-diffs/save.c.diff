@@ -1,0 +1,161 @@
+--- acquired/save.c
++++ baseline-src/save.c
+@@ -16,14 +16,16 @@
+ #include <errno.h>
+ #include <signal.h>
+ #include <string.h>
+-#include <curses.h>
++#include "knowledge.h"
+ #include "rogue.h"
+ #include "score.h"
++#include "rogue_abi.h"
+ 
+ typedef struct stat STAT;
+ 
+ extern char version[], encstr[];
+ 
++#ifndef ROGUE_LAYERED
+ static STAT sbuf;
+ 
+ /*
+@@ -34,7 +36,7 @@
+ void
+ save_game()
+ {
+-    FILE *savef;
++    FILE *savef = NULL;
+     int c;
+     auto char buf[MAXSTR];
+ 
+@@ -104,8 +106,8 @@
+ 	    md_unlink(file_name);
+ 	}
+ 	strcpy(file_name, buf);
+-	if ((savef = fopen(file_name, "w")) == NULL)
+-	    msg(strerror(errno));
++    if ((savef = fopen(file_name, "wb")) == NULL)
++        msg("%s", strerror(errno));
+     } while (savef == NULL);
+ 
+     save_file(savef);
+@@ -121,12 +123,11 @@
+ void
+ auto_save(int sig)
+ {
+-    FILE *savef;
++    FILE *savef = NULL;
+     NOOP(sig);
+ 
+     md_ignoreallsignals();
+-    if (file_name[0] != '\0' && ((savef = fopen(file_name, "w")) != NULL ||
+-	(md_unlink_open_file(file_name, savef) >= 0 && (savef = fopen(file_name, "w")) != NULL)))
++    if (file_name[0] != '\0' && (savef = fopen(file_name, "wb")) != NULL)
+ 	    save_file(savef);
+     exit(0);
+ }
+@@ -139,7 +140,7 @@
+ void
+ save_file(FILE *savef)
+ {
+-    char buf[80];
++    char buf[80] = {0};
+     mvcur(0, COLS - 1, LINES - 1, 0); 
+     putchar('\n');
+     endwin();
+@@ -148,7 +149,11 @@
+     encwrite(version, strlen(version)+1, savef);
+     sprintf(buf,"%d x %d\n", LINES, COLS);
+     encwrite(buf,80,savef);
+-    rs_save_file(savef);
++    if (rs_save_file(savef) != 0) {
++        fclose(savef);
++        fprintf(stderr, "Unable to write complete saved game.\n");
++        exit(1);
++    }
+     fflush(savef);
+     fclose(savef);
+     exit(0);
+@@ -174,7 +179,7 @@
+ 
+ 	md_tstphold();
+ 
+-	if ((inf = fopen(file,"r")) == NULL)
++	if ((inf = fopen(file,"rb")) == NULL)
+     {
+ 	perror(file);
+ 	return FALSE;
+@@ -183,14 +188,21 @@
+     syml = is_symlink(file);
+ 
+     fflush(stdout);
+-    encread(buf, (unsigned) strlen(version) + 1, inf);
+-    if (strcmp(buf, version) != 0)
+-    {
+-	printf("Sorry, saved game is out of date.\n");
++    memset(buf, 0, sizeof buf);
++    if (strlen(version) >= sizeof buf ||
++        encread(buf, strlen(version) + 1, inf) != strlen(version) + 1 ||
++        strcmp(buf, version) != 0)
++    {
++        printf("Sorry, saved game is out of date.\n");
++        fclose(inf);
+ 	return FALSE;
+     }
+-    encread(buf,80,inf);
+-    sscanf(buf,"%d x %d\n", &lines, &cols);
++    if (encread(buf,80,inf) != 80 || memchr(buf, '\0', 80) == NULL ||
++        sscanf(buf,"%d x %d\n", &lines, &cols) != 2 ||
++        lines < 1 || lines > MAXLINES || cols < 1 || cols > MAXCOLS) {
++        fclose(inf);
++        return FALSE;
++    }
+ 
+     initscr();                          /* Start up cursor package */
+     keypad(stdscr, 1);
+@@ -213,7 +225,11 @@
+     hw = newwin(LINES, COLS, 0, 0);
+     setup();
+ 
+-    rs_restore_file(inf);
++    if (rs_restore_file(inf) != 0) {
++        fclose(inf);
++        endwin();
++        return FALSE;
++    }
+     /*
+      * we do not close the file so that we will have a hold of the
+      * inode for as long as possible
+@@ -265,6 +281,18 @@
+     /*NOTREACHED*/
+     return(0);
+ }
++#else
++/* Persistence is a Rust platform action against the last complete command
++ * checkpoint plus its input journal. Saving inside this original C command
++ * would lose its stack and daemon phase, so the browser action handles it. */
++void
++save_game(void)
++{
++    after = FALSE;
++    rg_host_message("save.browser", "{}",
++        "Use the Save button to persist the current checkpoint.");
++}
++#endif
+ 
+ /*
+  * encwrite:
+@@ -313,12 +341,13 @@
+ 
+     fb = 0;
+ 
+-    if ((read_size = fread(start,1,size,inf)) == 0 || read_size == -1)
++    if ((read_size = fread(start,1,size,inf)) == 0)
+ 	return(read_size);
+ 
+     e1 = encstr;
+     e2 = statlist;
+ 
++    size = read_size;
+     while (size--)
+     {
+ 	*start++ ^= *e1 ^ *e2 ^ fb;

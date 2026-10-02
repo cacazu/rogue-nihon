@@ -1,0 +1,28 @@
+--- acquired/rip.c
++++ baseline-src/rip.c
+@@ -227,10 +227,15 @@
+ void
+ death(char monst)
+ {
++#ifdef ROGUE_LAYERED
++    rg_core_set_outcome(1, "dead");
++#endif
+     char **dp, *killer;
+     struct tm *lt;
+     static time_t date;
++#ifndef ROGUE_LAYERED
+     struct tm *localtime();
++#endif
+ 
+     signal(SIGINT, SIG_IGN);
+     purse -= purse / 10;
+@@ -292,6 +297,9 @@
+ void
+ total_winner()
+ {
++#ifdef ROGUE_LAYERED
++    rg_core_set_outcome(2, "winner");
++#endif
+     THING *obj;
+     struct obj_info *op;
+     int worth = 0;

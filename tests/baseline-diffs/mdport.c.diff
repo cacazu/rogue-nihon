@@ -1,0 +1,15 @@
+--- acquired/mdport.c
++++ baseline-src/mdport.c
+@@ -1,3 +1,6 @@
++#if defined(ROGUE_LAYERED)
++#include "platform_md.h"
++#else
+ /*
+     mdport.c - Machine Dependent Code for Porting Unix/Curses games
+ 
+@@ -1430,3 +1433,5 @@
+ }
+ 
+ #endif
++
++#endif /* ROGUE_LAYERED */

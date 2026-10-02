@@ -1,0 +1,10 @@
+--- acquired/armor.c
++++ baseline-src/armor.c
+@@ -86,4 +86,7 @@
+     do_fuses(BEFORE);
+     do_daemons(AFTER);
+     do_fuses(AFTER);
++#ifdef ROGUE_LAYERED
++    rg_core_tick_complete();
++#endif
+ }

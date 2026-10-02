@@ -1,0 +1,129 @@
+[
+  {
+    "package": "serde-1.0.229",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\serde-1.0.229"
+  },
+  {
+    "package": "serde_core-1.0.229",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\serde_core-1.0.229"
+  },
+  {
+    "package": "serde_json-1.0.151",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\serde_json-1.0.151"
+  },
+  {
+    "package": "itoa-1.0.18",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\itoa-1.0.18"
+  },
+  {
+    "package": "memchr-2.8.3",
+    "declared_license": "license = \"Unlicense OR MIT\"",
+    "included_notices": [
+      "COPYING",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\memchr-2.8.3"
+  },
+  {
+    "package": "zmij-1.0.23",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\zmij-1.0.23"
+  },
+  {
+    "package": "serde_derive-1.0.229",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\serde_derive-1.0.229"
+  },
+  {
+    "package": "proc-macro2-1.0.107",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\proc-macro2-1.0.107"
+  },
+  {
+    "package": "quote-1.0.47",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\quote-1.0.47"
+  },
+  {
+    "package": "syn-3.0.6",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\syn-3.0.6"
+  },
+  {
+    "package": "unicode-ident-1.0.26",
+    "declared_license": "license = \"(MIT OR Apache-2.0) AND Unicode-3.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT",
+      "LICENSE-UNICODE"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\unicode-ident-1.0.26"
+  },
+  {
+    "package": "LICENSE",
+    "source": "C:\\Users\\kit\\emsdk\\upstream\\emscripten\\LICENSE",
+    "included_notices": [
+      "LICENSE"
+    ]
+  },
+  {
+    "package": "musl-COPYRIGHT",
+    "source": "C:\\Users\\kit\\emsdk\\upstream\\emscripten\\system\\lib\\libc\\musl\\COPYRIGHT",
+    "included_notices": [
+      "musl-COPYRIGHT"
+    ]
+  },
+  {
+    "package": "compiler-rt-LICENSE.TXT",
+    "source": "C:\\Users\\kit\\emsdk\\upstream\\emscripten\\system\\lib\\compiler-rt\\LICENSE.TXT",
+    "included_notices": [
+      "compiler-rt-LICENSE.TXT"
+    ]
+  },
+  {
+    "package": "rust-std",
+    "source": "C:\\Users\\kit\\.rustup\\toolchains\\1.98.1-x86_64-pc-windows-gnu\\share\\doc\\rust\\COPYRIGHT.html",
+    "included_notices": [
+      "COPYRIGHT.html"
+    ]
+  }
+]

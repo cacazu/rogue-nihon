@@ -1,0 +1,207 @@
+{
+  "schema": 1,
+  "language": "ja",
+  "messages": {
+    "message.entity": {
+      "template": "{0}",
+      "conversions": [
+        "s"
+      ],
+      "notation_only": true
+    },
+    "ui.text": {
+      "template": "{0}",
+      "conversions": [
+        "s"
+      ],
+      "notation_only": true
+    },
+    "ui.inventory.entry": {
+      "template": "{0}) {1}",
+      "conversions": [
+        "c",
+        "s"
+      ],
+      "notation_only": true
+    },
+    "ui.status": {
+      "template": "地下{0}階　所持金：{1}　HP：{2}（{3}）　腕力：{4}（{5}）　防御：{6}　経験：{7}/{8}　{9}",
+      "conversions": [
+        "d",
+        "d",
+        "d",
+        "d",
+        "d",
+        "d",
+        "d",
+        "d",
+        "d",
+        "s"
+      ]
+    },
+    "ui.more": {
+      "template": "スペースキーで続きを表示",
+      "conversions": []
+    },
+    "input.wait_enter": {
+      "template": "Enterキーで続ける",
+      "conversions": []
+    },
+    "ui.detect_magic": {
+      "template": "この階に魔法の気配を感じる。スペースキーで戻る。",
+      "conversions": []
+    },
+    "ui.detect_food": {
+      "template": "鼻がむずむずし、食べ物のにおいを感じる。スペースキーで戻る。",
+      "conversions": []
+    },
+    "ui.level_map": {
+      "template": "この階の地図。スペースキーで戻る。",
+      "conversions": []
+    },
+    "ui.quit_gold": {
+      "template": "所持金{0}で冒険を終了した。",
+      "conversions": [
+        "d"
+      ]
+    },
+    "ui.untranslated": {
+      "template": "未登録の表示文があります。",
+      "conversions": [
+        "s"
+      ],
+      "notation_only": true,
+      "grammar_indexes": [
+        0
+      ],
+      "grammar_reason": "未登録の英語原文引数は診断記録に保持し、画面には日本語の未登録通知だけを表示する。"
+    },
+    "platform.save_error": {
+      "template": "保存できませんでした。保存データと空き容量を確認してください。",
+      "conversions": []
+    },
+    "platform.restore_error": {
+      "template": "保存を読み込めませんでした。形式や整合性を確認してください。",
+      "conversions": []
+    },
+    "platform.input_limit": {
+      "template": "操作記録の上限に達しました。最後の保存から再開してください。",
+      "conversions": []
+    },
+    "platform.name_error": {
+      "template": "名前に使用できない文字があるか、長さの上限を超えています。",
+      "conversions": []
+    },
+    "platform.error": {
+      "template": "ゲームの処理でエラーが発生しました。",
+      "conversions": []
+    },
+    "outcome.ended": {
+      "template": "冒険を終了しました。",
+      "conversions": []
+    },
+    "outcome.input_ended": {
+      "template": "操作を終了しました。",
+      "conversions": []
+    },
+    "outcome.quit": {
+      "template": "冒険を終了しました。",
+      "conversions": []
+    },
+    "outcome.died": {
+      "template": "冒険者は倒れました。",
+      "conversions": []
+    },
+    "outcome.won": {
+      "template": "イェンダーの護符を持ち帰り、迷宮から生還しました！",
+      "conversions": []
+    },
+    "outcome.invalid_state": {
+      "template": "ゲームの状態を読み込めませんでした。",
+      "conversions": []
+    },
+    "outcome.restore_error": {
+      "template": "保存された状態を復元できませんでした。",
+      "conversions": []
+    },
+    "outcome.allocation_error": {
+      "template": "ゲームに必要なメモリを確保できませんでした。",
+      "conversions": []
+    },
+    "outcome.fatal": {
+      "template": "冒険を終了しました。",
+      "conversions": []
+    },
+    "potion.effect.confused": {
+      "template": "何が起きている？　え？　何？　誰？",
+      "conversions": []
+    },
+    "potion.effect.confused.high": {
+      "template": "なんだか、ふわふわしてきた！",
+      "conversions": []
+    },
+    "potion.effect.hallucinating": {
+      "template": "うわあ！　何もかも宇宙のように見える！",
+      "conversions": []
+    },
+    "potion.effect.blind": {
+      "template": "あたりが闇に包まれた。",
+      "conversions": []
+    },
+    "potion.effect.blind.high": {
+      "template": "なんてこった！　真っ暗だ！　助けて！",
+      "conversions": []
+    },
+    "potion.effect.levitating": {
+      "template": "体が宙に浮かび始めた。",
+      "conversions": []
+    },
+    "potion.effect.levitating.high": {
+      "template": "うわあ！　空中に浮かんでいる！",
+      "conversions": []
+    },
+    "potion.effect.see_invisible": {
+      "template": "この薬は{0}のジュースのような味がする。",
+      "conversions": [
+        "s"
+      ]
+    },
+    "status.hunger.0": {
+      "template": "",
+      "conversions": [],
+      "intentional_empty_reason": "通常の空腹状態には追加ラベルを表示しない"
+    },
+    "status.hunger.1": {
+      "template": "空腹",
+      "conversions": []
+    },
+    "status.hunger.2": {
+      "template": "衰弱",
+      "conversions": []
+    },
+    "status.hunger.3": {
+      "template": "飢餓",
+      "conversions": []
+    },
+    "projectile.bolt": {
+      "template": "雷撃",
+      "argument_types": [],
+      "conversions": []
+    },
+    "projectile.flame": {
+      "template": "炎",
+      "argument_types": [],
+      "conversions": []
+    },
+    "projectile.ice": {
+      "template": "氷",
+      "argument_types": [],
+      "conversions": []
+    },
+    "input.default_fruit": {
+      "template": "スライムモールド（既定。空欄で維持）",
+      "argument_types": [],
+      "conversions": []
+    }
+  }
+}

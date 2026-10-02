@@ -1,0 +1,39 @@
+--- acquired/potions.c
++++ logic/potions.c
+@@ -13,6 +13,7 @@
+ #include <curses.h>
+ #include <ctype.h>
+ #include "rogue.h"
++#include "semantic.h"
+ 
+ typedef struct
+ {
+@@ -371,5 +372,26 @@
+     }
+     else
+ 	lengthen(pp->pa_daemon, t);
+-    msg(choose_str(pp->pa_high, pp->pa_straight));
+-}
++    {
++        const char *text = choose_str(pp->pa_high, pp->pa_straight);
++        if (type == P_SEEINVIS) {
++            char arguments[RG_MESSAGE_ARGUMENT_BYTES];
++            if (rg_capture_arguments(arguments, sizeof arguments, "%s", fruit) == 0)
++                rg_semantic_register_message(text, "potion.effect.see_invisible", arguments);
++        } else {
++            static const char *const normal[] = {
++                "potion.effect.confused", "potion.effect.hallucinating", NULL, NULL, NULL,
++                NULL, NULL, NULL, NULL, NULL, NULL, NULL,
++                "potion.effect.blind", "potion.effect.levitating"
++            };
++            static const char *const high[] = {
++                "potion.effect.confused.high", "potion.effect.hallucinating", NULL, NULL, NULL,
++                NULL, NULL, NULL, NULL, NULL, NULL, NULL,
++                "potion.effect.blind.high", "potion.effect.levitating.high"
++            };
++            const char *id = on(player, ISHALU) ? high[type] : normal[type];
++            if (id) rg_semantic_register_term(text, id);
++        }
++        msg(text);
++    }
++}

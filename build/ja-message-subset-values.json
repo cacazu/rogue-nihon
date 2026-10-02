@@ -1,0 +1,997 @@
+{
+  "daemons.come_down.everything_looks_so_boring_now": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "daemons.land.bummer_youve_hit_the_ground": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "daemons.land.you_float_gently_to_the_ground": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "daemons.nohaste.you_feel_yourself_slowing_down": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "daemons.sight.far_out_everything_is_all_cosmic_again": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "daemons.sight.the_veil_of_darkness_lifts": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "daemons.stomach.getting_hungry": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "daemons.stomach.getting_the_munchies": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "daemons.stomach.the_munchies_are_interfering_with_your_motor_capabilites": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "daemons.stomach.the_munchies_overpower_your_motor_capabilities": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "daemons.stomach.you_are_getting_the_munchies": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "daemons.stomach.you_are_starting_to_feel_weak": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "daemons.stomach.you_are_starting_to_get_hungry": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "daemons.stomach.you_faint": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "daemons.stomach.you_feel_too_weak_from_lack_of_food": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "daemons.stomach.you_freak_out": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "daemons.unconfuse.you_feel_less_now": {
+    "argument_values": {
+      "0": {
+        "trippy": {
+          "id": "state.feeling.trippy",
+          "text": "浮ついた"
+        },
+        "confused": {
+          "id": "state.feeling.confused",
+          "text": "混乱した"
+        }
+      }
+    },
+    "argument_roles": {
+      "0": "token"
+    },
+    "argument_sources": {
+      "0": "choose_str(\"trippy\", \"confused\") [daemons.c:87; ISHALU ? trippy : confused via misc.c:600]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "monsters.wake_monster.cant_find_monster_in_wake_monster": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "monsters.wake_monster.possessive_apostrophe": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "monsters.wake_monster.s_gaze_has_confused_you": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "monsters.wake_monster.string": {
+    "argument_values": {},
+    "argument_roles": {
+      "0": "monster"
+    },
+    "argument_sources": {
+      "0": "mname = set_mname(tp) [monsters.c:190-191; fight.c:349 returns it/something or the + monsters[].m_name]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "monsters.wanderer.started_a_wandering": {
+    "argument_values": {},
+    "argument_roles": {
+      "0": "monster"
+    },
+    "argument_sources": {
+      "0": "monsters[tp->t_type-'A'].m_name [monsters.c:142]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "move.be_trapped.a_gush_of_water_hits_you_on_the_head": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.be_trapped.a_light_flashes_in_your_eyes": {
+    "argument_values": {},
+    "argument_roles": {
+      "0": "color"
+    },
+    "argument_sources": {
+      "0": "rainbow[rnd(cNCOLORS)] [move.c:293; rainbow defined at init.c:81]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "move.be_trapped.a_poisoned_dart_killed_you": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.be_trapped.a_small_dart_just_hit_you_in_the_shoulder": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.be_trapped.a_small_dart_whizzes_by_your_ear_and_vanishes": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.be_trapped.a_spike_shoots_past_your_ear": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.be_trapped.a_strange_white_mist_envelops_you_and_you_fall_asleep": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.be_trapped.an_arrow_killed_you": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.be_trapped.an_arrow_shoots_past_you": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.be_trapped.multi_colored_lines_swirl_around_you_then_fade": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.be_trapped.oh_no_an_arrow_shot_you": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.be_trapped.sparks_dance_across_your_armor": {
+    "argument_values": {},
+    "argument_roles": {
+      "0": "color"
+    },
+    "argument_sources": {
+      "0": "rainbow[rnd(cNCOLORS)] [move.c:295; rainbow defined at init.c:81]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "move.be_trapped.the_light_in_here_suddenly_seems": {
+    "argument_values": {},
+    "argument_roles": {
+      "0": "color"
+    },
+    "argument_sources": {
+      "0": "rainbow[rnd(cNCOLORS)] [move.c:290; rainbow defined at init.c:81]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "move.be_trapped.time_now_seems_to_be_going_slower": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.be_trapped.you_are_caught_in_a_bear_trap": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.be_trapped.you_are_suddenly_in_a_parallel_dimension": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.be_trapped.you_feel_a_sting_in_the_side_of_your_neck": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.be_trapped.you_feel_time_speed_up_suddenly": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.be_trapped.you_fell_into_a_trap": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.be_trapped.you_pack_turns": {
+    "argument_values": {},
+    "argument_roles": {
+      "0": "color"
+    },
+    "argument_sources": {
+      "0": "rainbow[rnd(cNCOLORS)] [move.c:299; rainbow defined at init.c:81]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "move.be_trapped.you_suddenly_feel_very_thirsty": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.do_move.you_are_being_held": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.do_move.you_are_still_stuck_in_the_bear_trap": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.rust_armor.the_rust_vanishes_instantly": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.rust_armor.your_armor_appears_to_be_weaker_now_oh_my": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "move.rust_armor.your_armor_weakens": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "potions.quaff.hey_this_tastes_great_it_make_you_feel_warm_all_over": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "potions.quaff.thats_undrinkable": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "potions.quaff.what_an_odd_tasting_potion": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "potions.quaff.you_begin_to_feel_better": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "potions.quaff.you_begin_to_feel_much_better": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "potions.quaff.you_feel_momentarily_sick": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "potions.quaff.you_feel_stronger_now_what_bulging_muscles": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "potions.quaff.you_feel_very_sick_now": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "potions.quaff.you_feel_yourself_moving_much_faster": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "potions.quaff.you_have_a_feeling_for_a_moment_then_it_passes": {
+    "argument_values": {
+      "0": {
+        "normal": {
+          "id": "state.feeling.normal",
+          "text": "普通の"
+        },
+        "strange": {
+          "id": "state.feeling.strange",
+          "text": "奇妙な"
+        }
+      }
+    },
+    "argument_roles": {
+      "0": "token"
+    },
+    "argument_sources": {
+      "0": "choose_str(\"normal\", \"strange\") [potions.c:116-117 and 155-156; ISHALU ? normal : strange via misc.c:600]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "potions.quaff.you_suddenly_feel_much_more_skillful": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "potions.quaff.yuk_why_would_you_want_to_drink_that": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "rings.gethand.l_or_r": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "rings.gethand.left_hand_or_right_hand": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "rings.gethand.left_or_right_ring": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "rings.gethand.please_type_l_or_r": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "rings.ring_off.no_rings": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "rings.ring_off.not_wearing_such_a_ring": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "rings.ring_off.was_wearing": {
+    "argument_values": {},
+    "argument_roles": {
+      "0": "item"
+    },
+    "argument_sources": {
+      "0": "inv_name(obj, TRUE) [rings.c:122; promoted argument 1 is %c obj->o_packch]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "rings.ring_off.you_arent_wearing_any_rings": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "rings.ring_on.it_would_be_difficult_to_wrap_that_around_a_finger": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "rings.ring_on.not_a_ring": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "rings.ring_on.string_character": {
+    "argument_values": {},
+    "argument_roles": {
+      "0": "item"
+    },
+    "argument_sources": {
+      "0": "inv_name(obj, TRUE) [rings.c:85; promoted argument 1 is %c obj->o_packch]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "rings.ring_on.wearing_two": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "rings.ring_on.you_already_have_a_ring_on_each_hand": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "rings.ring_on.you_are_now_wearing": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "scrolls.read_scroll.freeze": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "scrolls.read_scroll.nothing_to_read": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "scrolls.read_scroll.oh_now_this_scroll_has_a_map_on_it": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "scrolls.read_scroll.s": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "scrolls.read_scroll.s_around_you": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "scrolls.read_scroll.the_monster": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "scrolls.read_scroll.there_is_nothing_on_it_to_read": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "scrolls.read_scroll.this_scroll_is_an_scroll": {
+    "argument_values": {},
+    "argument_roles": {
+      "0": "item"
+    },
+    "argument_sources": {
+      "0": "scr_info[obj->o_which].oi_name [scrolls.c:158; S_ID_POTION/S_ID_SCROLL/S_ID_WEAPON/S_ID_ARMOR/S_ID_R_OR_S cases]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "scrolls.read_scroll.what_a_puzzling_scroll": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "scrolls.read_scroll.you_fall_asleep": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "scrolls.read_scroll.you_feel_a_strange_sense_of_loss": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "scrolls.read_scroll.you_feel_as_if_somebody_is_watching_over_you": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "scrolls.read_scroll.you_feel_in_touch_with_the_universal_onenes": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "scrolls.read_scroll.you_hear_a_faint_cry_of_anguish_in_the_distance": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "scrolls.read_scroll.you_hear_a_high_pitched_humming_noise": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "scrolls.read_scroll.you_hear_maniacal_laughter_in_the_distance": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "scrolls.read_scroll.your_armor_glows_for_a_moment": {
+    "argument_values": {},
+    "argument_roles": {
+      "0": "color"
+    },
+    "argument_sources": {
+      "0": "pick_color(\"silver\") [scrolls.c:71; init.c:444 returns ISHALU ? rainbow[rnd(NCOLORS)] : silver]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "scrolls.read_scroll.your_armor_is_covered_by_a_shimmering_shield": {
+    "argument_values": {},
+    "argument_roles": {
+      "0": "color"
+    },
+    "argument_sources": {
+      "0": "pick_color(\"gold\") [scrolls.c:298-299; init.c:444 returns ISHALU ? rainbow[rnd(NCOLORS)] : gold]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "scrolls.read_scroll.your_glows_for_a_moment": {
+    "argument_values": {},
+    "argument_roles": {
+      "0": "item",
+      "1": "color"
+    },
+    "argument_sources": {
+      "0": "weap_info[cur_weapon->o_which].oi_name [scrolls.c:271-272]",
+      "1": "pick_color(\"blue\") [scrolls.c:272; init.c:444 returns ISHALU ? rainbow[rnd(NCOLORS)] : blue]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "scrolls.read_scroll.your_hands_begin_to_glow": {
+    "argument_values": {},
+    "argument_roles": {
+      "0": "color"
+    },
+    "argument_sources": {
+      "0": "pick_color(\"red\") [scrolls.c:65; init.c:444 returns ISHALU ? rainbow[rnd(NCOLORS)] : red]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "scrolls.read_scroll.your_nose_tingles": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "sticks.do_zap.by_a_shimmering_light": {
+    "argument_values": {},
+    "argument_roles": {
+      "0": "color"
+    },
+    "argument_sources": {
+      "0": "pick_color(\"blue\") [sticks.c:87; init.c:444 returns ISHALU ? rainbow[rnd(NCOLORS)] : blue]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "sticks.do_zap.missle_vanishes": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "sticks.do_zap.nothing_happens": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "sticks.do_zap.the_corridor_glows_and_then_fades": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "sticks.do_zap.the_missle_vanishes_with_a_puff_of_smoke": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "sticks.do_zap.the_room_is_lit": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "sticks.do_zap.what_a_bizarre_schtick": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "sticks.do_zap.you_are_too_weak_to_use_it": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "sticks.do_zap.you_cant_zap_with_that": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "sticks.drain.you_have_a_tingling_feeling": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "sticks.fire_bolt.misses": {
+    "argument_values": {
+      "0": {
+        "bolt": {
+          "id": "projectile.bolt",
+          "text": "稲妻"
+        },
+        "flame": {
+          "id": "projectile.flame",
+          "text": "炎"
+        },
+        "ice": {
+          "id": "projectile.ice",
+          "text": "氷"
+        }
+      }
+    },
+    "argument_roles": {
+      "0": "token"
+    },
+    "argument_sources": {
+      "0": "name [sticks.c:380; fire_bolt parameter from do_zap name=bolt/flame/ice at sticks.c:225-231 or chase.c:177 literal flame]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "sticks.fire_bolt.off_the_dragon": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "sticks.fire_bolt.the_bounces": {
+    "argument_values": {
+      "0": {
+        "bolt": {
+          "id": "projectile.bolt",
+          "text": "稲妻"
+        },
+        "flame": {
+          "id": "projectile.flame",
+          "text": "炎"
+        },
+        "ice": {
+          "id": "projectile.ice",
+          "text": "氷"
+        }
+      }
+    },
+    "argument_roles": {
+      "0": "token"
+    },
+    "argument_sources": {
+      "0": "name [sticks.c:352; fire_bolt parameter from do_zap name=bolt/flame/ice at sticks.c:225-231 or chase.c:177 literal flame]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "sticks.fire_bolt.the_flame_bounces": {
+    "argument_roles": {},
+    "unresolved": [],
+    "argument_sources": {},
+    "grammar_indexes": [],
+    "argument_values": {}
+  },
+  "sticks.fire_bolt.the_hits": {
+    "argument_values": {
+      "0": {
+        "bolt": {
+          "id": "projectile.bolt",
+          "text": "稲妻"
+        },
+        "flame": {
+          "id": "projectile.flame",
+          "text": "炎"
+        },
+        "ice": {
+          "id": "projectile.ice",
+          "text": "氷"
+        }
+      }
+    },
+    "argument_roles": {
+      "0": "token"
+    },
+    "argument_sources": {
+      "0": "name [sticks.c:400; fire_bolt parameter from do_zap name=bolt/flame/ice at sticks.c:225-231 or chase.c:177 literal flame]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "sticks.fire_bolt.the_whizzes_by_you": {
+    "argument_values": {
+      "0": {
+        "bolt": {
+          "id": "projectile.bolt",
+          "text": "稲妻"
+        },
+        "flame": {
+          "id": "projectile.flame",
+          "text": "炎"
+        },
+        "ice": {
+          "id": "projectile.ice",
+          "text": "氷"
+        }
+      }
+    },
+    "argument_roles": {
+      "0": "token"
+    },
+    "argument_sources": {
+      "0": "name [sticks.c:405; fire_bolt parameter from do_zap name=bolt/flame/ice at sticks.c:225-231 or chase.c:177 literal flame]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "sticks.fire_bolt.the_whizzes_past": {
+    "argument_values": {
+      "0": {
+        "bolt": {
+          "id": "projectile.bolt",
+          "text": "稲妻"
+        },
+        "flame": {
+          "id": "projectile.flame",
+          "text": "炎"
+        },
+        "ice": {
+          "id": "projectile.ice",
+          "text": "氷"
+        }
+      }
+    },
+    "argument_roles": {
+      "0": "token",
+      "1": "monster"
+    },
+    "argument_sources": {
+      "0": "name [sticks.c:382; fire_bolt parameter from do_zap name=bolt/flame/ice at sticks.c:225-231 or chase.c:177 literal flame]",
+      "1": "set_mname(tp) [sticks.c:382; fight.c:349 returns it/something or the + monsters[].m_name]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  },
+  "sticks.fire_bolt.you_are_hit_by_the": {
+    "argument_values": {
+      "0": {
+        "bolt": {
+          "id": "projectile.bolt",
+          "text": "稲妻"
+        },
+        "flame": {
+          "id": "projectile.flame",
+          "text": "炎"
+        },
+        "ice": {
+          "id": "projectile.ice",
+          "text": "氷"
+        }
+      }
+    },
+    "argument_roles": {
+      "0": "token"
+    },
+    "argument_sources": {
+      "0": "name [sticks.c:402; fire_bolt parameter from do_zap name=bolt/flame/ice at sticks.c:225-231 or chase.c:177 literal flame]"
+    },
+    "grammar_indexes": [],
+    "unresolved": []
+  }
+}

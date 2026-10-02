@@ -1,0 +1,417 @@
+{
+  "schema": 1,
+  "language": "en",
+  "messages": {
+    "help.help": {
+      "template": "\tprints help"
+    },
+    "help.identify": {
+      "template": "\tidentify object"
+    },
+    "help.left": {
+      "template": "\tleft"
+    },
+    "help.down": {
+      "template": "\tdown"
+    },
+    "help.up": {
+      "template": "\tup"
+    },
+    "help.right": {
+      "template": "\tright"
+    },
+    "help.up_left": {
+      "template": "\tup & left"
+    },
+    "help.up_right": {
+      "template": "\tup & right"
+    },
+    "help.down_left": {
+      "template": "\tdown & left"
+    },
+    "help.down_right": {
+      "template": "\tdown & right"
+    },
+    "help.run_left": {
+      "template": "\trun left"
+    },
+    "help.run_down": {
+      "template": "\trun down"
+    },
+    "help.run_up": {
+      "template": "\trun up"
+    },
+    "help.run_right": {
+      "template": "\trun right"
+    },
+    "help.run_up_left": {
+      "template": "\trun up & left"
+    },
+    "help.run_up_right": {
+      "template": "\trun up & right"
+    },
+    "help.run_down_left": {
+      "template": "\trun down & left"
+    },
+    "help.run_down_right": {
+      "template": "\trun down & right"
+    },
+    "help.adjacent_left": {
+      "template": "\trun left until adjacent"
+    },
+    "help.adjacent_down": {
+      "template": "\trun down until adjacent"
+    },
+    "help.adjacent_up": {
+      "template": "\trun up until adjacent"
+    },
+    "help.adjacent_right": {
+      "template": "\trun right until adjacent"
+    },
+    "help.adjacent_up_left": {
+      "template": "\trun up & left until adjacent"
+    },
+    "help.adjacent_up_right": {
+      "template": "\trun up & right until adjacent"
+    },
+    "help.adjacent_down_left": {
+      "template": "\trun down & left until adjacent"
+    },
+    "help.adjacent_down_right": {
+      "template": "\trun down & right until adjacent"
+    },
+    "help.run": {
+      "template": "\t<SHIFT><dir>: run that way"
+    },
+    "help.run_adjacent": {
+      "template": "\t<CTRL><dir>: run till adjacent"
+    },
+    "help.fight_carefully": {
+      "template": "<dir>\tfight till death or near death"
+    },
+    "help.throw": {
+      "template": "<dir>\tthrow something"
+    },
+    "help.move_without_pickup": {
+      "template": "<dir>\tmove onto without picking up"
+    },
+    "help.zap": {
+      "template": "<dir>\tzap a wand in a direction"
+    },
+    "help.trap": {
+      "template": "<dir>\tidentify trap type"
+    },
+    "help.search": {
+      "template": "\tsearch for trap/secret door"
+    },
+    "help.downstairs": {
+      "template": "\tgo down a staircase"
+    },
+    "help.upstairs": {
+      "template": "\tgo up a staircase"
+    },
+    "help.rest": {
+      "template": "\trest for a turn"
+    },
+    "help.pickup": {
+      "template": "\tpick something up"
+    },
+    "help.inventory": {
+      "template": "\tinventory"
+    },
+    "help.inventory_one": {
+      "template": "\tinventory single item"
+    },
+    "help.quaff": {
+      "template": "\tquaff potion"
+    },
+    "help.read": {
+      "template": "\tread scroll"
+    },
+    "help.eat": {
+      "template": "\teat food"
+    },
+    "help.wield": {
+      "template": "\twield a weapon"
+    },
+    "help.wear": {
+      "template": "\twear armor"
+    },
+    "help.take_off": {
+      "template": "\ttake armor off"
+    },
+    "help.put_ring": {
+      "template": "\tput on ring"
+    },
+    "help.remove_ring": {
+      "template": "\tremove ring"
+    },
+    "help.drop": {
+      "template": "\tdrop object"
+    },
+    "help.call": {
+      "template": "\tcall object"
+    },
+    "help.again": {
+      "template": "\trepeat last command"
+    },
+    "help.weapon": {
+      "template": "\tprint current weapon"
+    },
+    "help.armor": {
+      "template": "\tprint current armor"
+    },
+    "help.rings": {
+      "template": "\tprint current rings"
+    },
+    "help.stats": {
+      "template": "\tprint current stats"
+    },
+    "help.discoveries": {
+      "template": "\trecall what's been discovered"
+    },
+    "help.options": {
+      "template": "\texamine/set options"
+    },
+    "help.redraw": {
+      "template": "\tredraw screen"
+    },
+    "help.recall": {
+      "template": "\trepeat last message"
+    },
+    "help.cancel": {
+      "template": "\tcancel command"
+    },
+    "help.save": {
+      "template": "\tsave game"
+    },
+    "help.quit": {
+      "template": "\tquit"
+    },
+    "help.shell": {
+      "template": "\tshell escape"
+    },
+    "help.fight_to_death": {
+      "template": "<dir>\tfight till either of you dies"
+    },
+    "help.version": {
+      "template": "\tprint version number"
+    },
+    "ui.help.entry": {
+      "template": "{0}{1}"
+    },
+    "ui.text": {
+      "template": "{0}"
+    },
+    "ui.inventory.entry": {
+      "template": "{0}) {1}"
+    },
+    "ui.continue": {
+      "template": "--Press space to continue--"
+    },
+    "input.wait_space": {
+      "template": "Press Space to continue."
+    },
+    "input.option_bool": {
+      "template": "T: True / F: False / Enter: Keep / -: Back / Escape: Finish"
+    },
+    "input.option_inventory": {
+      "template": "O: Overlay / S: Slow / C: Clear / Enter: Keep / -: Back / Escape: Finish"
+    },
+    "options.value.true": {
+      "template": "True"
+    },
+    "options.value.false": {
+      "template": "False"
+    },
+    "options.value.overlay": {
+      "template": "Overlay"
+    },
+    "options.value.slow": {
+      "template": "Slow"
+    },
+    "options.value.clear": {
+      "template": "Clear"
+    },
+    "options.hint.bool": {
+      "template": "(T or F)"
+    },
+    "options.hint.inventory": {
+      "template": "(O, S, or C)"
+    },
+    "input.choose_item": {
+      "template": "Choose an item key, * for list, Escape to cancel."
+    },
+    "input.choose_direction": {
+      "template": "Choose a direction, Escape to cancel."
+    },
+    "prompt.direction": {
+      "template": "which direction? "
+    },
+    "prompt.direction.short": {
+      "template": "direction: "
+    },
+    "equipment.wielding": {
+      "template": "wielding"
+    },
+    "equipment.wearing": {
+      "template": "wearing"
+    },
+    "equipment.left_hand": {
+      "template": "on left hand"
+    },
+    "equipment.right_hand": {
+      "template": "on right hand"
+    },
+    "equipment.left_short": {
+      "template": "(L)"
+    },
+    "equipment.right_short": {
+      "template": "(R)"
+    },
+    "action.wear": {
+      "template": "wear"
+    },
+    "action.charge": {
+      "template": "charge"
+    },
+    "action.call": {
+      "template": "call"
+    },
+    "action.eat": {
+      "template": "eat"
+    },
+    "action.quaff": {
+      "template": "quaff"
+    },
+    "action.put_ring": {
+      "template": "put on"
+    },
+    "action.read": {
+      "template": "read"
+    },
+    "action.zap": {
+      "template": "zap with"
+    },
+    "action.drop": {
+      "template": "drop"
+    },
+    "action.throw": {
+      "template": "throw"
+    },
+    "action.wield": {
+      "template": "wield"
+    },
+    "action.identify": {
+      "template": "identify"
+    },
+    "options.terse": {
+      "template": "Terse output (\"terse\"): "
+    },
+    "options.flush": {
+      "template": "Flush typeahead during battle (\"flush\"): "
+    },
+    "options.jump": {
+      "template": "Show position only at end of run (\"jump\"): "
+    },
+    "options.seefloor": {
+      "template": "Show the lamp-illuminated floor (\"seefloor\"): "
+    },
+    "options.passgo": {
+      "template": "Follow turnings in passageways (\"passgo\"): "
+    },
+    "options.tombstone": {
+      "template": "Print out tombstone when killed (\"tombstone\"): "
+    },
+    "options.inven": {
+      "template": "Inventory style (\"inven\"): "
+    },
+    "options.name": {
+      "template": "Name (\"name\"): "
+    },
+    "options.fruit": {
+      "template": "Fruit (\"fruit\"): "
+    },
+    "options.file": {
+      "template": "Save file (\"file\"): "
+    },
+    "identify.wall": {
+      "template": "wall of a room"
+    },
+    "identify.gold": {
+      "template": "gold"
+    },
+    "identify.stairs": {
+      "template": "a staircase"
+    },
+    "identify.door": {
+      "template": "door"
+    },
+    "identify.floor": {
+      "template": "room floor"
+    },
+    "identify.player": {
+      "template": "you"
+    },
+    "identify.passage": {
+      "template": "passage"
+    },
+    "identify.trap": {
+      "template": "trap"
+    },
+    "identify.potion": {
+      "template": "potion"
+    },
+    "identify.scroll": {
+      "template": "scroll"
+    },
+    "identify.food": {
+      "template": "food"
+    },
+    "identify.weapon": {
+      "template": "weapon"
+    },
+    "identify.rock": {
+      "template": "solid rock"
+    },
+    "identify.armor": {
+      "template": "armor"
+    },
+    "identify.amulet": {
+      "template": "the Amulet of Yendor"
+    },
+    "identify.ring": {
+      "template": "ring"
+    },
+    "identify.stick": {
+      "template": "wand or staff"
+    },
+    "identify.unknown": {
+      "template": "unknown character"
+    },
+    "discoveries.none.potion": {
+      "template": "Haven't discovered anything about any potions"
+    },
+    "discoveries.none_short.potion": {
+      "template": "Nothing about any potions"
+    },
+    "discoveries.none.scroll": {
+      "template": "Haven't discovered anything about any scrolls"
+    },
+    "discoveries.none_short.scroll": {
+      "template": "Nothing about any scrolls"
+    },
+    "discoveries.none.ring": {
+      "template": "Haven't discovered anything about any rings"
+    },
+    "discoveries.none_short.ring": {
+      "template": "Nothing about any rings"
+    },
+    "discoveries.none.stick": {
+      "template": "Haven't discovered anything about any sticks"
+    },
+    "discoveries.none_short.stick": {
+      "template": "Nothing about any sticks"
+    }
+  }
+}

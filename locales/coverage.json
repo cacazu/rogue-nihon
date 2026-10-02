@@ -1,0 +1,195 @@
+{
+  "schema": 1,
+  "count_basis": "all C source msg/addmsg/debug sites, including inactive conditional and legacy OS code",
+  "calls": 296,
+  "literal_template_ids": 274,
+  "literal_or_choice_calls": 277,
+  "dynamic_calls": [
+    {
+      "file": "command.c",
+      "line": 313,
+      "function": "command",
+      "call": "msg",
+      "argument_count": 0,
+      "expression": "tr_name[rnd(NTRAPS)]",
+      "formats": []
+    },
+    {
+      "file": "command.c",
+      "line": 315,
+      "function": "command",
+      "call": "msg",
+      "argument_count": 0,
+      "expression": "tr_name[*fp&F_TMASK]",
+      "formats": []
+    },
+    {
+      "file": "command.c",
+      "line": 529,
+      "function": "search",
+      "call": "msg",
+      "argument_count": 0,
+      "expression": "tr_name[rnd(NTRAPS)]",
+      "formats": []
+    },
+    {
+      "file": "command.c",
+      "line": 531,
+      "function": "search",
+      "call": "msg",
+      "argument_count": 0,
+      "expression": "tr_name[*fp&F_TMASK]",
+      "formats": []
+    },
+    {
+      "file": "fight.c",
+      "line": 539,
+      "function": "hit",
+      "call": "addmsg",
+      "argument_count": 0,
+      "expression": "prname(er,TRUE)",
+      "formats": []
+    },
+    {
+      "file": "fight.c",
+      "line": 553,
+      "function": "hit",
+      "call": "addmsg",
+      "argument_count": 0,
+      "expression": "s",
+      "formats": []
+    },
+    {
+      "file": "fight.c",
+      "line": 555,
+      "function": "hit",
+      "call": "addmsg",
+      "argument_count": 0,
+      "expression": "prname(ee,FALSE)",
+      "formats": []
+    },
+    {
+      "file": "fight.c",
+      "line": 572,
+      "function": "miss",
+      "call": "addmsg",
+      "argument_count": 0,
+      "expression": "prname(er,TRUE)",
+      "formats": []
+    },
+    {
+      "file": "fight.c",
+      "line": 580,
+      "function": "miss",
+      "call": "addmsg",
+      "argument_count": 0,
+      "expression": "m_names[i]",
+      "formats": []
+    },
+    {
+      "file": "fight.c",
+      "line": 600,
+      "function": "bounce",
+      "call": "addmsg",
+      "argument_count": 0,
+      "expression": "mname",
+      "formats": []
+    },
+    {
+      "file": "fight.c",
+      "line": 691,
+      "function": "killed",
+      "call": "msg",
+      "argument_count": 0,
+      "expression": "mname",
+      "formats": []
+    },
+    {
+      "file": "mach_dep.c",
+      "line": 330,
+      "function": "chmsg",
+      "call": "msg",
+      "argument_count": 1,
+      "expression": "fmt",
+      "formats": []
+    },
+    {
+      "file": "misc.c",
+      "line": 271,
+      "function": "find_obj",
+      "call": "msg",
+      "argument_count": 0,
+      "expression": "prbuf",
+      "formats": []
+    },
+    {
+      "file": "misc.c",
+      "line": 511,
+      "function": "get_dir",
+      "call": "msg",
+      "argument_count": 0,
+      "expression": "prompt",
+      "formats": []
+    },
+    {
+      "file": "pack.c",
+      "line": 441,
+      "function": "get_item",
+      "call": "addmsg",
+      "argument_count": 0,
+      "expression": "purpose",
+      "formats": []
+    },
+    {
+      "file": "potions.c",
+      "line": 395,
+      "function": "do_pot",
+      "call": "msg",
+      "argument_count": 0,
+      "expression": "text",
+      "formats": []
+    },
+    {
+      "file": "things.c",
+      "line": 517,
+      "function": "add_line",
+      "call": "msg",
+      "argument_count": 1,
+      "expression": "fmt",
+      "formats": []
+    },
+    {
+      "file": "things.c",
+      "line": 618,
+      "function": "end_line",
+      "call": "msg",
+      "argument_count": 1,
+      "expression": "lastfmt",
+      "formats": []
+    },
+    {
+      "file": "wizard.c",
+      "line": 72,
+      "function": "whatis",
+      "call": "msg",
+      "argument_count": 0,
+      "expression": "inv_name(obj,FALSE)",
+      "formats": []
+    }
+  ],
+  "printf_formats": {
+    "%%": 1,
+    "%*d": 2,
+    "%-2d": 1,
+    "%-5d": 1,
+    "%2d": 1,
+    "%c": 12,
+    "%d": 26,
+    "%ld": 1,
+    "%s": 70
+  },
+  "limitations": [
+    "runtime names, item purpose/name fragments and English grammar are not yet ID-separated",
+    "curses printw/addstr/menu/status text outside msg/addmsg is outside this catalog"
+  ]
+}

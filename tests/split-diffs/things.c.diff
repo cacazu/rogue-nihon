@@ -1,0 +1,125 @@
+--- acquired/things.c
++++ logic/things.c
+@@ -15,6 +15,7 @@
+ #include <string.h>
+ #include <ctype.h>
+ #include "rogue.h"
++#include "semantic.h"
+ 
+ /*
+  * inv_name:
+@@ -130,6 +131,7 @@
+     else if (!drop && islower(*prbuf))
+ 	*prbuf = (char) toupper(*prbuf);
+     prbuf[MAXSTR-1] = '\0';
++    rg_semantic_item(prbuf, obj, drop);
+     return prbuf;
+ }
+ 
+@@ -337,6 +339,18 @@
+ static bool newpage = FALSE;
+ 
+ static char *lastfmt, *lastarg;
++static int maxlen = -1;
++
++#ifdef ROGUE_LAYERED
++void rg_menu_state_get(uint32_t *out) {
++    out[0]=(uint32_t)line_cnt;out[1]=(uint32_t)newpage;out[2]=(uint32_t)maxlen;
++}
++void rg_menu_state_set(const uint32_t *in) {
++    line_cnt=(int32_t)in[0];newpage=(bool)in[1];maxlen=(int32_t)in[2];
++    /* Outer checkpoints cannot retain an in-flight line callback. */
++    lastfmt=NULL;lastarg=NULL;
++}
++#endif
+ 
+ 
+ void
+@@ -439,7 +453,19 @@
+ 	    num_found++;
+ 	}
+     if (num_found == 0)
+-	add_line(nothing(type), NULL);
++    {
++        char *text = nothing(type);
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++        const char *id = type == POTION ? "discoveries.none.potion" :
++            type == SCROLL ? "discoveries.none.scroll" :
++            type == RING ? "discoveries.none.ring" : "discoveries.none.stick";
++        if (terse) id = type == POTION ? "discoveries.none_short.potion" :
++            type == SCROLL ? "discoveries.none_short.scroll" :
++            type == RING ? "discoveries.none_short.ring" : "discoveries.none_short.stick";
++        rg_semantic_register_term(text, id);
++#endif
++        add_line(text, NULL);
++    }
+ }
+ 
+ /*
+@@ -475,10 +501,12 @@
+     WINDOW *tw, *sw;
+     int x, y;
+     char *prompt = "--Press space to continue--";
+-    static int maxlen = -1;
+ 
+     if (line_cnt == 0)
+     {
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++        rg_ui_clear("menu");
++#endif
+ 	    wclear(hw);
+ 	    if (inv_type == INV_SLOW)
+ 		mpos = 0;
+@@ -498,6 +526,10 @@
+ 	{
+ 	    if (inv_type == INV_OVER && fmt == NULL && !newpage)
+ 	    {
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++        rg_ui_line("menu", line_cnt, 0, "ui.continue", "[]", prompt);
++        rg_ui_line("input", -2, 0, "input.wait_space", "[]", "");
++#endif
+ 		msg("");
+ 		refresh();
+ 		tw = newwin(line_cnt + 1, maxlen + 2, 0, COLS - maxlen - 3);
+@@ -534,6 +566,10 @@
+ 	    }
+ 	    else
+ 	    {
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++        rg_ui_line("menu", LINES - 1, 0, "ui.continue", "[]", prompt);
++        rg_ui_line("input", -2, 0, "input.wait_space", "[]", "");
++#endif
+ 		wmove(hw, LINES - 1, 0);
+ 		waddstr(hw, prompt);
+ 		wrefresh(hw);
+@@ -542,12 +578,19 @@
+ 		wclear(hw);
+ 		touchwin(stdscr);
+ 	    }
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++        rg_ui_clear("menu");
++        rg_ui_clear("input");
++#endif
+ 	    newpage = TRUE;
+ 	    line_cnt = 0;
+ 	    maxlen = (int) strlen(prompt);
+ 	}
+ 	if (fmt != NULL && !(line_cnt == 0 && *fmt == '\0'))
+ 	{
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++        rg_ui_printf("menu", line_cnt, 0, __FILE__, __LINE__, fmt, arg);
++#endif
+ 	    mvwprintw(hw, line_cnt++, 0, fmt, arg);
+ 	    getyx(hw, y, x);
+ 	    if (maxlen < x)
+@@ -579,6 +622,10 @@
+     }
+     line_cnt = 0;
+     newpage = FALSE;
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++    rg_ui_clear("menu");
++    rg_ui_clear("input");
++#endif
+ }
+ 
+ /*

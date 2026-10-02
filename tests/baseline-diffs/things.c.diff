@@ -1,0 +1,29 @@
+--- acquired/things.c
++++ baseline-src/things.c
+@@ -337,6 +337,18 @@
+ static bool newpage = FALSE;
+ 
+ static char *lastfmt, *lastarg;
++static int maxlen = -1;
++
++#ifdef ROGUE_LAYERED
++void rg_menu_state_get(uint32_t *out) {
++    out[0]=(uint32_t)line_cnt;out[1]=(uint32_t)newpage;out[2]=(uint32_t)maxlen;
++}
++void rg_menu_state_set(const uint32_t *in) {
++    line_cnt=(int32_t)in[0];newpage=(bool)in[1];maxlen=(int32_t)in[2];
++    /* Outer checkpoints cannot retain an in-flight line callback. */
++    lastfmt=NULL;lastarg=NULL;
++}
++#endif
+ 
+ 
+ void
+@@ -475,7 +487,6 @@
+     WINDOW *tw, *sw;
+     int x, y;
+     char *prompt = "--Press space to continue--";
+-    static int maxlen = -1;
+ 
+     if (line_cnt == 0)
+     {

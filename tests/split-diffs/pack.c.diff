@@ -1,0 +1,85 @@
+--- acquired/pack.c
++++ logic/pack.c
+@@ -14,6 +14,9 @@
+ #include <curses.h>
+ #include <ctype.h>
+ #include "rogue.h"
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++#include "semantic.h"
++#endif
+ 
+ /*
+  * add_pack:
+@@ -197,6 +200,22 @@
+ leave_pack(THING *obj, bool newobj, bool all)
+ {
+     THING *nobj;
++#ifdef ROGUE_LAYERED
++    char *split_label = NULL;
++
++    /* Renaming one separated arrow must not free the other's label. Allocate
++     * before changing either count so a failure leaves the pack intact. */
++    if (newobj && !all && obj->o_count > 1 && obj->o_label != NULL)
++    {
++        split_label = malloc(strlen(obj->o_label) + 1);
++        if (split_label == NULL)
++        {
++            fatal("Out of memory copying an item label.\n");
++            return NULL;
++        }
++        strcpy(split_label, obj->o_label);
++    }
++#endif
+ 
+     inpack--;
+     nobj = obj;
+@@ -210,6 +229,9 @@
+ 	{
+ 	    nobj = new_item();
+ 	    *nobj = *obj;
++#ifdef ROGUE_LAYERED
++            nobj->o_label = split_label;
++#endif
+ 	    next(nobj) = NULL;
+ 	    prev(nobj) = NULL;
+ 	    nobj->o_count = 1;
+@@ -386,6 +408,19 @@
+ {
+     THING *obj;
+     char ch;
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++    static const struct { const char *english, *id; } purposes[] = {
++        {"wear", "action.wear"}, {"charge", "action.charge"}, {"call", "action.call"}, {"eat", "action.eat"},
++        {"quaff", "action.quaff"}, {"put on", "action.put_ring"}, {"read", "action.read"}, {"zap with", "action.zap"},
++        {"drop", "action.drop"}, {"throw", "action.throw"}, {"wield", "action.wield"}, {"identify", "action.identify"}
++    };
++    size_t purpose_index;
++    for (purpose_index = 0; purpose_index < sizeof purposes / sizeof purposes[0]; ++purpose_index)
++        if (!strcmp(purpose, purposes[purpose_index].english)) {
++            rg_semantic_register_term(purpose, purposes[purpose_index].id);
++            break;
++        }
++#endif
+ 
+     if (pack == NULL)
+ 	msg("you aren't carrying anything");
+@@ -398,6 +433,9 @@
+     {
+ 	for (;;)
+ 	{
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++        rg_ui_line("input", -2, 0, "input.choose_item", "[]", "");
++#endif
+ 	    if (!terse)
+ 		addmsg("which object do you want to ");
+ 	    addmsg(purpose);
+@@ -405,6 +443,9 @@
+ 		addmsg(" what");
+ 	    msg("? (* for list): ");
+ 	    ch = readchar();
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++        rg_ui_clear("input");
++#endif
+ 	    mpos = 0;
+ 	    /*
+ 	     * Give the poor player a chance to abort the command

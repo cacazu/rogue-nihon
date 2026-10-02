@@ -1,0 +1,2339 @@
+{
+  "schema": 1,
+  "language": "en",
+  "entries": {
+    "appearance.color.amber": {
+      "text": "amber",
+      "source": "init.c:rainbow[0]"
+    },
+    "appearance.color.aquamarine": {
+      "text": "aquamarine",
+      "source": "init.c:rainbow[1]"
+    },
+    "appearance.color.black": {
+      "text": "black",
+      "source": "init.c:rainbow[2]"
+    },
+    "appearance.color.blue": {
+      "text": "blue",
+      "source": "init.c:rainbow[3]"
+    },
+    "appearance.color.brown": {
+      "text": "brown",
+      "source": "init.c:rainbow[4]"
+    },
+    "appearance.color.clear": {
+      "text": "clear",
+      "source": "init.c:rainbow[5]"
+    },
+    "appearance.color.crimson": {
+      "text": "crimson",
+      "source": "init.c:rainbow[6]"
+    },
+    "appearance.color.cyan": {
+      "text": "cyan",
+      "source": "init.c:rainbow[7]"
+    },
+    "appearance.color.ecru": {
+      "text": "ecru",
+      "source": "init.c:rainbow[8]"
+    },
+    "appearance.color.gold": {
+      "text": "gold",
+      "source": "init.c:rainbow[9]"
+    },
+    "appearance.color.green": {
+      "text": "green",
+      "source": "init.c:rainbow[10]"
+    },
+    "appearance.color.grey": {
+      "text": "grey",
+      "source": "init.c:rainbow[11]"
+    },
+    "appearance.color.magenta": {
+      "text": "magenta",
+      "source": "init.c:rainbow[12]"
+    },
+    "appearance.color.orange": {
+      "text": "orange",
+      "source": "init.c:rainbow[13]"
+    },
+    "appearance.color.pink": {
+      "text": "pink",
+      "source": "init.c:rainbow[14]"
+    },
+    "appearance.color.plaid": {
+      "text": "plaid",
+      "source": "init.c:rainbow[15]"
+    },
+    "appearance.color.purple": {
+      "text": "purple",
+      "source": "init.c:rainbow[16]"
+    },
+    "appearance.color.red": {
+      "text": "red",
+      "source": "init.c:rainbow[17]"
+    },
+    "appearance.color.silver": {
+      "text": "silver",
+      "source": "init.c:rainbow[18]"
+    },
+    "appearance.color.tan": {
+      "text": "tan",
+      "source": "init.c:rainbow[19]"
+    },
+    "appearance.color.tangerine": {
+      "text": "tangerine",
+      "source": "init.c:rainbow[20]"
+    },
+    "appearance.color.topaz": {
+      "text": "topaz",
+      "source": "init.c:rainbow[21]"
+    },
+    "appearance.color.turquoise": {
+      "text": "turquoise",
+      "source": "init.c:rainbow[22]"
+    },
+    "appearance.color.vermilion": {
+      "text": "vermilion",
+      "source": "init.c:rainbow[23]"
+    },
+    "appearance.color.violet": {
+      "text": "violet",
+      "source": "init.c:rainbow[24]"
+    },
+    "appearance.color.white": {
+      "text": "white",
+      "source": "init.c:rainbow[25]"
+    },
+    "appearance.color.yellow": {
+      "text": "yellow",
+      "source": "init.c:rainbow[26]"
+    },
+    "appearance.metal.aluminum": {
+      "text": "aluminum",
+      "source": "init.c:metal[0]"
+    },
+    "appearance.metal.beryllium": {
+      "text": "beryllium",
+      "source": "init.c:metal[1]"
+    },
+    "appearance.metal.bone": {
+      "text": "bone",
+      "source": "init.c:metal[2]"
+    },
+    "appearance.metal.brass": {
+      "text": "brass",
+      "source": "init.c:metal[3]"
+    },
+    "appearance.metal.bronze": {
+      "text": "bronze",
+      "source": "init.c:metal[4]"
+    },
+    "appearance.metal.copper": {
+      "text": "copper",
+      "source": "init.c:metal[5]"
+    },
+    "appearance.metal.electrum": {
+      "text": "electrum",
+      "source": "init.c:metal[6]"
+    },
+    "appearance.metal.gold": {
+      "text": "gold",
+      "source": "init.c:metal[7]"
+    },
+    "appearance.metal.iron": {
+      "text": "iron",
+      "source": "init.c:metal[8]"
+    },
+    "appearance.metal.lead": {
+      "text": "lead",
+      "source": "init.c:metal[9]"
+    },
+    "appearance.metal.magnesium": {
+      "text": "magnesium",
+      "source": "init.c:metal[10]"
+    },
+    "appearance.metal.mercury": {
+      "text": "mercury",
+      "source": "init.c:metal[11]"
+    },
+    "appearance.metal.nickel": {
+      "text": "nickel",
+      "source": "init.c:metal[12]"
+    },
+    "appearance.metal.pewter": {
+      "text": "pewter",
+      "source": "init.c:metal[13]"
+    },
+    "appearance.metal.platinum": {
+      "text": "platinum",
+      "source": "init.c:metal[14]"
+    },
+    "appearance.metal.silicon": {
+      "text": "silicon",
+      "source": "init.c:metal[17]"
+    },
+    "appearance.metal.silver": {
+      "text": "silver",
+      "source": "init.c:metal[16]"
+    },
+    "appearance.metal.steel": {
+      "text": "steel",
+      "source": "init.c:metal[15]"
+    },
+    "appearance.metal.tin": {
+      "text": "tin",
+      "source": "init.c:metal[18]"
+    },
+    "appearance.metal.titanium": {
+      "text": "titanium",
+      "source": "init.c:metal[19]"
+    },
+    "appearance.metal.tungsten": {
+      "text": "tungsten",
+      "source": "init.c:metal[20]"
+    },
+    "appearance.metal.zinc": {
+      "text": "zinc",
+      "source": "init.c:metal[21]"
+    },
+    "appearance.stone.agate": {
+      "text": "agate",
+      "source": "init.c:stones[0]"
+    },
+    "appearance.stone.alexandrite": {
+      "text": "alexandrite",
+      "source": "init.c:stones[1]"
+    },
+    "appearance.stone.amethyst": {
+      "text": "amethyst",
+      "source": "init.c:stones[2]"
+    },
+    "appearance.stone.carnelian": {
+      "text": "carnelian",
+      "source": "init.c:stones[3]"
+    },
+    "appearance.stone.diamond": {
+      "text": "diamond",
+      "source": "init.c:stones[4]"
+    },
+    "appearance.stone.emerald": {
+      "text": "emerald",
+      "source": "init.c:stones[5]"
+    },
+    "appearance.stone.garnet": {
+      "text": "garnet",
+      "source": "init.c:stones[8]"
+    },
+    "appearance.stone.germanium": {
+      "text": "germanium",
+      "source": "init.c:stones[6]"
+    },
+    "appearance.stone.granite": {
+      "text": "granite",
+      "source": "init.c:stones[7]"
+    },
+    "appearance.stone.jade": {
+      "text": "jade",
+      "source": "init.c:stones[9]"
+    },
+    "appearance.stone.kryptonite": {
+      "text": "kryptonite",
+      "source": "init.c:stones[10]"
+    },
+    "appearance.stone.lapis_lazuli": {
+      "text": "lapis lazuli",
+      "source": "init.c:stones[11]"
+    },
+    "appearance.stone.moonstone": {
+      "text": "moonstone",
+      "source": "init.c:stones[12]"
+    },
+    "appearance.stone.obsidian": {
+      "text": "obsidian",
+      "source": "init.c:stones[13]"
+    },
+    "appearance.stone.onyx": {
+      "text": "onyx",
+      "source": "init.c:stones[14]"
+    },
+    "appearance.stone.opal": {
+      "text": "opal",
+      "source": "init.c:stones[15]"
+    },
+    "appearance.stone.pearl": {
+      "text": "pearl",
+      "source": "init.c:stones[16]"
+    },
+    "appearance.stone.peridot": {
+      "text": "peridot",
+      "source": "init.c:stones[17]"
+    },
+    "appearance.stone.ruby": {
+      "text": "ruby",
+      "source": "init.c:stones[18]"
+    },
+    "appearance.stone.sapphire": {
+      "text": "sapphire",
+      "source": "init.c:stones[19]"
+    },
+    "appearance.stone.stibotantalite": {
+      "text": "stibotantalite",
+      "source": "init.c:stones[20]"
+    },
+    "appearance.stone.taaffeite": {
+      "text": "taaffeite",
+      "source": "init.c:stones[24]"
+    },
+    "appearance.stone.tiger_eye": {
+      "text": "tiger eye",
+      "source": "init.c:stones[21]"
+    },
+    "appearance.stone.topaz": {
+      "text": "topaz",
+      "source": "init.c:stones[22]"
+    },
+    "appearance.stone.turquoise": {
+      "text": "turquoise",
+      "source": "init.c:stones[23]"
+    },
+    "appearance.stone.zircon": {
+      "text": "zircon",
+      "source": "init.c:stones[25]"
+    },
+    "appearance.unknown": {
+      "text": "unfamiliar",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "appearance.wood.avocado_wood": {
+      "text": "avocado wood",
+      "source": "init.c:wood[0]"
+    },
+    "appearance.wood.balsa": {
+      "text": "balsa",
+      "source": "init.c:wood[1]"
+    },
+    "appearance.wood.bamboo": {
+      "text": "bamboo",
+      "source": "init.c:wood[2]"
+    },
+    "appearance.wood.banyan": {
+      "text": "banyan",
+      "source": "init.c:wood[3]"
+    },
+    "appearance.wood.birch": {
+      "text": "birch",
+      "source": "init.c:wood[4]"
+    },
+    "appearance.wood.cedar": {
+      "text": "cedar",
+      "source": "init.c:wood[5]"
+    },
+    "appearance.wood.cherry": {
+      "text": "cherry",
+      "source": "init.c:wood[6]"
+    },
+    "appearance.wood.cinnibar": {
+      "text": "cinnibar",
+      "source": "init.c:wood[7]"
+    },
+    "appearance.wood.cypress": {
+      "text": "cypress",
+      "source": "init.c:wood[8]"
+    },
+    "appearance.wood.dogwood": {
+      "text": "dogwood",
+      "source": "init.c:wood[9]"
+    },
+    "appearance.wood.driftwood": {
+      "text": "driftwood",
+      "source": "init.c:wood[10]"
+    },
+    "appearance.wood.ebony": {
+      "text": "ebony",
+      "source": "init.c:wood[11]"
+    },
+    "appearance.wood.elm": {
+      "text": "elm",
+      "source": "init.c:wood[12]"
+    },
+    "appearance.wood.eucalyptus": {
+      "text": "eucalyptus",
+      "source": "init.c:wood[13]"
+    },
+    "appearance.wood.fall": {
+      "text": "fall",
+      "source": "init.c:wood[14]"
+    },
+    "appearance.wood.hemlock": {
+      "text": "hemlock",
+      "source": "init.c:wood[15]"
+    },
+    "appearance.wood.holly": {
+      "text": "holly",
+      "source": "init.c:wood[16]"
+    },
+    "appearance.wood.ironwood": {
+      "text": "ironwood",
+      "source": "init.c:wood[17]"
+    },
+    "appearance.wood.kukui_wood": {
+      "text": "kukui wood",
+      "source": "init.c:wood[18]"
+    },
+    "appearance.wood.mahogany": {
+      "text": "mahogany",
+      "source": "init.c:wood[19]"
+    },
+    "appearance.wood.manzanita": {
+      "text": "manzanita",
+      "source": "init.c:wood[20]"
+    },
+    "appearance.wood.maple": {
+      "text": "maple",
+      "source": "init.c:wood[21]"
+    },
+    "appearance.wood.oaken": {
+      "text": "oaken",
+      "source": "init.c:wood[22]"
+    },
+    "appearance.wood.pecan": {
+      "text": "pecan",
+      "source": "init.c:wood[24]"
+    },
+    "appearance.wood.persimmon_wood": {
+      "text": "persimmon wood",
+      "source": "init.c:wood[23]"
+    },
+    "appearance.wood.pine": {
+      "text": "pine",
+      "source": "init.c:wood[25]"
+    },
+    "appearance.wood.poplar": {
+      "text": "poplar",
+      "source": "init.c:wood[26]"
+    },
+    "appearance.wood.redwood": {
+      "text": "redwood",
+      "source": "init.c:wood[27]"
+    },
+    "appearance.wood.rosewood": {
+      "text": "rosewood",
+      "source": "init.c:wood[28]"
+    },
+    "appearance.wood.spruce": {
+      "text": "spruce",
+      "source": "init.c:wood[29]"
+    },
+    "appearance.wood.teak": {
+      "text": "teak",
+      "source": "init.c:wood[30]"
+    },
+    "appearance.wood.walnut": {
+      "text": "walnut",
+      "source": "init.c:wood[31]"
+    },
+    "appearance.wood.zebrawood": {
+      "text": "zebrawood",
+      "source": "init.c:wood[32]"
+    },
+    "category.amulet": {
+      "text": "amulet",
+      "counter": "個",
+      "source": "rogue.h:o_type/things.c:inv_name"
+    },
+    "category.armor": {
+      "text": "armor",
+      "counter": "着",
+      "source": "rogue.h:o_type/things.c:inv_name"
+    },
+    "category.food": {
+      "text": "food",
+      "counter": "食",
+      "source": "rogue.h:o_type/things.c:inv_name"
+    },
+    "category.gold": {
+      "text": "gold",
+      "counter": "枚",
+      "source": "rogue.h:o_type/things.c:inv_name"
+    },
+    "category.potion": {
+      "text": "potion",
+      "counter": "本",
+      "source": "rogue.h:o_type/things.c:inv_name"
+    },
+    "category.ring": {
+      "text": "ring",
+      "counter": "個",
+      "source": "rogue.h:o_type/things.c:inv_name"
+    },
+    "category.scroll": {
+      "text": "scroll",
+      "counter": "枚",
+      "source": "rogue.h:o_type/things.c:inv_name"
+    },
+    "category.staff": {
+      "text": "staff",
+      "counter": "本",
+      "source": "rogue.h:o_type/things.c:inv_name"
+    },
+    "category.stick": {
+      "text": "stick",
+      "counter": "本",
+      "source": "rogue.h:o_type/things.c:inv_name"
+    },
+    "category.wand": {
+      "text": "wand",
+      "counter": "本",
+      "source": "rogue.h:o_type/things.c:inv_name"
+    },
+    "category.weapon": {
+      "text": "weapon",
+      "counter": "本",
+      "source": "rogue.h:o_type/things.c:inv_name"
+    },
+    "combat.hit.has_injured": {
+      "text": " has injured ",
+      "source": "fight.c:h_names[6]"
+    },
+    "combat.hit.have_injured": {
+      "text": " have injured ",
+      "source": "fight.c:h_names[2]"
+    },
+    "combat.hit.hit": {
+      "text": " hit ",
+      "source": "fight.c:h_names[5]"
+    },
+    "combat.hit.scored_an_excellent_hit_on": {
+      "text": " scored an excellent hit on ",
+      "source": "fight.c:h_names[4]"
+    },
+    "combat.hit.swing_and_hit": {
+      "text": " swing and hit ",
+      "source": "fight.c:h_names[3]"
+    },
+    "combat.hit.swings_and_hits": {
+      "text": " swings and hits ",
+      "source": "fight.c:h_names[7]"
+    },
+    "combat.miss.barely_miss": {
+      "text": " barely miss",
+      "source": "fight.c:m_names[2]"
+    },
+    "combat.miss.barely_misses": {
+      "text": " barely misses",
+      "source": "fight.c:m_names[6]"
+    },
+    "combat.miss.doesn_t_hit": {
+      "text": " doesn't hit",
+      "source": "fight.c:m_names[7]"
+    },
+    "combat.miss.don_t_hit": {
+      "text": " don't hit",
+      "source": "fight.c:m_names[3]"
+    },
+    "combat.miss.miss": {
+      "text": " miss",
+      "source": "fight.c:m_names[0]"
+    },
+    "combat.miss.misses": {
+      "text": " misses",
+      "source": "fight.c:m_names[4]"
+    },
+    "combat.miss.swing_and_miss": {
+      "text": " swing and miss",
+      "source": "fight.c:m_names[1]"
+    },
+    "combat.miss.swings_and_misses": {
+      "text": " swings and misses",
+      "source": "fight.c:m_names[5]"
+    },
+    "death.arrow": {
+      "text": "arrow",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "death.badger": {
+      "text": "Wally the Wonder Badger",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "death.bolt": {
+      "text": "bolt",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "death.dart": {
+      "text": "dart",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "death.hypothermia": {
+      "text": "hypothermia",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "death.starvation": {
+      "text": "starvation",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "entity.unknown": {
+      "text": "something",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "equipped.armor": {
+      "text": "being worn",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "equipped.left_ring": {
+      "text": "on left hand",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "equipped.right_ring": {
+      "text": "on right hand",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "equipped.weapon": {
+      "text": "weapon in hand",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "food.ration": {
+      "text": "Some food",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "food.slime_mold": {
+      "text": "slime-mold",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "item.amulet.yendor": {
+      "text": "The Amulet of Yendor",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "item.armor.banded_mail": {
+      "text": "banded mail",
+      "source": "extern.c:arm_info[6]"
+    },
+    "item.armor.chain_mail": {
+      "text": "chain mail",
+      "source": "extern.c:arm_info[4]"
+    },
+    "item.armor.leather_armor": {
+      "text": "leather armor",
+      "source": "extern.c:arm_info[0]"
+    },
+    "item.armor.plate_mail": {
+      "text": "plate mail",
+      "source": "extern.c:arm_info[7]"
+    },
+    "item.armor.ring_mail": {
+      "text": "ring mail",
+      "source": "extern.c:arm_info[1]"
+    },
+    "item.armor.scale_mail": {
+      "text": "scale mail",
+      "source": "extern.c:arm_info[3]"
+    },
+    "item.armor.splint_mail": {
+      "text": "splint mail",
+      "source": "extern.c:arm_info[5]"
+    },
+    "item.armor.studded_leather_armor": {
+      "text": "studded leather armor",
+      "source": "extern.c:arm_info[2]"
+    },
+    "item.potion.blindness": {
+      "text": "blindness",
+      "source": "extern.c:pot_info[12]"
+    },
+    "item.potion.confusion": {
+      "text": "confusion",
+      "source": "extern.c:pot_info[0]"
+    },
+    "item.potion.extra_healing": {
+      "text": "extra healing",
+      "source": "extern.c:pot_info[9]"
+    },
+    "item.potion.gain_strength": {
+      "text": "gain strength",
+      "source": "extern.c:pot_info[3]"
+    },
+    "item.potion.hallucination": {
+      "text": "hallucination",
+      "source": "extern.c:pot_info[1]"
+    },
+    "item.potion.haste_self": {
+      "text": "haste self",
+      "source": "extern.c:pot_info[10]"
+    },
+    "item.potion.healing": {
+      "text": "healing",
+      "source": "extern.c:pot_info[5]"
+    },
+    "item.potion.levitation": {
+      "text": "levitation",
+      "source": "extern.c:pot_info[13]"
+    },
+    "item.potion.magic_detection": {
+      "text": "magic detection",
+      "source": "extern.c:pot_info[7]"
+    },
+    "item.potion.monster_detection": {
+      "text": "monster detection",
+      "source": "extern.c:pot_info[6]"
+    },
+    "item.potion.poison": {
+      "text": "poison",
+      "source": "extern.c:pot_info[2]"
+    },
+    "item.potion.raise_level": {
+      "text": "raise level",
+      "source": "extern.c:pot_info[8]"
+    },
+    "item.potion.restore_strength": {
+      "text": "restore strength",
+      "source": "extern.c:pot_info[11]"
+    },
+    "item.potion.see_invisible": {
+      "text": "see invisible",
+      "source": "extern.c:pot_info[4]"
+    },
+    "item.ring.add_strength": {
+      "text": "add strength",
+      "source": "extern.c:ring_info[1]"
+    },
+    "item.ring.adornment": {
+      "text": "adornment",
+      "source": "extern.c:ring_info[5]"
+    },
+    "item.ring.aggravate_monster": {
+      "text": "aggravate monster",
+      "source": "extern.c:ring_info[6]"
+    },
+    "item.ring.dexterity": {
+      "text": "dexterity",
+      "source": "extern.c:ring_info[7]"
+    },
+    "item.ring.increase_damage": {
+      "text": "increase damage",
+      "source": "extern.c:ring_info[8]"
+    },
+    "item.ring.maintain_armor": {
+      "text": "maintain armor",
+      "source": "extern.c:ring_info[13]"
+    },
+    "item.ring.protection": {
+      "text": "protection",
+      "source": "extern.c:ring_info[0]"
+    },
+    "item.ring.regeneration": {
+      "text": "regeneration",
+      "source": "extern.c:ring_info[9]"
+    },
+    "item.ring.searching": {
+      "text": "searching",
+      "source": "extern.c:ring_info[3]"
+    },
+    "item.ring.see_invisible": {
+      "text": "see invisible",
+      "source": "extern.c:ring_info[4]"
+    },
+    "item.ring.slow_digestion": {
+      "text": "slow digestion",
+      "source": "extern.c:ring_info[10]"
+    },
+    "item.ring.stealth": {
+      "text": "stealth",
+      "source": "extern.c:ring_info[12]"
+    },
+    "item.ring.sustain_strength": {
+      "text": "sustain strength",
+      "source": "extern.c:ring_info[2]"
+    },
+    "item.ring.teleportation": {
+      "text": "teleportation",
+      "source": "extern.c:ring_info[11]"
+    },
+    "item.scroll.aggravate_monsters": {
+      "text": "aggravate monsters",
+      "source": "extern.c:scr_info[16]"
+    },
+    "item.scroll.create_monster": {
+      "text": "create monster",
+      "source": "extern.c:scr_info[14]"
+    },
+    "item.scroll.enchant_armor": {
+      "text": "enchant armor",
+      "source": "extern.c:scr_info[4]"
+    },
+    "item.scroll.enchant_weapon": {
+      "text": "enchant weapon",
+      "source": "extern.c:scr_info[13]"
+    },
+    "item.scroll.food_detection": {
+      "text": "food detection",
+      "source": "extern.c:scr_info[11]"
+    },
+    "item.scroll.hold_monster": {
+      "text": "hold monster",
+      "source": "extern.c:scr_info[2]"
+    },
+    "item.scroll.identify_armor": {
+      "text": "identify armor",
+      "source": "extern.c:scr_info[8]"
+    },
+    "item.scroll.identify_potion": {
+      "text": "identify potion",
+      "source": "extern.c:scr_info[5]"
+    },
+    "item.scroll.identify_ring_wand_or_staff": {
+      "text": "identify ring, wand or staff",
+      "source": "extern.c:scr_info[9]"
+    },
+    "item.scroll.identify_scroll": {
+      "text": "identify scroll",
+      "source": "extern.c:scr_info[6]"
+    },
+    "item.scroll.identify_weapon": {
+      "text": "identify weapon",
+      "source": "extern.c:scr_info[7]"
+    },
+    "item.scroll.magic_mapping": {
+      "text": "magic mapping",
+      "source": "extern.c:scr_info[1]"
+    },
+    "item.scroll.monster_confusion": {
+      "text": "monster confusion",
+      "source": "extern.c:scr_info[0]"
+    },
+    "item.scroll.protect_armor": {
+      "text": "protect armor",
+      "source": "extern.c:scr_info[17]"
+    },
+    "item.scroll.remove_curse": {
+      "text": "remove curse",
+      "source": "extern.c:scr_info[15]"
+    },
+    "item.scroll.scare_monster": {
+      "text": "scare monster",
+      "source": "extern.c:scr_info[10]"
+    },
+    "item.scroll.sleep": {
+      "text": "sleep",
+      "source": "extern.c:scr_info[3]"
+    },
+    "item.scroll.teleportation": {
+      "text": "teleportation",
+      "source": "extern.c:scr_info[12]"
+    },
+    "item.stick.cancellation": {
+      "text": "cancellation",
+      "source": "extern.c:ws_info[13]"
+    },
+    "item.stick.cold": {
+      "text": "cold",
+      "source": "extern.c:ws_info[4]"
+    },
+    "item.stick.drain_life": {
+      "text": "drain life",
+      "source": "extern.c:ws_info[9]"
+    },
+    "item.stick.fire": {
+      "text": "fire",
+      "source": "extern.c:ws_info[3]"
+    },
+    "item.stick.haste_monster": {
+      "text": "haste monster",
+      "source": "extern.c:ws_info[7]"
+    },
+    "item.stick.invisibility": {
+      "text": "invisibility",
+      "source": "extern.c:ws_info[1]"
+    },
+    "item.stick.light": {
+      "text": "light",
+      "source": "extern.c:ws_info[0]"
+    },
+    "item.stick.lightning": {
+      "text": "lightning",
+      "source": "extern.c:ws_info[2]"
+    },
+    "item.stick.magic_missile": {
+      "text": "magic missile",
+      "source": "extern.c:ws_info[6]"
+    },
+    "item.stick.nothing": {
+      "text": "nothing",
+      "source": "extern.c:ws_info[10]"
+    },
+    "item.stick.polymorph": {
+      "text": "polymorph",
+      "source": "extern.c:ws_info[5]"
+    },
+    "item.stick.slow_monster": {
+      "text": "slow monster",
+      "source": "extern.c:ws_info[8]"
+    },
+    "item.stick.teleport_away": {
+      "text": "teleport away",
+      "source": "extern.c:ws_info[11]"
+    },
+    "item.stick.teleport_to": {
+      "text": "teleport to",
+      "source": "extern.c:ws_info[12]"
+    },
+    "item.weapon.arrow": {
+      "text": "arrow",
+      "source": "extern.c:weap_info[3]"
+    },
+    "item.weapon.dagger": {
+      "text": "dagger",
+      "source": "extern.c:weap_info[4]"
+    },
+    "item.weapon.dart": {
+      "text": "dart",
+      "source": "extern.c:weap_info[6]"
+    },
+    "item.weapon.long_sword": {
+      "text": "long sword",
+      "source": "extern.c:weap_info[1]"
+    },
+    "item.weapon.mace": {
+      "text": "mace",
+      "source": "extern.c:weap_info[0]"
+    },
+    "item.weapon.short_bow": {
+      "text": "short bow",
+      "source": "extern.c:weap_info[2]"
+    },
+    "item.weapon.shuriken": {
+      "text": "shuriken",
+      "source": "extern.c:weap_info[7]"
+    },
+    "item.weapon.spear": {
+      "text": "spear",
+      "source": "extern.c:weap_info[8]"
+    },
+    "item.weapon.two_handed_sword": {
+      "text": "two handed sword",
+      "source": "extern.c:weap_info[5]"
+    },
+    "monster.aquator": {
+      "text": "aquator",
+      "source": "extern.c:monsters[0]"
+    },
+    "monster.bat": {
+      "text": "bat",
+      "source": "extern.c:monsters[1]"
+    },
+    "monster.black_unicorn": {
+      "text": "black unicorn",
+      "source": "extern.c:monsters[20]"
+    },
+    "monster.centaur": {
+      "text": "centaur",
+      "source": "extern.c:monsters[2]"
+    },
+    "monster.dragon": {
+      "text": "dragon",
+      "source": "extern.c:monsters[3]"
+    },
+    "monster.emu": {
+      "text": "emu",
+      "source": "extern.c:monsters[4]"
+    },
+    "monster.griffin": {
+      "text": "griffin",
+      "source": "extern.c:monsters[6]"
+    },
+    "monster.hobgoblin": {
+      "text": "hobgoblin",
+      "source": "extern.c:monsters[7]"
+    },
+    "monster.ice_monster": {
+      "text": "ice monster",
+      "source": "extern.c:monsters[8]"
+    },
+    "monster.it": {
+      "text": "it",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "monster.jabberwock": {
+      "text": "jabberwock",
+      "source": "extern.c:monsters[9]"
+    },
+    "monster.kestrel": {
+      "text": "kestrel",
+      "source": "extern.c:monsters[10]"
+    },
+    "monster.leprechaun": {
+      "text": "leprechaun",
+      "source": "extern.c:monsters[11]"
+    },
+    "monster.medusa": {
+      "text": "medusa",
+      "source": "extern.c:monsters[12]"
+    },
+    "monster.nymph": {
+      "text": "nymph",
+      "source": "extern.c:monsters[13]"
+    },
+    "monster.orc": {
+      "text": "orc",
+      "source": "extern.c:monsters[14]"
+    },
+    "monster.phantom": {
+      "text": "phantom",
+      "source": "extern.c:monsters[15]"
+    },
+    "monster.quagga": {
+      "text": "quagga",
+      "source": "extern.c:monsters[16]"
+    },
+    "monster.rattlesnake": {
+      "text": "rattlesnake",
+      "source": "extern.c:monsters[17]"
+    },
+    "monster.snake": {
+      "text": "snake",
+      "source": "extern.c:monsters[18]"
+    },
+    "monster.something": {
+      "text": "something",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "monster.troll": {
+      "text": "troll",
+      "source": "extern.c:monsters[19]"
+    },
+    "monster.vampire": {
+      "text": "vampire",
+      "source": "extern.c:monsters[21]"
+    },
+    "monster.venus_flytrap": {
+      "text": "venus flytrap",
+      "source": "extern.c:monsters[5]"
+    },
+    "monster.wraith": {
+      "text": "wraith",
+      "source": "extern.c:monsters[22]"
+    },
+    "monster.xeroc": {
+      "text": "xeroc",
+      "source": "extern.c:monsters[23]"
+    },
+    "monster.yeti": {
+      "text": "yeti",
+      "source": "extern.c:monsters[24]"
+    },
+    "monster.you": {
+      "text": "you",
+      "source": "things.c/fight.c/rip.c visible naming"
+    },
+    "monster.zombie": {
+      "text": "zombie",
+      "source": "extern.c:monsters[25]"
+    },
+    "scroll.syllable.a": {
+      "text": "a",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ab": {
+      "text": "ab",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ag": {
+      "text": "ag",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.aks": {
+      "text": "aks",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ala": {
+      "text": "ala",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.an": {
+      "text": "an",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.app": {
+      "text": "app",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.arg": {
+      "text": "arg",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.arze": {
+      "text": "arze",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ash": {
+      "text": "ash",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.bek": {
+      "text": "bek",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.bie": {
+      "text": "bie",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.bit": {
+      "text": "bit",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.bjor": {
+      "text": "bjor",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.blu": {
+      "text": "blu",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.bot": {
+      "text": "bot",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.bu": {
+      "text": "bu",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.byt": {
+      "text": "byt",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.comp": {
+      "text": "comp",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.con": {
+      "text": "con",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.cos": {
+      "text": "cos",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.cre": {
+      "text": "cre",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.dalf": {
+      "text": "dalf",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.dan": {
+      "text": "dan",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.den": {
+      "text": "den",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.do": {
+      "text": "do",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.e": {
+      "text": "e",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.eep": {
+      "text": "eep",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.el": {
+      "text": "el",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.eng": {
+      "text": "eng",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.er": {
+      "text": "er",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ere": {
+      "text": "ere",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.erk": {
+      "text": "erk",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.esh": {
+      "text": "esh",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.evs": {
+      "text": "evs",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.fa": {
+      "text": "fa",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.fid": {
+      "text": "fid",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.fri": {
+      "text": "fri",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.fu": {
+      "text": "fu",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.gan": {
+      "text": "gan",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.gar": {
+      "text": "gar",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.glen": {
+      "text": "glen",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.gop": {
+      "text": "gop",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.gre": {
+      "text": "gre",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ha": {
+      "text": "ha",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.hyd": {
+      "text": "hyd",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.i": {
+      "text": "i",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ing": {
+      "text": "ing",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ip": {
+      "text": "ip",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ish": {
+      "text": "ish",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.it": {
+      "text": "it",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ite": {
+      "text": "ite",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.iv": {
+      "text": "iv",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.jo": {
+      "text": "jo",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.kho": {
+      "text": "kho",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.kli": {
+      "text": "kli",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.klis": {
+      "text": "klis",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.la": {
+      "text": "la",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.lech": {
+      "text": "lech",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.mar": {
+      "text": "mar",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.me": {
+      "text": "me",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.mi": {
+      "text": "mi",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.mic": {
+      "text": "mic",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.mik": {
+      "text": "mik",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.mon": {
+      "text": "mon",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.mung": {
+      "text": "mung",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.mur": {
+      "text": "mur",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.nej": {
+      "text": "nej",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.nelg": {
+      "text": "nelg",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.nep": {
+      "text": "nep",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ner": {
+      "text": "ner",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.nes": {
+      "text": "nes",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.nih": {
+      "text": "nih",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.nin": {
+      "text": "nin",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.o": {
+      "text": "o",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.od": {
+      "text": "od",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ood": {
+      "text": "ood",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.org": {
+      "text": "org",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.orn": {
+      "text": "orn",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ox": {
+      "text": "ox",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.oxy": {
+      "text": "oxy",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.pay": {
+      "text": "pay",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ple": {
+      "text": "ple",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.plu": {
+      "text": "plu",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.po": {
+      "text": "po",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.pot": {
+      "text": "pot",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.prok": {
+      "text": "prok",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.re": {
+      "text": "re",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.rea": {
+      "text": "rea",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.rhov": {
+      "text": "rhov",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ri": {
+      "text": "ri",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ro": {
+      "text": "ro",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.rog": {
+      "text": "rog",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.rok": {
+      "text": "rok",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.rol": {
+      "text": "rol",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.sa": {
+      "text": "sa",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.san": {
+      "text": "san",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.sat": {
+      "text": "sat",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.sef": {
+      "text": "sef",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.seh": {
+      "text": "seh",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.shu": {
+      "text": "shu",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ski": {
+      "text": "ski",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.sna": {
+      "text": "sna",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.sne": {
+      "text": "sne",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.snik": {
+      "text": "snik",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.sno": {
+      "text": "sno",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.so": {
+      "text": "so",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.sol": {
+      "text": "sol",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.sri": {
+      "text": "sri",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.sta": {
+      "text": "sta",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.sun": {
+      "text": "sun",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ta": {
+      "text": "ta",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.tab": {
+      "text": "tab",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.tem": {
+      "text": "tem",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ther": {
+      "text": "ther",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ti": {
+      "text": "ti",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.tox": {
+      "text": "tox",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.trol": {
+      "text": "trol",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.tue": {
+      "text": "tue",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.turs": {
+      "text": "turs",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.u": {
+      "text": "u",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ulk": {
+      "text": "ulk",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.um": {
+      "text": "um",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.un": {
+      "text": "un",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.uni": {
+      "text": "uni",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.ur": {
+      "text": "ur",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.val": {
+      "text": "val",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.viv": {
+      "text": "viv",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.vly": {
+      "text": "vly",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.vom": {
+      "text": "vom",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.wah": {
+      "text": "wah",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.wed": {
+      "text": "wed",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.werg": {
+      "text": "werg",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.wex": {
+      "text": "wex",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.whon": {
+      "text": "whon",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.wun": {
+      "text": "wun",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.xo": {
+      "text": "xo",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.y": {
+      "text": "y",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.yot": {
+      "text": "yot",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.yu": {
+      "text": "yu",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.zant": {
+      "text": "zant",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.zeb": {
+      "text": "zeb",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.zim": {
+      "text": "zim",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.zok": {
+      "text": "zok",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.zon": {
+      "text": "zon",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "scroll.syllable.zum": {
+      "text": "zum",
+      "source": "init.c:sylls",
+      "note": "generated magical proper-name syllable; preserve literal runes, no inferred meaning"
+    },
+    "trap.a_beartrap": {
+      "text": "a beartrap",
+      "source": "extern.c:tr_name[3]"
+    },
+    "trap.a_mysterious_trap": {
+      "text": "a mysterious trap",
+      "source": "extern.c:tr_name[7]"
+    },
+    "trap.a_poison_dart_trap": {
+      "text": "a poison dart trap",
+      "source": "extern.c:tr_name[5]"
+    },
+    "trap.a_rust_trap": {
+      "text": "a rust trap",
+      "source": "extern.c:tr_name[6]"
+    },
+    "trap.a_sleeping_gas_trap": {
+      "text": "a sleeping gas trap",
+      "source": "extern.c:tr_name[2]"
+    },
+    "trap.a_teleport_trap": {
+      "text": "a teleport trap",
+      "source": "extern.c:tr_name[4]"
+    },
+    "trap.a_trapdoor": {
+      "text": "a trapdoor",
+      "source": "extern.c:tr_name[0]"
+    },
+    "trap.an_arrow_trap": {
+      "text": "an arrow trap",
+      "source": "extern.c:tr_name[1]"
+    }
+  },
+  "tables": {
+    "weapon": [
+      "item.weapon.mace",
+      "item.weapon.long_sword",
+      "item.weapon.short_bow",
+      "item.weapon.arrow",
+      "item.weapon.dagger",
+      "item.weapon.two_handed_sword",
+      "item.weapon.dart",
+      "item.weapon.shuriken",
+      "item.weapon.spear"
+    ],
+    "armor": [
+      "item.armor.leather_armor",
+      "item.armor.ring_mail",
+      "item.armor.studded_leather_armor",
+      "item.armor.scale_mail",
+      "item.armor.chain_mail",
+      "item.armor.splint_mail",
+      "item.armor.banded_mail",
+      "item.armor.plate_mail"
+    ],
+    "potion": [
+      "item.potion.confusion",
+      "item.potion.hallucination",
+      "item.potion.poison",
+      "item.potion.gain_strength",
+      "item.potion.see_invisible",
+      "item.potion.healing",
+      "item.potion.monster_detection",
+      "item.potion.magic_detection",
+      "item.potion.raise_level",
+      "item.potion.extra_healing",
+      "item.potion.haste_self",
+      "item.potion.restore_strength",
+      "item.potion.blindness",
+      "item.potion.levitation"
+    ],
+    "ring": [
+      "item.ring.protection",
+      "item.ring.add_strength",
+      "item.ring.sustain_strength",
+      "item.ring.searching",
+      "item.ring.see_invisible",
+      "item.ring.adornment",
+      "item.ring.aggravate_monster",
+      "item.ring.dexterity",
+      "item.ring.increase_damage",
+      "item.ring.regeneration",
+      "item.ring.slow_digestion",
+      "item.ring.teleportation",
+      "item.ring.stealth",
+      "item.ring.maintain_armor"
+    ],
+    "scroll": [
+      "item.scroll.monster_confusion",
+      "item.scroll.magic_mapping",
+      "item.scroll.hold_monster",
+      "item.scroll.sleep",
+      "item.scroll.enchant_armor",
+      "item.scroll.identify_potion",
+      "item.scroll.identify_scroll",
+      "item.scroll.identify_weapon",
+      "item.scroll.identify_armor",
+      "item.scroll.identify_ring_wand_or_staff",
+      "item.scroll.scare_monster",
+      "item.scroll.food_detection",
+      "item.scroll.teleportation",
+      "item.scroll.enchant_weapon",
+      "item.scroll.create_monster",
+      "item.scroll.remove_curse",
+      "item.scroll.aggravate_monsters",
+      "item.scroll.protect_armor"
+    ],
+    "stick": [
+      "item.stick.light",
+      "item.stick.invisibility",
+      "item.stick.lightning",
+      "item.stick.fire",
+      "item.stick.cold",
+      "item.stick.polymorph",
+      "item.stick.magic_missile",
+      "item.stick.haste_monster",
+      "item.stick.slow_monster",
+      "item.stick.drain_life",
+      "item.stick.nothing",
+      "item.stick.teleport_away",
+      "item.stick.teleport_to",
+      "item.stick.cancellation"
+    ],
+    "monster": [
+      "monster.aquator",
+      "monster.bat",
+      "monster.centaur",
+      "monster.dragon",
+      "monster.emu",
+      "monster.venus_flytrap",
+      "monster.griffin",
+      "monster.hobgoblin",
+      "monster.ice_monster",
+      "monster.jabberwock",
+      "monster.kestrel",
+      "monster.leprechaun",
+      "monster.medusa",
+      "monster.nymph",
+      "monster.orc",
+      "monster.phantom",
+      "monster.quagga",
+      "monster.rattlesnake",
+      "monster.snake",
+      "monster.troll",
+      "monster.black_unicorn",
+      "monster.vampire",
+      "monster.wraith",
+      "monster.xeroc",
+      "monster.yeti",
+      "monster.zombie"
+    ],
+    "trap": [
+      "trap.a_trapdoor",
+      "trap.an_arrow_trap",
+      "trap.a_sleeping_gas_trap",
+      "trap.a_beartrap",
+      "trap.a_teleport_trap",
+      "trap.a_poison_dart_trap",
+      "trap.a_rust_trap",
+      "trap.a_mysterious_trap"
+    ],
+    "color": [
+      "appearance.color.amber",
+      "appearance.color.aquamarine",
+      "appearance.color.black",
+      "appearance.color.blue",
+      "appearance.color.brown",
+      "appearance.color.clear",
+      "appearance.color.crimson",
+      "appearance.color.cyan",
+      "appearance.color.ecru",
+      "appearance.color.gold",
+      "appearance.color.green",
+      "appearance.color.grey",
+      "appearance.color.magenta",
+      "appearance.color.orange",
+      "appearance.color.pink",
+      "appearance.color.plaid",
+      "appearance.color.purple",
+      "appearance.color.red",
+      "appearance.color.silver",
+      "appearance.color.tan",
+      "appearance.color.tangerine",
+      "appearance.color.topaz",
+      "appearance.color.turquoise",
+      "appearance.color.vermilion",
+      "appearance.color.violet",
+      "appearance.color.white",
+      "appearance.color.yellow"
+    ],
+    "stone": [
+      "appearance.stone.agate",
+      "appearance.stone.alexandrite",
+      "appearance.stone.amethyst",
+      "appearance.stone.carnelian",
+      "appearance.stone.diamond",
+      "appearance.stone.emerald",
+      "appearance.stone.germanium",
+      "appearance.stone.granite",
+      "appearance.stone.garnet",
+      "appearance.stone.jade",
+      "appearance.stone.kryptonite",
+      "appearance.stone.lapis_lazuli",
+      "appearance.stone.moonstone",
+      "appearance.stone.obsidian",
+      "appearance.stone.onyx",
+      "appearance.stone.opal",
+      "appearance.stone.pearl",
+      "appearance.stone.peridot",
+      "appearance.stone.ruby",
+      "appearance.stone.sapphire",
+      "appearance.stone.stibotantalite",
+      "appearance.stone.tiger_eye",
+      "appearance.stone.topaz",
+      "appearance.stone.turquoise",
+      "appearance.stone.taaffeite",
+      "appearance.stone.zircon"
+    ],
+    "wood": [
+      "appearance.wood.avocado_wood",
+      "appearance.wood.balsa",
+      "appearance.wood.bamboo",
+      "appearance.wood.banyan",
+      "appearance.wood.birch",
+      "appearance.wood.cedar",
+      "appearance.wood.cherry",
+      "appearance.wood.cinnibar",
+      "appearance.wood.cypress",
+      "appearance.wood.dogwood",
+      "appearance.wood.driftwood",
+      "appearance.wood.ebony",
+      "appearance.wood.elm",
+      "appearance.wood.eucalyptus",
+      "appearance.wood.fall",
+      "appearance.wood.hemlock",
+      "appearance.wood.holly",
+      "appearance.wood.ironwood",
+      "appearance.wood.kukui_wood",
+      "appearance.wood.mahogany",
+      "appearance.wood.manzanita",
+      "appearance.wood.maple",
+      "appearance.wood.oaken",
+      "appearance.wood.persimmon_wood",
+      "appearance.wood.pecan",
+      "appearance.wood.pine",
+      "appearance.wood.poplar",
+      "appearance.wood.redwood",
+      "appearance.wood.rosewood",
+      "appearance.wood.spruce",
+      "appearance.wood.teak",
+      "appearance.wood.walnut",
+      "appearance.wood.zebrawood"
+    ],
+    "metal": [
+      "appearance.metal.aluminum",
+      "appearance.metal.beryllium",
+      "appearance.metal.bone",
+      "appearance.metal.brass",
+      "appearance.metal.bronze",
+      "appearance.metal.copper",
+      "appearance.metal.electrum",
+      "appearance.metal.gold",
+      "appearance.metal.iron",
+      "appearance.metal.lead",
+      "appearance.metal.magnesium",
+      "appearance.metal.mercury",
+      "appearance.metal.nickel",
+      "appearance.metal.pewter",
+      "appearance.metal.platinum",
+      "appearance.metal.steel",
+      "appearance.metal.silver",
+      "appearance.metal.silicon",
+      "appearance.metal.tin",
+      "appearance.metal.titanium",
+      "appearance.metal.tungsten",
+      "appearance.metal.zinc"
+    ],
+    "hit": [
+      "combat.hit.scored_an_excellent_hit_on",
+      "combat.hit.hit",
+      "combat.hit.have_injured",
+      "combat.hit.swing_and_hit",
+      "combat.hit.scored_an_excellent_hit_on",
+      "combat.hit.hit",
+      "combat.hit.has_injured",
+      "combat.hit.swings_and_hits"
+    ],
+    "miss": [
+      "combat.miss.miss",
+      "combat.miss.swing_and_miss",
+      "combat.miss.barely_miss",
+      "combat.miss.don_t_hit",
+      "combat.miss.misses",
+      "combat.miss.swings_and_misses",
+      "combat.miss.barely_misses",
+      "combat.miss.doesn_t_hit"
+    ],
+    "scroll_syllables": [
+      "scroll.syllable.a",
+      "scroll.syllable.ab",
+      "scroll.syllable.ag",
+      "scroll.syllable.aks",
+      "scroll.syllable.ala",
+      "scroll.syllable.an",
+      "scroll.syllable.app",
+      "scroll.syllable.arg",
+      "scroll.syllable.arze",
+      "scroll.syllable.ash",
+      "scroll.syllable.bek",
+      "scroll.syllable.bie",
+      "scroll.syllable.bit",
+      "scroll.syllable.bjor",
+      "scroll.syllable.blu",
+      "scroll.syllable.bot",
+      "scroll.syllable.bu",
+      "scroll.syllable.byt",
+      "scroll.syllable.comp",
+      "scroll.syllable.con",
+      "scroll.syllable.cos",
+      "scroll.syllable.cre",
+      "scroll.syllable.dalf",
+      "scroll.syllable.dan",
+      "scroll.syllable.den",
+      "scroll.syllable.do",
+      "scroll.syllable.e",
+      "scroll.syllable.eep",
+      "scroll.syllable.el",
+      "scroll.syllable.eng",
+      "scroll.syllable.er",
+      "scroll.syllable.ere",
+      "scroll.syllable.erk",
+      "scroll.syllable.esh",
+      "scroll.syllable.evs",
+      "scroll.syllable.fa",
+      "scroll.syllable.fid",
+      "scroll.syllable.fri",
+      "scroll.syllable.fu",
+      "scroll.syllable.gan",
+      "scroll.syllable.gar",
+      "scroll.syllable.glen",
+      "scroll.syllable.gop",
+      "scroll.syllable.gre",
+      "scroll.syllable.ha",
+      "scroll.syllable.hyd",
+      "scroll.syllable.i",
+      "scroll.syllable.ing",
+      "scroll.syllable.ip",
+      "scroll.syllable.ish",
+      "scroll.syllable.it",
+      "scroll.syllable.ite",
+      "scroll.syllable.iv",
+      "scroll.syllable.jo",
+      "scroll.syllable.kho",
+      "scroll.syllable.kli",
+      "scroll.syllable.klis",
+      "scroll.syllable.la",
+      "scroll.syllable.lech",
+      "scroll.syllable.mar",
+      "scroll.syllable.me",
+      "scroll.syllable.mi",
+      "scroll.syllable.mic",
+      "scroll.syllable.mik",
+      "scroll.syllable.mon",
+      "scroll.syllable.mung",
+      "scroll.syllable.mur",
+      "scroll.syllable.nej",
+      "scroll.syllable.nelg",
+      "scroll.syllable.nep",
+      "scroll.syllable.ner",
+      "scroll.syllable.nes",
+      "scroll.syllable.nes",
+      "scroll.syllable.nih",
+      "scroll.syllable.nin",
+      "scroll.syllable.o",
+      "scroll.syllable.od",
+      "scroll.syllable.ood",
+      "scroll.syllable.org",
+      "scroll.syllable.orn",
+      "scroll.syllable.ox",
+      "scroll.syllable.oxy",
+      "scroll.syllable.pay",
+      "scroll.syllable.ple",
+      "scroll.syllable.plu",
+      "scroll.syllable.po",
+      "scroll.syllable.pot",
+      "scroll.syllable.prok",
+      "scroll.syllable.re",
+      "scroll.syllable.rea",
+      "scroll.syllable.rhov",
+      "scroll.syllable.ri",
+      "scroll.syllable.ro",
+      "scroll.syllable.rog",
+      "scroll.syllable.rok",
+      "scroll.syllable.rol",
+      "scroll.syllable.sa",
+      "scroll.syllable.san",
+      "scroll.syllable.sat",
+      "scroll.syllable.sef",
+      "scroll.syllable.seh",
+      "scroll.syllable.shu",
+      "scroll.syllable.ski",
+      "scroll.syllable.sna",
+      "scroll.syllable.sne",
+      "scroll.syllable.snik",
+      "scroll.syllable.sno",
+      "scroll.syllable.so",
+      "scroll.syllable.sol",
+      "scroll.syllable.sri",
+      "scroll.syllable.sta",
+      "scroll.syllable.sun",
+      "scroll.syllable.ta",
+      "scroll.syllable.tab",
+      "scroll.syllable.tem",
+      "scroll.syllable.ther",
+      "scroll.syllable.ti",
+      "scroll.syllable.tox",
+      "scroll.syllable.trol",
+      "scroll.syllable.tue",
+      "scroll.syllable.turs",
+      "scroll.syllable.u",
+      "scroll.syllable.ulk",
+      "scroll.syllable.um",
+      "scroll.syllable.un",
+      "scroll.syllable.uni",
+      "scroll.syllable.ur",
+      "scroll.syllable.val",
+      "scroll.syllable.viv",
+      "scroll.syllable.vly",
+      "scroll.syllable.vom",
+      "scroll.syllable.wah",
+      "scroll.syllable.wed",
+      "scroll.syllable.werg",
+      "scroll.syllable.wex",
+      "scroll.syllable.whon",
+      "scroll.syllable.wun",
+      "scroll.syllable.xo",
+      "scroll.syllable.y",
+      "scroll.syllable.yot",
+      "scroll.syllable.yu",
+      "scroll.syllable.zant",
+      "scroll.syllable.zeb",
+      "scroll.syllable.zim",
+      "scroll.syllable.zok",
+      "scroll.syllable.zon",
+      "scroll.syllable.zum"
+    ]
+  },
+  "source_tables": {
+    "weapon": {
+      "source": "extern.c:weap_info",
+      "count": 9,
+      "original_match": true,
+      "sha256": "8d35a633cab6a4a2fc3413bbb552887e821ae6bb84d547acb184bb64b1f226dd"
+    },
+    "armor": {
+      "source": "extern.c:arm_info",
+      "count": 8,
+      "original_match": true,
+      "sha256": "1b3719308c0893f6f3be6f90f9e5de0a50fb72d2af1bf09103c3ed51050c5056"
+    },
+    "potion": {
+      "source": "extern.c:pot_info",
+      "count": 14,
+      "original_match": true,
+      "sha256": "e8e4c80a8fb2d8db670e2059ef7d4527c6ffe50144a7fdbc49d29588d7783b03"
+    },
+    "ring": {
+      "source": "extern.c:ring_info",
+      "count": 14,
+      "original_match": true,
+      "sha256": "75301f9e4ffb7d737acd95d8f083e4bf16c8b069b620d5579a1adb5d9f5f2c9a"
+    },
+    "scroll": {
+      "source": "extern.c:scr_info",
+      "count": 18,
+      "original_match": true,
+      "sha256": "744d74c1581ccfcfc7a4644e0c5d4e3d1807126b87d726d700a74e0b7d34085c"
+    },
+    "stick": {
+      "source": "extern.c:ws_info",
+      "count": 14,
+      "original_match": true,
+      "sha256": "854ccc56a72747a8d5fed639360d5904a97b57c1510fd4b2c557c2ed8bd30043"
+    },
+    "monster": {
+      "source": "extern.c:monsters",
+      "count": 26,
+      "original_match": true,
+      "sha256": "c1386d654a925633e717df4bfd8836314ed14a441566c0006e5a94a6f347b5c7"
+    },
+    "trap": {
+      "source": "extern.c:tr_name",
+      "count": 8,
+      "original_match": true,
+      "sha256": "eb8aa18019352c62a60c6ce9d4e1bb3e74d0127e6a40568ca3fade4f60c5c4cc"
+    },
+    "color": {
+      "source": "init.c:rainbow",
+      "count": 27,
+      "original_match": true,
+      "sha256": "804b4c8ecb76594d7c3e2dec3de694a7eb46ed47b3f72d2512c08e4ac3373822"
+    },
+    "stone": {
+      "source": "init.c:stones",
+      "count": 26,
+      "original_match": true,
+      "sha256": "2b9b24874fbe602e40bf61d6df133ca3d9d2e46f8f3edeadedfb855a1be4920d"
+    },
+    "wood": {
+      "source": "init.c:wood",
+      "count": 33,
+      "original_match": true,
+      "sha256": "0681752e0f0fbbb02b8b3839cafcdc46bfeecb891b544250579575d9fceb88cf"
+    },
+    "metal": {
+      "source": "init.c:metal",
+      "count": 22,
+      "original_match": true,
+      "sha256": "dd475a99158121d0fd0324fe4fac5ef11dce143d41276c79c63b14f0a972f0ea"
+    },
+    "hit": {
+      "source": "fight.c:h_names",
+      "count": 8,
+      "original_match": true,
+      "sha256": "3b964faef217c403d11de03942d79cbf84aee97951e8acf5887c8d41b04c33fa"
+    },
+    "miss": {
+      "source": "fight.c:m_names",
+      "count": 8,
+      "original_match": true,
+      "sha256": "1daacf9a4800ed1bd4fe6cc6d9ea48b088443da2f201943db9ca348064ebf31c"
+    },
+    "scroll_syllables": {
+      "source": "init.c:sylls",
+      "count": 147,
+      "original_match": true,
+      "sha256": "4fe4c240116152e19a77de271424a14d2377dcbd988435877e7841d9caca8994"
+    }
+  },
+  "forms": {
+    "effect": "{kind} of {effect}",
+    "appearance": "{appearance} {kind}",
+    "scroll_title": "{kind} titled '{title}'",
+    "called": "{name} called {label}",
+    "details": "{name} ({details})",
+    "quantity": "{count} {name}",
+    "weapon_bonus": "{hit},{damage} {name}",
+    "armor_bonus": "{bonus} {name} [protection {protection}]",
+    "armor_bonus_brief": "{bonus} {name} [{protection}]",
+    "ring_bonus": "{name} [{bonus}]",
+    "charges": "{charges} charges",
+    "charges_known": "{name} [{charges} charges]",
+    "charges_brief": "{name} [{charges}]",
+    "appearance_known": "{name}({appearance})",
+    "gold": "{count} Gold pieces",
+    "food_count": "{count} rations of food",
+    "fruit_count": "{count} {fruit}s",
+    "definite": "the {name}",
+    "indefinite": "{article} {name}",
+    "combat.hit.scored_an_excellent_hit_on.sentence": "{actor} scored an excellent hit on {target}",
+    "combat.hit.hit.sentence": "{actor} hit {target}",
+    "combat.hit.have_injured.sentence": "{actor} have injured {target}",
+    "combat.hit.swing_and_hit.sentence": "{actor} swing and hit {target}",
+    "combat.hit.has_injured.sentence": "{actor} has injured {target}",
+    "combat.hit.swings_and_hits.sentence": "{actor} swings and hits {target}",
+    "combat.hit.terse": "{actor} hit",
+    "combat.miss.miss.sentence": "{actor} miss {target}",
+    "combat.miss.swing_and_miss.sentence": "{actor} swing and miss {target}",
+    "combat.miss.barely_miss.sentence": "{actor} barely miss {target}",
+    "combat.miss.don_t_hit.sentence": "{actor} don't hit {target}",
+    "combat.miss.misses.sentence": "{actor} misses {target}",
+    "combat.miss.swings_and_misses.sentence": "{actor} swings and misses {target}",
+    "combat.miss.barely_misses.sentence": "{actor} barely misses {target}",
+    "combat.miss.doesn_t_hit.sentence": "{actor} doesn't hit {target}",
+    "combat.miss.terse": "{actor} missed"
+  },
+  "note": "random scroll rune syllables and user labels remain literal; hidden type/bonuses are not inferred"
+}

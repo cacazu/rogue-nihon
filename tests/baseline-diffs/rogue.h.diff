@@ -1,0 +1,24 @@
+--- acquired/rogue.h
++++ baseline-src/rogue.h
+@@ -11,6 +11,16 @@
+  */
+ 
+ #include "extern.h"
++#ifdef ROGUE_LAYERED
++#include "core.h"
++/* A rule file cannot touch a process terminal or terminate the host. */
++#define printf rg_console_printf
++#define putchar rg_console_putchar
++#define getchar rg_console_getchar
++#define fgets rg_console_fgets
++#define exit rg_core_exit
++#define abort rg_core_abort
++#endif
+ 
+ #undef lines 
+ 
+@@ -751,3 +761,4 @@
+ extern int      cNWOOD;
+ extern char     *metal[];
+ extern int      cNMETAL;
++

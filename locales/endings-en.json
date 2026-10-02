@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "language": "en",
+  "messages": {
+    "ui.ending.return": {"template": "[Press return to continue]", "conversions": []},
+    "ui.score.heading": {"template": "Top {0} {1}:", "conversions": ["s", "s"]},
+    "ui.score.columns": {"template": "   Score Name", "conversions": []},
+    "ui.score.reason.killed": {"template": "killed", "conversions": []},
+    "ui.score.reason.quit": {"template": "quit", "conversions": []},
+    "ui.score.reason.winner": {"template": "A total winner", "conversions": []},
+    "ui.score.reason.amulet": {"template": "killed with Amulet", "conversions": []},
+    "ui.score.entry": {"template": "{0} {1} {2}: {3} on level {4}", "conversions": ["d", "d", "s", "s", "d"]},
+    "ui.score.entry_death": {"template": "{0} {1} {2}: {3} on level {4} by {5}", "conversions": ["d", "d", "s", "s", "d", "s"]},
+    "ui.ending.death_summary": {"template": "Killed by {0}{1} with {2} gold", "conversions": ["s", "s", "d"]},
+    "ui.ending.cause": {"template": "{0}", "conversions": ["s"], "notation_only": true},
+    "ui.ending.name": {"template": "{0}", "conversions": ["s"], "notation_only": true},
+    "ui.ending.gold": {"template": "{0} Au", "conversions": ["d"]},
+    "ui.ending.year": {"template": "{0}", "conversions": ["d"]},
+    "ui.ending.rest": {"template": "REST", "conversions": []},
+    "ui.ending.in": {"template": "IN", "conversions": []},
+    "ui.ending.peace": {"template": "PEACE", "conversions": []},
+    "ui.ending.killed_by": {"template": "killed by a", "conversions": []},
+    "ui.ending.victory_title": {"template": "YOU MADE IT!", "conversions": []},
+    "ui.ending.congratulations": {"template": "Congratulations, you have made it to the light of day!", "conversions": []},
+    "ui.ending.elite": {"template": "You have joined the elite ranks of those who have escaped the", "conversions": []},
+    "ui.ending.home": {"template": "Dungeons of Doom alive.  You journey home and sell all your loot at", "conversions": []},
+    "ui.ending.guild": {"template": "a great profit and are admitted to the Fighters' Guild.", "conversions": []},
+    "ui.ending.space": {"template": "--Press space to continue--", "conversions": []},
+    "ui.ending.loot_columns": {"template": "   Worth  Item", "conversions": []},
+    "ui.ending.loot_item": {"template": "{0}) {1}  {2}", "conversions": ["s", "d", "s"]},
+    "ui.ending.gold_value": {"template": "   {0}  Gold Pieces", "conversions": ["d"]}
+  }
+}
