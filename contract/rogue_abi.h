@@ -58,6 +58,9 @@ void rg_core_save_free(uint8_t *bytes);
 int32_t rg_host_read_key(void);
 void rg_host_flush_input(void);
 void rg_host_present(const uint8_t *cells, uint32_t rows, uint32_t columns);
+/* Presentation-only observation of a currently drawn bolt. active=0 clears
+ * transient tags. This never changes cells, game state, RNG or save bytes. */
+void rg_host_map_effect(int32_t x, int32_t y, int32_t glyph, int32_t active);
 void rg_host_message(const char *message_id, const char *arguments_json,
                      const char *legacy_english);
 /* UTF-8 semantic UI is presentation data only. row=-1 clears a scope;

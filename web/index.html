@@ -22,7 +22,13 @@
     <p id="notice" role="status" aria-live="polite"></p>
     <section class="game-panel" data-i18n-aria="app.game_screen">
       <div id="player-status" class="player-status" hidden><span id="player-name"></span><span id="status-text"></span></div>
-      <div class="board-scroll"><canvas id="board" tabindex="0" role="img" data-i18n-aria="app.board"></canvas></div>
+      <div class="map-tools">
+        <label><span data-i18n="form.display_mode"></span><select id="display-mode"><option value="ascii" data-i18n="view.ascii"></option><option value="tiles" data-i18n="view.tiles"></option><option value="pixels" data-i18n="view.pixels"></option></select></label>
+        <label><span data-i18n="form.zoom"></span><select id="tile-zoom"><option value="16">50%</option><option value="24">75%</option><option value="32" selected>100%</option><option value="48">150%</option><option value="64">200%</option></select></label>
+        <button id="center-map" data-i18n="action.center"></button><button id="fullscreen" data-i18n="action.fullscreen"></button>
+        <span id="tile-description" role="status" aria-live="polite"></span>
+      </div>
+      <div class="board-scroll" data-display="tiles"><div id="map-space"><canvas id="board" tabindex="0" role="img" aria-describedby="accessible-screen" data-i18n-aria="app.board"></canvas></div></div>
       <pre id="accessible-screen" class="sr-only" aria-live="off"></pre>
       <p id="game-message" class="message" role="status" aria-live="polite"></p>
       <section id="presentation" class="presentation" hidden>
@@ -57,6 +63,8 @@
   <script src="/web/abi.js"></script>
   <script src="/web/event-queue.js"></script>
   <script src="/web/localization.js"></script>
+  <script src="/web/tiles.js"></script>
+  <script src="/web/view-settings.js"></script>
   <script src="/web/app.js"></script>
 </body>
 </html>

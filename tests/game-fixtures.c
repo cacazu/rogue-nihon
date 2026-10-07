@@ -132,7 +132,13 @@ void rg_test_apply_fixture(void)
     name[name_length] = 0;
     name[strcspn(name, "\r\n")] = 0;
     clean_world();
-    if (!strcmp(name, "wall")) {
+    if (!strncmp(name, "graphics-beam-", 14)) {
+        coord direction;
+        direction.x = name[14] == 'v' ? 0 : 1;
+        direction.y = name[14] == 'h' ? 0 : name[14] == 's' ? -1 : 1;
+        if (!strchr("hvsb", name[14]) || name[15]) abort();
+        fire_bolt(&hero, &direction, "flame");
+    } else if (!strcmp(name, "wall")) {
         chat(hero.y, hero.x - 1) = '|';
         mvaddch(hero.y, hero.x - 1, '|');
     } else if (!strcmp(name, "haste")) {

@@ -16,6 +16,8 @@
 /tests/ui-results/
 /tests/browser-smoke/output/
 /tests/browser-smoke/output-ja/
+/tests/graphics-output/
+/tests/pixel-output/
 /tests/*-result.json
 /tests/*-run.txt
 

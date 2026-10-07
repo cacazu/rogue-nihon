@@ -84,6 +84,15 @@
     "error.frame": "ゲーム画面を表示できませんでした。",
     "error.presentation": "このビルドでは翻訳済みのゲーム画面を表示できません。",
     "error.translation": "ゲーム文言の日本語訳を表示できませんでした。",
-    "error.catalog": "画面の文言カタログを読み込めませんでした。"
+    "error.catalog": "画面の文言カタログを読み込めませんでした。",
+    "form.display_mode": "地図の表示",
+    "view.tiles": "イラスト",
+    "view.ascii": "文字",
+    "form.zoom": "拡大率",
+    "action.center": "自分の位置へ",
+    "action.fullscreen": "全画面",
+    "error.tiles": "地図の画像を読み込めませんでした。ページを再読み込みしてください。",
+    "error.fullscreen": "全画面表示を開けませんでした。",
+    "view.pixels": "ドット絵"
   }
 }

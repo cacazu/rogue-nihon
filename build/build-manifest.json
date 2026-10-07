@@ -1,8 +1,8 @@
 {
-  "built_at_utc": "2026-10-02T11:31:05.0518820Z",
-  "logic_source_directory": "C:\\Users\\kit\\Documents\\Codex\\2026-10-02\\task\\rogue-four-layer\\logic",
+  "built_at_utc": "2026-10-02T13:41:52.8198250Z",
+  "logic_source_directory": "C:\\Users\\kit\\Documents\\Codex\\2026-10-02\\task\\rogue-tiles-work\\logic",
   "c_source_files": 38,
-  "rust_library": "C:\\Users\\kit\\Documents\\Codex\\2026-10-02\\task\\rogue-four-layer\\rust\\target\\wasm32-unknown-emscripten\\release\\librogue_layers.a",
+  "rust_library": "C:\\Users\\kit\\Documents\\Codex\\2026-10-02\\task\\rogue-tiles-work\\rust\\target\\wasm32-unknown-emscripten\\release\\librogue_layers.a",
   "sdk_root": "C:\\Users\\kit\\emsdk",
   "rust_version": "rustc 1.98.1 (48a229cea 2026-09-01)",
   "c_flags": [
@@ -27,8 +27,8 @@
     },
     {
       "file": "game.wasm",
-      "bytes": 1042044,
-      "sha256": "d4e4f53f7e3b5c6e1a86c1fa185f41d172893afa3d269a101e10bbbd3ee2fb56"
+      "bytes": 1048326,
+      "sha256": "4fc67c2d8fdfc95401399862cbbd4266340da91ad257d5a311a4060e1c338b31"
     }
   ]
 }

@@ -10,7 +10,7 @@ import { prepareJapanese, japaneseScenarios } from "./ja-scenarios.mjs";
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const jaScenario = process.env.ROGUE_JA_SCENARIO === "1";
-const output = path.join(directory, jaScenario ? "output-ja" : "output");
+const output = path.join(directory, jaScenario ? (process.env.ROGUE_VIEW === "pixels" ? "../pixel-output/japanese" : "output-ja") : "output");
 const chrome = process.env.ROGUE_CHROME || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let readBrowserDiagnostics = null;
@@ -56,7 +56,7 @@ try {
   await cdp.call("Runtime.enable"); await cdp.call("Page.enable");
   readBrowserDiagnostics = () => cdp.evaluate("window.__rogueBrowserTest ? __rogueBrowserTest.diagnostics : null");
   await cdp.call("Emulation.setDeviceMetricsOverride", { width: 1240, height: 900, deviceScaleFactor: 1, mobile: false });
-  await cdp.call("Page.navigate", { url: base + "?trace=1" });
+  await cdp.call("Page.navigate", { url: base + "?trace=1" + (process.env.ROGUE_VIEW ? "&view=" + encodeURIComponent(process.env.ROGUE_VIEW) : "") });
   await until(() => cdp.evaluate("Boolean(window.__rogueBrowserTest)"), "browser host loaded");
   assert.equal(await cdp.evaluate("crossOriginIsolated && typeof SharedArrayBuffer === 'function'"), true);
   evidence.checks.push("COOP/COEP enable cross-origin isolated SharedArrayBuffer");

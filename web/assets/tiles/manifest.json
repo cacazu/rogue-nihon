@@ -1,0 +1,738 @@
+{
+  "schema_version": 1,
+  "style": "simple fantasy, thick dark outlines, flat readable colors",
+  "asset_id_count": 49,
+  "source_release": "RRP Rogue 5.4.4",
+  "tile_pixels": 96,
+  "default_display_pixels": 32,
+  "sheets": {
+    "terrain-actors": {
+      "columns": 4,
+      "rows": 3
+    },
+    "items": {
+      "columns": 3,
+      "rows": 3
+    },
+    "monsters-1": {
+      "columns": 3,
+      "rows": 3
+    },
+    "monsters-2": {
+      "columns": 3,
+      "rows": 3
+    },
+    "monsters-3": {
+      "columns": 3,
+      "rows": 3
+    }
+  },
+  "entries": [
+    {
+      "id": "terrain.unexplored",
+      "glyph": " ",
+      "meaning": "Unexplored or unlit",
+      "group": "terrain",
+      "sheet": "terrain-actors",
+      "index": 0,
+      "rotation": 0,
+      "labels": {
+        "ja": "暗闇",
+        "en": "Unexplored or unlit"
+      },
+      "image": "terrain.unexplored.png"
+    },
+    {
+      "id": "terrain.floor",
+      "glyph": ".",
+      "meaning": "Room floor",
+      "group": "terrain",
+      "sheet": "terrain-actors",
+      "index": 1,
+      "rotation": 0,
+      "labels": {
+        "ja": "床",
+        "en": "Room floor"
+      },
+      "image": "terrain.floor.png"
+    },
+    {
+      "id": "terrain.passage",
+      "glyph": "#",
+      "meaning": "Passage",
+      "group": "terrain",
+      "sheet": "terrain-actors",
+      "index": 2,
+      "rotation": 0,
+      "labels": {
+        "ja": "通路",
+        "en": "Passage"
+      },
+      "image": "terrain.passage.png"
+    },
+    {
+      "id": "terrain.door",
+      "glyph": "+",
+      "meaning": "Door",
+      "group": "terrain",
+      "sheet": "terrain-actors",
+      "index": 3,
+      "rotation": 0,
+      "labels": {
+        "ja": "扉",
+        "en": "Door"
+      },
+      "image": "terrain.door.png"
+    },
+    {
+      "id": "terrain.wall_horizontal",
+      "glyph": "-",
+      "meaning": "Horizontal wall",
+      "group": "terrain",
+      "sheet": "terrain-actors",
+      "index": 4,
+      "rotation": 0,
+      "labels": {
+        "ja": "横向きの壁",
+        "en": "Horizontal wall"
+      },
+      "image": "terrain.wall_horizontal.png"
+    },
+    {
+      "id": "terrain.wall_vertical",
+      "glyph": "|",
+      "meaning": "Vertical wall",
+      "group": "terrain",
+      "sheet": "terrain-actors",
+      "index": 5,
+      "rotation": 0,
+      "labels": {
+        "ja": "縦向きの壁",
+        "en": "Vertical wall"
+      },
+      "image": "terrain.wall_vertical.png"
+    },
+    {
+      "id": "terrain.stairs",
+      "glyph": "%",
+      "meaning": "Stairs down",
+      "group": "terrain",
+      "sheet": "terrain-actors",
+      "index": 6,
+      "rotation": 0,
+      "labels": {
+        "ja": "下り階段",
+        "en": "Stairs down"
+      },
+      "image": "terrain.stairs.png"
+    },
+    {
+      "id": "terrain.trap",
+      "glyph": "^",
+      "meaning": "Visible trap (all eight types)",
+      "group": "terrain",
+      "sheet": "terrain-actors",
+      "index": 7,
+      "rotation": 0,
+      "labels": {
+        "ja": "罠",
+        "en": "Visible trap (all eight types)"
+      },
+      "image": "terrain.trap.png"
+    },
+    {
+      "id": "actor.player",
+      "glyph": "@",
+      "meaning": "Player adventurer",
+      "group": "actor",
+      "sheet": "terrain-actors",
+      "index": 8,
+      "rotation": 0,
+      "labels": {
+        "ja": "あなた",
+        "en": "Player adventurer"
+      },
+      "image": "actor.player.png"
+    },
+    {
+      "id": "marker.magic",
+      "glyph": "$",
+      "meaning": "Magic detection marker",
+      "group": "marker",
+      "sheet": "terrain-actors",
+      "index": 9,
+      "rotation": 0,
+      "labels": {
+        "ja": "魔力の反応",
+        "en": "Magic detection marker"
+      },
+      "image": "marker.magic.png"
+    },
+    {
+      "id": "effect.bolt_horizontal",
+      "glyph": "-",
+      "meaning": "Visible bolt horizontal",
+      "group": "effect",
+      "sheet": "terrain-actors",
+      "index": 10,
+      "rotation": 0,
+      "labels": {
+        "ja": "横向きの光線",
+        "en": "Visible bolt horizontal"
+      },
+      "image": "effect.bolt_horizontal.png"
+    },
+    {
+      "id": "effect.bolt_vertical",
+      "glyph": "|",
+      "meaning": "Visible bolt vertical",
+      "group": "effect",
+      "sheet": "terrain-actors",
+      "index": 10,
+      "rotation": 90,
+      "labels": {
+        "ja": "縦向きの光線",
+        "en": "Visible bolt vertical"
+      },
+      "image": "effect.bolt_horizontal.png"
+    },
+    {
+      "id": "effect.bolt_slash",
+      "glyph": "/",
+      "meaning": "Visible bolt slash",
+      "group": "effect",
+      "sheet": "terrain-actors",
+      "index": 10,
+      "rotation": -45,
+      "labels": {
+        "ja": "右上がりの光線",
+        "en": "Visible bolt slash"
+      },
+      "image": "effect.bolt_horizontal.png"
+    },
+    {
+      "id": "effect.bolt_backslash",
+      "glyph": "\\",
+      "meaning": "Visible bolt backslash",
+      "group": "effect",
+      "sheet": "terrain-actors",
+      "index": 10,
+      "rotation": 45,
+      "labels": {
+        "ja": "右下がりの光線",
+        "en": "Visible bolt backslash"
+      },
+      "image": "effect.bolt_horizontal.png"
+    },
+    {
+      "id": "item.gold",
+      "glyph": "*",
+      "meaning": "Gold coins",
+      "group": "item",
+      "sheet": "items",
+      "index": 0,
+      "rotation": 0,
+      "labels": {
+        "ja": "金貨",
+        "en": "Gold coins"
+      },
+      "image": "item.gold.png"
+    },
+    {
+      "id": "item.potion",
+      "glyph": "!",
+      "meaning": "Unidentified potion",
+      "group": "item",
+      "sheet": "items",
+      "index": 1,
+      "rotation": 0,
+      "labels": {
+        "ja": "薬",
+        "en": "Unidentified potion"
+      },
+      "image": "item.potion.png"
+    },
+    {
+      "id": "item.scroll",
+      "glyph": "?",
+      "meaning": "Unidentified scroll",
+      "group": "item",
+      "sheet": "items",
+      "index": 2,
+      "rotation": 0,
+      "labels": {
+        "ja": "巻物",
+        "en": "Unidentified scroll"
+      },
+      "image": "item.scroll.png"
+    },
+    {
+      "id": "item.food",
+      "glyph": ":",
+      "meaning": "Food",
+      "group": "item",
+      "sheet": "items",
+      "index": 3,
+      "rotation": 0,
+      "labels": {
+        "ja": "食料",
+        "en": "Food"
+      },
+      "image": "item.food.png"
+    },
+    {
+      "id": "item.weapon",
+      "glyph": ")",
+      "meaning": "Weapon / thrown weapon",
+      "group": "item",
+      "sheet": "items",
+      "index": 4,
+      "rotation": 0,
+      "labels": {
+        "ja": "武器",
+        "en": "Weapon / thrown weapon"
+      },
+      "image": "item.weapon.png"
+    },
+    {
+      "id": "item.armor",
+      "glyph": "]",
+      "meaning": "Armor",
+      "group": "item",
+      "sheet": "items",
+      "index": 5,
+      "rotation": 0,
+      "labels": {
+        "ja": "防具",
+        "en": "Armor"
+      },
+      "image": "item.armor.png"
+    },
+    {
+      "id": "item.ring",
+      "glyph": "=",
+      "meaning": "Ring",
+      "group": "item",
+      "sheet": "items",
+      "index": 6,
+      "rotation": 0,
+      "labels": {
+        "ja": "指輪",
+        "en": "Ring"
+      },
+      "image": "item.ring.png"
+    },
+    {
+      "id": "item.stick",
+      "glyph": "/",
+      "meaning": "Wand or staff",
+      "group": "item",
+      "sheet": "items",
+      "index": 7,
+      "rotation": 0,
+      "labels": {
+        "ja": "杖",
+        "en": "Wand or staff"
+      },
+      "image": "item.stick.png"
+    },
+    {
+      "id": "item.amulet",
+      "glyph": ",",
+      "meaning": "Amulet of Yendor",
+      "group": "item",
+      "sheet": "items",
+      "index": 8,
+      "rotation": 0,
+      "labels": {
+        "ja": "イェンダーの魔除け",
+        "en": "Amulet of Yendor"
+      },
+      "image": "item.amulet.png"
+    },
+    {
+      "id": "monster.aquator",
+      "glyph": "A",
+      "meaning": "aquator",
+      "group": "monster",
+      "sheet": "monsters-1",
+      "index": 0,
+      "rotation": 0,
+      "labels": {
+        "ja": "アクアター",
+        "en": "aquator"
+      },
+      "image": "monster.aquator.png"
+    },
+    {
+      "id": "monster.bat",
+      "glyph": "B",
+      "meaning": "bat",
+      "group": "monster",
+      "sheet": "monsters-1",
+      "index": 1,
+      "rotation": 0,
+      "labels": {
+        "ja": "コウモリ",
+        "en": "bat"
+      },
+      "image": "monster.bat.png"
+    },
+    {
+      "id": "monster.centaur",
+      "glyph": "C",
+      "meaning": "centaur",
+      "group": "monster",
+      "sheet": "monsters-1",
+      "index": 2,
+      "rotation": 0,
+      "labels": {
+        "ja": "ケンタウロス",
+        "en": "centaur"
+      },
+      "image": "monster.centaur.png"
+    },
+    {
+      "id": "monster.dragon",
+      "glyph": "D",
+      "meaning": "dragon",
+      "group": "monster",
+      "sheet": "monsters-1",
+      "index": 3,
+      "rotation": 0,
+      "labels": {
+        "ja": "ドラゴン",
+        "en": "dragon"
+      },
+      "image": "monster.dragon.png"
+    },
+    {
+      "id": "monster.emu",
+      "glyph": "E",
+      "meaning": "emu",
+      "group": "monster",
+      "sheet": "monsters-1",
+      "index": 4,
+      "rotation": 0,
+      "labels": {
+        "ja": "エミュー",
+        "en": "emu"
+      },
+      "image": "monster.emu.png"
+    },
+    {
+      "id": "monster.venus_flytrap",
+      "glyph": "F",
+      "meaning": "venus flytrap",
+      "group": "monster",
+      "sheet": "monsters-1",
+      "index": 5,
+      "rotation": 0,
+      "labels": {
+        "ja": "ハエトリグサ",
+        "en": "venus flytrap"
+      },
+      "image": "monster.venus_flytrap.png"
+    },
+    {
+      "id": "monster.griffin",
+      "glyph": "G",
+      "meaning": "griffin",
+      "group": "monster",
+      "sheet": "monsters-1",
+      "index": 6,
+      "rotation": 0,
+      "labels": {
+        "ja": "グリフィン",
+        "en": "griffin"
+      },
+      "image": "monster.griffin.png"
+    },
+    {
+      "id": "monster.hobgoblin",
+      "glyph": "H",
+      "meaning": "hobgoblin",
+      "group": "monster",
+      "sheet": "monsters-1",
+      "index": 7,
+      "rotation": 0,
+      "labels": {
+        "ja": "ホブゴブリン",
+        "en": "hobgoblin"
+      },
+      "image": "monster.hobgoblin.png"
+    },
+    {
+      "id": "monster.ice_monster",
+      "glyph": "I",
+      "meaning": "ice monster",
+      "group": "monster",
+      "sheet": "monsters-1",
+      "index": 8,
+      "rotation": 0,
+      "labels": {
+        "ja": "氷の怪物",
+        "en": "ice monster"
+      },
+      "image": "monster.ice_monster.png"
+    },
+    {
+      "id": "monster.jabberwock",
+      "glyph": "J",
+      "meaning": "jabberwock",
+      "group": "monster",
+      "sheet": "monsters-2",
+      "index": 0,
+      "rotation": 0,
+      "labels": {
+        "ja": "ジャバウォック",
+        "en": "jabberwock"
+      },
+      "image": "monster.jabberwock.png"
+    },
+    {
+      "id": "monster.kestrel",
+      "glyph": "K",
+      "meaning": "kestrel",
+      "group": "monster",
+      "sheet": "monsters-2",
+      "index": 1,
+      "rotation": 0,
+      "labels": {
+        "ja": "チョウゲンボウ",
+        "en": "kestrel"
+      },
+      "image": "monster.kestrel.png"
+    },
+    {
+      "id": "monster.leprechaun",
+      "glyph": "L",
+      "meaning": "leprechaun",
+      "group": "monster",
+      "sheet": "monsters-2",
+      "index": 2,
+      "rotation": 0,
+      "labels": {
+        "ja": "レプラコーン",
+        "en": "leprechaun"
+      },
+      "image": "monster.leprechaun.png"
+    },
+    {
+      "id": "monster.medusa",
+      "glyph": "M",
+      "meaning": "medusa",
+      "group": "monster",
+      "sheet": "monsters-2",
+      "index": 3,
+      "rotation": 0,
+      "labels": {
+        "ja": "メデューサ",
+        "en": "medusa"
+      },
+      "image": "monster.medusa.png"
+    },
+    {
+      "id": "monster.nymph",
+      "glyph": "N",
+      "meaning": "nymph",
+      "group": "monster",
+      "sheet": "monsters-2",
+      "index": 4,
+      "rotation": 0,
+      "labels": {
+        "ja": "ニンフ",
+        "en": "nymph"
+      },
+      "image": "monster.nymph.png"
+    },
+    {
+      "id": "monster.orc",
+      "glyph": "O",
+      "meaning": "orc",
+      "group": "monster",
+      "sheet": "monsters-2",
+      "index": 5,
+      "rotation": 0,
+      "labels": {
+        "ja": "オーク",
+        "en": "orc"
+      },
+      "image": "monster.orc.png"
+    },
+    {
+      "id": "monster.phantom",
+      "glyph": "P",
+      "meaning": "phantom",
+      "group": "monster",
+      "sheet": "monsters-2",
+      "index": 6,
+      "rotation": 0,
+      "labels": {
+        "ja": "ファントム",
+        "en": "phantom"
+      },
+      "image": "monster.phantom.png"
+    },
+    {
+      "id": "monster.quagga",
+      "glyph": "Q",
+      "meaning": "quagga",
+      "group": "monster",
+      "sheet": "monsters-2",
+      "index": 7,
+      "rotation": 0,
+      "labels": {
+        "ja": "クアッガ",
+        "en": "quagga"
+      },
+      "image": "monster.quagga.png"
+    },
+    {
+      "id": "monster.rattlesnake",
+      "glyph": "R",
+      "meaning": "rattlesnake",
+      "group": "monster",
+      "sheet": "monsters-2",
+      "index": 8,
+      "rotation": 0,
+      "labels": {
+        "ja": "ガラガラヘビ",
+        "en": "rattlesnake"
+      },
+      "image": "monster.rattlesnake.png"
+    },
+    {
+      "id": "monster.snake",
+      "glyph": "S",
+      "meaning": "snake",
+      "group": "monster",
+      "sheet": "monsters-3",
+      "index": 0,
+      "rotation": 0,
+      "labels": {
+        "ja": "ヘビ",
+        "en": "snake"
+      },
+      "image": "monster.snake.png"
+    },
+    {
+      "id": "monster.troll",
+      "glyph": "T",
+      "meaning": "troll",
+      "group": "monster",
+      "sheet": "monsters-3",
+      "index": 1,
+      "rotation": 0,
+      "labels": {
+        "ja": "トロール",
+        "en": "troll"
+      },
+      "image": "monster.troll.png"
+    },
+    {
+      "id": "monster.black_unicorn",
+      "glyph": "U",
+      "meaning": "black unicorn",
+      "group": "monster",
+      "sheet": "monsters-3",
+      "index": 2,
+      "rotation": 0,
+      "labels": {
+        "ja": "黒いユニコーン",
+        "en": "black unicorn"
+      },
+      "image": "monster.black_unicorn.png"
+    },
+    {
+      "id": "monster.vampire",
+      "glyph": "V",
+      "meaning": "vampire",
+      "group": "monster",
+      "sheet": "monsters-3",
+      "index": 3,
+      "rotation": 0,
+      "labels": {
+        "ja": "吸血鬼",
+        "en": "vampire"
+      },
+      "image": "monster.vampire.png"
+    },
+    {
+      "id": "monster.wraith",
+      "glyph": "W",
+      "meaning": "wraith",
+      "group": "monster",
+      "sheet": "monsters-3",
+      "index": 4,
+      "rotation": 0,
+      "labels": {
+        "ja": "レイス",
+        "en": "wraith"
+      },
+      "image": "monster.wraith.png"
+    },
+    {
+      "id": "monster.xeroc",
+      "glyph": "X",
+      "meaning": "xeroc",
+      "group": "monster",
+      "sheet": "monsters-3",
+      "index": 5,
+      "rotation": 0,
+      "labels": {
+        "ja": "ゼロック",
+        "en": "xeroc"
+      },
+      "image": "monster.xeroc.png"
+    },
+    {
+      "id": "monster.yeti",
+      "glyph": "Y",
+      "meaning": "yeti",
+      "group": "monster",
+      "sheet": "monsters-3",
+      "index": 6,
+      "rotation": 0,
+      "labels": {
+        "ja": "イエティ",
+        "en": "yeti"
+      },
+      "image": "monster.yeti.png"
+    },
+    {
+      "id": "monster.zombie",
+      "glyph": "Z",
+      "meaning": "zombie",
+      "group": "monster",
+      "sheet": "monsters-3",
+      "index": 7,
+      "rotation": 0,
+      "labels": {
+        "ja": "ゾンビ",
+        "en": "zombie"
+      },
+      "image": "monster.zombie.png"
+    }
+  ],
+  "trap_subtypes": [
+    "trapdoor",
+    "arrow",
+    "sleeping gas",
+    "bear trap",
+    "teleport",
+    "poison dart",
+    "rust",
+    "mysterious"
+  ],
+  "visibility_policy": "Only currently presented cells; no hidden subtype, disguise, FOV or RNG lookup",
+  "sources": [
+    "logic/rogue.h glyph and trap definitions",
+    "logic/extern.c monsters[26]",
+    "logic/rooms.c horiz/vert",
+    "logic/sticks.c bolt",
+    "logic/weapons.c do_motion",
+    "logic/misc.c rnd_thing",
+    "logic/potions.c MAGIC detection"
+  ]
+}

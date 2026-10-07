@@ -4,6 +4,7 @@ mod abi;
 mod display;
 mod entities;
 mod input;
+mod map_tiles;
 mod platform;
 mod presentation;
 
@@ -36,6 +37,7 @@ struct Session {
     restore_checkpoint: Vec<u8>,
     input_index: u32,
     last_frame: Option<Value>,
+    map_effects: Vec<(u32, u32, u8)>,
     checkpoint_error: Option<String>,
     trace_enabled: bool,
     language: String,
@@ -496,8 +498,10 @@ pub unsafe extern "C" fn rg_host_present(cells: *const u8, rows: u32, columns: u
     let mut value = value;
     SESSION.with(|session| {
         let session = session.borrow();
-        if session.language == "ja" {
-            let ui = session.presentation.render("ja", &session.name);
+        {
+            let ui = session
+                .presentation
+                .render(&session.language, &session.name);
             let mut map = cells.as_bytes().to_vec();
             if ui["mode"] != "game" {
                 map.fill(b' ');
@@ -507,12 +511,44 @@ pub unsafe extern "C" fn rg_host_present(cells: *const u8, rows: u32, columns: u
                     map[start..start + columns as usize].fill(b' ');
                 }
             }
+            let (tiles, unknown) = map_tiles::map(&map, columns, rows, &session.map_effects);
+            value["map_tiles"] = json!(tiles);
+            value["map_tile_ids"] = json!(&map_tiles::IDS[..]);
+            value["map_unknown_glyphs"] = json!(unknown);
             value["map_cells"] = Value::String(String::from_utf8(map).unwrap_or_default());
             value["ui"] = ui;
         }
     });
     SESSION.with(|session| session.borrow_mut().last_frame = Some(value.clone()));
     emit(&value);
+}
+
+/// Tags a bolt that C has already drawn, without looking up hidden terrain.
+#[unsafe(no_mangle)]
+pub extern "C" fn rg_host_map_effect(x: i32, y: i32, glyph: i32, active: i32) {
+    SESSION.with(|state| {
+        let mut state = state.borrow_mut();
+        if active == 0 {
+            state.map_effects.clear();
+            return;
+        }
+        let (Ok(x), Ok(y), Ok(glyph)) = (u32::try_from(x), u32::try_from(y), u8::try_from(glyph))
+        else {
+            return;
+        };
+        if x >= 80 || y >= 24 || map_tiles::bolt(glyph).is_none() {
+            return;
+        }
+        if let Some(effect) = state
+            .map_effects
+            .iter_mut()
+            .find(|effect| effect.0 == x && effect.1 == y)
+        {
+            effect.2 = glyph;
+        } else if state.map_effects.len() < 6 {
+            state.map_effects.push((x, y, glyph));
+        }
+    });
 }
 
 /// Emits semantic message IDs and typed arguments to Rust presentation.

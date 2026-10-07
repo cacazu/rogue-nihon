@@ -18,6 +18,11 @@
   let frameCount = 0, inputRequestCount = 0, generation = 0, lastTrace = null, traces = [], messages = [];
   let lastOutcome = null, exitCode = null, runtimeError = null, logs = [], translationFallbacks = [], textMode = false, textDraftDirty = false, inputContext = null;
   const cellWidth = 12, cellHeight = 19, fontSize = 16;
+  const scroll = document.querySelector(".board-scroll"), mapSpace = $("map-space");
+  const preference = RogueViewSettings.load();
+  let displayMode = RogueViewSettings.modes.includes(parameters.get("view")) ? parameters.get("view") : preference.mode;
+  let tileSize = RogueViewSettings.sizes(displayMode).includes(preference.zoom) ? preference.zoom : 32, camera = null, centeredPlayer = "";
+  let tiles = null, tileSets = null;
   let noticeState = { id: "notice.start", args: {}, error: false };
 
   function notice(id, args = {}, error = false) {
@@ -56,7 +61,7 @@
   }
   function renderPresentation() {
     const presentation = frame?.ui;
-    const menuOnly = language === "ja" && presentation && presentation.mode !== "game";
+    const menuOnly = Boolean(presentation && presentation.mode !== "game");
     document.querySelector(".board-scroll").hidden = Boolean(menuOnly);
     $("accessible-screen").hidden = Boolean(menuOnly);
     $("presentation").hidden = !presentation;
@@ -105,12 +110,38 @@
   }
   function redraw() {
     if (!frame) return;
+    const cells = frame.map_cells || " ".repeat(frame.width * frame.height);
+    const descriptions = [];
+    for (let y = 1; y < frame.height - 1; y++) {
+      const visible = [];
+      for (let x = 0; x < frame.width; x++) {
+        const entry = tiles.entries[frame.map_tiles[y * frame.width + x]];
+        if (entry?.id !== "terrain.unexplored") visible.push(`${x + 1}: ${entry?.labels?.[language] || entry?.meaning}`);
+      }
+      if (visible.length) descriptions.push(`${y}: ${visible.join(" / ")}`);
+    }
+    $("accessible-screen").textContent = descriptions.join("\n");
+    scroll.dataset.display = displayMode;
+    $("tile-zoom").disabled = displayMode === "ascii";
+    if (displayMode !== "ascii") {
+      const totalWidth = frame.width * tileSize, totalHeight = (frame.height - 2) * tileSize;
+      mapSpace.style.width = totalWidth + "px"; mapSpace.style.height = totalHeight + "px";
+      const width = Math.min(totalWidth, scroll.clientWidth || 960), height = Math.min(totalHeight, scroll.clientHeight || 480);
+      const ratio = displayMode === "pixels" ? Math.max(1, Math.min(2, Math.floor(window.devicePixelRatio || 1))) : Math.min(window.devicePixelRatio || 1, 2);
+      camera = { size: tileSize, ratio, left: scroll.scrollLeft, top: scroll.scrollTop, width, height };
+      board.style.width = width + "px"; board.style.height = height + "px";
+      board.width = Math.round(width * ratio); board.height = Math.round(height * ratio);
+      context.setTransform(1, 0, 0, 1, 0, 0); context.fillStyle = "#080d0f"; context.fillRect(0, 0, board.width, board.height);
+      tiles.draw(context, frame, camera);
+      return;
+    }
+    camera = null; mapSpace.style.width = ""; mapSpace.style.height = "";
     const width = frame.width, height = frame.height, ratio = window.devicePixelRatio || 1;
     board.width = Math.round(width * cellWidth * ratio); board.height = Math.round(height * cellHeight * ratio);
     board.style.width = width * cellWidth + "px"; board.style.height = height * cellHeight + "px";
     context.setTransform(ratio, 0, 0, ratio, 0, 0); context.fillStyle = "#080d0f"; context.fillRect(0, 0, width * cellWidth, height * cellHeight);
     context.font = fontSize + "px Consolas, \"Courier New\", monospace"; context.textBaseline = "top";
-    const cells = frame.map_cells || (language === "en" ? frame.cells : " ".repeat(width * height)), lines = [];
+    const lines = [];
     for (let y = 0; y < height; y++) {
       const line = cells.slice(y * width, (y + 1) * width); lines.push(line);
       for (let x = 0; x < width; x++) {
@@ -119,13 +150,21 @@
         context.fillText(glyph, x * cellWidth, y * cellHeight + 1);
       }
     }
-    $("accessible-screen").textContent = lines.join("\n");
+  }
+  function centerMap() {
+    if (!frame?.player || displayMode === "ascii") return;
+    scroll.scrollLeft = frame.player.x * tileSize + tileSize / 2 - scroll.clientWidth / 2;
+    scroll.scrollTop = (frame.player.y - 1) * tileSize + tileSize / 2 - scroll.clientHeight / 2;
+    redraw();
   }
   function receiveFrame(payload) {
     const valid = Number.isInteger(payload.width) && Number.isInteger(payload.height) && payload.width > 0 && payload.width <= 256 && payload.height > 0 && payload.height <= 128 && typeof payload.cells === "string" && payload.cells.length === payload.width * payload.height;
     if (!valid) throw new Error("Invalid Rust frame");
     if (language === "ja" && (typeof payload.map_cells !== "string" || payload.map_cells.length !== payload.cells.length || !payload.ui)) throw new Error("Missing translated presentation");
-    fallbackRecord(payload, "frame"); frame = Object.freeze(payload); frameCount++; redraw(); renderPresentation();
+    tiles.validate(payload);
+    fallbackRecord(payload, "frame"); frame = Object.freeze(payload); frameCount++; renderPresentation(); redraw();
+    const position = frame.player.x + ":" + frame.player.y;
+    if (position !== centeredPlayer && frame.ui?.mode === "game") { centeredPlayer = position; centerMap(); }
   }
   function database() {
     if (!databasePromise) databasePromise = new Promise((resolve, reject) => {
@@ -160,7 +199,7 @@
     if (!restore && !validName) { notice("error.name", {}, true); return; }
     const seed = validSeed ? enteredSeed : 0, name = validName ? enteredName : "Player";
     if (worker) { queue.close(); worker.terminate(); }
-    generation++; queue = new RogueEventQueue(); frame = null; lastTrace = null; traces = []; messages = []; logs = []; translationFallbacks = []; lastOutcome = null; exitCode = null; runtimeError = null; frameCount = 0; inputRequestCount = 0; savePending = false; restorePending = Boolean(restore); textMode = false; textDraftDirty = false; inputContext = null;
+    generation++; queue = new RogueEventQueue(); frame = null; lastTrace = null; traces = []; messages = []; logs = []; translationFallbacks = []; lastOutcome = null; exitCode = null; runtimeError = null; frameCount = 0; inputRequestCount = 0; savePending = false; restorePending = Boolean(restore); textMode = false; textDraftDirty = false; inputContext = null; centeredPlayer = "";
     $("game-message").textContent = ""; $("presentation").hidden = true; $("player-status").hidden = true;
     worker = new Worker("/web/worker.js"); const currentWorker = worker;
     worker.onmessage = async ({ data }) => {
@@ -198,6 +237,40 @@
     setRunning(false); $("connection").textContent = t("status.loading"); notice("notice.loading");
     worker.postMessage({ type: "start", queue: queue.buffer, capacity: queue.capacity, seed, name, restore, locale: language, trace: parameters.get("trace") === "1" }, restore ? [restore.buffer] : []);
   }
+  ui.apply(document); setRunning(false);
+  try {
+    const [illustration, pixels] = await Promise.all([RogueTiles.load(), RogueTiles.load("/web/assets/pixels/manifest.json")]);
+    tileSets = { tiles: illustration, pixels }; tiles = tileSets[displayMode === "pixels" ? "pixels" : "tiles"];
+  }
+  catch (error) { runtimeError = error.stack || String(error); notice("error.tiles", {}, true); $("new-game").disabled = true; throw error; }
+  $("display-mode").value = displayMode;
+  function zoomOptions() {
+    const sizes = RogueViewSettings.sizes(displayMode); if (!sizes.includes(tileSize)) tileSize = 32;
+    $("tile-zoom").replaceChildren(...sizes.map(size => { const option = document.createElement("option"); option.value = size; option.textContent = size / 32 * 100 + "%"; return option; }));
+    $("tile-zoom").value = tileSize; $("tile-zoom").disabled = displayMode === "ascii";
+  }
+  function persistView() { RogueViewSettings.save({ version: 1, mode: displayMode, zoom: tileSize }); }
+  zoomOptions();
+  $("display-mode").onchange = () => {
+    const selected = $("display-mode").value; if (!RogueViewSettings.modes.includes(selected)) return;
+    displayMode = selected; tiles = tileSets[displayMode === "pixels" ? "pixels" : "tiles"];
+    zoomOptions(); persistView(); redraw(); centerMap();
+  };
+  $("tile-zoom").onchange = () => { const size = Number($("tile-zoom").value); if (!RogueViewSettings.sizes(displayMode).includes(size)) return; tileSize = size; persistView(); redraw(); centerMap(); };
+  $("center-map").onclick = centerMap;
+  $("fullscreen").onclick = async () => {
+    try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.querySelector(".game-panel").requestFullscreen(); }
+    catch (error) { logs.push(String(error)); notice("error.fullscreen", {}, true); }
+  };
+  document.addEventListener("fullscreenchange", () => { redraw(); centerMap(); });
+  scroll.addEventListener("scroll", () => { if (displayMode !== "ascii") redraw(); }, { passive: true });
+  new ResizeObserver(() => { redraw(); }).observe(scroll);
+  board.addEventListener("pointermove", event => {
+    if (!camera || !frame) return;
+    const position = tiles.coordinate(event, board, frame, camera); if (!position) return;
+    const entry = tiles.entries[frame.map_tiles[position.y * frame.width + position.x]];
+    $("tile-description").textContent = entry.labels?.[language] || entry.meaning;
+  });
   $("new-game").onclick = () => start().catch((error) => { runtimeError = error.stack || String(error); notice("error.runtime", {}, true); });
   $("save").onclick = () => {
     if (composing) { notice("error.text_composing", {}, true); return; }
@@ -231,6 +304,7 @@
   document.addEventListener("compositionstart", () => { composing = true; });
   document.addEventListener("compositionend", () => { composing = false; });
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && document.fullscreenElement) return;
     const target = event.target instanceof Element ? event.target : null;
     if (!running || composing || event.isComposing || event.keyCode === 229 || event.metaKey || target?.closest("input,textarea,select,[contenteditable=true]")) return;
     if (target?.closest("button,a") && (event.key === "Enter" || event.key === " ")) return;
@@ -239,7 +313,10 @@
   document.querySelectorAll("[data-key],[data-character]").forEach((button) => { button.onclick = () => { const raw = rawKey(button.dataset.key || button.dataset.character); if (raw !== null) enqueue(raw); board.focus(); }; });
   board.onclick = (event) => {
     if (!frame?.player || !running) return;
-    const bounds = board.getBoundingClientRect(), x = Math.floor((event.clientX - bounds.left) * frame.width / bounds.width), y = Math.floor((event.clientY - bounds.top) * frame.height / bounds.height);
+    const bounds = board.getBoundingClientRect();
+    const position = camera ? tiles.coordinate(event, board, frame, camera) : {x: Math.floor((event.clientX - bounds.left) * frame.width / bounds.width), y: Math.floor((event.clientY - bounds.top) * frame.height / bounds.height)};
+    if (!position) return;
+    const { x, y } = position;
     const dx = x - frame.player.x, dy = y - frame.player.y;
     if (Math.abs(dx) > 1 || Math.abs(dy) > 1 || (!dx && !dy)) { notice("error.adjacent", {}, true); return; }
     const key = dy < 0 ? (dx < 0 ? "Home" : dx > 0 ? "PageUp" : "ArrowUp") : dy > 0 ? (dx < 0 ? "End" : dx > 0 ? "PageDown" : "ArrowDown") : dx < 0 ? "ArrowLeft" : "ArrowRight";
@@ -248,5 +325,5 @@
   window.addEventListener("resize", redraw); window.addEventListener("pagehide", () => { if (queue) queue.close(); });
   ui.apply(document); $("language").value = language; document.documentElement.lang = language; setRunning(false); notice("notice.start"); $("screen-status").textContent = t("status.waiting");
   database().then(readSave).then((bytes) => { if (bytes) { savedBytes = bytes; $("load").disabled = false; $("download-save").disabled = false; } }).catch((error) => { logs.push(error.stack || String(error)); notice("error.storage_init", {}, true); });
-  window.__rogueBrowserTest = Object.freeze({ enqueue, enqueueMany, rawKey, redraw, get language() { return language; }, get generation() { return generation; }, get running() { return running; }, get frame() { return frame; }, get frameCount() { return frameCount; }, get inputRequestCount() { return inputRequestCount; }, get trace() { return lastTrace; }, get traces() { return traces.slice(); }, get messages() { return messages.slice(); }, get savedLength() { return savedBytes?.byteLength || 0; }, get savePending() { return savePending; }, get queuePending() { return queue?.pending || 0; }, get translationFallbacks() { return translationFallbacks.slice(); }, get uiMissing() { return ui.missing.slice(); }, get diagnostics() { return { language, generation, running, exitCode, outcome: lastOutcome, runtimeError, notice: $("notice").textContent, message: $("game-message").textContent, inputRequests: inputRequestCount, frameCount, trace: lastTrace, messages: messages.slice(-8), logs: logs.slice(-16), savePending, savedLength: savedBytes?.byteLength || 0, translationFallbacks: translationFallbacks.slice(), uiMissing: ui.missing.slice(), presentation: frame?.ui }; } });
+  window.__rogueBrowserTest = Object.freeze({ enqueue, enqueueMany, rawKey, redraw, centerMap, get graphics() {return {mode:displayMode,tileSize,camera,ids:tiles.entries.map(e=>e.id),images:tiles.images.size,drawCount:tiles.drawCount,unknown:frame?.map_unknown_glyphs||[]};}, get language() { return language; }, get generation() { return generation; }, get running() { return running; }, get frame() { return frame; }, get frameCount() { return frameCount; }, get inputRequestCount() { return inputRequestCount; }, get trace() { return lastTrace; }, get traces() { return traces.slice(); }, get messages() { return messages.slice(); }, get savedLength() { return savedBytes?.byteLength || 0; }, get savePending() { return savePending; }, get queuePending() { return queue?.pending || 0; }, get translationFallbacks() { return translationFallbacks.slice(); }, get uiMissing() { return ui.missing.slice(); }, get diagnostics() { return { language, generation, running, exitCode, outcome: lastOutcome, runtimeError, notice: $("notice").textContent, message: $("game-message").textContent, inputRequests: inputRequestCount, frameCount, trace: lastTrace, messages: messages.slice(-8), logs: logs.slice(-16), savePending, savedLength: savedBytes?.byteLength || 0, translationFallbacks: translationFallbacks.slice(), uiMissing: ui.missing.slice(), presentation: frame?.ui }; } });
 })().catch((error) => { console.error("Browser host startup failed", error); });

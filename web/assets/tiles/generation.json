@@ -1,0 +1,560 @@
+{
+  "tool": "built-in image_gen",
+  "unique_pngs": 46,
+  "semantic_ids": 49,
+  "technical_packing": "Alpha component bounds preserve sprites across imperfect atlas grid margins; resize to 96px",
+  "images": [
+    {
+      "id": "terrain.unexplored",
+      "file": "terrain.unexplored.png",
+      "source": "terrain-actors",
+      "crop": [
+        49,
+        74,
+        276,
+        268
+      ],
+      "sha256": "0e02ff54f629cbe4f84a4f3aad3adc196ec5a54a585175ddb64dba7eb6d26b06"
+    },
+    {
+      "id": "terrain.floor",
+      "file": "terrain.floor.png",
+      "source": "terrain-actors",
+      "crop": [
+        407,
+        74,
+        278,
+        269
+      ],
+      "sha256": "86fd8e114faabe6136351361ba1b219a3236b9cda58d52247155920697ad45db"
+    },
+    {
+      "id": "terrain.passage",
+      "file": "terrain.passage.png",
+      "source": "terrain-actors",
+      "crop": [
+        768,
+        74,
+        275,
+        269
+      ],
+      "sha256": "d9cc472813f2dc67795c005f4cec1aa7808c9cbffcf4d01f45fb7f2fff097827"
+    },
+    {
+      "id": "terrain.door",
+      "file": "terrain.door.png",
+      "source": "terrain-actors",
+      "crop": [
+        1130,
+        45,
+        280,
+        305
+      ],
+      "sha256": "aa88e8b58caa90b35e3fda41b28e90b3fc939a2b782fde81ab9a9b552799fb92"
+    },
+    {
+      "id": "terrain.wall_horizontal",
+      "file": "terrain.wall_horizontal.png",
+      "source": "terrain-actors",
+      "crop": [
+        38,
+        450,
+        301,
+        186
+      ],
+      "sha256": "bf1559175536e08e521108dff2b73363aaaac6d018661a108d8716554f56b24d"
+    },
+    {
+      "id": "terrain.wall_vertical",
+      "file": "terrain.wall_vertical.png",
+      "source": "terrain-actors",
+      "crop": [
+        469,
+        395,
+        166,
+        293
+      ],
+      "sha256": "20835dc31e90c33a733ea1788500c476988c6691bf28089335cd52f123df0dcb"
+    },
+    {
+      "id": "terrain.stairs",
+      "file": "terrain.stairs.png",
+      "source": "terrain-actors",
+      "crop": [
+        741,
+        403,
+        323,
+        282
+      ],
+      "sha256": "14b75441231b1d5778ecf1c8972f359f5f7cc3a022a61f2902616f80917b2c54"
+    },
+    {
+      "id": "terrain.trap",
+      "file": "terrain.trap.png",
+      "source": "terrain-actors",
+      "crop": [
+        1128,
+        457,
+        288,
+        211
+      ],
+      "sha256": "7fb8cb0830f3595f0298ed33813cf9956cca47a22a367a496e776b328111e9dc"
+    },
+    {
+      "id": "actor.player",
+      "file": "actor.player.png",
+      "source": "terrain-actors",
+      "crop": [
+        29,
+        724,
+        329,
+        290
+      ],
+      "sha256": "e42915a8e0d774fc093a138b26bb2b7ae345c694e972dc0ede643f238d88b042"
+    },
+    {
+      "id": "marker.magic",
+      "file": "marker.magic.png",
+      "source": "terrain-actors",
+      "crop": [
+        427,
+        748,
+        238,
+        242
+      ],
+      "sha256": "4ea0c172752f48761925cf92c82c22c085e1a69b205fab63273ec556c4e40abf"
+    },
+    {
+      "id": "effect.bolt_horizontal",
+      "file": "effect.bolt_horizontal.png",
+      "source": "terrain-actors",
+      "crop": [
+        728,
+        813,
+        376,
+        130
+      ],
+      "sha256": "81c0240c6ca7ec6e71aaf5ac78101095dee25be485825ec8ea1c65273f46f6dd"
+    },
+    {
+      "id": "item.gold",
+      "file": "item.gold.png",
+      "source": "items",
+      "crop": [
+        45,
+        127,
+        344,
+        241
+      ],
+      "sha256": "b10a6cc5ff6f99735151413bf062102b991e6b7e19423bb9631f0b628de85f7a"
+    },
+    {
+      "id": "item.potion",
+      "file": "item.potion.png",
+      "source": "items",
+      "crop": [
+        503,
+        62,
+        248,
+        327
+      ],
+      "sha256": "7a73c39b32e9e998bcbc4c09ad059055d90f059e61c24b2a5fc647bf57b09b18"
+    },
+    {
+      "id": "item.scroll",
+      "file": "item.scroll.png",
+      "source": "items",
+      "crop": [
+        865,
+        96,
+        350,
+        273
+      ],
+      "sha256": "0a4a218f08cc87975e44670049db37503c3a10019ecdbd126f8af9337aa07b74"
+    },
+    {
+      "id": "item.food",
+      "file": "item.food.png",
+      "source": "items",
+      "crop": [
+        41,
+        532,
+        343,
+        244
+      ],
+      "sha256": "43dece58a819f8357ad5efc2bbac6a3b051eae99b0d75c0dfe2b73ffa6b9980d"
+    },
+    {
+      "id": "item.weapon",
+      "file": "item.weapon.png",
+      "source": "items",
+      "crop": [
+        463,
+        466,
+        337,
+        339
+      ],
+      "sha256": "471ddfe639149d37b54ddb267017d0075d07cf05f7fb043c90619e3958cc1ecf"
+    },
+    {
+      "id": "item.armor",
+      "file": "item.armor.png",
+      "source": "items",
+      "crop": [
+        883,
+        471,
+        342,
+        335
+      ],
+      "sha256": "f1e620e24f2f35edb0a3667d5206af5591750b3a4aecb6ea2efaf88f1115f6eb"
+    },
+    {
+      "id": "item.ring",
+      "file": "item.ring.png",
+      "source": "items",
+      "crop": [
+        67,
+        915,
+        282,
+        248
+      ],
+      "sha256": "2b99008a9b8805cd52baebbe3753ad2b3462e3437fa4b62cb0e8c33b1496737e"
+    },
+    {
+      "id": "item.stick",
+      "file": "item.stick.png",
+      "source": "items",
+      "crop": [
+        480,
+        839,
+        306,
+        367
+      ],
+      "sha256": "e28d5d54e20227739c0f892438970f7ef05c2ac2401ace5c6c325a56bd9e4669"
+    },
+    {
+      "id": "item.amulet",
+      "file": "item.amulet.png",
+      "source": "items",
+      "crop": [
+        889,
+        862,
+        321,
+        308
+      ],
+      "sha256": "3f6c72ee969e16375565b51c3591d63972f709ef003d1e8b15da8eb13f43d8de"
+    },
+    {
+      "id": "monster.aquator",
+      "file": "monster.aquator.png",
+      "source": "monsters-1",
+      "crop": [
+        20,
+        73,
+        403,
+        334
+      ],
+      "sha256": "4f00f8315d1943b5404c94f254a536b66e1089bbb5e36e53d2f53a55b7c8d306"
+    },
+    {
+      "id": "monster.bat",
+      "file": "monster.bat.png",
+      "source": "monsters-1",
+      "crop": [
+        424,
+        92,
+        449,
+        253
+      ],
+      "sha256": "6b4e80d1b1cdc57188dba24b502efc904782ba656fb43bc2953b057b3fe19dfd"
+    },
+    {
+      "id": "monster.centaur",
+      "file": "monster.centaur.png",
+      "source": "monsters-1",
+      "crop": [
+        858,
+        23,
+        374,
+        395
+      ],
+      "sha256": "97c25a91b88270a637bf57131fe25c4173b7a7a8a28bf1605a553d6c520a8852"
+    },
+    {
+      "id": "monster.dragon",
+      "file": "monster.dragon.png",
+      "source": "monsters-1",
+      "crop": [
+        17,
+        429,
+        462,
+        381
+      ],
+      "sha256": "e0fe7d5ab8912d852312188ae3b4bdd5f0d703defb574a710a19b71d509c45b1"
+    },
+    {
+      "id": "monster.emu",
+      "file": "monster.emu.png",
+      "source": "monsters-1",
+      "crop": [
+        501,
+        429,
+        308,
+        387
+      ],
+      "sha256": "aa84720fc9ad7876ded084d28e5f0ef2b27a58980190701e0524828b1aa781ce"
+    },
+    {
+      "id": "monster.venus_flytrap",
+      "file": "monster.venus_flytrap.png",
+      "source": "monsters-1",
+      "crop": [
+        878,
+        436,
+        349,
+        381
+      ],
+      "sha256": "4da200fe6efc8ced87d0704e3b432d6637dc4b5fb64759a39cb66522362382aa"
+    },
+    {
+      "id": "monster.griffin",
+      "file": "monster.griffin.png",
+      "source": "monsters-1",
+      "crop": [
+        13,
+        805,
+        474,
+        420
+      ],
+      "sha256": "27f736e5efb17befcaf24505de75fbd06e624441bb263bbe2f264d9791952dff"
+    },
+    {
+      "id": "monster.hobgoblin",
+      "file": "monster.hobgoblin.png",
+      "source": "monsters-1",
+      "crop": [
+        456,
+        810,
+        362,
+        410
+      ],
+      "sha256": "a1d4b53337fcc09ed9ff86c297bf0246d42d95d9db528fd6360f2c1d91007b01"
+    },
+    {
+      "id": "monster.ice_monster",
+      "file": "monster.ice_monster.png",
+      "source": "monsters-1",
+      "crop": [
+        834,
+        840,
+        413,
+        378
+      ],
+      "sha256": "e8e42ad72d0cb26188f084bcfd15f3a625b33dbe4f755b2a45849e356f814bd8"
+    },
+    {
+      "id": "monster.jabberwock",
+      "file": "monster.jabberwock.png",
+      "source": "monsters-2",
+      "crop": [
+        22,
+        16,
+        423,
+        415
+      ],
+      "sha256": "b9277e11f93275c46d32776f489ca1277f1e8e55d80d653d01308023f7bf3b3f"
+    },
+    {
+      "id": "monster.kestrel",
+      "file": "monster.kestrel.png",
+      "source": "monsters-2",
+      "crop": [
+        469,
+        15,
+        371,
+        393
+      ],
+      "sha256": "499cb0acaa6e724543bb0d6e93d14cc36f1c9a8ad1a7d9281681289a468de0b6"
+    },
+    {
+      "id": "monster.leprechaun",
+      "file": "monster.leprechaun.png",
+      "source": "monsters-2",
+      "crop": [
+        919,
+        25,
+        294,
+        410
+      ],
+      "sha256": "5bb8a0cc8567f0a4a25235b20cb7bae9c986a433e7abdee5bd33b9145951a513"
+    },
+    {
+      "id": "monster.medusa",
+      "file": "monster.medusa.png",
+      "source": "monsters-2",
+      "crop": [
+        48,
+        429,
+        350,
+        432
+      ],
+      "sha256": "1c7574895ece8caf3c39295c2b0610f0e29ec86a9c8a281561a1eb2591147594"
+    },
+    {
+      "id": "monster.nymph",
+      "file": "monster.nymph.png",
+      "source": "monsters-2",
+      "crop": [
+        466,
+        421,
+        339,
+        450
+      ],
+      "sha256": "80d9ee96bfbf2f7207d5ea4a594b3e20d4ed8e4c6ca162616bf6a4006e3f5765"
+    },
+    {
+      "id": "monster.orc",
+      "file": "monster.orc.png",
+      "source": "monsters-2",
+      "crop": [
+        835,
+        464,
+        402,
+        393
+      ],
+      "sha256": "c3c208cadfe3d83993cb448a074298409a84b3db13b5e3ac320583c01ba9e74a"
+    },
+    {
+      "id": "monster.phantom",
+      "file": "monster.phantom.png",
+      "source": "monsters-2",
+      "crop": [
+        30,
+        855,
+        376,
+        384
+      ],
+      "sha256": "66a84710ab1667fc51448ab82686eb4343e49b11aa19dcbfb23d68856e34e49c"
+    },
+    {
+      "id": "monster.quagga",
+      "file": "monster.quagga.png",
+      "source": "monsters-2",
+      "crop": [
+        436,
+        848,
+        397,
+        384
+      ],
+      "sha256": "ff1abdac6cdc95e935a0780895e9ca08e192317925dcdb05324088aaa9047d40"
+    },
+    {
+      "id": "monster.rattlesnake",
+      "file": "monster.rattlesnake.png",
+      "source": "monsters-2",
+      "crop": [
+        866,
+        887,
+        358,
+        346
+      ],
+      "sha256": "68f433cd83c66a52b3f3730815db02531f6e6cc0698a5a61a3f5c3724d710d97"
+    },
+    {
+      "id": "monster.snake",
+      "file": "monster.snake.png",
+      "source": "monsters-3",
+      "crop": [
+        46,
+        95,
+        317,
+        319
+      ],
+      "sha256": "4215af27914790d9cbd33d5b44d2781df3d86e9399836f5304c2e5c28db589e6"
+    },
+    {
+      "id": "monster.troll",
+      "file": "monster.troll.png",
+      "source": "monsters-3",
+      "crop": [
+        420,
+        32,
+        415,
+        388
+      ],
+      "sha256": "ddad49dd64a8e0b66d52b5364f905e43563085c8371fe2f60d38421c7a9e904c"
+    },
+    {
+      "id": "monster.black_unicorn",
+      "file": "monster.black_unicorn.png",
+      "source": "monsters-3",
+      "crop": [
+        874,
+        16,
+        351,
+        408
+      ],
+      "sha256": "960ff6fb0a1db37c9f8efcff989c77a7bbdd04fd8c422843bd38bf585a85c643"
+    },
+    {
+      "id": "monster.vampire",
+      "file": "monster.vampire.png",
+      "source": "monsters-3",
+      "crop": [
+        34,
+        424,
+        370,
+        418
+      ],
+      "sha256": "bbbc83177982720fabea33152d3fba5bce3738907be96114f1da7a7eb357a4e5"
+    },
+    {
+      "id": "monster.wraith",
+      "file": "monster.wraith.png",
+      "source": "monsters-3",
+      "crop": [
+        445,
+        431,
+        381,
+        410
+      ],
+      "sha256": "5650d81ca9ecd72e6ee1256ca2efdb40bb2c0bbeaed1bdce48f64954518ba8bf"
+    },
+    {
+      "id": "monster.xeroc",
+      "file": "monster.xeroc.png",
+      "source": "monsters-3",
+      "crop": [
+        857,
+        494,
+        371,
+        333
+      ],
+      "sha256": "ffc927adc3b87db872114ce25dce5e74a4747bcde71b0271370cfa44ddfcda52"
+    },
+    {
+      "id": "monster.yeti",
+      "file": "monster.yeti.png",
+      "source": "monsters-3",
+      "crop": [
+        20,
+        839,
+        424,
+        392
+      ],
+      "sha256": "17cb233f10774073311a365c7f6c1d945f265ede605ce2d687cb2a55ee85b9b6"
+    },
+    {
+      "id": "monster.zombie",
+      "file": "monster.zombie.png",
+      "source": "monsters-3",
+      "crop": [
+        471,
+        834,
+        379,
+        396
+      ],
+      "sha256": "873a9292eb782400754379d3be03314e2fa9996acf0b8caa6a5d72484c4e7fc8"
+    }
+  ]
+}

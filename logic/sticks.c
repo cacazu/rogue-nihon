@@ -405,11 +405,17 @@ def:
 			msg("the %s whizzes by you", name);
 		}
 		mvaddch(pos.y, pos.x, dirch);
+#ifdef ROGUE_LAYERED
+                rg_host_map_effect(pos.x, pos.y, dirch, 1);
+#endif
 		refresh();
 	}
     }
-    for (c2 = spotpos; c2 < c1; c2++)
+     for (c2 = spotpos; c2 < c1; c2++)
 	mvaddch(c2->y, c2->x, chat(c2->y, c2->x));
+#ifdef ROGUE_LAYERED
+    rg_host_map_effect(0, 0, 0, 0);
+#endif
 }
 
 /*
