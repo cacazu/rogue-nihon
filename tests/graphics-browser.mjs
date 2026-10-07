@@ -39,7 +39,7 @@ try{
  evidence.centered_camera=await cdp.evaluate('({player:__rogueBrowserTest.frame.player,camera:__rogueBrowserTest.graphics.camera})');
  await shot('desktop-100');
  for(const size of [16,24,32,48,64]){
-  await cdp.evaluate(`document.getElementById('tile-zoom').value='${size}';document.getElementById('tile-zoom').dispatchEvent(new Event('change'));for(let i=0;i<10;i++)__rogueBrowserTest.redraw()`);
+  await cdp.evaluate(`document.getElementById('tile-zoom').value='${[16,24,32,48,64].indexOf(size)}';document.getElementById('tile-zoom').dispatchEvent(new Event('input'));for(let i=0;i<10;i++)__rogueBrowserTest.redraw()`);
   const bounds=await cdp.evaluate("(()=>{const b=document.getElementById('board'),s=document.querySelector('.board-scroll');return {size:__rogueBrowserTest.graphics.tileSize,width:b.width,viewport:s.clientWidth,smoothing:b.getContext('2d').imageSmoothingEnabled,overflow:document.documentElement.scrollWidth>innerWidth};})()");
   assert.equal(bounds.size,size);assert.equal(bounds.smoothing,false);assert.equal(bounds.overflow,false);assert.ok(bounds.width<=bounds.viewport*2+1);
  }
@@ -48,13 +48,13 @@ try{
  evidence.checks.push('50–200% zoom uses only raster images, disables smoothing and bounds Canvas to viewport');
  await cdp.evaluate("document.getElementById('display-mode').value='ascii';document.getElementById('display-mode').dispatchEvent(new Event('change'))");
  assert.equal(await cdp.evaluate('__rogueBrowserTest.graphics.mode'),'ascii');assert.ok(await cdp.evaluate('__tileTextCalls>0'));
- await cdp.evaluate("document.getElementById('display-mode').value='tiles';document.getElementById('display-mode').dispatchEvent(new Event('change'));window.__tileTextCalls=0;document.getElementById('tile-zoom').value='32';document.getElementById('tile-zoom').dispatchEvent(new Event('change'))");
+ await cdp.evaluate("document.getElementById('display-mode').value='tiles';document.getElementById('display-mode').dispatchEvent(new Event('change'));window.__tileTextCalls=0;document.getElementById('tile-zoom').value='2';document.getElementById('tile-zoom').dispatchEvent(new Event('input'))");
  for(const [name,width,height,dpr] of [['mobile-portrait',390,844,3],['mobile-landscape',844,390,2]]){
   await cdp.call('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:dpr,mobile:true});await pause(250);
   await cdp.evaluate("document.querySelector('.board-scroll').scrollTo(301,93);__rogueBrowserTest.redraw()");
   assert.equal(await cdp.evaluate('document.documentElement.scrollWidth<=innerWidth'),true);
   assert.equal(await cdp.evaluate("document.getElementById('board').width<=document.querySelector('.board-scroll').clientWidth*2+1"),true);
-  await cdp.evaluate("document.getElementById('center-map').click();document.querySelector('.map-tools').scrollIntoView({block:'start'})");await pause(150);
+  await cdp.evaluate("document.getElementById('center-map').click();document.querySelector('.game-panel').scrollIntoView({block:'start'})");await pause(150);
   const center=await cdp.evaluate('({player:__rogueBrowserTest.frame.player,camera:__rogueBrowserTest.graphics.camera})');
   assert.ok(center.player.x*center.camera.size-center.camera.left>=0&&center.player.x*center.camera.size-center.camera.left<center.camera.width,'Player stays visible after centering');
   evidence[name]=center;

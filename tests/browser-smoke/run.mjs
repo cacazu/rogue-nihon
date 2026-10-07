@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { createPreviewServer } from "../../web/server.mjs";
 import { prepareJapanese, japaneseScenarios } from "./ja-scenarios.mjs";
+import { createPlaywrightCdp } from "./playwright-cdp.mjs";
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const jaScenario = process.env.ROGUE_JA_SCENARIO === "1";
@@ -33,12 +34,12 @@ class CDP {
 }
 
 await mkdir(output, { recursive: true });
-const profile = await mkdtemp(path.join(os.tmpdir(), "rogue-browser-smoke-"));
+const profile = await mkdtemp(path.join(process.env.ROGUE_PLAYWRIGHT_MODULE ? output : os.tmpdir(), "rogue-browser-smoke-"));
 const server = createPreviewServer();
 await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const base = `http://127.0.0.1:${server.address().port}/`;
-const processHandle = spawn(chrome, ["--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check", "--disable-background-networking", "--disable-component-update", "--remote-debugging-port=0", "--user-data-dir=" + profile, "about:blank"], { windowsHide: true, stdio: ["ignore", "ignore", "pipe"] });
-let chromeErrors = ""; processHandle.stderr.on("data", (chunk) => { chromeErrors += chunk.toString(); });
+const processHandle = process.env.ROGUE_PLAYWRIGHT_MODULE ? null : spawn(chrome, ["--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check", "--disable-background-networking", "--disable-component-update", "--remote-debugging-port=0", "--user-data-dir=" + profile, "about:blank"], { windowsHide: true, stdio: ["ignore", "ignore", "pipe"] });
+let chromeErrors = ""; processHandle?.stderr.on("data", (chunk) => { chromeErrors += chunk.toString(); });
 let socket = null, cdp = null;
 const evidence = { started_at: new Date().toISOString(), checks: [], base };
 try {
@@ -48,11 +49,16 @@ try {
     const bytes = await readFile(path.join(buildDirectory, file));
     return { file, bytes: bytes.byteLength, sha256: createHash("sha256").update(bytes).digest("hex") };
   }));
-  const debugPort = await until(async () => { try { return Number((await readFile(path.join(profile, "DevToolsActivePort"), "utf8")).split("\n")[0]); } catch { return false; } }, "Chrome debug port");
-  const pages = await (await fetch(`http://127.0.0.1:${debugPort}/json/list`)).json();
-  socket = new WebSocket(pages.find((page) => page.type === "page").webSocketDebuggerUrl);
-  await new Promise((resolve, reject) => { socket.addEventListener("open", resolve, { once: true }); socket.addEventListener("error", reject, { once: true }); });
-  cdp = new CDP(socket);
+  if (process.env.ROGUE_PLAYWRIGHT_MODULE) {
+    cdp = await createPlaywrightCdp({ executable: chrome, profile });
+    evidence.launch = cdp.launch;
+  } else {
+    const debugPort = await until(async () => { try { return Number((await readFile(path.join(profile, "DevToolsActivePort"), "utf8")).split("\n")[0]); } catch { return false; } }, "Chrome debug port");
+    const pages = await (await fetch(`http://127.0.0.1:${debugPort}/json/list`)).json();
+    socket = new WebSocket(pages.find((page) => page.type === "page").webSocketDebuggerUrl);
+    await new Promise((resolve, reject) => { socket.addEventListener("open", resolve, { once: true }); socket.addEventListener("error", reject, { once: true }); });
+    cdp = new CDP(socket);
+  }
   await cdp.call("Runtime.enable"); await cdp.call("Page.enable");
   readBrowserDiagnostics = () => cdp.evaluate("window.__rogueBrowserTest ? __rogueBrowserTest.diagnostics : null");
   await cdp.call("Emulation.setDeviceMetricsOverride", { width: 1240, height: 900, deviceScaleFactor: 1, mobile: false });
@@ -83,8 +89,12 @@ try {
   const inventoryFrame = await cdp.evaluate("__rogueBrowserTest.frame");
   assert.match(inventoryFrame.cells, /food|ration|armor|mail/);
   evidence.inventory = inventoryFrame; evidence.checks.push("Inventory button enters the original item-list prompt");
+  const beforeSave = await cdp.evaluate("({words:__rogueBrowserTest.trace.words,cells:__rogueBrowserTest.frame.cells,map:__rogueBrowserTest.frame.map_cells,player:__rogueBrowserTest.frame.player})");
   await cdp.evaluate("document.getElementById('save').click();");
   await until(() => cdp.evaluate("__rogueBrowserTest.savedLength > 0 && !__rogueBrowserTest.savePending"), "IndexedDB transaction completed");
+  assert.deepEqual(await cdp.evaluate("({words:__rogueBrowserTest.trace.words,cells:__rogueBrowserTest.frame.cells,map:__rogueBrowserTest.frame.map_cells,player:__rogueBrowserTest.frame.player})"), beforeSave);
+  evidence.before_save = beforeSave;
+  evidence.checks.push("Acknowledged normal save preserves all C/RNG words and the original frame without advancing the game");
   evidence.save_length = await cdp.evaluate("__rogueBrowserTest.savedLength"); evidence.checks.push("Save envelope reaches IndexedDB and UI acknowledges transaction completion");
   const saveTrace = await cdp.evaluate("__rogueBrowserTest.trace");
   const saveGeneration = await cdp.evaluate("__rogueBrowserTest.generation");
@@ -116,5 +126,6 @@ try {
   }
   await writeFile(path.join(output, "evidence.json"), JSON.stringify(evidence, null, 2) + "\n"); throw error;
 } finally {
-  if (socket) socket.close(); processHandle.kill(); await new Promise((resolve) => server.close(resolve));
+  try { if (socket) socket.close(); await cdp?.close?.(); }
+  finally { processHandle?.kill(); await new Promise((resolve) => server.close(resolve)); }
 }

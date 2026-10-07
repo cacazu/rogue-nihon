@@ -19,6 +19,8 @@
   let lastOutcome = null, exitCode = null, runtimeError = null, logs = [], translationFallbacks = [], textMode = false, textDraftDirty = false, inputContext = null;
   const cellWidth = 12, cellHeight = 19, fontSize = 16;
   const scroll = document.querySelector(".board-scroll"), mapSpace = $("map-space");
+  const gamePanel = document.querySelector(".game-panel"), hud = document.querySelector(".hud-overlay"), settingsPanel = $("settings-panel");
+  let settingsOpen = false;
   const preference = RogueViewSettings.load();
   let displayMode = RogueViewSettings.modes.includes(parameters.get("view")) ? parameters.get("view") : preference.mode;
   let tileSize = RogueViewSettings.sizes(displayMode).includes(preference.zoom) ? preference.zoom : 32, camera = null, centeredPlayer = "";
@@ -30,8 +32,16 @@
   }
   function setRunning(value) {
     running = value; $("save").disabled = !value || savePending;
-    $("connection").textContent = t(value ? "status.playing" : exitCode !== null ? "status.ended" : "status.idle");
     $("language").disabled = value;
+  }
+  function setSettingsOpen(open) {
+    settingsOpen = open; settingsPanel.hidden = !open; $("settings-scrim").hidden = !open;
+    $("settings-toggle").setAttribute("aria-expanded", String(open));
+    gamePanel.classList.toggle("settings-open", open); scroll.inert = open; hud.inert = open;
+    if (open) $("settings-close").focus();
+    else if (textMode) $("prompt-text").focus();
+    else if (frame) board.focus();
+    else $("settings-toggle").focus();
   }
   function enqueue(rawEvent) {
     if (!running || !queue) return false;
@@ -64,7 +74,7 @@
     const menuOnly = Boolean(presentation && presentation.mode !== "game");
     document.querySelector(".board-scroll").hidden = Boolean(menuOnly);
     $("accessible-screen").hidden = Boolean(menuOnly);
-    $("presentation").hidden = !presentation;
+    $("presentation").hidden = !presentation || !(menuOnly || presentation.lines?.length || presentation.more || ["text", "space", "enter"].includes(presentation.input?.kind));
     $("player-status").hidden = !presentation?.status;
     if (!presentation) { $("presentation-lines").replaceChildren(); return; }
     fallbackRecord(presentation, "ui");
@@ -98,7 +108,7 @@
     $("prompt-text").placeholder = input?.placeholder || "";
     if (nextTextMode && !textMode) textDraftDirty = false;
     if (nextTextMode && !textDraftDirty) $("prompt-text").value = input.current_text ?? input.initial ?? "";
-    if (nextTextMode && !textMode) $("prompt-text").focus();
+    if (nextTextMode && !textMode && !settingsOpen) $("prompt-text").focus();
     textMode = nextTextMode;
     if (nextTextMode) $("presentation").hidden = false;
     if (["space", "enter"].includes(input?.kind) && !frame?.ui?.more) {
@@ -125,18 +135,21 @@
     $("tile-zoom").disabled = displayMode === "ascii";
     if (displayMode !== "ascii") {
       const totalWidth = frame.width * tileSize, totalHeight = (frame.height - 2) * tileSize;
-      mapSpace.style.width = totalWidth + "px"; mapSpace.style.height = totalHeight + "px";
-      const width = Math.min(totalWidth, scroll.clientWidth || 960), height = Math.min(totalHeight, scroll.clientHeight || 480);
+      const width = scroll.clientWidth || 960, height = scroll.clientHeight || 480;
+      // Neutral space lets edge cells be centered clear of the HUD. The same
+      // camera remains the source for both drawing and map hit-testing.
+      mapSpace.style.width = Math.max(totalWidth, width) + "px"; mapSpace.style.height = totalHeight + height + "px"; mapSpace.style.paddingTop = "";
       const ratio = displayMode === "pixels" ? Math.max(1, Math.min(2, Math.floor(window.devicePixelRatio || 1))) : Math.min(window.devicePixelRatio || 1, 2);
-      camera = { size: tileSize, ratio, left: scroll.scrollLeft, top: scroll.scrollTop, width, height };
+      camera = { size: tileSize, ratio, left: scroll.scrollLeft, top: scroll.scrollTop - height / 2, width, height };
       board.style.width = width + "px"; board.style.height = height + "px";
       board.width = Math.round(width * ratio); board.height = Math.round(height * ratio);
       context.setTransform(1, 0, 0, 1, 0, 0); context.fillStyle = "#080d0f"; context.fillRect(0, 0, board.width, board.height);
       tiles.draw(context, frame, camera);
       return;
     }
-    camera = null; mapSpace.style.width = ""; mapSpace.style.height = "";
+    camera = null; mapSpace.style.width = "";
     const width = frame.width, height = frame.height, ratio = window.devicePixelRatio || 1;
+    mapSpace.style.height = height * cellHeight + scroll.clientHeight + "px"; mapSpace.style.paddingTop = scroll.clientHeight / 2 + "px";
     board.width = Math.round(width * cellWidth * ratio); board.height = Math.round(height * cellHeight * ratio);
     board.style.width = width * cellWidth + "px"; board.style.height = height * cellHeight + "px";
     context.setTransform(ratio, 0, 0, ratio, 0, 0); context.fillStyle = "#080d0f"; context.fillRect(0, 0, width * cellWidth, height * cellHeight);
@@ -152,9 +165,10 @@
     }
   }
   function centerMap() {
-    if (!frame?.player || displayMode === "ascii") return;
-    scroll.scrollLeft = frame.player.x * tileSize + tileSize / 2 - scroll.clientWidth / 2;
-    scroll.scrollTop = (frame.player.y - 1) * tileSize + tileSize / 2 - scroll.clientHeight / 2;
+    if (!frame?.player) return;
+    const width = displayMode === "ascii" ? cellWidth : tileSize, height = displayMode === "ascii" ? cellHeight : tileSize;
+    scroll.scrollLeft = frame.player.x * width + width / 2 - scroll.clientWidth / 2;
+    scroll.scrollTop = (frame.player.y - (displayMode === "ascii" ? 0 : 1)) * height + height / 2;
     redraw();
   }
   function receiveFrame(payload) {
@@ -198,6 +212,7 @@
     const enteredName = $("name").value || "Player", validName = RogueUiCatalog.validText(enteredName, 49, false);
     if (!restore && !validName) { notice("error.name", {}, true); return; }
     const seed = validSeed ? enteredSeed : 0, name = validName ? enteredName : "Player";
+    setSettingsOpen(false);
     if (worker) { queue.close(); worker.terminate(); }
     generation++; queue = new RogueEventQueue(); frame = null; lastTrace = null; traces = []; messages = []; logs = []; translationFallbacks = []; lastOutcome = null; exitCode = null; runtimeError = null; frameCount = 0; inputRequestCount = 0; savePending = false; restorePending = Boolean(restore); textMode = false; textDraftDirty = false; inputContext = null; centeredPlayer = "";
     $("game-message").textContent = ""; $("presentation").hidden = true; $("player-status").hidden = true;
@@ -206,7 +221,7 @@
       if (worker !== currentWorker) return;
       try {
         switch (data.type) {
-          case "ready": setRunning(true); notice(restore ? "notice.restoring" : "notice.entered"); board.focus(); break;
+          case "ready": setRunning(true); notice(restore ? "notice.restoring" : "notice.entered"); if (!settingsOpen) board.focus(); break;
           case "frame": receiveFrame(data); break;
           case "presentation":
             if (frame && data.ui && typeof data.ui === "object") {
@@ -234,7 +249,7 @@
       } catch (error) { runtimeError = error.stack || error.message; setRunning(false); notice(error.message === "Missing translated presentation" ? "error.presentation" : "error.frame", {}, true); console.error(error); }
     };
     worker.onerror = (event) => { runtimeError = event.message; setRunning(false); notice("error.runtime", {}, true); };
-    setRunning(false); $("connection").textContent = t("status.loading"); notice("notice.loading");
+    setRunning(false); notice("notice.loading");
     worker.postMessage({ type: "start", queue: queue.buffer, capacity: queue.capacity, seed, name, restore, locale: language, trace: parameters.get("trace") === "1" }, restore ? [restore.buffer] : []);
   }
   ui.apply(document); setRunning(false);
@@ -246,8 +261,8 @@
   $("display-mode").value = displayMode;
   function zoomOptions() {
     const sizes = RogueViewSettings.sizes(displayMode); if (!sizes.includes(tileSize)) tileSize = 32;
-    $("tile-zoom").replaceChildren(...sizes.map(size => { const option = document.createElement("option"); option.value = size; option.textContent = size / 32 * 100 + "%"; return option; }));
-    $("tile-zoom").value = tileSize; $("tile-zoom").disabled = displayMode === "ascii";
+    $("tile-zoom").max = sizes.length - 1; $("tile-zoom").value = sizes.indexOf(tileSize); $("tile-zoom").disabled = displayMode === "ascii";
+    $("zoom-value").textContent = tileSize / 32 * 100 + "%"; $("tile-zoom").setAttribute("aria-valuetext", $("zoom-value").textContent);
   }
   function persistView() { RogueViewSettings.save({ version: 1, mode: displayMode, zoom: tileSize }); }
   zoomOptions();
@@ -256,13 +271,20 @@
     displayMode = selected; tiles = tileSets[displayMode === "pixels" ? "pixels" : "tiles"];
     zoomOptions(); persistView(); redraw(); centerMap();
   };
-  $("tile-zoom").onchange = () => { const size = Number($("tile-zoom").value); if (!RogueViewSettings.sizes(displayMode).includes(size)) return; tileSize = size; persistView(); redraw(); centerMap(); };
+  $("tile-zoom").oninput = () => { const size = RogueViewSettings.sizes(displayMode)[Number($("tile-zoom").value)]; if (!size || displayMode === "ascii") return; tileSize = size; zoomOptions(); persistView(); redraw(); centerMap(); };
   $("center-map").onclick = centerMap;
-  $("fullscreen").onclick = async () => {
-    try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.querySelector(".game-panel").requestFullscreen(); }
+  function fullscreenLabels() {
+    const id = document.fullscreenElement ? "action.exit_fullscreen" : "action.fullscreen";
+    for (const label of [$("fullscreen"), $("header-fullscreen-label")]) { label.dataset.i18n = id; label.textContent = t(id); }
+  }
+  async function toggleFullscreen() {
+    try { if (document.fullscreenElement) await document.exitFullscreen(); else await gamePanel.requestFullscreen(); if (!settingsOpen && frame) board.focus(); }
     catch (error) { logs.push(String(error)); notice("error.fullscreen", {}, true); }
-  };
-  document.addEventListener("fullscreenchange", () => { redraw(); centerMap(); });
+  }
+  $("fullscreen").onclick = $("header-fullscreen").onclick = toggleFullscreen;
+  $("settings-toggle").onclick = () => setSettingsOpen(!settingsOpen);
+  $("settings-close").onclick = $("settings-scrim").onclick = () => setSettingsOpen(false);
+  document.addEventListener("fullscreenchange", () => { fullscreenLabels(); redraw(); centerMap(); });
   scroll.addEventListener("scroll", () => { if (displayMode !== "ascii") redraw(); }, { passive: true });
   new ResizeObserver(() => { redraw(); }).observe(scroll);
   board.addEventListener("pointermove", event => {
@@ -290,7 +312,7 @@
   };
   $("language").onchange = () => {
     language = $("language").value === "en" ? "en" : "ja"; ui.locale = language; document.documentElement.lang = language; ui.apply(document);
-    setRunning(running); notice(noticeState.id, noticeState.args, noticeState.error); if (frame) { redraw(); renderPresentation(); }
+    setRunning(running); fullscreenLabels(); notice(noticeState.id, noticeState.args, noticeState.error); if (frame) { redraw(); renderPresentation(); }
   };
   $("text-prompt").onsubmit = (event) => {
     event.preventDefault(); if (composing || !textMode) return;
@@ -304,15 +326,25 @@
   document.addEventListener("compositionstart", () => { composing = true; });
   document.addEventListener("compositionend", () => { composing = false; });
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && document.fullscreenElement) return;
     const target = event.target instanceof Element ? event.target : null;
+    if (settingsOpen) {
+      if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); setSettingsOpen(false); }
+      else if (event.key === "Tab") {
+        const controls = Array.from(settingsPanel.querySelectorAll("button,input,select,summary,a[href],[tabindex='0']")).filter(element => !element.disabled && element.getClientRects().length);
+        const first = controls[0], last = controls[controls.length - 1];
+        if (first && (!settingsPanel.contains(target) || (event.shiftKey && target === first) || (!event.shiftKey && target === last))) { event.preventDefault(); (event.shiftKey ? last : first).focus(); }
+      }
+      return;
+    }
+    if (event.key === "Escape" && document.fullscreenElement) { event.preventDefault(); void toggleFullscreen(); return; }
+    if (target?.closest(".ui-overlay,.heading,.credits")) return;
     if (!running || composing || event.isComposing || event.keyCode === 229 || event.metaKey || target?.closest("input,textarea,select,[contenteditable=true]")) return;
     if (target?.closest("button,a") && (event.key === "Enter" || event.key === " ")) return;
     const raw = rawKey(event.key, event); if (raw !== null) { event.preventDefault(); enqueue(raw); }
   });
-  document.querySelectorAll("[data-key],[data-character]").forEach((button) => { button.onclick = () => { const raw = rawKey(button.dataset.key || button.dataset.character); if (raw !== null) enqueue(raw); board.focus(); }; });
+  document.querySelectorAll("[data-key],[data-character]").forEach((button) => { button.onclick = () => { if (settingsOpen) return; const raw = rawKey(button.dataset.key || button.dataset.character); if (raw !== null) enqueue(raw); board.focus(); }; });
   board.onclick = (event) => {
-    if (!frame?.player || !running) return;
+    if (settingsOpen || !frame?.player || !running || frame.ui?.mode !== "game") return;
     const bounds = board.getBoundingClientRect();
     const position = camera ? tiles.coordinate(event, board, frame, camera) : {x: Math.floor((event.clientX - bounds.left) * frame.width / bounds.width), y: Math.floor((event.clientY - bounds.top) * frame.height / bounds.height)};
     if (!position) return;
@@ -324,6 +356,7 @@
   };
   window.addEventListener("resize", redraw); window.addEventListener("pagehide", () => { if (queue) queue.close(); });
   ui.apply(document); $("language").value = language; document.documentElement.lang = language; setRunning(false); notice("notice.start"); $("screen-status").textContent = t("status.waiting");
+  fullscreenLabels(); setSettingsOpen(true);
   database().then(readSave).then((bytes) => { if (bytes) { savedBytes = bytes; $("load").disabled = false; $("download-save").disabled = false; } }).catch((error) => { logs.push(error.stack || String(error)); notice("error.storage_init", {}, true); });
   window.__rogueBrowserTest = Object.freeze({ enqueue, enqueueMany, rawKey, redraw, centerMap, get graphics() {return {mode:displayMode,tileSize,camera,ids:tiles.entries.map(e=>e.id),images:tiles.images.size,drawCount:tiles.drawCount,unknown:frame?.map_unknown_glyphs||[]};}, get language() { return language; }, get generation() { return generation; }, get running() { return running; }, get frame() { return frame; }, get frameCount() { return frameCount; }, get inputRequestCount() { return inputRequestCount; }, get trace() { return lastTrace; }, get traces() { return traces.slice(); }, get messages() { return messages.slice(); }, get savedLength() { return savedBytes?.byteLength || 0; }, get savePending() { return savePending; }, get queuePending() { return queue?.pending || 0; }, get translationFallbacks() { return translationFallbacks.slice(); }, get uiMissing() { return ui.missing.slice(); }, get diagnostics() { return { language, generation, running, exitCode, outcome: lastOutcome, runtimeError, notice: $("notice").textContent, message: $("game-message").textContent, inputRequests: inputRequestCount, frameCount, trace: lastTrace, messages: messages.slice(-8), logs: logs.slice(-16), savePending, savedLength: savedBytes?.byteLength || 0, translationFallbacks: translationFallbacks.slice(), uiMissing: ui.missing.slice(), presentation: frame?.ui }; } });
 })().catch((error) => { console.error("Browser host startup failed", error); });

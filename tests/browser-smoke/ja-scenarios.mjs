@@ -50,8 +50,20 @@ export async function japaneseScenarios(cdp, until, evidence, output) {
   await screenshot("ja-help-top.png");
   await cdp.evaluate("document.getElementById('presentation-lines').scrollTop=document.getElementById('presentation-lines').scrollHeight;");
   await screenshot("ja-help-bottom.png");
+  const measureWrapping = () => cdp.evaluate("(()=>{const e=document.getElementById('presentation-lines');return {viewport:innerWidth,text:e.innerText,scroll:e.scrollWidth,client:e.clientWidth,wrapped:[...e.children].some(l=>l.getBoundingClientRect().height>parseFloat(getComputedStyle(l).lineHeight)*1.5),lines:[...e.children].map(l=>{const r=document.createRange();r.selectNodeContents(l);return {text:l.textContent,textWidth:r.getBoundingClientRect().width,width:l.getBoundingClientRect().width,height:l.getBoundingClientRect().height,lineHeight:getComputedStyle(l).lineHeight,font:getComputedStyle(l).fontSize}})}})()");
   await cdp.call("Emulation.setDeviceMetricsOverride", { width: 360, height: 850, deviceScaleFactor: 1, mobile: false });
-  const wrapping = await cdp.evaluate("(()=>{const e=document.getElementById('presentation-lines');return {scroll:e.scrollWidth,client:e.clientWidth,wrapped:[...e.children].some(l=>l.getBoundingClientRect().height>parseFloat(getComputedStyle(l).lineHeight)*1.5)}})()");
+  const at360 = await measureWrapping();
+  evidence.help_wrapping_360 = at360;
+  assert.equal(at360.viewport, 360);
+  assert.equal(at360.text, help.text, "all Japanese help text remains available at 360px");
+  assert.ok(at360.scroll <= at360.client + 1, "Japanese descriptions do not overflow horizontally at 360px");
+  await screenshot("ja-help-360.png");
+  // Real 14px help fits at 360px in both baseline and unified layouts. At 320px it must wrap.
+  await cdp.call("Emulation.setDeviceMetricsOverride", { width: 320, height: 850, deviceScaleFactor: 1, mobile: false });
+  const wrapping = await measureWrapping();
+  evidence.help_wrapping = wrapping;
+  assert.equal(wrapping.viewport, 320);
+  assert.equal(wrapping.text, help.text, "all Japanese help text remains available at 320px");
   assert.ok(wrapping.scroll <= wrapping.client + 1, "Japanese descriptions do not overflow horizontally");
   assert.ok(wrapping.wrapped, "actual Japanese help descriptions wrap at a narrow width");
   await screenshot("ja-help-wrap.png");
@@ -130,7 +142,8 @@ export async function japaneseScenarios(cdp, until, evidence, output) {
   assert.equal(score.input.kind, "ended");
   assert.equal(await cdp.evaluate("document.getElementById('game-message').textContent"), "");
   assert.equal(await cdp.evaluate("document.getElementById('presentation-hint').hidden"), true);
-  assert.equal(await cdp.evaluate("document.getElementById('connection').textContent === document.getElementById('screen-status').textContent"), true);
+  assert.equal(await cdp.evaluate("document.getElementById('connection') === null"), true);
+  assert.equal(await cdp.evaluate("document.getElementById('screen-status').textContent"), "ゲームを終了しました");
   assert.match(await cdp.evaluate("document.getElementById('presentation-lines').innerText"), /[\u3040-\u30ff\u3400-\u9fff]/u);
   await screenshot("ja-score.png");
   evidence.score_ja = score;

@@ -9,56 +9,94 @@
 </head>
 <body>
   <main>
-    <header class="heading"><div><span class="eyebrow" data-i18n="app.version"></span><h1 data-i18n="app.heading"></h1><p data-i18n="app.introduction"></p></div><span id="connection" class="badge"></span></header>
-    <section class="toolbar" data-i18n-aria="app.toolbar">
-      <label><span data-i18n="form.seed"></span><input id="seed" type="number" min="0" max="4294967295" value="12345" inputmode="numeric"></label>
-      <label><span data-i18n="form.name"></span><input id="name" value="Player" maxlength="49" autocomplete="off"></label>
-      <label><span data-i18n="form.language"></span><select id="language"><option value="ja" data-i18n="language.ja"></option><option value="en" data-i18n="language.en"></option></select></label>
-      <button id="new-game" class="primary" data-i18n="action.new"></button>
-      <button id="save" disabled data-i18n="action.save"></button>
-      <button id="load" disabled data-i18n="action.load"></button>
-      <button id="download-save" disabled data-i18n="action.download"></button>
-    </section>
-    <p id="notice" role="status" aria-live="polite"></p>
-    <section class="game-panel" data-i18n-aria="app.game_screen">
-      <div id="player-status" class="player-status" hidden><span id="player-name"></span><span id="status-text"></span></div>
-      <div class="map-tools">
-        <label><span data-i18n="form.display_mode"></span><select id="display-mode"><option value="ascii" data-i18n="view.ascii"></option><option value="tiles" data-i18n="view.tiles"></option><option value="pixels" data-i18n="view.pixels"></option></select></label>
-        <label><span data-i18n="form.zoom"></span><select id="tile-zoom"><option value="16">50%</option><option value="24">75%</option><option value="32" selected>100%</option><option value="48">150%</option><option value="64">200%</option></select></label>
-        <button id="center-map" data-i18n="action.center"></button><button id="fullscreen" data-i18n="action.fullscreen"></button>
-        <span id="tile-description" role="status" aria-live="polite"></span>
+    <header class="heading">
+      <h1 data-i18n="app.heading"></h1>
+      <button id="header-fullscreen" class="icon-button" type="button" aria-controls="game-screen">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg>
+        <span id="header-fullscreen-label" class="sr-only" data-i18n="action.fullscreen"></span>
+      </button>
+    </header>
+    <section id="game-screen" class="game-panel" data-i18n-aria="app.game_screen">
+      <div class="map-area board-scroll" data-display="tiles">
+        <div id="map-space"><canvas id="board" tabindex="0" role="img" aria-describedby="accessible-screen" data-i18n-aria="app.board"></canvas></div>
       </div>
-      <div class="board-scroll" data-display="tiles"><div id="map-space"><canvas id="board" tabindex="0" role="img" aria-describedby="accessible-screen" data-i18n-aria="app.board"></canvas></div></div>
       <pre id="accessible-screen" class="sr-only" aria-live="off"></pre>
-      <p id="game-message" class="message" role="status" aria-live="polite"></p>
-      <section id="presentation" class="presentation" hidden>
-        <header><h2 id="presentation-title"></h2><span id="presentation-hint" data-i18n="instruction.selection"></span></header>
-        <div id="presentation-lines" class="presentation-lines" tabindex="0"></div>
-        <div id="more-prompt" class="more-prompt" hidden></div>
-        <form id="text-prompt" class="text-prompt" hidden>
-          <label><span data-i18n="input.text"></span><input id="prompt-text" type="text" autocomplete="off"></label>
-          <button type="submit" data-i18n="action.submit"></button>
-          <button id="cancel-text" type="button" data-i18n="action.cancel"></button>
-        </form>
-      </section>
-      <div class="board-footer"><span id="screen-status"></span><span data-i18n="instruction.mouse"></span></div>
-    </section>
-    <section class="controls" data-i18n-aria="app.controls">
-      <div class="direction-pad" data-i18n-aria="app.directions">
-        <button data-key="Home" data-i18n-aria="direction.nw">↖</button><button data-key="ArrowUp" data-i18n-aria="direction.n">↑</button><button data-key="PageUp" data-i18n-aria="direction.ne">↗</button>
-        <button data-key="ArrowLeft" data-i18n-aria="direction.w">←</button><button data-character="." data-i18n-aria="direction.wait">·</button><button data-key="ArrowRight" data-i18n-aria="direction.e">→</button>
-        <button data-key="End" data-i18n-aria="direction.sw">↙</button><button data-key="ArrowDown" data-i18n-aria="direction.s">↓</button><button data-key="PageDown" data-i18n-aria="direction.se">↘</button>
+      <div class="hud-overlay">
+        <div id="player-status" class="player-status" hidden><span id="player-name"></span><span id="status-text"></span></div>
+        <p id="game-message" class="message" role="status" aria-live="polite"></p>
+        <span id="tile-description" role="status" aria-live="polite"></span>
+        <section id="presentation" class="presentation" hidden>
+          <header><h2 id="presentation-title"></h2><span id="presentation-hint" data-i18n="instruction.selection"></span></header>
+          <div id="presentation-lines" class="presentation-lines" tabindex="0"></div>
+          <div id="more-prompt" class="more-prompt" hidden></div>
+          <form id="text-prompt" class="text-prompt" hidden>
+            <label><span data-i18n="input.text"></span><input id="prompt-text" type="text" autocomplete="off"></label>
+            <button type="submit" data-i18n="action.submit"></button>
+            <button id="cancel-text" type="button" data-i18n="action.cancel"></button>
+          </form>
+        </section>
+        <section class="controls" data-i18n-aria="app.controls">
+          <div class="direction-pad" data-i18n-aria="app.directions">
+            <button data-key="Home" data-i18n-aria="direction.nw">↖</button><button data-key="ArrowUp" data-i18n-aria="direction.n">↑</button><button data-key="PageUp" data-i18n-aria="direction.ne">↗</button>
+            <button data-key="ArrowLeft" data-i18n-aria="direction.w">←</button><button data-character="." data-i18n-aria="direction.wait">·</button><button data-key="ArrowRight" data-i18n-aria="direction.e">→</button>
+            <button data-key="End" data-i18n-aria="direction.sw">↙</button><button data-key="ArrowDown" data-i18n-aria="direction.s">↓</button><button data-key="PageDown" data-i18n-aria="direction.se">↘</button>
+          </div>
+          <div class="action-buttons">
+            <button data-character="i"><span data-i18n="action.inventory"></span> <kbd>i</kbd></button>
+            <button data-character="?"><span data-i18n="action.help"></span> <kbd>?</kbd></button>
+            <button data-character=">"><span data-i18n="action.descend"></span> <kbd>&gt;</kbd></button>
+            <button data-character=" "><span data-i18n="action.continue"></span> <kbd>Space</kbd></button>
+            <button data-key="Escape"><span data-i18n="action.cancel"></span> <kbd>Esc</kbd></button>
+          </div>
+        </section>
+        <div class="board-footer sr-only"><span id="screen-status"></span><span data-i18n="instruction.mouse"></span></div>
       </div>
-      <div class="action-buttons">
-        <button data-character="i"><span data-i18n="action.inventory"></span> <kbd>i</kbd></button>
-        <button data-character="?"><span data-i18n="action.help"></span> <kbd>?</kbd></button>
-        <button data-character=">"><span data-i18n="action.descend"></span> <kbd>&gt;</kbd></button>
-        <button data-character=" "><span data-i18n="action.continue"></span> <kbd>Space</kbd></button>
-        <button data-key="Escape"><span data-i18n="action.cancel"></span> <kbd>Esc</kbd></button>
+      <div class="ui-overlay">
+        <button id="settings-toggle" class="icon-button settings-toggle" type="button" aria-controls="settings-panel" aria-expanded="false" data-i18n-aria="action.settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3-1 3-3 1-2 3 2 2v3l3 1 1 3h4l1-3 3-1v-3l2-2-2-3-3-1-1-3Z"/><circle cx="12" cy="11" r="3"/></svg>
+        </button>
+        <button id="settings-scrim" class="settings-scrim" type="button" tabindex="-1" hidden data-i18n-aria="action.close_settings"></button>
+        <section id="settings-panel" class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
+          <header>
+            <h2 id="settings-title" data-i18n="settings.title"></h2>
+            <button id="settings-close" class="icon-button" type="button" data-i18n-aria="action.close_settings"><span aria-hidden="true">×</span></button>
+          </header>
+          <div class="toolbar">
+            <label><span data-i18n="form.language"></span><select id="language" aria-describedby="language-help"><option value="ja" data-i18n="language.ja"></option><option value="en" data-i18n="language.en"></option></select></label>
+            <p id="language-help" class="setting-help" data-i18n="settings.language_help"></p>
+            <div class="save-actions">
+              <button id="save" disabled data-i18n="action.save"></button>
+              <button id="load" disabled data-i18n="action.load"></button>
+              <button id="download-save" disabled data-i18n="action.download"></button>
+            </div>
+            <div class="view-controls">
+              <label><span data-i18n="form.display_mode"></span><select id="display-mode"><option value="ascii" data-i18n="view.ascii"></option><option value="tiles" data-i18n="view.tiles"></option><option value="pixels" data-i18n="view.pixels"></option></select></label>
+              <label class="zoom-control"><span data-i18n="form.zoom"></span><output id="zoom-value" for="tile-zoom">100%</output><input id="tile-zoom" type="range" min="0" max="4" step="1" value="2"></label>
+              <div class="view-actions"><button id="center-map" data-i18n="action.center"></button><button id="fullscreen" data-i18n="action.fullscreen"></button></div>
+            </div>
+            <details class="new-game-options" open>
+              <summary data-i18n="settings.new_game"></summary>
+              <div class="new-game-fields">
+                <label><span data-i18n="form.seed"></span><input id="seed" type="number" min="0" max="4294967295" value="12345" inputmode="numeric"></label>
+                <label><span data-i18n="form.name"></span><input id="name" value="Player" maxlength="49" autocomplete="off"></label>
+              </div>
+              <button id="new-game" class="primary" data-i18n="action.new"></button>
+            </details>
+            <div class="instructions"><p data-i18n="instruction.movement"></p><p data-i18n="instruction.prompts"></p></div>
+          </div>
+        </section>
+        <p id="notice" role="status" aria-live="polite"></p>
       </div>
-      <div class="instructions"><p data-i18n="instruction.movement"></p><p data-i18n="instruction.prompts"></p></div>
     </section>
-    <details class="credits"><summary data-i18n="credits.title"></summary><p data-i18n="credits.description"></p><a href="/logic/LICENSE.TXT" target="_blank" rel="noopener" data-i18n="credits.license"></a></details>
+    <footer class="credits">
+      <div class="version"><h2 data-i18n="credits.title"></h2><span class="eyebrow" data-i18n="app.version"></span></div>
+      <p data-i18n="credits.description"></p>
+      <nav>
+        <a href="/logic/LICENSE.TXT" target="_blank" rel="noopener" data-i18n="credits.license"></a>
+        <a href="/THIRD-PARTY-NOTICES.md" target="_blank" rel="noopener" data-i18n="credits.notices"></a>
+        <span><span data-i18n="credits.repository"></span> <a href="https://github.com/cacazu/jrogue" target="_blank" rel="noopener">github.com/cacazu/jrogue</a></span>
+      </nav>
+    </footer>
   </main>
   <script src="/web/abi.js"></script>
   <script src="/web/event-queue.js"></script>

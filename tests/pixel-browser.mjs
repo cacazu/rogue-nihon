@@ -5,6 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {createPreviewServer} from '../web/server.mjs';
+import {createPlaywrightCdp} from './browser-smoke/playwright-cdp.mjs';
 const directory=path.dirname(fileURLToPath(import.meta.url)),output=path.join(directory,'pixel-output');
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function until(fn,label){const end=Date.now()+30000;while(Date.now()<end){if(await fn())return;await pause(100);}throw new Error('Timed out: '+label);}
@@ -14,15 +15,16 @@ class CDP{
  async evaluate(expression,userGesture=false){const r=await this.call('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true,userGesture});if(r.exceptionDetails)throw new Error(JSON.stringify(r.exceptionDetails));return r.result.value;}
 }
 await mkdir(output,{recursive:true});
-const profile=await mkdtemp(path.join(os.tmpdir(),'rogue-pixels-'));
+const profile=await mkdtemp(path.join(process.env.ROGUE_PLAYWRIGHT_MODULE?output:os.tmpdir(),'rogue-pixels-'));
 const server=createPreviewServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base=`http://127.0.0.1:${server.address().port}/`;
-const browser=spawn(process.env.ROGUE_CHROME||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',['--headless=new','--disable-gpu','--no-first-run','--no-default-browser-check','--disable-background-networking','--disable-component-update','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{windowsHide:true,stdio:'ignore'});
+const browser=process.env.ROGUE_PLAYWRIGHT_MODULE?null:spawn(process.env.ROGUE_CHROME||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',['--headless=new','--disable-gpu','--no-first-run','--no-default-browser-check','--disable-background-networking','--disable-component-update','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{windowsHide:true,stdio:'ignore'});
 const evidence={started_at:new Date().toISOString(),checks:[],screenshots:[]};let socket,cdp;
 async function shot(name){const r=await cdp.call('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await writeFile(path.join(output,name+'.png'),Buffer.from(r.data,'base64'));evidence.screenshots.push(name+'.png');}
 try{
- let port;await until(async()=>{try{port=Number((await readFile(path.join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0]);return port;}catch{return false;}},'Chrome');
- const pages=await(await fetch(`http://127.0.0.1:${port}/json/list`)).json();socket=new WebSocket(pages.find(p=>p.type==='page').webSocketDebuggerUrl);await new Promise((resolve,reject)=>{socket.addEventListener('open',resolve,{once:true});socket.addEventListener('error',reject,{once:true});});cdp=new CDP(socket);
+ if(process.env.ROGUE_PLAYWRIGHT_MODULE){cdp=await createPlaywrightCdp({executable:process.env.ROGUE_CHROME||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',profile});evidence.launch=cdp.launch;}
+ else{let port;await until(async()=>{try{port=Number((await readFile(path.join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0]);return port;}catch{return false;}},'Chrome');
+ const pages=await(await fetch(`http://127.0.0.1:${port}/json/list`)).json();socket=new WebSocket(pages.find(p=>p.type==='page').webSocketDebuggerUrl);await new Promise((resolve,reject)=>{socket.addEventListener('open',resolve,{once:true});socket.addEventListener('error',reject,{once:true});});cdp=new CDP(socket);}
  await cdp.call('Runtime.enable');await cdp.call('Page.enable');
  await cdp.call('Emulation.setDeviceMetricsOverride',{width:1280,height:960,deviceScaleFactor:1,mobile:false});
  await cdp.call('Page.navigate',{url:base+'?trace=1'});
@@ -39,7 +41,7 @@ try{
  evidence.centered_camera=await cdp.evaluate('({player:__rogueBrowserTest.frame.player,camera:__rogueBrowserTest.graphics.camera})');
  await shot('desktop-100');
  for(const size of [16,24,32,48,64]){
-  await cdp.evaluate(`document.getElementById('tile-zoom').value='${size}';document.getElementById('tile-zoom').dispatchEvent(new Event('change'));for(let i=0;i<10;i++)__rogueBrowserTest.redraw()`);
+  await cdp.evaluate(`document.getElementById('tile-zoom').value='${[16,24,32,48,64].indexOf(size)}';document.getElementById('tile-zoom').dispatchEvent(new Event('input'));for(let i=0;i<10;i++)__rogueBrowserTest.redraw()`);
   const bounds=await cdp.evaluate("(()=>{const b=document.getElementById('board'),s=document.querySelector('.board-scroll');return {size:__rogueBrowserTest.graphics.tileSize,width:b.width,viewport:s.clientWidth,smoothing:b.getContext('2d').imageSmoothingEnabled,overflow:document.documentElement.scrollWidth>innerWidth};})()");
   assert.equal(bounds.size,size);assert.equal(bounds.smoothing,false);assert.equal(bounds.overflow,false);assert.ok(bounds.width<=bounds.viewport*2+1);
  }
@@ -48,13 +50,13 @@ try{
  evidence.checks.push('50–200% zoom uses only raster images, disables smoothing and bounds Canvas to viewport');
  await cdp.evaluate("document.getElementById('display-mode').value='ascii';document.getElementById('display-mode').dispatchEvent(new Event('change'))");
  assert.equal(await cdp.evaluate('__rogueBrowserTest.graphics.mode'),'ascii');assert.ok(await cdp.evaluate('__tileTextCalls>0'));
- await cdp.evaluate("document.getElementById('display-mode').value='tiles';document.getElementById('display-mode').dispatchEvent(new Event('change'));window.__tileTextCalls=0;document.getElementById('tile-zoom').value='32';document.getElementById('tile-zoom').dispatchEvent(new Event('change'))");
+ await cdp.evaluate("document.getElementById('display-mode').value='tiles';document.getElementById('display-mode').dispatchEvent(new Event('change'));window.__tileTextCalls=0;document.getElementById('tile-zoom').value='2';document.getElementById('tile-zoom').dispatchEvent(new Event('input'))");
  for(const [name,width,height,dpr] of [['mobile-portrait',390,844,3],['mobile-landscape',844,390,2]]){
   await cdp.call('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:dpr,mobile:true});await pause(250);
   await cdp.evaluate("document.querySelector('.board-scroll').scrollTo(301,93);__rogueBrowserTest.redraw()");
   assert.equal(await cdp.evaluate('document.documentElement.scrollWidth<=innerWidth'),true);
   assert.equal(await cdp.evaluate("document.getElementById('board').width<=document.querySelector('.board-scroll').clientWidth*2+1"),true);
-  await cdp.evaluate("document.getElementById('center-map').click();document.querySelector('.map-tools').scrollIntoView({block:'start'})");await pause(150);
+  await cdp.evaluate("document.getElementById('center-map').click();document.querySelector('.game-panel').scrollIntoView({block:'start'})");await pause(150);
   const center=await cdp.evaluate('({player:__rogueBrowserTest.frame.player,camera:__rogueBrowserTest.graphics.camera})');
   assert.ok(center.player.x*center.camera.size-center.camera.left>=0&&center.player.x*center.camera.size-center.camera.left<center.camera.width,'Player stays visible after centering');
   evidence[name]=center;
@@ -86,7 +88,7 @@ try{
    await cdp.evaluate(`document.getElementById('display-mode').value='${mode}';document.getElementById('display-mode').dispatchEvent(new Event('change'));window.__tileTextCalls=0`);
    assert.equal(await cdp.evaluate('__rogueBrowserTest.graphics.mode'),mode);
    for(const size of mode==='pixels'?[32,64,96,128]:mode==='tiles'?[16,24,32,48,64]:[]){
-    await cdp.evaluate(`document.getElementById('tile-zoom').value='${size}';document.getElementById('tile-zoom').dispatchEvent(new Event('change'));for(let i=0;i<10;i++)__rogueBrowserTest.redraw()`);
+    await cdp.evaluate(`document.getElementById('tile-zoom').value='${(mode==='pixels'?[32,64,96,128]:[16,24,32,48,64]).indexOf(size)}';document.getElementById('tile-zoom').dispatchEvent(new Event('input'));for(let i=0;i<10;i++)__rogueBrowserTest.redraw()`);
     assert.equal(await cdp.evaluate('__rogueBrowserTest.graphics.tileSize'),size);
     assert.equal(await cdp.evaluate("document.getElementById('board').getContext('2d').imageSmoothingEnabled"),false);
    }
@@ -96,7 +98,7 @@ try{
   assert.equal(await cdp.evaluate('__rogueBrowserTest.queuePending'),0);
  }
  evidence.checks.push('Three seeds: switching ASCII/illustration/pixel art and all permitted zoom levels preserves all 20 C/RNG words, original screen and input requests');
- await cdp.evaluate("document.getElementById('tile-zoom').value='64';document.getElementById('tile-zoom').dispatchEvent(new Event('change'));__rogueBrowserTest.centerMap()");
+ await cdp.evaluate("document.getElementById('tile-zoom').value='1';document.getElementById('tile-zoom').dispatchEvent(new Event('input'));__rogueBrowserTest.centerMap()");
  assert.deepEqual(await cdp.evaluate("Array.from(document.getElementById('display-mode').options).map(o=>o.textContent)"),['文字','イラスト','ドット絵']);
  await shot('pixels-desktop-200');
  const pixelGallery=await cdp.evaluate("(async()=>{const t=await RogueTiles.load('/web/assets/pixels/manifest.json');if(!t.pixelArt||t.images.size!==46)throw new Error('Not native pixels');const frame={width:7,height:9,map_tile_ids:t.entries.map(e=>e.id),map_tiles:Array(63).fill(0),map_unknown_glyphs:[]};for(let i=0;i<49;i++)frame.map_tiles[i+7]=i;const c=document.createElement('canvas');c.width=c.height=448;t.draw(c.getContext('2d'),frame,{size:64,ratio:1,left:0,top:0,width:448,height:448});const probe={width:1,height:3,map_tile_ids:frame.map_tile_ids,map_tiles:[0,8,0],map_unknown_glyphs:[]};const a=document.createElement('canvas'),b=document.createElement('canvas');a.width=a.height=32;b.width=b.height=128;t.draw(a.getContext('2d'),probe,{size:32,ratio:1,left:0,top:0,width:32,height:32});t.draw(b.getContext('2d'),probe,{size:128,ratio:1,left:0,top:0,width:128,height:128});const n=a.getContext('2d').getImageData(0,0,32,32).data,z=b.getContext('2d').getImageData(0,0,128,128).data;for(let y=0;y<128;y++)for(let x=0;x<128;x++)for(let k=0;k<4;k++)if(z[(y*128+x)*4+k]!==n[(Math.floor(y/4)*32+Math.floor(x/4))*4+k])throw new Error('Blurred pixel cluster');for(const rotated of t.rotated.values()){const p=rotated.getContext('2d').getImageData(0,0,32,32).data;for(let i=3;i<p.length;i+=4)if(p[i]!==0&&p[i]!==255)throw new Error('Antialiased bolt');}return {image:c.toDataURL('image/png').split(',')[1],rotations:t.rotated.size};})()");
@@ -107,7 +109,7 @@ try{
  await cdp.call('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});await cdp.call('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});await cdp.evaluate('document.fullscreenElement?document.exitFullscreen():undefined');
  for(const [name,width,height,dpr] of [['pixels-mobile-portrait',390,844,3],['pixels-mobile-landscape',844,390,2]]){
   await cdp.call('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:dpr,mobile:true});await pause(150);
-  await cdp.evaluate("document.querySelector('.board-scroll').scrollTo(101,67);__rogueBrowserTest.centerMap();document.querySelector('.map-tools').scrollIntoView({block:'start'})");await pause(100);
+  await cdp.evaluate("document.querySelector('.board-scroll').scrollTo(101,67);__rogueBrowserTest.centerMap();document.querySelector('.game-panel').scrollIntoView({block:'start'})");await pause(100);
   const layout=await cdp.evaluate("({ratio:__rogueBrowserTest.graphics.camera.ratio,overflow:document.documentElement.scrollWidth>innerWidth,canvas:document.getElementById('board').width,viewport:document.querySelector('.board-scroll').clientWidth})");
   assert.equal(layout.ratio,2);assert.equal(layout.overflow,false);assert.ok(layout.canvas<=layout.viewport*2+1);await shot(name);
  }
@@ -133,4 +135,4 @@ try{
  assert.deepEqual(cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'),[]);evidence.checks.push('No main-browser Runtime exceptions');
  evidence.status='passed';evidence.finished_at=new Date().toISOString();await writeFile(path.join(output,'evidence.json'),JSON.stringify(evidence,null,2)+'\n');console.log(JSON.stringify(evidence,null,2));
 }catch(error){evidence.status='failed';evidence.error=error.stack;await writeFile(path.join(output,'evidence.json'),JSON.stringify(evidence,null,2)+'\n');throw error;}
-finally{socket?.close();browser.kill();await new Promise(resolve=>server.close(resolve));}
+finally{try{socket?.close();await cdp?.close?.();}finally{browser?.kill();await new Promise(resolve=>server.close(resolve));}}
