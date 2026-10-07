@@ -360,6 +360,10 @@ try {
   await page.keyboard.press("i");
   await page.waitForFunction(() => __rogueBrowserTest.frame.ui.mode === "inventory" || __rogueBrowserTest.frame.ui.mode === "menu");
   await settled();
+  const inventoryText=await page.locator('#presentation').innerText();
+  assert.doesNotMatch(inventoryText,/原作の質問と続行待ちを保っています/,'inventory shows no internal implementation guidance');
+  assert.equal(inventoryText.split('スペースキーで続ける').length-1,1,'inventory has exactly one continuation instruction');
+  assert.equal(await page.locator('#presentation-hint').isHidden(),true,'non-selectable inventory has no selection hint');
   await openSettings();
   await page.locator("#save").click();
   await page.waitForFunction(() => __rogueBrowserTest.savedLength > 0 && !__rogueBrowserTest.savePending);

@@ -39,7 +39,7 @@
     "instruction.movement": "矢印キーまたは h j k l で移動。斜めは y u b n。",
     "instruction.prompts": "原作の質問には表示されたキーで回答します。名前の入力中や文字の変換中はゲーム操作を送りません。",
     "instruction.mouse": "クリック：隣接方向",
-    "instruction.selection": "表示された持ち物キーで選びます。原作の質問と続行待ちを保っています。",
+    "instruction.selection": "表示された持ち物キーで選びます。",
     "credits.title": "版とライセンス",
     "credits.description": "配布元とライセンスは GitHub で確認できます。",
     "credits.license": "ライセンスの案内・一括ダウンロード",

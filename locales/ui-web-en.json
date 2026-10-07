@@ -39,7 +39,7 @@
     "instruction.movement": "Move with arrows or h j k l. Diagonals: y u b n.",
     "instruction.prompts": "Answer prompts using their displayed keys. Typing a name or composing text does not send game commands.",
     "instruction.mouse": "Click: adjacent direction",
-    "instruction.selection": "Choose a displayed item key. Original prompts and acknowledgements remain active.",
+    "instruction.selection": "Choose a displayed item key.",
     "credits.title": "Version and license",
     "credits.description": "Distribution and licenses are available on GitHub.",
     "credits.license": "License guide and download",

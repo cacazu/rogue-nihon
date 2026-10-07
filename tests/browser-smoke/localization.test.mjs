@@ -45,3 +45,8 @@ test("UTF-8 input budget accepts Japanese and rejects overlong or control input"
   assert.equal(Catalog.validText("", 49, false), false);
   assert.equal(Catalog.validText("", 50), true);
 });
+
+test("Selection guidance describes only the user's action", () => {
+  assert.equal(catalogs.ja.messages['instruction.selection'], '表示された持ち物キーで選びます。');
+  assert.equal(catalogs.en.messages['instruction.selection'], 'Choose a displayed item key.');
+});

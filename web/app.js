@@ -116,9 +116,10 @@
     $("status-text").textContent = translatedText(presentation.status, "status");
     const modeId = "panel." + presentation.mode;
     $("presentation-title").textContent = t(Object.hasOwn(catalogs[language].messages, modeId) ? modeId : "panel.game");
-    $("presentation-hint").hidden = presentation.mode !== "menu";
+    $("presentation-hint").hidden = presentation.mode !== "menu" || !panelLines.some(line => line.selectable === true);
     const fragment = document.createDocumentFragment();
     for (const line of presentation.lines || []) {
+      if (line.id === "ui.continue" && ["space", "enter"].includes(presentation.input?.kind)) continue;
       if (presentation.more && line.id === presentation.more.id && line.text === presentation.more.text) continue;
       const selectable = line.selectable === true && typeof line.key === "string" && Array.from(line.key).length === 1;
       const element = document.createElement(selectable ? "button" : "div");
