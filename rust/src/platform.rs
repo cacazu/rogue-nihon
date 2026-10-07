@@ -23,6 +23,65 @@ pub struct Envelope {
     pub checksum: u32,
 }
 
+/// Narration policy separates recorded acknowledgements from future input.
+#[derive(Clone, Copy, Default, PartialEq, Eq)]
+pub enum MessagePaging {
+    #[default]
+    Legacy,
+    Log,
+    ReplayLegacyUntil(u32),
+}
+impl MessagePaging {
+    pub fn from_saved(presentation: &serde_json::Value) -> Self {
+        if presentation["input"]["message_paging"] == "log" {
+            presentation["input"]["message_paging_legacy_until"]
+                .as_u64()
+                .and_then(|index| u32::try_from(index).ok())
+                .map_or(Self::Log, Self::ReplayLegacyUntil)
+        } else {
+            Self::Legacy
+        }
+    }
+    pub fn mark(self, presentation: &mut serde_json::Value) {
+        if self != Self::Legacy {
+            if presentation["input"].is_null() {
+                presentation["input"] = serde_json::json!({});
+            }
+            presentation["input"]["message_paging"] = serde_json::json!("log");
+            if let Self::ReplayLegacyUntil(index) = self {
+                presentation["input"]["message_paging_legacy_until"] = serde_json::json!(index);
+            }
+        }
+    }
+    pub fn requires_acknowledgement(self, input_index: u32) -> bool {
+        match self {
+            Self::Legacy => true,
+            Self::Log => false,
+            Self::ReplayLegacyUntil(index) => input_index < index,
+        }
+    }
+    pub fn at_checkpoint(self, input_index: u32) -> Self {
+        if matches!(self, Self::ReplayLegacyUntil(index) if input_index >= index) {
+            Self::Log
+        } else {
+            self
+        }
+    }
+    pub fn remove_marker(presentation: &mut serde_json::Value) {
+        let Some(input) = presentation
+            .get_mut("input")
+            .and_then(serde_json::Value::as_object_mut)
+        else {
+            return;
+        };
+        let marked = input.remove("message_paging").is_some();
+        input.remove("message_paging_legacy_until");
+        if marked && input.is_empty() {
+            presentation["input"] = serde_json::Value::Null;
+        }
+    }
+}
+
 impl Envelope {
     #[allow(dead_code)] // Version 1 compatibility is checked independently.
     pub fn new(
@@ -149,6 +208,20 @@ impl Envelope {
             {
                 return Err("invalid saved presentation structure".into());
             }
+        }
+        if let Some(marker) = self.presentation["input"].get("message_paging")
+            && marker != "log"
+        {
+            return Err("invalid narration policy".into());
+        }
+        if let Some(until) = self.presentation["input"].get("message_paging_legacy_until")
+            && (self.presentation["input"]["message_paging"] != "log"
+                || !until.as_u64().is_some_and(|index| {
+                    index >= u64::from(self.input_index - self.inputs.len() as u32)
+                        && index <= u64::from(self.input_index)
+                }))
+        {
+            return Err("invalid narration replay boundary".into());
         }
         if self.checksum != self.digest() {
             return Err("save checksum mismatch".into());

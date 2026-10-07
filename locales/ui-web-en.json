@@ -41,10 +41,9 @@
     "instruction.mouse": "Click: adjacent direction",
     "instruction.selection": "Choose a displayed item key. Original prompts and acknowledgements remain active.",
     "credits.title": "Version and license",
-    "credits.description": "A Japanese Web derivative of Roguelike Restoration Project Rogue 5.4.4. C owns the original game logic; Rust handles display, input and platform services. The original copyright notices, three BSD-style license blocks and dependency notices are linked below.",
-    "credits.license": "Original copyright and license",
-    "credits.notices": "Dependency notices",
-    "credits.repository": "Distribution and source:",
+    "credits.description": "Distribution and licenses are available on GitHub.",
+    "credits.license": "License guide and download",
+    "credits.repository": "GitHub (distribution)",
     "action.settings": "Settings",
     "action.close_settings": "Close settings",
     "action.exit_fullscreen": "Exit fullscreen",
@@ -100,6 +99,9 @@
     "action.fullscreen": "Fullscreen",
     "error.tiles": "Map images could not load. Please reload the page.",
     "error.fullscreen": "Fullscreen is unavailable.",
-    "view.pixels": "Pixel art"
+    "view.pixels": "Pixel art",
+    "log.title": "Log",
+    "log.game": "Game",
+    "log.system": "System"
   }
 }

@@ -24,6 +24,20 @@ test("UI argument text stays literal and missing Japanese IDs never fall back to
   assert.throws(() => catalog.text("missing.id"), /Missing UI catalog entry/);
   assert.deepEqual(catalog.missing, [{ locale: "ja", id: "missing.id" }]);
 });
+
+test("Version footer exposes only GitHub distribution and license guidance", async () => {
+  const html = await readFile(new URL("../../web/index.html", import.meta.url), "utf8");
+  const footer = html.match(/<footer class="credits">([\s\S]*?)<\/footer>/)[1];
+  const links = Array.from(footer.matchAll(/href="([^"]+)"/g), match => match[1]);
+  assert.deepEqual(links, ["https://github.com/cacazu/jrogue/tree/main/rogue-nihon", "https://github.com/cacazu/jrogue/blob/main/rogue-nihon/docs/LICENSES-ja.md"]);
+  assert.equal(footer.includes("download="), false);
+  for (const catalog of Object.values(catalogs)) {
+    const text = Object.entries(catalog.messages).filter(([id]) => id.startsWith("credits.")).map(([, value]) => value).join(" ");
+    assert.doesNotMatch(text, /\b(?:Rust|Worker|Wasm|ABI|C)\b|表示・入力・プラットフォーム/);
+  }
+  const guide = await readFile(new URL("../../docs/LICENSES-ja.md", import.meta.url), "utf8");
+  assert.match(guide, /https:\/\/raw\.githubusercontent\.com\/cacazu\/jrogue\/main\/rogue-nihon\/distribution\/rogue-5\.4\.4-licenses\.zip/);
+});
 test("UTF-8 input budget accepts Japanese and rejects overlong or control input", () => {
   assert.equal(Catalog.validText("勇者".repeat(8), 49, false), true);
   assert.equal(Catalog.validText("勇者".repeat(9), 49, false), false);

@@ -84,11 +84,13 @@ try {
   await until(() => cdp.evaluate(`__rogueBrowserTest.inputRequestCount > ${inputBefore}`), "wait command processed");
   evidence.after_wait = await cdp.evaluate("__rogueBrowserTest.trace");
   const beforeInventory = await cdp.evaluate("__rogueBrowserTest.inputRequestCount");
-  await cdp.evaluate("document.querySelector('[data-character=\"i\"]').click();");
+  await cdp.evaluate("document.getElementById('board').focus()");
+  await cdp.call("Input.dispatchKeyEvent",{type:"keyDown",key:"i",text:"i",windowsVirtualKeyCode:73});
+  await cdp.call("Input.dispatchKeyEvent",{type:"keyUp",key:"i",windowsVirtualKeyCode:73});
   await until(() => cdp.evaluate("__rogueBrowserTest.inputRequestCount > " + beforeInventory), "inventory prompt");
   const inventoryFrame = await cdp.evaluate("__rogueBrowserTest.frame");
   assert.match(inventoryFrame.cells, /food|ration|armor|mail/);
-  evidence.inventory = inventoryFrame; evidence.checks.push("Inventory button enters the original item-list prompt");
+  evidence.inventory = inventoryFrame; evidence.checks.push("Inventory keyboard command enters the original item-list prompt");
   const beforeSave = await cdp.evaluate("({words:__rogueBrowserTest.trace.words,cells:__rogueBrowserTest.frame.cells,map:__rogueBrowserTest.frame.map_cells,player:__rogueBrowserTest.frame.player})");
   await cdp.evaluate("document.getElementById('save').click();");
   await until(() => cdp.evaluate("__rogueBrowserTest.savedLength > 0 && !__rogueBrowserTest.savePending"), "IndexedDB transaction completed");
@@ -107,7 +109,9 @@ try {
   evidence.restored = restored; evidence.checks.push("New Worker restores the saved logical trace exactly");
   evidence.checks.push("Restore also reconstructs the pending inventory prompt view");
   const beforeContinue = await cdp.evaluate("__rogueBrowserTest.inputRequestCount");
-  await cdp.evaluate("document.querySelector('[data-character=\" \"]').click();");
+  await cdp.evaluate("document.getElementById('board').focus()");
+  await cdp.call("Input.dispatchKeyEvent",{type:"keyDown",key:" ",text:" ",windowsVirtualKeyCode:32});
+  await cdp.call("Input.dispatchKeyEvent",{type:"keyUp",key:" ",windowsVirtualKeyCode:32});
   await until(() => cdp.evaluate("__rogueBrowserTest.inputRequestCount > " + beforeContinue), "inventory acknowledgement");
   if (jaScenario) await japaneseScenarios(cdp, until, evidence, output);
   const screenshot = await cdp.call("Page.captureScreenshot", { format: "png", captureBeyondViewport: true });

@@ -109,14 +109,12 @@ async function inspectOverlayBounds(name) {
   await page.waitForFunction(() => document.getElementById("tile-description").textContent.trim().length > 0);
   const bounds = await page.evaluate(() => {
     const rect = (selector) => { const e = document.querySelector(selector), r = e.getBoundingClientRect(); return { text: e.textContent.trim(), left: r.left, top: r.top, right: r.right, bottom: r.bottom }; };
-    return { description: rect("#tile-description"), directions: rect(".direction-pad"), actions: rect(".action-buttons"), message: rect("#game-message") };
+    return { description: rect("#tile-description"), directions: rect(".direction-pad"), message: rect("#log-history") };
   });
   const overlaps = (a, b) => Math.min(a.right, b.right) > Math.max(a.left, b.left) + 1 && Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top) + 1;
   assert.equal(overlaps(bounds.description, bounds.directions), false, name + ": nonempty map description does not cover the direction pad");
-  assert.equal(overlaps(bounds.description, bounds.actions), false, name + ": map description does not cover action buttons");
   if (bounds.message.text) {
     assert.equal(overlaps(bounds.message, bounds.directions), false, name + ": game message does not cover direction buttons");
-    assert.equal(overlaps(bounds.message, bounds.actions), false, name + ": game message does not cover action buttons");
   }
   evidence[name + "_overlay_bounds"] = { pointer: "mouse", ...bounds };
 }
@@ -127,7 +125,7 @@ try {
     return { file, bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") };
   }));
   context = await playwright.chromium.launchPersistentContext(path.join(scratch, "profile"), { executablePath: executable, headless: process.env.ROGUE_HEADLESS !== "0", downloadsPath: path.join(scratch, "downloads"),
-    viewport: { width: 1280, height: 960 }, deviceScaleFactor: 1, hasTouch: true,
+    viewport: { width: 2160, height: 960 }, deviceScaleFactor: 1, hasTouch: false,
     args: launchArgs });
   browser = context.browser();
   evidence.browser_version = browser.version();
@@ -143,6 +141,21 @@ try {
   assert.equal(await page.locator(".board-scroll").evaluate((element) => Boolean(element.closest(".map-area"))), true);
   assert.equal(await page.locator(".game-panel .ui-overlay #settings-panel").count(), 1);
   assert.equal(await page.locator(".game-panel .hud-overlay #player-status").count(), 1);
+  assert.equal(await page.locator('.hud-overlay .action-buttons').count(), 1, 'mobile actions remain inside the game HUD');
+  assert.equal(await page.locator('.action-buttons').isVisible(), false, 'desktop action toolbar hidden');
+  assert.equal(await page.locator('#settings-panel .action-buttons').count(), 0, 'actions are not relocated to settings');
+  assert.equal(await page.locator('#cancel-text,#more-prompt button').count(), 0, 'no replacement continue/cancel controls');
+  const split = await page.evaluate(() => {
+    const r=s=>document.querySelector(s).getBoundingClientRect();
+    const g=r('.game-panel'), m=r('.map-area'), l=r('.log-column'), gear=r('#settings-toggle');
+    return {width:g.width, viewport:innerWidth, ratio:m.width/(g.width-2), logRatio:l.width/(g.width-2), gearLeft:gear.left, mapLeft:m.left, heading:r('.heading').width};
+  });
+  assert.ok(Math.abs(split.width-split.viewport)<=2, 'PC game spans full viewport width');
+  assert.ok(Math.abs(split.ratio-.8)<.002 && Math.abs(split.logRatio-.2)<.002, 'PC map/log split is 80/20');
+  assert.ok(split.gearLeft-split.mapLeft<20, 'settings at map upper left');
+  assert.ok(split.heading<1440,'title width remains constrained');
+  assert.equal(await page.locator('.direction-pad').isVisible(), false, 'no desktop direction pad');
+  evidence.checks.push('Full-width PC 80/20 map/log, upper-left settings and hidden desktop action toolbar');
   await openSettings();
   assert.equal(await page.locator("#load").isDisabled(), true, "fresh profile starts without a save");
   await page.locator("#language").selectOption("en");
@@ -150,7 +163,7 @@ try {
   await page.locator("#language").selectOption("ja");
   assert.equal(await page.evaluate(() => __rogueBrowserTest.language), "ja");
   assert.equal(await page.evaluate(() => __rogueBrowserTest.generation), 0);
-  const repo = page.locator('a[href="https://github.com/cacazu/jrogue"]');
+  const repo = page.locator('a[href="https://github.com/cacazu/jrogue/tree/main/rogue-nihon"]');
   assert.ok(await repo.count() > 0, "distribution repository is linked");
   evidence.checks.push("Title, unified map/UI/HUD game screen and source/license footer are present; pre-start language selection creates no Worker");
   await page.locator("#seed").fill("12345");
@@ -159,6 +172,24 @@ try {
   await settled();
   assert.equal(await page.locator("#settings-panel").isHidden(), true);
   assert.equal(await page.locator("#language").isDisabled(), true, "running language contract remains unchanged");
+  const logState = await snapshot();
+  await openSettings();
+  for (let n=0;n<24;n++) {
+    await page.locator('#seed').fill('-1'); await page.locator('#new-game').click();
+    await page.locator('#seed').fill('12345'); await page.locator('#name').fill('界'.repeat(17)); await page.locator('#new-game').click();
+  }
+  await page.locator('#name').fill('画面検証の勇者');
+  await closeSettings();
+  const bottom = await page.locator('#log-scroll').evaluate(e=>e.scrollHeight-e.clientHeight-e.scrollTop);
+  assert.ok(bottom <= 4,'new notices follow bottom');
+  assert.equal(await page.locator('.log-entry[data-source=system] .log-label').first().textContent(),'システム');
+  await page.locator('#log-scroll').evaluate(e=>e.scrollTop=0);
+  await openSettings(); await page.locator('#seed').fill('-1'); await page.locator('#new-game').click(); await page.locator('#seed').fill('12345'); await closeSettings();
+  assert.equal(await page.locator('#log-scroll').evaluate(e=>e.scrollTop),0,'new notice does not steal reader history position');
+  await page.locator('#log-scroll').focus(); await page.keyboard.press('ArrowDown'); await page.keyboard.press('h');
+  await unchanged(logState,'reading log and failed setting validation never reaches C');
+  await page.locator('#board').focus();
+  evidence.checks.push('Unified system history follows bottom, preserves manual reading and isolates log navigation keys');
   const before = await snapshot();
   assert.equal(before.words.length, 20);
   evidence.initial = before;
@@ -231,6 +262,10 @@ try {
     const cdp = await context.newCDPSession(page);
     await page.setViewportSize({ width, height });
     await cdp.send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: dpr, mobile: true });
+    await cdp.send("Emulation.setTouchEmulationEnabled", {enabled:true,maxTouchPoints:1});
+    assert.equal(await page.locator(".direction-pad").isVisible(),true,"mobile direction pad retained");
+    assert.equal(await page.locator('.action-buttons').isVisible(),true,'mobile action toolbar visible');
+    assert.equal(await page.locator('.action-buttons button').count(),5,'all five original actions retained');
     await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     await openSettings();
     const panel = await page.locator("#settings-panel").boundingBox();
@@ -321,7 +356,8 @@ try {
   assert.deepEqual(await page.evaluate(() => __rogueBrowserTest.frame.player), { x: target.x, y: target.y });
   evidence.checks.push("A native pointer click through the map camera reaches exactly the selected adjacent cell in the real C game");
 
-  await page.locator('[data-character="i"]').click();
+  await page.locator("#board").focus();
+  await page.keyboard.press("i");
   await page.waitForFunction(() => __rogueBrowserTest.frame.ui.mode === "inventory" || __rogueBrowserTest.frame.ui.mode === "menu");
   await settled();
   await openSettings();
@@ -339,6 +375,50 @@ try {
   evidence.restored = restored;
   await shot("restored-inventory");
   evidence.checks.push("Scratch IndexedDB save completes before acknowledgement and a fresh Worker restores exact 20-word C/RNG state and original pending inventory screen");
+  await page.setViewportSize({width:390,height:844});
+  await desktop.send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:3,mobile:true});
+  await desktop.send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:1});
+  await page.evaluate(() => {
+    window.__actionEvents=[];
+    const push=RogueEventQueue.prototype.push;
+    RogueEventQueue.prototype.push=function(raw){window.__actionEvents.push(raw);return push.call(this,raw);};
+  });
+  const action = async (selector, raw) => {
+    const count=await page.evaluate(()=>__rogueBrowserTest.inputRequestCount);
+    const box=await page.locator(selector).boundingBox();
+    assert.ok(box,'touch action has a visible target');
+    const point={x:box.x+box.width/2,y:box.y+box.height/2};
+    await desktop.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});
+    await desktop.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    await page.waitForFunction(n=>__rogueBrowserTest.inputRequestCount>n && __rogueBrowserTest.queuePending===0,count);
+    assert.equal(await page.evaluate(()=>__actionEvents.at(-1)),raw,'touch sends the canonical original key');
+    await settled();
+  };
+  const actions='.action-buttons ';
+  await action(actions+'[data-character=" "]',32);
+  await page.waitForFunction(()=>__rogueBrowserTest.frame.ui.mode==='game');
+  await action(actions+'[data-character="i"]',105);
+  await page.waitForFunction(()=>__rogueBrowserTest.frame.ui.mode==='inventory' || __rogueBrowserTest.frame.ui.mode==='menu');
+  await action(actions+'[data-character=" "]',32);
+  await action(actions+'[data-character="?"]',63);
+  await action(actions+'[data-key="Escape"]',27);
+  await page.waitForFunction(()=>__rogueBrowserTest.frame.ui.mode==='game');
+  await action(actions+'[data-character=">"]',62);
+  const touchState=await snapshot();
+  assert.deepEqual(await page.evaluate(()=>__actionEvents),[32,105,32,63,27,62],'one input per native touch without key leakage');
+  await openSettings(); await page.locator('#load').click();
+  await page.waitForFunction(g=>__rogueBrowserTest.generation>g && __rogueBrowserTest.frame && __rogueBrowserTest.queuePending===0,touchState.generation);
+  await settled();
+  for (const key of [' ','i',' ','?','Escape','>']) {
+    const count=await page.evaluate(()=>__rogueBrowserTest.inputRequestCount);
+    await page.locator('#board').focus(); await page.keyboard.press(key===' '?'Space':key);
+    await page.waitForFunction(n=>__rogueBrowserTest.inputRequestCount>n && __rogueBrowserTest.queuePending===0,count);
+    await settled();
+  }
+  const keyboardState=await snapshot();
+  assert.deepEqual({words:touchState.words,cells:touchState.cells,map:touchState.map,player:touchState.player},{words:keyboardState.words,cells:keyboardState.cells,map:keyboardState.map,player:keyboardState.player},'touch controls match original keyboard commands in every C/RNG word and frame');
+  evidence.mobile_actions={touch:touchState,keyboard:keyboardState,raw_events:[32,105,32,63,27,62]};
+  evidence.checks.push('Mobile touch inventory, continue, help, cancel and stairs enqueue exactly one original key each and match native keyboard C/RNG state and frame');
   assert.deepEqual(await page.evaluate(() => ({ fallbacks: __rogueBrowserTest.translationFallbacks, missing: __rogueBrowserTest.uiMissing })), { fallbacks: [], missing: [] });
   assert.deepEqual(evidence.errors, []);
   evidence.checks.push("Observed Japanese UI has no missing translation IDs, fallbacks or browser exceptions");

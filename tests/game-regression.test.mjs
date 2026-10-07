@@ -48,7 +48,10 @@ async function restoreCase(label, prefix, suffix) {
   const restored = await recorded(`${label}-restored`, { seed: 999, text: suffix, restore: original.stores[0] });
   assertEquivalent(original.traces.slice(traceStart), restored.traces, `${label} continued read states`);
   assertEquivalent(original.final, restored.final, `${label} continued final state`);
-  assert.equal(restored.frames.at(-1).sha256, original.frames.at(-1).sha256);
+  assert.deepEqual(originalFrames([restored.frames.at(-1)]), originalFrames([original.frames.at(-1)]), 'complete original C frame restored');
+  // V1 never stored semantic UI metadata; even the prior committed executable
+  // loses ui.status at an unchanged C status cache. V2 checks retain full UI.
+  if(envelope.version===2) assert.deepEqual(restored.frames.at(-1).ui,original.frames.at(-1).ui);
   return { original, restored, envelope };
 }
 

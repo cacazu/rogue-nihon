@@ -9,6 +9,8 @@
 #undef abort /* This focused fixture uses libc abort for a failed invariant. */
 
 static int look_count, input_count, event_count;
+static int narration_ack = 1;
+int32_t rg_host_message_requires_acknowledgement(void) { return narration_ack; }
 static char event_id[256], event_text[2048];
 
 int move(int y, int x) { (void)y; (void)x; return OK; }
@@ -93,6 +95,14 @@ int main(void)
     REQUIRE(rg_message_state_export(&after, &after_length) == 0);
     REQUIRE(rg_message_state_validate(after, after_length) == 0);
     free(after);
+    /* Log presentation retains the same look side effect without a key read. */
+    narration_ack = 0;
+    saved_mpos = look_count;
+    { int reads = input_count;
+      rg_msg("unregistered.c", 1, "log narration");
+      REQUIRE(look_count == saved_mpos + 1 && input_count == reads);
+      REQUIRE(!strcmp(event_text, "Log narration"));
+    }
     puts("{\"englishPaging\":\"pass\",\"privateCheckpoint\":\"pass\",\"malformedCheckpoint\":\"pass\",\"boundedMessage\":\"pass\"}");
     return 0;
 }

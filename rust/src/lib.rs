@@ -30,6 +30,7 @@ unsafe extern "C" {
 #[derive(Default)]
 struct Session {
     seed: u32,
+    message_paging: platform::MessagePaging,
     name: String,
     checkpoint: Vec<u8>,
     journal: Vec<i32>,
@@ -90,8 +91,7 @@ fn replace_player_names(value: &mut Value, name: &str) {
 fn emit_input_context() {
     let event = SESSION.with(|session| {
         let session = session.borrow();
-        if session.language != "ja" {return None;}
-        Some(json!({"type":"input-context","input":session.presentation.render("ja", &session.name)["input"]}))
+        Some(json!({"type":"input-context","input":session.presentation.render(&session.language, &session.name)["input"]}))
     });
     if let Some(event) = event {
         emit(&event);
@@ -298,10 +298,24 @@ pub unsafe extern "C" fn rg_run(seed: u32, name: *const c_char) -> i32 {
         ..Session::default()
     };
     session.trace_enabled = std::fs::metadata("/trace.enabled").is_ok();
+    if std::fs::read_to_string("/message-paging.txt")
+        .ok()
+        .is_some_and(|text| text.trim() == "log")
+    {
+        session.message_paging = platform::MessagePaging::Log;
+    }
     match std::fs::read("/restore.json") {
         Ok(bytes) => match platform::Envelope::parse(&bytes) {
-            Ok(saved) => match saved.checkpoint() {
+            Ok(mut saved) => match saved.checkpoint() {
                 Ok(checkpoint) => {
+                    let requested_log = session.message_paging == platform::MessagePaging::Log;
+                    session.message_paging =
+                        platform::MessagePaging::from_saved(&saved.presentation);
+                    if requested_log && session.message_paging == platform::MessagePaging::Legacy {
+                        session.message_paging =
+                            platform::MessagePaging::ReplayLegacyUntil(saved.input_index);
+                    }
+                    platform::MessagePaging::remove_marker(&mut saved.presentation);
                     session.seed = saved.seed;
                     session.name = saved.name;
                     session.input_index = saved.input_index - saved.inputs.len() as u32;
@@ -349,6 +363,20 @@ pub unsafe extern "C" fn rg_run(seed: u32, name: *const c_char) -> i32 {
     // SAFETY: CString remains live until C returns. All callbacks use the same
     // single-threaded module and hold no RefCell borrow across a call into C.
     unsafe { rg_core_start(initial_seed, name.as_ptr()) }
+}
+
+/// Ordinary narration has a separate presentation acknowledgement policy.
+/// This observes session metadata and its input cursor; it never reads a key or changes C state.
+#[unsafe(no_mangle)]
+pub extern "C" fn rg_host_message_requires_acknowledgement() -> i32 {
+    SESSION.with(|session| {
+        let session = session.borrow();
+        i32::from(
+            session
+                .message_paging
+                .requires_acknowledgement(session.input_index),
+        )
+    })
 }
 
 /// Returns one original game key, consuming raw browser events in Rust.
@@ -414,11 +442,11 @@ pub extern "C" fn rg_host_read_key() -> i32 {
         };
         let accepted = SESSION.with(|session| {
             let mut session = session.borrow_mut();
-            if session.journal.len() >= platform::MAX_INPUTS {
+            if session.journal.len() >= platform::MAX_INPUTS || session.input_index == u32::MAX {
                 return false;
             }
             session.journal.push(key);
-            session.input_index = session.input_index.wrapping_add(1);
+            session.input_index += 1;
             if session.text_mode {
                 match key {
                     21 => session.text_bytes.clear(),
@@ -606,6 +634,7 @@ pub extern "C" fn rg_host_checkpoint() {
         }
         SESSION.with(|session| {
             let mut session = session.borrow_mut();
+            session.message_paging = session.message_paging.at_checkpoint(session.input_index);
             session.checkpoint = bytes;
             session.journal.clear();
             session.checkpoint_error = None;
@@ -676,7 +705,7 @@ pub unsafe extern "C" fn rg_host_outcome(code: i32, message: *const c_char) {
         _ => "outcome.ended",
     };
     let translated = display::message_language(id, &json!([]), &text, &language).text;
-    if code >= 0 && language == "ja" {
+    if code >= 0 {
         let ui = SESSION.with(|session| {
             let mut session = session.borrow_mut();
             session
@@ -685,7 +714,7 @@ pub unsafe extern "C" fn rg_host_outcome(code: i32, message: *const c_char) {
                 .retain(|line| line["id"] != "ui.ending.return" && line["scope"] != "more");
             session.presentation.input = json!({"kind":"ended"});
             session.presentation.last_message = None;
-            let ui = session.presentation.render("ja", &session.name);
+            let ui = session.presentation.render(&language, &session.name);
             if let Some(frame) = &mut session.last_frame {
                 frame["ui"] = ui.clone();
             }
@@ -713,11 +742,14 @@ fn persist() {
             &session.checkpoint,
             session.journal.clone(),
             session.input_index,
-            if session.language == "ja"
+            if session.message_paging != platform::MessagePaging::Legacy
+                || session.language == "ja"
                 || session.name.len() > 49
                 || session.journal.iter().any(|key| *key > 127)
             {
-                session.checkpoint_presentation.clone()
+                let mut presentation = session.checkpoint_presentation.clone();
+                session.message_paging.mark(&mut presentation);
+                presentation
             } else {
                 Value::Null
             },

@@ -56,6 +56,9 @@ void rg_core_save_free(uint8_t *bytes);
 
 /* Rust-owned host callbacks. The C caller lends buffers only for the call. */
 int32_t rg_host_read_key(void);
+/* Presentation policy for ordinary narration only. No input/RNG/turn.
+ * Important selections and cancelable pagination keep their C input waits. */
+int32_t rg_host_message_requires_acknowledgement(void);
 void rg_host_flush_input(void);
 void rg_host_present(const uint8_t *cells, uint32_t rows, uint32_t columns);
 /* Presentation-only observation of a currently drawn bolt. active=0 clears

@@ -42,13 +42,13 @@ export async function japaneseScenarios(cdp, until, evidence, output) {
   await key("?", "help question");
   await key("*", "full help listing");
   await until(() => cdp.evaluate("__rogueBrowserTest.frame.ui.mode === 'help'"), "Japanese help view");
-  const help = await cdp.evaluate("({ui:__rogueBrowserTest.frame.ui,text:document.getElementById('presentation-lines').innerText,height:document.getElementById('presentation-lines').scrollHeight,client:document.getElementById('presentation-lines').clientHeight})");
+  const help = await cdp.evaluate("({ui:__rogueBrowserTest.frame.ui,text:document.getElementById('presentation-lines').innerText,height:document.getElementById('log-scroll').scrollHeight,client:document.getElementById('log-scroll').clientHeight})");
   assert.ok(help.ui.lines.length >= 20);
   assert.match(help.text, /[\u3040-\u30ff\u3400-\u9fff]/u);
   assert.ok(help.height > help.client, "help remains vertically scrollable");
-  assert.equal(await cdp.evaluate("document.querySelector('.board-scroll').hidden"), true, "blank menu canvas collapses");
+  assert.equal(await cdp.evaluate("document.querySelector('.board-scroll').hidden"), false, "map area remains while menu lives in logs");
   await screenshot("ja-help-top.png");
-  await cdp.evaluate("document.getElementById('presentation-lines').scrollTop=document.getElementById('presentation-lines').scrollHeight;");
+  await cdp.evaluate("document.getElementById('log-scroll').scrollTop=document.getElementById('log-scroll').scrollHeight;");
   await screenshot("ja-help-bottom.png");
   const measureWrapping = () => cdp.evaluate("(()=>{const e=document.getElementById('presentation-lines');return {viewport:innerWidth,text:e.innerText,scroll:e.scrollWidth,client:e.clientWidth,wrapped:[...e.children].some(l=>l.getBoundingClientRect().height>parseFloat(getComputedStyle(l).lineHeight)*1.5),lines:[...e.children].map(l=>{const r=document.createRange();r.selectNodeContents(l);return {text:l.textContent,textWidth:r.getBoundingClientRect().width,width:l.getBoundingClientRect().width,height:l.getBoundingClientRect().height,lineHeight:getComputedStyle(l).lineHeight,font:getComputedStyle(l).fontSize}})}})()");
   await cdp.call("Emulation.setDeviceMetricsOverride", { width: 360, height: 850, deviceScaleFactor: 1, mobile: false });
@@ -140,7 +140,7 @@ export async function japaneseScenarios(cdp, until, evidence, output) {
   assert.ok(score.lines.some(line => line.id === "ui.score.heading"));
   assert.ok(!score.lines.some(line => line.id === "ui.ending.return"), "completed score view removes the consumed return prompt");
   assert.equal(score.input.kind, "ended");
-  assert.equal(await cdp.evaluate("document.getElementById('game-message').textContent"), "");
+  assert.equal(await cdp.evaluate("document.querySelector('.log-column #game-message') !== null"), true, "game history remains available after ending");
   assert.equal(await cdp.evaluate("document.getElementById('presentation-hint').hidden"), true);
   assert.equal(await cdp.evaluate("document.getElementById('connection') === null"), true);
   assert.equal(await cdp.evaluate("document.getElementById('screen-status').textContent"), "ゲームを終了しました");

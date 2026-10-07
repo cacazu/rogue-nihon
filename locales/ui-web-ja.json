@@ -41,10 +41,9 @@
     "instruction.mouse": "クリック：隣接方向",
     "instruction.selection": "表示された持ち物キーで選びます。原作の質問と続行待ちを保っています。",
     "credits.title": "版とライセンス",
-    "credits.description": "Roguelike Restoration Project の Rogue 5.4.4 を基にした日本語 Web 派生版です。C が原作のゲーム処理、Rust が表示・入力・プラットフォームを担当します。原作の著作権表示と三つの BSD 形式のライセンス条項、依存ソフトウェアの通知は以下から確認できます。",
-    "credits.license": "原作の著作権表示とライセンス",
-    "credits.notices": "依存ソフトウェアの通知",
-    "credits.repository": "配布・ソース：",
+    "credits.description": "配布元とライセンスは GitHub で確認できます。",
+    "credits.license": "ライセンスの案内・一括ダウンロード",
+    "credits.repository": "GitHub（配布元）",
     "action.settings": "設定",
     "action.close_settings": "設定を閉じる",
     "action.exit_fullscreen": "全画面を終了",
@@ -100,6 +99,9 @@
     "action.fullscreen": "全画面",
     "error.tiles": "地図の画像を読み込めませんでした。ページを再読み込みしてください。",
     "error.fullscreen": "全画面表示を開けませんでした。",
-    "view.pixels": "ドット絵"
+    "view.pixels": "ドット絵",
+    "log.title": "ログ",
+    "log.game": "ゲーム",
+    "log.system": "システム"
   }
 }

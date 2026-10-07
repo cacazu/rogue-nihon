@@ -39,7 +39,10 @@ export async function runGame(modulePath, config = {}) {
   let position = 0;
   globalThis.RogueHost = {
     readEvent() {
-      const value = position < events.length ? events[position++] : END_EVENT;
+      // Test-only legacy comparison: acknowledge the currently observed C More,
+      // representing explicit reader responses, never production input injection.
+      const more = config.acknowledgeMore && result.frames.at(-1)?.cells.includes('--More--');
+      const value = more ? 32 : position < events.length ? events[position++] : END_EVENT;
       result.reads.push({ position, event: value, trace: result.traces.length - 1 });
       return value | 0;
     },
@@ -81,6 +84,7 @@ export async function runGame(modulePath, config = {}) {
   const module = await factory({ printErr: (line) => result.stderr.push(String(line)), print: () => {} });
   module.FS.writeFile('/trace.enabled', '1');
   module.FS.writeFile('/locale.txt', config.locale ?? 'en');
+  if (config.messagePaging !== undefined) module.FS.writeFile('/message-paging.txt', config.messagePaging);
   if (config.fixture !== undefined) module.FS.writeFile('/fixture.id', config.fixture);
   if (config.restore !== undefined) module.FS.writeFile('/restore.json', config.restore);
   result.code = module.ccall('rg_run', 'number', ['number', 'string'], [result.seed, config.name ?? 'Test']);

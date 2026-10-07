@@ -23,18 +23,6 @@
       <pre id="accessible-screen" class="sr-only" aria-live="off"></pre>
       <div class="hud-overlay">
         <div id="player-status" class="player-status" hidden><span id="player-name"></span><span id="status-text"></span></div>
-        <p id="game-message" class="message" role="status" aria-live="polite"></p>
-        <span id="tile-description" role="status" aria-live="polite"></span>
-        <section id="presentation" class="presentation" hidden>
-          <header><h2 id="presentation-title"></h2><span id="presentation-hint" data-i18n="instruction.selection"></span></header>
-          <div id="presentation-lines" class="presentation-lines" tabindex="0"></div>
-          <div id="more-prompt" class="more-prompt" hidden></div>
-          <form id="text-prompt" class="text-prompt" hidden>
-            <label><span data-i18n="input.text"></span><input id="prompt-text" type="text" autocomplete="off"></label>
-            <button type="submit" data-i18n="action.submit"></button>
-            <button id="cancel-text" type="button" data-i18n="action.cancel"></button>
-          </form>
-        </section>
         <section class="controls" data-i18n-aria="app.controls">
           <div class="direction-pad" data-i18n-aria="app.directions">
             <button data-key="Home" data-i18n-aria="direction.nw">↖</button><button data-key="ArrowUp" data-i18n-aria="direction.n">↑</button><button data-key="PageUp" data-i18n-aria="direction.ne">↗</button>
@@ -42,15 +30,30 @@
             <button data-key="End" data-i18n-aria="direction.sw">↙</button><button data-key="ArrowDown" data-i18n-aria="direction.s">↓</button><button data-key="PageDown" data-i18n-aria="direction.se">↘</button>
           </div>
           <div class="action-buttons">
-            <button data-character="i"><span data-i18n="action.inventory"></span> <kbd>i</kbd></button>
-            <button data-character="?"><span data-i18n="action.help"></span> <kbd>?</kbd></button>
-            <button data-character=">"><span data-i18n="action.descend"></span> <kbd>&gt;</kbd></button>
-            <button data-character=" "><span data-i18n="action.continue"></span> <kbd>Space</kbd></button>
-            <button data-key="Escape"><span data-i18n="action.cancel"></span> <kbd>Esc</kbd></button>
+            <button data-character="i" data-i18n="action.inventory"></button>
+            <button data-character="?" data-i18n="action.help"></button>
+            <button data-character=">" data-i18n="action.descend"></button>
+            <button data-character=" " data-i18n="action.continue"></button>
+            <button data-key="Escape" data-i18n="action.cancel"></button>
           </div>
         </section>
         <div class="board-footer sr-only"><span id="screen-status"></span><span data-i18n="instruction.mouse"></span></div>
       </div>
+      <aside class="log-column" data-i18n-aria="log.title">
+        <div id="tile-description" role="status" aria-live="polite"></div>
+        <div id="log-scroll" tabindex="0" data-i18n-aria="log.title">
+          <div id="log-history" role="log" aria-live="polite" aria-relevant="additions"></div>
+        <section id="presentation" class="presentation" hidden>
+          <header><h2 id="presentation-title"></h2><span id="presentation-hint" data-i18n="instruction.selection"></span></header>
+          <div id="presentation-lines" class="presentation-lines" tabindex="0"></div>
+          <div id="more-prompt" class="more-prompt" hidden></div>
+          <form id="text-prompt" class="text-prompt" hidden>
+            <label><span data-i18n="input.text"></span><input id="prompt-text" type="text" autocomplete="off"></label>
+            <button type="submit" data-i18n="action.submit"></button>
+          </form>
+        </section>
+        </div>
+      </aside>
       <div class="ui-overlay">
         <button id="settings-toggle" class="icon-button settings-toggle" type="button" aria-controls="settings-panel" aria-expanded="false" data-i18n-aria="action.settings">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3-1 3-3 1-2 3 2 2v3l3 1 1 3h4l1-3 3-1v-3l2-2-2-3-3-1-1-3Z"/><circle cx="12" cy="11" r="3"/></svg>
@@ -85,16 +88,14 @@
             <div class="instructions"><p data-i18n="instruction.movement"></p><p data-i18n="instruction.prompts"></p></div>
           </div>
         </section>
-        <p id="notice" role="status" aria-live="polite"></p>
       </div>
     </section>
     <footer class="credits">
       <div class="version"><h2 data-i18n="credits.title"></h2><span class="eyebrow" data-i18n="app.version"></span></div>
       <p data-i18n="credits.description"></p>
       <nav>
-        <a href="/logic/LICENSE.TXT" target="_blank" rel="noopener" data-i18n="credits.license"></a>
-        <a href="/THIRD-PARTY-NOTICES.md" target="_blank" rel="noopener" data-i18n="credits.notices"></a>
-        <span><span data-i18n="credits.repository"></span> <a href="https://github.com/cacazu/jrogue" target="_blank" rel="noopener">github.com/cacazu/jrogue</a></span>
+        <a href="https://github.com/cacazu/jrogue/tree/main/rogue-nihon" target="_blank" rel="noopener" data-i18n="credits.repository"></a>
+        <a href="https://github.com/cacazu/jrogue/blob/main/rogue-nihon/docs/LICENSES-ja.md" target="_blank" rel="noopener" data-i18n="credits.license"></a>
       </nav>
     </footer>
   </main>
@@ -103,6 +104,7 @@
   <script src="/web/localization.js"></script>
   <script src="/web/tiles.js"></script>
   <script src="/web/view-settings.js"></script>
+  <script src="/web/game-log.js"></script>
   <script src="/web/app.js"></script>
 </body>
 </html>

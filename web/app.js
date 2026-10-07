@@ -21,14 +21,39 @@
   const scroll = document.querySelector(".board-scroll"), mapSpace = $("map-space");
   const gamePanel = document.querySelector(".game-panel"), hud = document.querySelector(".hud-overlay"), settingsPanel = $("settings-panel");
   let settingsOpen = false;
+  const logColumn = document.querySelector('.log-column'), logScroll = $('log-scroll');
+  let gameLog = new RogueGameLog(), previousPanel = null;
+  const logRows = new WeakMap();
+  function renderLog() {
+    const following = RogueGameLog.atBottom(logScroll), top = logScroll.scrollTop;
+    const entries = gameLog.entries, history = $('log-history');
+    const anchor = Array.from(history.children).find(row => row.getBoundingClientRect().bottom > logScroll.getBoundingClientRect().top);
+    const anchorTop = anchor?.getBoundingClientRect().top;
+    const lastGame = entries.findLastIndex(entry => entry.source === 'game');
+    const lastSystem = entries.findLastIndex(entry => entry.source === 'system');
+    entries.forEach((entry, index) => {
+      let row = logRows.get(entry);
+      if (!row) { row = document.createElement('p'); row.append(document.createElement('span'), document.createElement('span')); logRows.set(entry, row); }
+      const [label, text] = row.children;
+      row.className = 'log-entry' + (entry.error ? ' error' : ''); row.dataset.source = entry.source;
+      label.className = 'log-label';
+      const value = entry.message ? translatedText(entry.message, 'log') : t(entry.id, entry.args);
+      if (label.textContent !== t('log.' + entry.source)) label.textContent = t('log.' + entry.source);
+      if (text.textContent !== value) text.textContent = value;
+      text.id = index === lastGame ? 'game-message' : index === lastSystem ? 'notice' : '';
+      if (!row.isConnected) history.append(row);
+    });
+    const retained = new Set(entries.map(entry => logRows.get(entry)));
+    for (const row of Array.from(history.children)) if (!retained.has(row)) row.remove();
+    logScroll.scrollTop = following ? logScroll.scrollHeight : anchor?.isConnected ? top + anchor.getBoundingClientRect().top - anchorTop : top;
+  }
   const preference = RogueViewSettings.load();
   let displayMode = RogueViewSettings.modes.includes(parameters.get("view")) ? parameters.get("view") : preference.mode;
   let tileSize = RogueViewSettings.sizes(displayMode).includes(preference.zoom) ? preference.zoom : 32, camera = null, centeredPlayer = "";
   let tiles = null, tileSets = null;
-  let noticeState = { id: "notice.start", args: {}, error: false };
 
   function notice(id, args = {}, error = false) {
-    noticeState = { id, args, error }; $("notice").textContent = t(id, args); $("notice").classList.toggle("error", error);
+    gameLog.notice(id, args, error); renderLog();
   }
   function setRunning(value) {
     running = value; $("save").disabled = !value || savePending;
@@ -37,7 +62,7 @@
   function setSettingsOpen(open) {
     settingsOpen = open; settingsPanel.hidden = !open; $("settings-scrim").hidden = !open;
     $("settings-toggle").setAttribute("aria-expanded", String(open));
-    gamePanel.classList.toggle("settings-open", open); scroll.inert = open; hud.inert = open;
+    gamePanel.classList.toggle("settings-open", open); scroll.inert = open; hud.inert = open; logColumn.inert = open;
     if (open) $("settings-close").focus();
     else if (textMode) $("prompt-text").focus();
     else if (frame) board.focus();
@@ -72,13 +97,21 @@
   function renderPresentation() {
     const presentation = frame?.ui;
     const menuOnly = Boolean(presentation && presentation.mode !== "game");
-    document.querySelector(".board-scroll").hidden = Boolean(menuOnly);
-    $("accessible-screen").hidden = Boolean(menuOnly);
+    const following = RogueGameLog.atBottom(logScroll), top = logScroll.scrollTop;
+    const panelLines = presentation?.lines || [];
+    if (previousPanel && previousPanel.mode !== presentation?.mode) {
+      for (const line of previousPanel.lines) if (!["ui.continue", "ui.more"].includes(line.id)) gameLog.message(line);
+      renderLog();
+    }
+    previousPanel = menuOnly ? { mode: presentation.mode, lines: panelLines } : null;
     $("presentation").hidden = !presentation || !(menuOnly || presentation.lines?.length || presentation.more || ["text", "space", "enter"].includes(presentation.input?.kind));
     $("player-status").hidden = !presentation?.status;
     if (!presentation) { $("presentation-lines").replaceChildren(); return; }
     fallbackRecord(presentation, "ui");
-    if (Object.hasOwn(presentation, "message")) $("game-message").textContent = translatedText(presentation.message, "ui-message");
+    if (presentation.message) {
+      fallbackRecord(presentation.message, "ui-message");
+      if (!gameLog.entries.some(entry => entry.source === 'game')) { gameLog.message(presentation.message); renderLog(); }
+    }
     $("player-name").textContent = presentation.name || "";
     $("status-text").textContent = translatedText(presentation.status, "status");
     const modeId = "panel." + presentation.mode;
@@ -86,6 +119,7 @@
     $("presentation-hint").hidden = presentation.mode !== "menu";
     const fragment = document.createDocumentFragment();
     for (const line of presentation.lines || []) {
+      if (presentation.more && line.id === presentation.more.id && line.text === presentation.more.text) continue;
       const selectable = line.selectable === true && typeof line.key === "string" && Array.from(line.key).length === 1;
       const element = document.createElement(selectable ? "button" : "div");
       element.className = "presentation-line"; element.dataset.messageId = line.id || ""; element.dataset.scope = line.scope ?? ""; element.dataset.row = line.row ?? "";
@@ -95,12 +129,9 @@
     }
     $("presentation-lines").replaceChildren(fragment);
     $("more-prompt").hidden = !presentation.more; $("more-prompt").replaceChildren();
-    if (presentation.more) {
-      const button = document.createElement("button"); button.type = "button"; button.textContent = translatedText(presentation.more, "more");
-      button.onclick = () => { const event = rawKey(presentation.more.key || " "); if (event !== null) enqueue(event); board.focus(); };
-      $("more-prompt").appendChild(button);
-    }
+    if (presentation.more) $('more-prompt').textContent = translatedText(presentation.more, 'more');
     applyInputContext(inputContext || presentation.input);
+    logScroll.scrollTop = following ? logScroll.scrollHeight : top;
   }
   function applyInputContext(input) {
     const nextTextMode = input?.kind === "text";
@@ -113,9 +144,7 @@
     if (nextTextMode) $("presentation").hidden = false;
     if (["space", "enter"].includes(input?.kind) && !frame?.ui?.more) {
       $("presentation").hidden = false; $("more-prompt").hidden = false; $("more-prompt").replaceChildren();
-      const button = document.createElement("button"); button.type = "button"; button.textContent = t("action.continue");
-      button.onclick = () => { enqueue(input.kind === "enter" ? 13 : 32); board.focus(); };
-      $("more-prompt").appendChild(button);
+      $('more-prompt').textContent = input.text || '';
     }
   }
   function redraw() {
@@ -215,7 +244,7 @@
     setSettingsOpen(false);
     if (worker) { queue.close(); worker.terminate(); }
     generation++; queue = new RogueEventQueue(); frame = null; lastTrace = null; traces = []; messages = []; logs = []; translationFallbacks = []; lastOutcome = null; exitCode = null; runtimeError = null; frameCount = 0; inputRequestCount = 0; savePending = false; restorePending = Boolean(restore); textMode = false; textDraftDirty = false; inputContext = null; centeredPlayer = "";
-    $("game-message").textContent = ""; $("presentation").hidden = true; $("player-status").hidden = true;
+    gameLog = new RogueGameLog(); previousPanel = null; renderLog(); $("tile-description").textContent = ""; $("presentation").hidden = true; $("player-status").hidden = true;
     worker = new Worker("/web/worker.js"); const currentWorker = worker;
     worker.onmessage = async ({ data }) => {
       if (worker !== currentWorker) return;
@@ -230,7 +259,7 @@
             break;
           case "trace": lastTrace = data; traces.push(data); if (traces.length > 2048) traces.shift(); break;
           case "input-context": inputContext = data.input; applyInputContext(inputContext); break;
-          case "message": messages.push(data); if (messages.length > 128) messages.shift(); $("game-message").textContent = translatedText(data, "message"); break;
+          case "message": messages.push(data); if (messages.length > 128) messages.shift(); gameLog.message(data); renderLog(); break;
           case "input-request": inputRequestCount++; $("screen-status").textContent = t("status.waiting"); if (restorePending) { restorePending = false; notice("notice.restored"); } break;
           case "input-flush":
             if (data.saveCancelled) { savePending = false; $("save").disabled = !running; notice("notice.save_cancelled"); }
@@ -312,7 +341,7 @@
   };
   $("language").onchange = () => {
     language = $("language").value === "en" ? "en" : "ja"; ui.locale = language; document.documentElement.lang = language; ui.apply(document);
-    setRunning(running); fullscreenLabels(); notice(noticeState.id, noticeState.args, noticeState.error); if (frame) { redraw(); renderPresentation(); }
+    setRunning(running); fullscreenLabels(); renderLog(); if (frame) { redraw(); renderPresentation(); }
   };
   $("text-prompt").onsubmit = (event) => {
     event.preventDefault(); if (composing || !textMode) return;
@@ -322,7 +351,6 @@
     if (enqueueMany(events)) { textDraftDirty = false; board.focus(); }
   };
   $("prompt-text").addEventListener("input", () => { textDraftDirty = true; });
-  $("cancel-text").onclick = () => { if (enqueue(27)) board.focus(); };
   document.addEventListener("compositionstart", () => { composing = true; });
   document.addEventListener("compositionend", () => { composing = false; });
   document.addEventListener("keydown", (event) => {
@@ -337,7 +365,7 @@
       return;
     }
     if (event.key === "Escape" && document.fullscreenElement) { event.preventDefault(); void toggleFullscreen(); return; }
-    if (target?.closest(".ui-overlay,.heading,.credits")) return;
+    if (target?.closest(".ui-overlay,.heading,.credits") || (target?.closest("#log-scroll") && !target.closest("#presentation"))) return;
     if (!running || composing || event.isComposing || event.keyCode === 229 || event.metaKey || target?.closest("input,textarea,select,[contenteditable=true]")) return;
     if (target?.closest("button,a") && (event.key === "Enter" || event.key === " ")) return;
     const raw = rawKey(event.key, event); if (raw !== null) { event.preventDefault(); enqueue(raw); }
@@ -358,5 +386,5 @@
   ui.apply(document); $("language").value = language; document.documentElement.lang = language; setRunning(false); notice("notice.start"); $("screen-status").textContent = t("status.waiting");
   fullscreenLabels(); setSettingsOpen(true);
   database().then(readSave).then((bytes) => { if (bytes) { savedBytes = bytes; $("load").disabled = false; $("download-save").disabled = false; } }).catch((error) => { logs.push(error.stack || String(error)); notice("error.storage_init", {}, true); });
-  window.__rogueBrowserTest = Object.freeze({ enqueue, enqueueMany, rawKey, redraw, centerMap, get graphics() {return {mode:displayMode,tileSize,camera,ids:tiles.entries.map(e=>e.id),images:tiles.images.size,drawCount:tiles.drawCount,unknown:frame?.map_unknown_glyphs||[]};}, get language() { return language; }, get generation() { return generation; }, get running() { return running; }, get frame() { return frame; }, get frameCount() { return frameCount; }, get inputRequestCount() { return inputRequestCount; }, get trace() { return lastTrace; }, get traces() { return traces.slice(); }, get messages() { return messages.slice(); }, get savedLength() { return savedBytes?.byteLength || 0; }, get savePending() { return savePending; }, get queuePending() { return queue?.pending || 0; }, get translationFallbacks() { return translationFallbacks.slice(); }, get uiMissing() { return ui.missing.slice(); }, get diagnostics() { return { language, generation, running, exitCode, outcome: lastOutcome, runtimeError, notice: $("notice").textContent, message: $("game-message").textContent, inputRequests: inputRequestCount, frameCount, trace: lastTrace, messages: messages.slice(-8), logs: logs.slice(-16), savePending, savedLength: savedBytes?.byteLength || 0, translationFallbacks: translationFallbacks.slice(), uiMissing: ui.missing.slice(), presentation: frame?.ui }; } });
+  window.__rogueBrowserTest = Object.freeze({ enqueue, enqueueMany, rawKey, redraw, centerMap, get graphics() {return {mode:displayMode,tileSize,camera,ids:tiles.entries.map(e=>e.id),images:tiles.images.size,drawCount:tiles.drawCount,unknown:frame?.map_unknown_glyphs||[]};}, get language() { return language; }, get generation() { return generation; }, get running() { return running; }, get frame() { return frame; }, get frameCount() { return frameCount; }, get inputRequestCount() { return inputRequestCount; }, get trace() { return lastTrace; }, get traces() { return traces.slice(); }, get messages() { return messages.slice(); }, get savedLength() { return savedBytes?.byteLength || 0; }, get savePending() { return savePending; }, get queuePending() { return queue?.pending || 0; }, get translationFallbacks() { return translationFallbacks.slice(); }, get uiMissing() { return ui.missing.slice(); }, get diagnostics() { return { language, generation, running, exitCode, outcome: lastOutcome, runtimeError, notice: $("notice")?.textContent || "", message: $("game-message")?.textContent || "", inputRequests: inputRequestCount, frameCount, trace: lastTrace, messages: messages.slice(-8), logs: logs.slice(-16), savePending, savedLength: savedBytes?.byteLength || 0, translationFallbacks: translationFallbacks.slice(), uiMissing: ui.missing.slice(), presentation: frame?.ui }; } });
 })().catch((error) => { console.error("Browser host startup failed", error); });

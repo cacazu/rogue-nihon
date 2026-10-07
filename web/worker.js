@@ -34,6 +34,7 @@ self.onmessage = async (event) => {
       onAbort: (text) => self.postMessage({ type: "error", text: String(text) })
     });
     if (event.data.restore) module.FS.writeFile("/restore.json", new Uint8Array(event.data.restore));
+    module.FS.writeFile("/message-paging.txt", "log");
     module.FS.writeFile("/locale.txt", event.data.locale === "en" ? "en" : "ja");
     if (event.data.trace) module.FS.writeFile("/trace.enabled", "1");
     self.postMessage({ type: "ready" });

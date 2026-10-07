@@ -14,7 +14,7 @@
 #include "rogue.h"
 #include "io_state.h"
 #include "semantic.h"
-
+#include "../contract/rogue_abi.h"
 /*
  * msg:
  *	Display a message at the top of the screen.
@@ -24,7 +24,7 @@
 static char msgbuf[2*MAXMSG+1];
 static int newpos = 0;
 static void rg_doadd(const char *file, int line, const char *fmt, va_list args);
-
+static void rg_wait_message_ack(void);
 /* VARARGS1 */
 int
 rg_msg(const char *file, int line, const char *fmt, ...)
@@ -85,7 +85,7 @@ endmsg()
 	rg_ui_line("more", 0, mpos, "ui.more", "[]", "--More--");
 	refresh();
 	if (!msg_esc)
-	    wait_for(' ');
+	    rg_wait_message_ack();
 	else
 	{
 	    while ((ch = readchar()) != ' ')
@@ -383,4 +383,16 @@ show_win(char *message)
     rg_ui_clear("game");
     clearok(curscr, TRUE);
     touchwin(stdscr);
+}
+
+/* Ordinary narration alone may continue after recorded legacy acknowledgements.
+ * Keep look(FALSE) and all message/frame state in endmsg; do not synthesize keys.
+ * Recheck at each read so a save inside an unfinished More loop can cross from
+ * its old recorded input prefix to live log presentation without swallowing it. */
+static void rg_wait_message_ack(void)
+{
+    if (!rg_host_message_requires_acknowledgement()) return;
+    rg_ui_line("input", -2, 0, "input.wait_space", "[]", "");
+    while (rg_host_message_requires_acknowledgement() && readchar() != ' ') continue;
+    rg_ui_clear("input");
 }

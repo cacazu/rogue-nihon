@@ -276,6 +276,107 @@ fn display_checks() -> usize {
 
 fn platform_checks() -> usize {
     let mut checks = Checks::default();
+    let mut v1 = Value::Null;
+    platform::MessagePaging::remove_marker(&mut v1);
+    checks.equal("v1 absent presentation remains null", v1, Value::Null);
+    let until = platform::MessagePaging::ReplayLegacyUntil(3);
+    checks.equal(
+        "legacy prefix acknowledgement",
+        until.requires_acknowledgement(2),
+        true,
+    );
+    checks.equal(
+        "future narration no acknowledgement",
+        until.requires_acknowledgement(3),
+        false,
+    );
+    checks.equal(
+        "unfinished checkpoint keeps replay policy",
+        until.at_checkpoint(2) == until,
+        true,
+    );
+    checks.equal(
+        "fresh checkpoint normalizes policy",
+        until.at_checkpoint(3) == platform::MessagePaging::Log,
+        true,
+    );
+    let mut mixed = json!({"lines":[],"input":{"kind":"item"},"history":[],"last_message":null});
+    until.mark(&mut mixed);
+    let mixed_save = platform::Envelope::new_with_presentation(
+        1,
+        "Rogue".into(),
+        &[1],
+        vec![32, 108],
+        4,
+        mixed.clone(),
+    )
+    .expect("mixed prefix");
+    checks.equal(
+        "mixed journal boundary roundtrip",
+        platform::MessagePaging::from_saved(&mixed_save.presentation) == until,
+        true,
+    );
+    mixed["input"]["message_paging_legacy_until"] = json!(5);
+    checks.rejects(
+        "future boundary",
+        platform::Envelope::new_with_presentation(
+            1,
+            "Rogue".into(),
+            &[1],
+            vec![32, 108],
+            4,
+            mixed.clone(),
+        ),
+    );
+    mixed["input"]["message_paging_legacy_until"] = json!(1);
+    checks.rejects(
+        "boundary before checkpoint",
+        platform::Envelope::new_with_presentation(
+            1,
+            "Rogue".into(),
+            &[1],
+            vec![32, 108],
+            4,
+            mixed.clone(),
+        ),
+    );
+    platform::MessagePaging::remove_marker(&mut mixed);
+    checks.equal(
+        "prompt context preserved",
+        mixed["input"].clone(),
+        json!({"kind":"item"}),
+    );
+    let original = json!({"lines":[],"input":null,"history":[],"last_message":null});
+    checks.equal(
+        "old narration policy",
+        platform::MessagePaging::from_saved(&original) == platform::MessagePaging::Legacy,
+        true,
+    );
+    let mut marked = original.clone();
+    platform::MessagePaging::Log.mark(&mut marked);
+    let saved =
+        platform::Envelope::new_with_presentation(1, "Rogue".into(), &[1], vec![], 0, marked)
+            .expect("policy fixture");
+    checks.equal("policy uses existing v2", saved.version, 2);
+    let mut restored = platform::Envelope::parse(&saved.bytes().expect("policy bytes"))
+        .expect("policy parse")
+        .presentation;
+    checks.equal(
+        "policy survives checksum roundtrip",
+        platform::MessagePaging::from_saved(&restored) == platform::MessagePaging::Log,
+        true,
+    );
+    platform::MessagePaging::remove_marker(&mut restored);
+    checks.equal(
+        "policy removed before UI restoration",
+        restored.clone(),
+        original,
+    );
+    restored["input"] = json!({"message_paging":"invalid"});
+    checks.rejects(
+        "unknown narration policy",
+        platform::Envelope::new_with_presentation(1, "Rogue".into(), &[1], vec![], 0, restored),
+    );
     let value = platform::Envelope::new(123, "Rogue".into(), &[0, 255, 7], vec![107, 27], 12)
         .expect("fixture");
     let bytes = value.bytes().expect("fixture encoding");
