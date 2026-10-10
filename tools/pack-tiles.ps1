@@ -70,6 +70,15 @@ try {
   $isolated[$sheet.Name]=@(0..($sheet.Value.columns*$sheet.Value.rows-1)|ForEach-Object {[RogueAtlasComponents]::Isolate($image,$_)} )
  }
  foreach($entry in $manifest.entries) {
+  if($entry.id -in @('terrain.wall_horizontal','terrain.wall_vertical')) {
+   $entry|Add-Member -Force -NotePropertyName image -NotePropertyValue 'terrain.wall.png'
+   if(-not $done.ContainsKey('shared-wall')) {
+    $wallGeneration=Get-Content -LiteralPath (Join-Path $root 'web\assets\walls\generation.json') -Raw|ConvertFrom-Json
+    $records+=@($wallGeneration.outputs|Where-Object {$_.set -eq 'tiles'})
+    $done['shared-wall']='terrain.wall.png'
+   }
+   continue
+  }
   $key=$entry.sheet+':'+$entry.index
   if($done.ContainsKey($key)){$entry|Add-Member -Force -NotePropertyName image -NotePropertyValue $done[$key];continue}
   $source=$isolated[$entry.sheet][$entry.index];$box=$rectangles[$entry.sheet][$entry.index]

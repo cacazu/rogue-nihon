@@ -583,9 +583,10 @@ impl Controller {
                 self.model["savePending"] = json!(false);
             }
             "assets" => {
-                let m = tiles::manifest(text(&r["set"]));
+                let plan = tiles::assets(text(&r["set"]));
+                let m = &plan["manifest"];
                 let valid = r["images"].as_array().is_some_and(|images| {
-                    images.len() == 46
+                    images.len() == plan["files"].as_array().unwrap().len()
                         && images.iter().all(|image| {
                             image["width"] == m["tile_pixels"]
                                 && image["height"] == m["tile_pixels"]

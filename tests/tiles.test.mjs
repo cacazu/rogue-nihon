@@ -12,7 +12,7 @@ const images=new Map(manifest.entries.map(e=>[e.image,{name:e.image}]));
 const tiles=new Tiles(request({type:'asset-plan'}).manifest,images);
 const fixture=(width,height,ids=Array(width*height).fill(0))=>({width,height,map_tiles:ids,map_tile_ids:manifest.entries.map(e=>e.id),map_unknown_glyphs:[]});
 test('all 49 semantic IDs have localized 96px raster assets; all 26 source monsters match',async()=>{
- assert.equal(new Set(manifest.entries.map(e=>e.id)).size,49);assert.equal(images.size,46);
+ assert.equal(new Set(manifest.entries.map(e=>e.id)).size,49);assert.equal(images.size,45);
  for(const entry of manifest.entries){
   const bytes=await readFile(new URL('../web/assets/tiles/'+entry.image,import.meta.url));
   assert.equal(bytes.subarray(1,4).toString(),'PNG');assert.equal(bytes.readUInt32BE(16),96);assert.equal(bytes.readUInt32BE(20),96);

@@ -1,6 +1,6 @@
 # Rogue image-tile inventory
 
-49 semantic IDs; 46 unique raster tiles (four bolt orientations share one image).
+49 semantic IDs; 45 unique raster tiles (both walls share one square block; four bolt orientations share one image).
 
 | ID | Glyph | Meaning | Sheet / slot |
 |---|---|---|---|

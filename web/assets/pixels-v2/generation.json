@@ -2,13 +2,13 @@
   "tool": "built-in image_gen",
   "native_pixels": 32,
   "semantic_ids": 49,
-  "unique_pngs": 46,
+  "unique_pngs": 45,
   "max_colors_per_sprite": 16,
   "alpha_values": [
     0,
     255
   ],
-  "packing": "Individual new ImageGen sprites; alpha bounds, nearest-neighbor native sampling, limited palette, binary alpha; periodic floor/wall edges. Approved silver soldier copied unchanged.",
+  "packing": "Individual new ImageGen sprites; alpha bounds, nearest-neighbor native sampling, limited palette, binary alpha; periodic floor edges and shared opaque square wall block. Approved silver soldier copied unchanged.",
   "images": [
     {
       "id": "terrain.unexplored",
@@ -63,30 +63,16 @@
       "sha256": "91fc46b69a62704b31cc40ea1aa52b38e090e7248486507579f73864f0e08b96"
     },
     {
-      "id": "terrain.wall_horizontal",
-      "file": "terrain.wall_horizontal.png",
-      "source": "source/terrain.wall_horizontal.png",
-      "crop": [
-        0,
-        470,
-        1254,
-        298
+      "id": "terrain.wall",
+      "file": "terrain.wall.png",
+      "set": "pixels-v2",
+      "source": "../walls/source.png",
+      "pixels": 32,
+      "semantic_ids": [
+        "terrain.wall_horizontal",
+        "terrain.wall_vertical"
       ],
-      "colors": 15,
-      "sha256": "de7e5d922598cabf8884ab1a25982e57aa8be013faf1a66807405c8e0ea062ba"
-    },
-    {
-      "id": "terrain.wall_vertical",
-      "file": "terrain.wall_vertical.png",
-      "source": "source/terrain.wall_vertical.png",
-      "crop": [
-        452,
-        0,
-        350,
-        1254
-      ],
-      "colors": 15,
-      "sha256": "fddac47bf0ef57a9dfbeddc7a9c4637ec5ff098672aa3a17f72db6d2ed229096"
+      "sha256": "55e2aad045859c33502285199f5fd3d6e8bc3bf26cc99619d92791e5305ff7b2"
     },
     {
       "id": "terrain.stairs",

@@ -1,0 +1,38 @@
+{
+  "tool": "built-in image_gen",
+  "requested_at": "2026-10-11",
+  "request": "縦横壁を同じアセットにする。四角い石のブロック（縦横共通）。",
+  "source": "source.png",
+  "prompts": [
+    "Use case: stylized-concept. Asset type: single production Rogue dungeon WALL TILE. Create ONE orientation-independent square gray stone wall block, used unchanged for horizontal and vertical walls. A front-facing flat square BOX silhouette occupying a full square, with a thick dark charcoal outer outline and subtle simple beveled light gray rim around a solid medium gray stone face. NOT a hollow frame; center is solid gray stone. Native 32x32 logical pixel art shown enlarged as uniform square nearest-neighbor blocks. Clean broad flat 2-3 gray stone shades, restrained palette maximum 8 colors, one-logical-pixel dark outline, no fine noise. Symmetric square outer geometry with equal thickness on all four sides. Straight full-square footprint; corner pixels present, no rounded corners, no horizontal/vertical strips. Tiny flat carved stone marks only if useful for a stone material, no separate bricks. Top-down/front-on game sprite; no isometric perspective, no 3D cube visible sides, no shadow, no scene, no floor, no text, numbers, captions, labels, watermark, or grid. Transparent alpha background only outside the one complete square block; square block itself opaque. Intended for a 32x32 game tile which is used without any rotation on both orientations. The user explicitly asked to unify vertical and horizontal walls into the same box asset.",
+    "Use case: precise-object-edit. Edit target: the generated square gray stone block image. Keep ONE flat square gray stone wall tile with the same simple dark charcoal outline and light gray square beveled rim. Fix these issues: fill the entire central HOLE with opaque flat medium gray stone; there must be absolutely NO holes, cracks, transparency, shadows, gradients, smooth shading or blurred texture anywhere. Remove fine noise and use strictly chunky flat pixel art colors. The square block must fill the ENTIRE square image canvas edge to edge, with no margin/background outside the block. Native logical pixel grid is exactly 32 x 32, uniformly enlarged by nearest neighbor. Uniform flat medium gray face inside, a simple 2 logical pixel wide lighter square bevel rim, and a 1 logical pixel wide dark gray square outline along the four canvas edges, all corners present. Maximum 5 solid gray colors. Straight square front face, no visible side planes, no perspective. Use subtle 2-3 pixel stone markings only. ENTIRE IMAGE 100 percent opaque. Suitable for repeating horizontally and vertically as the SAME wall tile in a pixel art roguelike. No hollow frame, no hole, no gradients or soft edges, no extra objects, floor, text or label."
+  ],
+  "outputs": [
+    {
+      "id": "terrain.wall",
+      "file": "terrain.wall.png",
+      "set": "pixels-v2",
+      "source": "../walls/source.png",
+      "pixels": 32,
+      "semantic_ids": [
+        "terrain.wall_horizontal",
+        "terrain.wall_vertical"
+      ],
+      "sha256": "55e2aad045859c33502285199f5fd3d6e8bc3bf26cc99619d92791e5305ff7b2"
+    },
+    {
+      "id": "terrain.wall",
+      "file": "terrain.wall.png",
+      "set": "tiles",
+      "source": "../walls/source.png",
+      "pixels": 96,
+      "semantic_ids": [
+        "terrain.wall_horizontal",
+        "terrain.wall_vertical"
+      ],
+      "sha256": "6eb593d8ab1f4b6b453ec39cc3bddc092f55cfbf921df74f9ef3d118a8ecf05e"
+    }
+  ],
+  "source_sha256": "604e4a2025c289b972cc2dcce5c294c5fd9c90c28c3eb8cf344c6239d0517f02",
+  "packing": "Nearest-neighbor 32x32 sampling, at most 8 colors, opaque RGBA, 96x96 nearest-neighbor enlargement. Both wall glyphs share one unrotated PNG per set."
+}

@@ -15,7 +15,7 @@
 | 魔法の弾道 | 4 | 横・縦・斜め2方向 |
 | A〜Zのモンスター | 26 | 種別画像 |
 
-実ファイルは **96×96のPNG 46枚**です。弾道の4方向は1枚の回転で表します。太く濃い輪郭、簡潔なファンタジー画、透明背景の画像を組み込みImageGenで新規生成しました。外部の既存ゲーム画像は使っていません。
+現在の実ファイルは **96×96のPNG 45枚**です。弾道の4方向は1枚の回転で表します。縦壁・横壁は同じ四角い石のブロックを回転せずに共有します（[壁アセット](WALL-BLOCKS-ja.md)）。太く濃い輪郭、簡潔なファンタジー画、透明背景の画像を組み込みImageGenで新規生成しました。外部の既存ゲーム画像は使っていません。
 
 `web/assets/tiles/` にPNG・[対応manifest](../web/assets/tiles/manifest.json)・[画像一覧](../web/assets/tiles/contact-sheet.png)を保存しました。`source/` の5枚が生成された元アトラス、`generation-prompts.json` が生成指示、`generation.json` が切り出し範囲と最終PNGのSHA-256です。画像の元作品・版・依存ライセンスの記録は従来の `docs/PROVENANCE-ja.md`、`logic/LICENSE.TXT`、`THIRD-PARTY-NOTICES.md` に保持しています。
 

@@ -1,6 +1,7 @@
+param([ValidateSet('pixels','pixels-v2')][string]$AssetSet='pixels')
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Drawing
-$root=Split-Path -Parent $PSScriptRoot;$dir=Join-Path $root 'web\assets\pixels'
+$root=Split-Path -Parent $PSScriptRoot;$dir=Join-Path $root ('web\assets\'+$AssetSet)
 $manifest=Get-Content -LiteralPath (Join-Path $dir 'manifest.json') -Raw -Encoding UTF8|ConvertFrom-Json
 $bitmap=[System.Drawing.Bitmap]::new(1190,1134);$g=[System.Drawing.Graphics]::FromImage($bitmap)
 $g.Clear([System.Drawing.Color]::FromArgb(20,27,31));$g.InterpolationMode=[System.Drawing.Drawing2D.InterpolationMode]::NearestNeighbor;$g.PixelOffsetMode=[System.Drawing.Drawing2D.PixelOffsetMode]::Half

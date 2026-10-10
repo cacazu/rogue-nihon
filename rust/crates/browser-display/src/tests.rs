@@ -5,7 +5,7 @@ fn boot() -> Controller {
     c.request(json!({"type":"boot","environment":{"isolated":true,"parameters":{"trace":"1"}}}));
     for mode in ["tiles", "pixels"] {
         let pixels = if mode == "pixels" { 32 } else { 96 };
-        c.request(json!({"type":"api","operation":"assets","ok":true,"set":mode,"images":vec![json!({"width":pixels,"height":pixels});46]}));
+        c.request(json!({"type":"api","operation":"assets","ok":true,"set":mode,"images":vec![json!({"width":pixels,"height":pixels});45]}));
     }
     c
 }
@@ -30,6 +30,23 @@ fn queue_effect(r: &Value) -> &Value {
         .iter()
         .find(|e| e["kind"] == "queue")
         .unwrap()
+}
+#[test]
+fn shared_wall_assets_load_and_incomplete_sets_fail() {
+    let mut c = boot();
+    let r = c.request(json!({"type":"render","view":{"width":1240,"height":900}}));
+    assert_eq!(r["state"]["ready"], true);
+    assert_eq!(r["state"]["runtimeError"], Value::Null);
+    for (count, pixels) in [(44, 32), (46, 32), (45, 96)] {
+        let mut c = Controller::new(measure);
+        c.request(json!({"type":"boot","environment":{"isolated":true,"parameters":{}}}));
+        let r = c.request(json!({"type":"api","operation":"assets","ok":true,"set":"pixels","images":vec![json!({"width":pixels,"height":pixels});count]}));
+        assert_eq!(r["state"]["ready"], false);
+        assert_eq!(
+            r["state"]["runtimeError"],
+            "Invalid tile dimensions or unavailable assets"
+        );
+    }
 }
 #[test]
 fn utf8_budgets_seed_bounds_and_controls() {
