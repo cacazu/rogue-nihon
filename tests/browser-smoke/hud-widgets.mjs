@@ -54,8 +54,14 @@ async function click(id,touch=false){
   await paint();
 }
 async function shot(name,clip){await page.screenshot({path:path.join(output,name+".png"),...(clip?{clip}:{})});evidence.screenshots.push(name+".png");}
-async function start(lang,touch=false,scale=1){
+async function start(lang,touch=false,scale=1,fixture=""){
   await context?.close();context=await browser.newContext({viewport:touch?{width:390,height:844}:{width:1240,height:900},hasTouch:touch,isMobile:touch,deviceScaleFactor:scale});
+  if(fixture){
+    const worker=await readFile(path.join(root,"web/worker.js"),"utf8");
+    const headers={"Cross-Origin-Opener-Policy":"same-origin","Cross-Origin-Embedder-Policy":"require-corp","Cross-Origin-Resource-Policy":"same-origin"};
+    await context.route("**/web/worker.js",r=>r.fulfill({body:worker.replace('    module.FS.writeFile("/locale.txt",','    module.FS.writeFile("/fixture.id", '+JSON.stringify(fixture)+');\n    module.FS.writeFile("/locale.txt",'),contentType:"text/javascript",headers}));
+    await context.route("**/build/game.js",r=>r.fulfill({path:path.join(root,"build/game-fixtures.js"),contentType:"text/javascript",headers}));
+  }
   page=await context.newPage();await installBrowserTestAdapter(page);page.on("pageerror",error=>evidence.errors.push(error.message));
   await page.addInitScript(()=>{
     const NativeWorker=Worker;
@@ -75,14 +81,15 @@ async function start(lang,touch=false,scale=1){
 function assertLayout(s){
   assert.equal(s.uiOwner,"rust");
   const hud=s.hud;assert.ok(hud);assert.equal(hud.items.length,8);
-  assert.deepEqual(hud.items.map(item=>item.id),["depth","gold","hp","strength","armor","experience","level","hunger"]);
+  assert.deepEqual(hud.items.map(item=>item.id),["depth","gold","hp","strength","armor","level","experience","hunger"]);
   assert.equal(hud.nameRect.y,hud.row.y);
   assert.ok(Math.abs(hud.nameRect.x-(hud.row.x-hud.offset))<.01);
   assert.ok(hud.offset>=0&&hud.offset<=hud.maxScroll+.01);
   let previous=hud.nameRect;
   for(const [index,item] of hud.items.entries()){
     assert.equal(item.rect.y,hud.row.y);
-    assert.ok(Math.abs(item.rect.x-(previous.x+previous.w+10))<.01,item.id+" stays packed to the left");
+    const gap=item.id==="experience"?0:10;
+    assert.ok(Math.abs(item.rect.x-(previous.x+previous.w+gap))<.01,item.id+" stays packed to the left");
     previous=item.rect;
     assert.ok(item.size>=18,item.id+" stays readable instead of shrinking");
     assert.ok(item.valueRect.x+item.valueRect.w<=item.rect.x+item.rect.w+.1,item.id+" value fits its target");
@@ -95,9 +102,15 @@ function assertLayout(s){
   const gear=s.icons.find(icon=>icon.name==="settings"),button=s.controls.find(control=>control.id==="settings-toggle");
   assert.ok(gear&&button);for(const axis of ["x","y"]){const dimension=axis==="x"?"w":"h";assert.equal(gear.rect[axis]+gear.rect[dimension]/2,button.rect[axis]+button.rect[dimension]/2);}
   const a=button.rect,b=hud.panel;assert.ok(a.x+a.w<=b.x||b.x+b.w<=a.x||a.y+a.h<=b.y||b.y+b.h<=a.y,"settings stays outside the name/status panel");
-  assert.equal(s.icons.find(icon=>icon.name==="floor").glyph,"F");
+  assert.ok(s.icons.some(icon=>icon.name==="stairs"&&!icon.glyph));
+  assert.ok(!s.icons.some(icon=>icon.glyph==="F"||icon.glyph==="Lv"));
   assert.equal(s.icons.find(icon=>icon.name==="strength").glyph,"💪");
-  assert.equal(s.icons.find(icon=>icon.name==="level").glyph,"Lv");
+  assert.equal(s.icons.find(icon=>icon.name==="level").glyph,"👑");
+  assert.equal(s.icons.find(icon=>icon.name==="experience").glyph,"☆");
+  const level=hud.items.find(item=>item.id==="level"),experience=hud.items.find(item=>item.id==="experience");
+  assert.equal(experience.separator,"=");
+  assert.ok(experience.separatorRect.x>=level.valueRect.x+level.valueRect.w);
+  assert.ok(experience.separatorRect.x+experience.separatorRect.w<=experience.iconRect.x);
 }
 function assertTooltip(s){
   const tooltip=s.hud.tooltip;assert.ok(tooltip);
@@ -116,6 +129,7 @@ try{
       await check(`${lang} ${touch?"touch":"PC"} ${viewport.width}px name and status form one readable left-aligned row outside settings`,async()=>{
         const before=await state();await page.setViewportSize(viewport);await paint();let s=await scene();assertLayout(s);
         const args=await page.evaluate(()=>__rogueBrowserTest.frame.ui.status.args.map(arg=>arg.value));
+        assert.equal(s.hud.items.find(item=>item.id==="depth").text,String(-args[0]));
         assert.equal(s.hud.items.find(item=>item.id==="hp").text,args[2]+"/"+args[3]);
         assert.equal(s.hud.items.find(item=>item.id==="experience").text,String(args[8]));
         assert.equal(s.hud.items.find(item=>item.id==="level").text,String(args[7]));
@@ -144,6 +158,23 @@ try{
       await click("hud-depth",touch);s=await scene();assert.equal(s.hud.tooltip.id,"depth");
       assert.deepEqual(s.camera,camera);assert.deepEqual(await state(),before);
       await page.keyboard.press("Escape");await paint();
+    });
+    await check(`${lang} crown level and star experience read as 👑3=☆12 with separate details`,async()=>{
+      const before=await state();
+      const original=await page.evaluate(()=>structuredClone(__rogueBrowserTest.frame.ui.status.args));
+      await page.evaluate(()=>{const ui=structuredClone(__rogueBrowserTest.frame.ui);ui.status.args[0].value=2;ui.status.args[7].value=3;ui.status.args[8].value=12;__hudPresentation(ui);});
+      await paint();let s=await scene();assertLayout(s);
+      assert.equal(s.hud.items.find(item=>item.id==="depth").text,"-2");
+      const items=s.hud.items.filter(item=>["level","experience"].includes(item.id));
+      assert.equal(items.map(item=>item.separator+s.icons.find(icon=>icon.name===item.id).glyph+item.text).join(""),"👑3=☆12");
+      await click("hud-level",touch);assert.equal((await scene()).hud.tooltip.text,lang==="ja"?"レベル：3":"Level：3");
+      await click("hud-experience",touch);assert.equal((await scene()).hud.tooltip.text,lang==="ja"?"経験値：12":"Experience points：12");
+      await page.keyboard.press("Escape");await paint();
+      s=await scene();
+      await shot(`${lang}-${touch?"touch":"pc"}-level-experience`);
+      if(!touch){await page.setViewportSize({width:1240,height:900});await paint();s=await scene();const r=s.hud.panel;await shot("ja-pc-level3-hud",{x:r.x-2,y:r.y-2,width:r.w+4,height:r.h+4});}
+      assert.deepEqual(await state(),before);
+      await page.evaluate(args=>{const ui=structuredClone(__rogueBrowserTest.frame.ui);ui.status.args=args;__hudPresentation(ui);},original);await paint();
     });
     await check(`${lang} HUD details use mouse/touch/keyboard without advancing the game`,async()=>{
       const before=await state();await click("hud-hp",touch);
@@ -204,6 +235,24 @@ try{
     });
     assert.deepEqual(await page.evaluate(()=>__rogueBrowserTest.translationFallbacks),[]);
     assert.deepEqual(await page.evaluate(()=>__rogueBrowserTest.uiMissing),[]);
+  }
+  for(const touch of [false,true]){
+    await check(`${touch?"mobile":"PC"} actual staircase descent displays -1 then -2`,async()=>{
+      await start("ja",touch,touch?2:1,"plain");
+      assert.equal((await scene()).hud.items.find(item=>item.id==="depth").text,"-1");
+      for(const key of ["l","l","l","l","l",">"]){
+        if(key===">")assert.equal(await page.evaluate(()=>__rogueBrowserTest.frame.map_player_underlay.tile),6);
+        const before=(await state()).input;
+        if(key===">"&&touch)await click("touch-action-action.descend",true);
+        else await page.keyboard.press(key);
+        await page.waitForFunction(input=>__rogueBrowserTest.inputRequestCount>input&&__rogueBrowserTest.queuePending===0,before);
+        await paint();
+      }
+      assert.equal(await page.evaluate(()=>__rogueBrowserTest.frame.stats.level),2);
+      assert.equal((await scene()).hud.items.find(item=>item.id==="depth").text,"-2");
+      await click("hud-depth",touch);assert.match((await scene()).hud.tooltip.text,/-2$/);
+      await page.keyboard.press("Escape");await paint();await shot(`${touch?"touch":"pc"}-descended-level2`);
+    });
   }
   assert.deepEqual(evidence.errors,[]);
   evidence.files=await Promise.all(["web/app.js","web/canvas-ui.js","build/browser-ui.wasm","rust/crates/browser-display/src/controller.rs","rust/crates/browser-display/src/policies.rs","rust/crates/display/src/browser_ui/tiles.rs","rust/crates/display/src/widgets.rs","rust/crates/display/src/browser_ui/mod.rs","rust/crates/display/src/browser_ui/hud.rs","rust/crates/display/src/browser_ui/screens.rs","rust/crates/display/src/browser_ui/interaction.rs","web/index.html","locales/ui-web-ja.json","locales/ui-web-en.json"].map(async file=>({file,sha256:createHash("sha256").update(await readFile(path.join(root,file))).digest("hex")})));

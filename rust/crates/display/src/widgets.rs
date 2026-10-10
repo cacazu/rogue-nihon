@@ -279,7 +279,7 @@ impl Widgets {
             glyph,
             r,
             LineStyle {
-                text: TextStyle::new(if name == "level" { r.h * 0.8 } else { r.h }, color, true),
+                text: TextStyle::new(r.h, color, true),
                 center: true,
                 ellipsis: false,
             },

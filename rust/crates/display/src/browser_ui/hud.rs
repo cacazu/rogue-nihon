@@ -9,6 +9,7 @@ pub struct HudWidget {
 struct Metric {
     id: String,
     icon: &'static str,
+    separator: &'static str,
     label: String,
     values: Vec<String>,
     detail: String,
@@ -19,12 +20,13 @@ struct Item {
     metric: Metric,
     text: String,
     width: f64,
+    gap: f64,
+    separator_width: f64,
 }
 struct Layout {
     items: Vec<Item>,
     size: f64,
     compact: u32,
-    gap: f64,
     icon_size: f64,
     width: f64,
 }
@@ -61,19 +63,39 @@ impl HudWidget {
         };
         let mut metrics = Vec::new();
         for (id, icon, indexes, color) in [
-            ("depth", "floor", &[0][..], "#b9cee8"),
+            ("depth", "stairs", &[0][..], "#b9cee8"),
             ("gold", "coins", &[1][..], "#efd18e"),
             ("hp", "heart", &[2, 3][..], "#f5a6aa"),
             ("strength", "strength", &[4, 5][..], "#d0bbef"),
             ("armor", "shield", &[6][..], "#9dcbe9"),
-            ("experience", "experience", &[8][..], "#a6d0be"),
             ("level", "level", &[7][..], "#a6d0be"),
+            ("experience", "experience", &[8][..], "#a6d0be"),
         ] {
             metrics.push(Metric {
                 id: id.into(),
                 icon,
+                separator: if id == "experience" { "=" } else { "" },
                 label: label(&format!("hud.{id}")),
-                values: indexes.iter().map(|&i| value(i)).collect(),
+                values: indexes
+                    .iter()
+                    .map(|&i| {
+                        let value = value(i);
+                        if id == "depth" {
+                            value
+                                .parse::<u32>()
+                                .map(|depth| {
+                                    if depth == 0 {
+                                        "0".into()
+                                    } else {
+                                        format!("-{depth}")
+                                    }
+                                })
+                                .unwrap_or(value)
+                        } else {
+                            value
+                        }
+                    })
+                    .collect(),
                 detail: String::new(),
                 color,
                 warning: false,
@@ -87,6 +109,7 @@ impl HudWidget {
         metrics.push(Metric {
             id: "hunger".into(),
             icon: "food",
+            separator: "",
             label: label("hud.hunger"),
             values: Vec::new(),
             detail: label(&format!("hud.hunger.{hunger}")),
@@ -111,7 +134,8 @@ impl HudWidget {
     ) -> Layout {
         let items: Vec<_> = metrics
             .iter()
-            .map(|metric| {
+            .enumerate()
+            .map(|(index, metric)| {
                 let values = metric
                     .values
                     .iter()
@@ -124,7 +148,13 @@ impl HudWidget {
                     })
                     .collect::<Vec<_>>();
                 let text = values.join("/");
-                let width = icon_size
+                let separator_width = if metric.separator.is_empty() {
+                    0.
+                } else {
+                    (measure)(metric.separator, size, true, false).width + 2.
+                };
+                let width = separator_width
+                    + icon_size
                     + if text.is_empty() {
                         0.
                     } else {
@@ -135,15 +165,20 @@ impl HudWidget {
                     metric: metric.clone(),
                     text,
                     width,
+                    gap: if index == 0 || !metric.separator.is_empty() {
+                        0.
+                    } else {
+                        gap
+                    },
+                    separator_width,
                 }
             })
             .collect();
-        let width = items.iter().map(|i| i.width).sum::<f64>() + (items.len() - 1) as f64 * gap;
+        let width = items.iter().map(|i| i.width + i.gap).sum::<f64>();
         Layout {
             items,
             size,
             compact,
-            gap,
             icon_size,
             width,
         }
@@ -195,12 +230,13 @@ impl HudWidget {
         let mut x = name_rect.x + name_width + gap;
         let mut items = Vec::new();
         for item in &layout.items {
+            x += item.gap;
             let metric = &item.metric;
             let w = item.width;
             let r = Rect::new(x, row.y, w, row.h);
             let id = format!("hud-{}", metric.id);
             let icon_size = layout.icon_size;
-            let content_x = x;
+            let content_x = x + item.separator_width;
             widgets.control(
                 &id,
                 &metric.label,
@@ -214,6 +250,20 @@ impl HudWidget {
                 },
                 measure,
             );
+            let separator = if metric.separator.is_empty() {
+                None
+            } else {
+                Some(widgets.single_line(
+                    metric.separator,
+                    Rect::new(x, row.y, item.separator_width, row.h),
+                    LineStyle {
+                        text: TextStyle::new(layout.size, TEXT, true),
+                        center: false,
+                        ellipsis: false,
+                    },
+                    measure,
+                ))
+            };
             let icon_rect = Rect::new(
                 content_x + 2.,
                 row.y + (row.h - icon_size) / 2.,
@@ -221,11 +271,13 @@ impl HudWidget {
                 icon_size,
             );
             let icon = match metric.icon {
-                "floor" => widgets.glyph_icon("floor", "F", icon_rect, metric.color, measure),
                 "strength" => {
                     widgets.glyph_icon("strength", "💪", icon_rect, metric.color, measure)
                 }
-                "level" => widgets.glyph_icon("level", "Lv", icon_rect, metric.color, measure),
+                "level" => widgets.glyph_icon("level", "👑", icon_rect, metric.color, measure),
+                "experience" => {
+                    widgets.glyph_icon("experience", "☆", icon_rect, metric.color, measure)
+                }
                 _ => widgets.icon(metric.icon, icon_rect, metric.color),
             };
             let value = widgets.single_line(
@@ -233,7 +285,7 @@ impl HudWidget {
                 Rect::new(
                     content_x + icon_size + if item.text.is_empty() { 2. } else { 5. },
                     row.y,
-                    (item.width - icon_size - 5.).max(0.),
+                    (item.width - item.separator_width - icon_size - 5.).max(0.),
                     row.h,
                 ),
                 LineStyle {
@@ -246,8 +298,8 @@ impl HudWidget {
             if metric.warning {
                 widgets.circle(content_x + icon_size + 1., row.y + 5., 2.5, metric.color);
             }
-            items.push(json!({"id":metric.id,"label":metric.label,"text":item.text,"values":metric.values,"rect":r,"iconRect":icon,"valueRect":value,"size":layout.size}));
-            x += w + layout.gap;
+            items.push(json!({"id":metric.id,"label":metric.label,"text":item.text,"values":metric.values,"separator":metric.separator,"separatorRect":separator,"rect":r,"iconRect":icon,"valueRect":value,"size":layout.size}));
+            x += w;
         }
         widgets.end_clip();
         if max_scroll > 0. {

@@ -45,12 +45,20 @@ fn responsive_hud_has_one_row_and_centered_icons() {
         for item in array(&hud["items"]) {
             let rect: Rect = serde_json::from_value(item["rect"].clone()).unwrap();
             assert_eq!(rect.y, row.y);
-            assert!((rect.x - right - 10.).abs() < 0.01);
+            let gap = if item["id"] == "experience" { 0. } else { 10. };
+            assert!((rect.x - right - gap).abs() < 0.01);
             right = rect.x + rect.w;
             assert!(n(&item["size"]) >= 18.);
         }
-        assert_eq!(hud["items"][5]["text"], "0");
-        assert_eq!(hud["items"][6]["text"], "1");
+        assert_eq!(hud["items"][0]["text"], "-1");
+        assert_eq!(hud["items"][5]["id"], "level");
+        assert_eq!(hud["items"][5]["text"], "1");
+        assert_eq!(hud["items"][6]["id"], "experience");
+        assert_eq!(hud["items"][6]["text"], "0");
+        assert_eq!(hud["items"][6]["separator"], "=");
+        assert!(ui.widgets.icons.iter().any(|icon| icon["name"] == "stairs"));
+        assert!(ui.widgets.icons.iter().any(|icon| icon["glyph"] == "👑"));
+        assert!(ui.widgets.icons.iter().any(|icon| icon["glyph"] == "☆"));
         let button = ui
             .widgets
             .controls
@@ -193,7 +201,7 @@ fn hud_swipe_and_keyboard_reveal_items_without_game_commands() {
     ui.event(json!({"type":"up","id":8,"x":x-120.,"y":y,"pointerType":"touch","captured":true}));
     ui.render(model(), view(320., 844.));
     assert!(n(&ui.hud.layout["offset"]) > 0.);
-    ui.widgets.focus = "hud-level".into();
+    ui.widgets.focus = "hud-experience".into();
     ui.event(json!({"type":"key","key":"Tab"}));
     ui.render(model(), view(320., 844.));
     let control = ui
