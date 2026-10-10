@@ -1,22 +1,27 @@
 use super::*;
 impl BrowserUi {
-    pub(super) fn footer(&mut self) {
-        let y = self.height - 50.;
-        self.text(
-            &self.t("app.version"),
-            16.,
-            y,
-            self.width - 32.,
-            10.,
-            MUTED,
-            false,
+    pub(super) fn settings_button(&mut self, rect: Rect) {
+        self.button(
+            "settings-toggle",
+            &self.t("action.settings"),
+            rect,
+            ControlStyle {
+                icon: Some("settings"),
+                icon_size: 26.,
+                disabled: b(&self.model["returnAfterEnd"]),
+                ..Default::default()
+            },
         );
+    }
+    pub(super) fn footer(&mut self) {
+        let y = self.height - 44.;
+        let repository_width = 110_f64.min(self.width * 0.3);
         self.button(
             "credits-repository",
             &self.t("credits.repository"),
-            Rect::new(16., y + 20., 130_f64.min(self.width * 0.35), 24.),
+            Rect::new(12., y, repository_width, 36.),
             ControlStyle {
-                size: 10.,
+                size: 16.,
                 ..Default::default()
             },
         );
@@ -24,13 +29,13 @@ impl BrowserUi {
             "credits-license",
             &self.t("credits.license"),
             Rect::new(
-                160_f64.min(self.width * 0.4),
-                y + 20.,
-                260_f64.min(self.width * 0.57),
-                24.,
+                20. + repository_width,
+                y,
+                280_f64.min(self.width - repository_width - 32.),
+                36.,
             ),
             ControlStyle {
-                size: 10.,
+                size: 16.,
                 ..Default::default()
             },
         );
@@ -39,7 +44,7 @@ impl BrowserUi {
         let mobile = self.width < 700.;
         let w = 960_f64.min(self.width - 32.);
         let x = (self.width - w) / 2.;
-        let viewport = Rect::new(0., 66., self.width, self.height - 124.);
+        let viewport = Rect::new(0., 72., self.width, self.height - 124.);
         let content_height = if mobile { 880. } else { 610. };
         let max = (content_height - viewport.h).max(0.);
         self.regions.insert(
@@ -52,7 +57,7 @@ impl BrowserUi {
         self.scrolls
             .insert("top".into(), clamp(self.scrolls["top"], 0., max));
         self.widgets.begin_clip(viewport);
-        let mut y = 82. - self.scrolls["top"];
+        let mut y = 88. - self.scrolls["top"];
         self.text(
             &self.t("top.title"),
             x,
@@ -76,7 +81,7 @@ impl BrowserUi {
                 json!({"kind":"select","id":"language","value":lang}),
                 ControlStyle {
                     primary: self.model["language"] == *lang,
-                    size: 12.,
+                    size: 16.,
                     disabled: b(&self.model["starting"]),
                     ..Default::default()
                 },
@@ -103,7 +108,7 @@ impl BrowserUi {
             x + 22.,
             row,
             left_w - 44.,
-            13.,
+            16.,
             MUTED,
             false,
         );
@@ -114,7 +119,7 @@ impl BrowserUi {
                 x + 22.,
                 row,
                 left_w - 44.,
-                12.,
+                16.,
                 MUTED,
                 false,
             );
@@ -127,7 +132,7 @@ impl BrowserUi {
                 Rect::new(r.x + r.w + 8., row, 76., 42.),
                 ControlStyle {
                     disabled: b(&self.model["starting"]),
-                    size: 12.,
+                    size: 16.,
                     ..Default::default()
                 },
             );
@@ -164,7 +169,7 @@ impl BrowserUi {
             right_x + 22.,
             ry + 68.,
             right_w - 44.,
-            13.,
+            16.,
             MUTED,
             false,
         );
@@ -177,7 +182,7 @@ impl BrowserUi {
             right_x + 22.,
             ry + 114.,
             right_w - 44.,
-            13.,
+            16.,
             ACCENT,
             false,
         );
@@ -201,7 +206,7 @@ impl BrowserUi {
                 s(&self.model["topNotice"]["id"]),
                 &self.model["topNotice"]["args"],
             );
-            let h = self.wrap(&value, w - 32., 13.).len() as f64 * 22. + 24.;
+            let h = self.wrap(&value, w - 32., 16.).len() as f64 * 27. + 24.;
             let error = b(&self.model["topNotice"]["error"]);
             self.widgets.box_rect(
                 Rect::new(x, ny, w, h),
@@ -214,7 +219,7 @@ impl BrowserUi {
                 x + 16.,
                 ny + 12.,
                 w - 32.,
-                13.,
+                16.,
                 if error { ERROR } else { "#b9dcec" },
                 false,
             );
@@ -225,7 +230,7 @@ impl BrowserUi {
         let mobile = self.width < 700. || b(&self.view["coarse"]);
         let game = Rect::new(
             0.,
-            if self.fullscreen { 0. } else { 66. },
+            if self.fullscreen { 0. } else { 72. },
             self.width,
             self.height - if self.fullscreen { 0. } else { 124. },
         );
@@ -385,12 +390,15 @@ impl BrowserUi {
             &title,
             r.x + 12.,
             r.y + 11.,
-            r.w - 24.,
-            12.,
+            r.w - if self.fullscreen { 76. } else { 24. },
+            18.,
             "#c9e4d5",
             false,
         );
-        let viewport = Rect::new(r.x + 10., r.y + 38., r.w - 20., (r.h - 46.).max(10.));
+        if self.fullscreen {
+            self.settings_button(Rect::new(r.x + r.w - 52., r.y + 4., 44., 44.));
+        }
+        let viewport = Rect::new(r.x + 10., r.y + 52., r.w - 20., (r.h - 60.).max(10.));
         let mut rows = Vec::new();
         let mut total = 0.;
         for e in array(&self.model["entries"]) {
@@ -399,7 +407,7 @@ impl BrowserUi {
                 if e["source"] == "system" { "ⓘ " } else { "" },
                 s(&e["text"])
             );
-            let height = self.wrap(&text, viewport.w - 8., 13.).len() as f64 * 22. + 6.;
+            let height = self.wrap(&text, viewport.w - 8., 18.).len() as f64 * 30. + 8.;
             rows.push((text, e.clone(), height, total));
             total += height;
         }
@@ -427,7 +435,7 @@ impl BrowserUi {
                 viewport.x,
                 y,
                 viewport.w - 8.,
-                13.,
+                18.,
                 if b(&e["error"]) {
                     ERROR
                 } else if e["source"] == "game" {
@@ -447,7 +455,7 @@ impl BrowserUi {
         }
         let ui = self.model["frame"]["ui"].clone();
         let direction = b(&ui["movement_direction"]);
-        let size = if self.height < 500. { 29. } else { 34. };
+        let size = if self.height < 500. { 32. } else { 36. };
         for a in array(&ui["map_controls"]["directions"]) {
             let key = char::from_u32(n(&a["key"]) as u32)
                 .unwrap_or(' ')
@@ -464,7 +472,7 @@ impl BrowserUi {
                 json!({"kind":"send","key":a["key"]}),
                 ControlStyle {
                     throw_direction: direction,
-                    size: 18.,
+                    size: 22.,
                     key: Some(json!(key)),
                     ..Default::default()
                 },
@@ -480,18 +488,23 @@ impl BrowserUi {
                     .unwrap_or(' ')
                     .to_string()
             };
+            let label_id = match s(&a["id"]) {
+                "action.descend" => "action.descend_short",
+                "action.cancel" => "action.cancel_short",
+                id => id,
+            };
             self.control(
                 &format!("touch-action-{}", s(&a["id"])),
-                &self.t(s(&a["id"])),
+                &self.t(label_id),
                 Rect::new(
-                    r.x + r.w - 164. + (i % 2) as f64 * 78.,
-                    r.y + r.h - rows * 40. - 10. + (i / 2) as f64 * 40.,
-                    74.,
-                    36.,
+                    r.x + r.w - 176. + (i % 2) as f64 * 86.,
+                    r.y + r.h - rows * 48. - 10. + (i / 2) as f64 * 48.,
+                    80.,
+                    44.,
                 ),
                 json!({"kind":"send","key":a["key"]}),
                 ControlStyle {
-                    size: 11.,
+                    size: 16.,
                     key: Some(json!(key)),
                     ..Default::default()
                 },
@@ -508,7 +521,7 @@ impl BrowserUi {
         let mobile = self.width < 700.;
         let w = if b(&d["map_view"]) { 920_f64 } else { 600_f64 }.min(self.width - 28.);
         let x = (self.width - w) / 2.;
-        let font = if mobile { 13. } else { 14. };
+        let font = 18.;
         let line_h = (font * 1.65_f64).ceil();
         let inner = w - 32.;
         let mut rows = Vec::new();
@@ -578,7 +591,7 @@ impl BrowserUi {
         let prompt_height = if prompt.is_empty() {
             0.
         } else {
-            self.wrap(&prompt, inner, 12.).len() as f64 * 20. + 8.
+            self.wrap(&prompt, inner, 16.).len() as f64 * 27. + 8.
         };
         let bottom = action_rows * 46.
             + if field.is_some() { 56. } else { 0. }
@@ -589,7 +602,7 @@ impl BrowserUi {
         let y = game.y + 24_f64.min(8_f64.max((game.h - h) / 3.));
         let panel = Rect::new(x, y, w, h);
         self.widgets.box_rect(panel, PANEL, Some("#81978e"), 9.);
-        self.text(s(&d["title"]), x + 16., y + 15., inner, 16., TEXT, true);
+        self.text(s(&d["title"]), x + 16., y + 15., inner, 20., TEXT, true);
         let viewport = Rect::new(x + 16., y + 48., inner, (h - 58. - bottom).max(16.));
         let max = (total - viewport.h).max(0.);
         let mut scroll = clamp(self.scrolls["dialog"], 0., max);
@@ -666,7 +679,7 @@ impl BrowserUi {
                 Rect::new(x + w - 112., ay, 96., 42.),
                 json!({"kind":"submit","id":field}),
                 ControlStyle {
-                    size: 12.,
+                    size: 16.,
                     disabled: !b(&self.model["running"]),
                     ..Default::default()
                 },
@@ -707,7 +720,7 @@ impl BrowserUi {
             ay += 46.;
         }
         if !prompt.is_empty() {
-            self.text(&prompt, x + 16., ay + 4., inner, 12., "#cad7e2", false);
+            self.text(&prompt, x + 16., ay + 4., inner, 16., "#cad7e2", false);
         }
         self.dialog_rect = Some(panel);
     }
@@ -756,7 +769,7 @@ impl BrowserUi {
             x + 16.,
             y + 16.,
             w - 80.,
-            18.,
+            22.,
             TEXT,
             true,
         );
@@ -801,7 +814,7 @@ impl BrowserUi {
                     42.,
                 ),
                 ControlStyle {
-                    size: 12.,
+                    size: 16.,
                     ..Default::default()
                 },
             );
@@ -812,7 +825,7 @@ impl BrowserUi {
             viewport.x,
             row,
             viewport.w,
-            12.,
+            16.,
             MUTED,
             false,
         );
@@ -830,7 +843,7 @@ impl BrowserUi {
                 json!({"kind":"select","id":"display-mode","value":mode}),
                 ControlStyle {
                     primary: self.model["displayMode"] == *mode,
-                    size: 12.,
+                    size: 16.,
                     ..Default::default()
                 },
             );
@@ -846,7 +859,7 @@ impl BrowserUi {
                 viewport.x,
                 row,
                 viewport.w,
-                13.,
+                16.,
                 ACCENT,
                 false,
             );
@@ -910,7 +923,7 @@ impl BrowserUi {
             ("instruction.movement", 14.),
             ("instruction.prompts", 14.),
         ] {
-            row += self.text(&self.t(id), viewport.x, row, viewport.w, 12., MUTED, false) + extra;
+            row += self.text(&self.t(id), viewport.x, row, viewport.w, 16., MUTED, false) + extra;
         }
         self.widgets.end_clip();
         let total = row - viewport.y + self.scrolls["settings"];

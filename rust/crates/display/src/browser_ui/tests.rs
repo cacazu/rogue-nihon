@@ -37,12 +37,20 @@ fn responsive_hud_has_one_row_and_centered_icons() {
         let output = ui.render(model(), view(width, height));
         let hud = &output["diagnostics"]["hud"];
         let row: Rect = serde_json::from_value(hud["row"].clone()).unwrap();
-        assert_eq!(array(&hud["items"]).len(), 7);
+        assert_eq!(array(&hud["items"]).len(), 8);
+        let name: Rect = serde_json::from_value(hud["nameRect"].clone()).unwrap();
+        assert_eq!(name.y, row.y);
+        assert_eq!(name.x, row.x);
+        let mut right = name.x + name.w;
         for item in array(&hud["items"]) {
             let rect: Rect = serde_json::from_value(item["rect"].clone()).unwrap();
             assert_eq!(rect.y, row.y);
-            assert!(rect.x >= row.x && rect.x + rect.w <= row.x + row.w + 0.01);
+            assert!((rect.x - right - 10.).abs() < 0.01);
+            right = rect.x + rect.w;
+            assert!(n(&item["size"]) >= 18.);
         }
+        assert_eq!(hud["items"][5]["text"], "0");
+        assert_eq!(hud["items"][6]["text"], "1");
         let button = ui
             .widgets
             .controls
@@ -56,6 +64,8 @@ fn responsive_hud_has_one_row_and_centered_icons() {
             .find(|i| i["name"] == "settings")
             .unwrap();
         let rect: Rect = serde_json::from_value(icon["rect"].clone()).unwrap();
+        let panel: Rect = serde_json::from_value(hud["panel"].clone()).unwrap();
+        assert!(!button.rect.overlaps(panel));
         assert_eq!(rect.x + rect.w / 2., button.rect.x + button.rect.w / 2.);
         assert_eq!(rect.y + rect.h / 2., button.rect.y + button.rect.h / 2.);
         let mut depth = 0;
@@ -151,23 +161,49 @@ fn hud_is_reusable_without_a_browser_surface() {
         &mut widgets,
         hud::HudData {
             map: Rect::new(0., 0., 320., 500.),
-            viewport_height: 844.,
             name: "別の画面",
             status: &m["frame"]["ui"]["status"],
-            settings_disabled: true,
+            offset: 0.,
             label: &|id| id.to_string(),
         },
         measure,
     );
-    assert_eq!(array(&hud.layout["items"]).len(), 7);
+    assert_eq!(array(&hud.layout["items"]).len(), 8);
     assert_eq!(hud.layout["items"][2]["text"], "12/12");
+    assert!(widgets.controls.iter().all(|c| c.id != "settings-toggle"));
+    assert_eq!(hud.layout["nameRect"]["y"], hud.layout["row"]["y"]);
+}
+
+#[test]
+fn hud_swipe_and_keyboard_reveal_items_without_game_commands() {
+    let mut ui = BrowserUi::new(measure);
+    ui.render(model(), view(320., 844.));
+    let row: Rect = serde_json::from_value(ui.hud.layout["row"].clone()).unwrap();
+    let x = row.x + row.w - 30.;
+    let y = row.y + row.h / 2.;
+    ui.event(
+        json!({"type":"down","id":8,"x":x,"y":y,"pointerType":"touch","button":0,"primary":true}),
+    );
+    let moved = ui.event(json!({"type":"move","id":8,"x":x-120.,"y":y,"pointerType":"touch","buttons":1,"captured":true}));
     assert!(
-        widgets
-            .controls
+        array(&moved["effects"])
             .iter()
-            .find(|c| c.id == "settings-toggle")
-            .unwrap()
-            .disabled
+            .all(|effect| effect["kind"] != "send")
+    );
+    ui.event(json!({"type":"up","id":8,"x":x-120.,"y":y,"pointerType":"touch","captured":true}));
+    ui.render(model(), view(320., 844.));
+    assert!(n(&ui.hud.layout["offset"]) > 0.);
+    ui.widgets.focus = "hud-level".into();
+    ui.event(json!({"type":"key","key":"Tab"}));
+    ui.render(model(), view(320., 844.));
+    let control = ui
+        .widgets
+        .controls
+        .iter()
+        .find(|control| control.id == "hud-hunger")
+        .unwrap();
+    assert!(
+        control.rect.w > 0. && control.full_rect.x + control.full_rect.w <= row.x + row.w + 0.01
     );
 }
 

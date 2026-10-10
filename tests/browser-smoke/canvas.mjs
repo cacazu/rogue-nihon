@@ -174,7 +174,7 @@ try{
     const full=await scene();
     assert.equal(full.mapRect.y,0);assert.equal(full.mapRect.h,full.height);
     assert.ok(!full.controls.some(c=>["header-fullscreen","credits-repository","credits-license"].includes(c.id)));
-    assert.ok(!full.text.includes("Rogue"));assert.ok(!full.text.some(t=>t.includes("ROGUE :")));
+    assert.ok(!full.text.some(t=>t.includes("ROGUE")));
     assert.ok(full.controls.some(c=>c.id==="settings-toggle"));await shot("game-fullscreen-desktop");
     assert.equal((await state()).input,before.input);assert.deepEqual((await state()).words,before.words);
     await page.keyboard.press("Escape");

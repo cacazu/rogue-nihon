@@ -94,14 +94,23 @@ impl BrowserUi {
             &mut self.widgets,
             hud::HudData {
                 map,
-                viewport_height: self.height,
                 name: s(&self.model["frame"]["ui"]["name"]),
                 status: &self.model["frame"]["ui"]["status"],
-                settings_disabled: b(&self.model["returnAfterEnd"]),
+                offset: self.scrolls["hud"],
                 label: &label,
             },
             self.measure,
         );
+        let row = serde_json::from_value(self.hud.layout["row"].clone()).expect("HUD row");
+        self.regions.insert(
+            "hud".into(),
+            Region {
+                rect: row,
+                max: n(&self.hud.layout["maxScroll"]),
+            },
+        );
+        self.scrolls
+            .insert("hud".into(), n(&self.hud.layout["offset"]));
     }
     fn draw_hud_details(&mut self, map: Rect) {
         let enabled =
@@ -131,7 +140,7 @@ impl BrowserUi {
             map_rect: None,
             dialog_rect: None,
             regions: BTreeMap::new(),
-            scrolls: ["top", "dialog", "settings", "log"]
+            scrolls: ["top", "dialog", "settings", "log", "hud"]
                 .into_iter()
                 .map(|id| (id.into(), 0.))
                 .collect(),
@@ -245,25 +254,50 @@ impl BrowserUi {
         self.widgets
             .rect(Rect::new(0., 0., self.width, self.height), BG);
         if !self.fullscreen {
-            self.text(
-                &self.t("app.heading"),
-                20.,
-                15.,
-                self.width - 180.,
-                26.,
-                TEXT,
-                true,
+            let playing = !b(&self.model["topOpen"]);
+            let inline_fullscreen = self.width >= 500.;
+            let title = self.t("app.heading");
+            let title_width = self.width
+                - if playing {
+                    if inline_fullscreen { 136. } else { 88. }
+                } else {
+                    32.
+                };
+            let mut title_size = if self.width < 700. { 24. } else { 30. };
+            while title_size > 18.
+                && (self.measure)(&title, title_size, true, false).width > title_width
+            {
+                title_size -= 1.;
+            }
+            self.widgets.single_line(
+                &title,
+                Rect::new(16., 12., title_width, 48.),
+                LineStyle {
+                    text: TextStyle::new(title_size, TEXT, true),
+                    center: false,
+                    ellipsis: true,
+                },
+                self.measure,
             );
-            if !b(&self.model["topOpen"]) {
-                self.button(
-                    "header-fullscreen",
-                    &self.t("action.fullscreen"),
-                    Rect::new(self.width - 128., 15., 108., 34.),
-                    ControlStyle {
-                        size: 12.,
-                        ..Default::default()
-                    },
-                );
+            if playing {
+                self.settings_button(Rect::new(
+                    self.width - if inline_fullscreen { 108. } else { 60. },
+                    14.,
+                    44.,
+                    44.,
+                ));
+                if inline_fullscreen {
+                    self.button(
+                        "header-fullscreen",
+                        &self.t("action.fullscreen"),
+                        Rect::new(self.width - 60., 14., 44., 44.),
+                        ControlStyle {
+                            icon: Some("expand"),
+                            icon_size: 24.,
+                            ..Default::default()
+                        },
+                    );
+                }
             }
             self.footer();
         }

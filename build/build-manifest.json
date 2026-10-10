@@ -1,5 +1,5 @@
 {
-  "built_at_utc": "2026-10-10T12:34:36.1565020Z",
+  "built_at_utc": "2026-10-10T12:34:36.156502Z",
   "logic_source_directory": "C:\\Users\\kit\\gameme\\jnethack\\jrouge\\rogue-nihon\\logic",
   "c_source_files": 38,
   "rust_library": "C:\\Users\\kit\\gameme\\jnethack\\jrouge\\rogue-nihon\\.local\\tasks\\powershell-7d02da1fbc0e4ed79b7a1ef4ab5ffb95\\cargo-target\\wasm32-unknown-emscripten\\release\\librogue_layers.a",
@@ -35,8 +35,13 @@
     },
     {
       "file": "browser-ui.wasm",
-      "bytes": 707009,
-      "sha256": "24f423280d169add151db765b06fe3a8812993a8a9db4e107f1842f90cafd4e5"
+      "bytes": 711842,
+      "sha256": "2a0912245b79b84f3d77e09ce38ea6afc9a3ec9863add4c60c8240383878f4bc"
     }
-  ]
+  ],
+  "browser_ui": {
+    "built_at_utc": "2026-10-10T13:39:44.7227844Z",
+    "crate": "rogue-browser-display",
+    "target": "wasm32-unknown-unknown"
+  }
 }

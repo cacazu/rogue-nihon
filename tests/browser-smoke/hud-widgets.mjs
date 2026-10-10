@@ -20,8 +20,34 @@ const paint=()=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>reque
 const scene=()=>page.evaluate(()=>__rogueBrowserTest.canvas);
 const state=()=>page.evaluate(()=>({words:__rogueBrowserTest.trace.words,input:__rogueBrowserTest.inputRequestCount,frameCount:__rogueBrowserTest.frameCount}));
 async function check(label,fn){await fn();evidence.checks.push(label);console.log("PASS "+label);}
+async function swipe(from,to){
+  const cdp=await context.newCDPSession(page);
+  try{
+    await cdp.send("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[{...from,id:1}]});
+    for(let n=1;n<=6;n++)await cdp.send("Input.dispatchTouchEvent",{type:"touchMove",touchPoints:[{x:from.x+(to.x-from.x)*n/6,y:from.y+(to.y-from.y)*n/6,id:1}]});
+    await cdp.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});
+    await paint();
+  }finally{await cdp.detach();}
+}
 async function click(id,touch=false){
   await page.waitForFunction(id=>__rogueBrowserTest.canvas.controls.some(c=>c.id===id&&!c.disabled),id);
+  if(id.startsWith("hud-")){
+    for(let attempt=0;attempt<4;attempt++){
+      const hud=(await scene()).hud,item=hud.items.find(item=>"hud-"+item.id===id),row=hud.row;
+      const delta=item.rect.x<row.x?item.rect.x-row.x:Math.max(0,item.rect.x+item.rect.w-row.x-row.w);
+      if(Math.abs(delta)<1)break;
+      if(touch){
+        const distance=Math.min(row.w-32,Math.max(12,Math.abs(delta))),y=row.y+row.h/2;
+        const x=delta>0?row.x+row.w-16:row.x+16;
+        await swipe({x,y},{x:x+(delta>0?-distance:distance),y});
+      }else{
+        const target=Math.max(0,Math.min(hud.maxScroll,hud.offset+delta));
+        await page.mouse.move(row.x+row.w/2,row.y+row.h/2);await page.mouse.wheel(delta,0);
+        await page.waitForFunction(target=>Math.abs(__rogueBrowserTest.canvas.hud.offset-target)<1,target);
+        await paint();
+      }
+    }
+  }
   const r=(await scene()).controls.find(c=>c.id===id).rect;
   if(touch)await page.touchscreen.tap(r.x+r.w/2,r.y+r.h/2);
   else await page.mouse.click(r.x+r.w/2,r.y+r.h/2);
@@ -48,11 +74,17 @@ async function start(lang,touch=false,scale=1){
 }
 function assertLayout(s){
   assert.equal(s.uiOwner,"rust");
-  const hud=s.hud;assert.ok(hud);assert.equal(hud.items.length,7);
-  assert.deepEqual(hud.items.map(item=>item.id),["depth","gold","hp","strength","armor","experience","hunger"]);
+  const hud=s.hud;assert.ok(hud);assert.equal(hud.items.length,8);
+  assert.deepEqual(hud.items.map(item=>item.id),["depth","gold","hp","strength","armor","experience","level","hunger"]);
+  assert.equal(hud.nameRect.y,hud.row.y);
+  assert.ok(Math.abs(hud.nameRect.x-(hud.row.x-hud.offset))<.01);
+  assert.ok(hud.offset>=0&&hud.offset<=hud.maxScroll+.01);
+  let previous=hud.nameRect;
   for(const [index,item] of hud.items.entries()){
-    assert.equal(item.rect.y,hud.row.y);assert.ok(item.rect.x>=hud.row.x-.01);
-    assert.ok(item.rect.x+item.rect.w<=hud.row.x+hud.row.w+.01,item.id+" fits in the row");
+    assert.equal(item.rect.y,hud.row.y);
+    assert.ok(Math.abs(item.rect.x-(previous.x+previous.w+10))<.01,item.id+" stays packed to the left");
+    previous=item.rect;
+    assert.ok(item.size>=18,item.id+" stays readable instead of shrinking");
     assert.ok(item.valueRect.x+item.valueRect.w<=item.rect.x+item.rect.w+.1,item.id+" value fits its target");
     assert.ok(item.iconRect.y>=item.rect.y&&item.iconRect.y+item.iconRect.h<=item.rect.y+item.rect.h);
     if(index)assert.ok(item.rect.x>=hud.items[index-1].rect.x+hud.items[index-1].rect.w-.01);
@@ -62,6 +94,10 @@ function assertLayout(s){
   }
   const gear=s.icons.find(icon=>icon.name==="settings"),button=s.controls.find(control=>control.id==="settings-toggle");
   assert.ok(gear&&button);for(const axis of ["x","y"]){const dimension=axis==="x"?"w":"h";assert.equal(gear.rect[axis]+gear.rect[dimension]/2,button.rect[axis]+button.rect[dimension]/2);}
+  const a=button.rect,b=hud.panel;assert.ok(a.x+a.w<=b.x||b.x+b.w<=a.x||a.y+a.h<=b.y||b.y+b.h<=a.y,"settings stays outside the name/status panel");
+  assert.equal(s.icons.find(icon=>icon.name==="floor").glyph,"F");
+  assert.equal(s.icons.find(icon=>icon.name==="strength").glyph,"💪");
+  assert.equal(s.icons.find(icon=>icon.name==="level").glyph,"Lv");
 }
 function assertTooltip(s){
   const tooltip=s.hud.tooltip;assert.ok(tooltip);
@@ -77,11 +113,20 @@ try{
   for(const [lang,touch,scale] of [["ja",false,1],["ja",true,2],["en",true,1]]){
     await start(lang,touch,scale);
     for(const viewport of touch?[{width:320,height:844},{width:360,height:800},{width:390,height:844},{width:844,height:390}]:[{width:1240,height:900},{width:700,height:900}]){
-      await check(`${lang} ${touch?"touch":"PC"} ${viewport.width}px HUD fits one row and gear stays centered`,async()=>{
+      await check(`${lang} ${touch?"touch":"PC"} ${viewport.width}px name and status form one readable left-aligned row outside settings`,async()=>{
         const before=await state();await page.setViewportSize(viewport);await paint();let s=await scene();assertLayout(s);
-        assert.ok(s.hud.items.every(item=>item.size>=10));
         const args=await page.evaluate(()=>__rogueBrowserTest.frame.ui.status.args.map(arg=>arg.value));
         assert.equal(s.hud.items.find(item=>item.id==="hp").text,args[2]+"/"+args[3]);
+        assert.equal(s.hud.items.find(item=>item.id==="experience").text,String(args[8]));
+        assert.equal(s.hud.items.find(item=>item.id==="level").text,String(args[7]));
+        if(!s.fullscreen){
+          const title=lang==="ja"?"元祖 ROGUE · 5.4.4":"ORIGINAL ROGUE · 5.4.4";
+          assert.equal(s.text.filter(text=>text===title).length,1);
+          assert.equal(await page.title(),title);
+          const runs=await page.evaluate(()=>__rogueBrowserTest.commands.filter(command=>command.op==="text"));
+          assert.ok(runs.every(run=>run.size>=16));
+          assert.ok(runs.find(run=>run.text===title).y<72);
+        }
         assert.ok(!s.text.some(text=>text.includes("所持金：")||text.includes("Gold:")));
         assert.deepEqual(await state(),before);
         evidence.layouts.push({lang,touch,scale,width:viewport.width,hud:s.hud});
@@ -91,13 +136,22 @@ try{
         }
       });
     }
+    await check(`${lang} horizontal HUD navigation keeps every value readable and does not pan the map or advance C`,async()=>{
+      await page.setViewportSize({width:320,height:844});await paint();
+      const before=await state(),camera=(await scene()).camera;
+      await click("hud-hunger",touch);let s=await scene();assert.ok(s.hud.offset>0);assertTooltip(s);
+      await shot(`${lang}-${touch?"touch":"pc"}-hud-scrolled`);
+      await click("hud-depth",touch);s=await scene();assert.equal(s.hud.tooltip.id,"depth");
+      assert.deepEqual(s.camera,camera);assert.deepEqual(await state(),before);
+      await page.keyboard.press("Escape");await paint();
+    });
     await check(`${lang} HUD details use mouse/touch/keyboard without advancing the game`,async()=>{
       const before=await state();await click("hud-hp",touch);
       let s=await scene();assert.equal(s.hud.tooltip.id,"hp");assert.match(s.hud.tooltip.text,lang==="ja"?/体力：/u:/Health：/u);
       assertTooltip(s);
       await shot(`${lang}-${touch?"touch":"pc"}-details`);assert.deepEqual(await state(),before);
       await page.keyboard.press("Escape");await paint();assert.equal((await scene()).hud.tooltip,null);
-      for(const id of ["depth","gold","strength","armor","experience","hunger"]){
+      for(const id of ["depth","gold","strength","armor","experience","level","hunger"]){
         await click("hud-"+id,touch);const s=await scene();assert.equal(s.hud.tooltip.id,id);assertTooltip(s);
         await page.keyboard.press("Escape");await paint();
       }
@@ -116,13 +170,24 @@ try{
       for(const [axis,dimension] of [["x","w"],["y","h"]])assert.equal(icon.rect[axis]+icon.rect[dimension]/2,button.rect[axis]+button.rect[dimension]/2);
       await shot(`${lang}-${touch?"touch":"pc"}-settings`);await click("settings-close",touch);assert.equal((await scene()).scope,"game");assert.deepEqual(await state(),before);
     });
+    if(touch)await check(`${lang} mobile fullscreen keeps settings outside the HUD and preserves game state`,async()=>{
+      const before=await state();await click("settings-toggle",true);await click("fullscreen",true);
+      await page.waitForFunction(()=>Boolean(document.fullscreenElement)&&__rogueBrowserTest.canvas.fullscreen);
+      await click("settings-close",true);const s=await scene();assertLayout(s);
+      assert.ok(!s.text.some(text=>text.includes("ROGUE")));
+      await shot(`${lang}-touch-fullscreen`);
+      await click("settings-toggle",true);await click("settings-close",true);
+      await page.keyboard.press("Escape");
+      await page.waitForFunction(()=>!document.fullscreenElement&&!__rogueBrowserTest.canvas.fullscreen);
+      assert.deepEqual(await state(),before);
+    });
     await check(`${lang} large values and all hunger states remain visible at 320px`,async()=>{
       await page.setViewportSize({width:320,height:844});await paint();const before=await state();
       const original=await page.evaluate(()=>structuredClone(__rogueBrowserTest.frame.ui.status.args));
       for(const hunger of ["0","1","2","3"]){
         // Presentation-only stress data: C state and input remain untouched.
         await page.evaluate(hunger=>{const values=[99,2147483647,12345,12345,31,31,-10,21,2147483647,"status.hunger."+hunger];const ui=structuredClone(__rogueBrowserTest.frame.ui);ui.status.args=values.map(value=>({value}));__hudPresentation(ui);},hunger);
-        await paint();let s=await scene();assertLayout(s);assert.equal(s.hud.compact,true);assert.ok(s.hud.items.every(item=>item.size>=10));
+        await paint();let s=await scene();assertLayout(s);assert.equal(s.hud.compact,true);
         await click("hud-gold",touch);assert.match((await scene()).hud.tooltip.text,/2147483647/);
         await click("hud-hunger",touch);assert.ok((await scene()).hud.tooltip.text.length>5);
         await shot(`${lang}-${touch?"touch":"pc"}-large-hunger-${hunger}`);await page.keyboard.press("Escape");await paint();

@@ -99,6 +99,7 @@ pub struct ControlStyle<'a> {
     pub key: Option<Value>,
     pub field: Option<&'a str>,
     pub custom: bool,
+    pub keep_offscreen: bool,
 }
 #[derive(Default)]
 pub struct Widgets {
@@ -249,7 +250,7 @@ impl Widgets {
             "heart"=>"M12 21 3.5 12.5C-2 7 5 0 12 7C19 0 26 7 20.5 12.5Z".into(),
             "stairs"=>"M3 21H9V15H15V9H21V3M3 3H10M3 3V10M3 3 12 12".into(),
             "coins"=>"M20 7C20 9.2 16.4 11 12 11S4 9.2 4 7 7.6 3 12 3 20 4.8 20 7ZM4 7V12C4 14.2 7.6 16 12 16S20 14.2 20 12V7M4 12V17C4 19.2 7.6 21 12 21S20 19.2 20 17V12".into(),
-            "strength"=>"M6 5H9V19H6ZM15 5H18V19H15ZM3 8H6V16H3ZM18 8H21V16H18ZM9 12H15".into(),
+            "expand"=>"M3 9V3H9M15 3H21V9M21 15V21H15M9 21H3V15".into(),
             "shield"=>"M12 3 21 6V12C21 17 16 20 12 22C8 20 3 17 3 12V6ZM12 7V16".into(),
             "experience"=>"M12 2 15 8.5 22 9.5 17 14.5 18 22 12 18.5 6 22 7 14.5 2 9.5 9 8.5Z".into(),
             "food"=>"M3 2V7C3 10 9 10 9 7V2M6 2V22M20 22V2C15 4 14 10 14 13H20".into(),
@@ -266,6 +267,27 @@ impl Widgets {
         self.icons.push(json!({"name":name,"rect":r}));
         r
     }
+    pub fn glyph_icon(
+        &mut self,
+        name: &str,
+        glyph: &str,
+        r: Rect,
+        color: &str,
+        measure: MeasureText,
+    ) -> Rect {
+        self.single_line(
+            glyph,
+            r,
+            LineStyle {
+                text: TextStyle::new(if name == "level" { r.h * 0.8 } else { r.h }, color, true),
+                center: true,
+                ellipsis: false,
+            },
+            measure,
+        );
+        self.icons.push(json!({"name":name,"glyph":glyph,"rect":r}));
+        r
+    }
     pub fn control(
         &mut self,
         id: &str,
@@ -275,8 +297,10 @@ impl Widgets {
         style: ControlStyle<'_>,
         measure: MeasureText,
     ) {
-        let clipped = self.clip.map_or(r, |clip| r.intersect(clip));
-        if clipped.w <= 0. || clipped.h <= 0. {
+        let mut clipped = self.clip.map_or(r, |clip| r.intersect(clip));
+        clipped.w = clipped.w.max(0.);
+        clipped.h = clipped.h.max(0.);
+        if (clipped.w <= 0. || clipped.h <= 0.) && !style.keep_offscreen {
             return;
         }
         self.controls.push(Control {
@@ -331,8 +355,13 @@ impl Widgets {
                 color,
             );
         } else if !style.custom {
-            let size = if style.size > 0. { style.size } else { 13. };
-            let lines = Self::wrap(label, r.w - 20., size, measure);
+            let size = if style.size > 0. { style.size } else { 16. };
+            let lines = Self::wrap(
+                label,
+                r.w - if style.left { 20. } else { 12. },
+                size,
+                measure,
+            );
             let line_h = size * 1.6;
             for (i, line) in lines.iter().enumerate() {
                 self.single_line(
@@ -394,17 +423,17 @@ impl Widgets {
             .as_u64()
             .unwrap_or(value.encode_utf16().count() as u64);
         let start = input["start"].as_u64().unwrap_or(end);
-        let caret = measure(&prefix(end), 14., false, false).width;
+        let caret = measure(&prefix(end), 18., false, false).width;
         let offset = if active {
             (caret - r.w + 32.).max(0.)
         } else {
             0.
         };
         let x = r.x + 12. - offset;
-        let y = r.y + (r.h - 23.) / 2.;
+        let y = r.y + (r.h - 29.) / 2.;
         if active && end > start {
-            let start_w = measure(&prefix(start), 14., false, false).width;
-            self.rect(Rect::new(x + start_w, y, caret - start_w, 23.), "#375e73");
+            let start_w = measure(&prefix(start), 18., false, false).width;
+            self.rect(Rect::new(x + start_w, y, caret - start_w, 29.), "#375e73");
         }
         self.raw_text(
             if value.is_empty() {
@@ -414,10 +443,10 @@ impl Widgets {
             },
             x,
             y,
-            TextStyle::new(14., if value.is_empty() { MUTED } else { TEXT }, false),
+            TextStyle::new(18., if value.is_empty() { MUTED } else { TEXT }, false),
         );
         if active && blink {
-            self.rect(Rect::new(x + caret, y, 1., 22.), ACCENT);
+            self.rect(Rect::new(x + caret, y, 1., 28.), ACCENT);
         }
         self.end_clip();
     }

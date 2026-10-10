@@ -43,7 +43,7 @@ impl BrowserUi {
             .cloned()
     }
     fn region_at(&self, x: f64, y: f64) -> String {
-        ["settings", "dialog", "top", "log", "map"]
+        ["settings", "dialog", "top", "log", "hud", "map"]
             .into_iter()
             .find(|id| self.regions.get(*id).is_some_and(|r| r.rect.contains(x, y)))
             .unwrap_or("")
@@ -235,8 +235,10 @@ impl BrowserUi {
                                     &mut effects,
                                 );
                             }
-                            if drag.moved && drag.hit.is_none() {
-                                if drag.region == "map" {
+                            if drag.moved && (drag.hit.is_none() || drag.region == "hud") {
+                                if drag.region == "hud" {
+                                    self.scroll_by("hud", -dx);
+                                } else if drag.region == "map" {
                                     if let Some(c) = &mut self.camera {
                                         c.left -= dx;
                                         c.top -= dy;
@@ -306,7 +308,16 @@ impl BrowserUi {
                 let region = self.region_at(x, y);
                 if !region.is_empty() {
                     consumed = true;
-                    if region == "map" {
+                    if region == "hud" {
+                        self.scroll_by(
+                            "hud",
+                            if n(&event["dx"]) != 0. {
+                                n(&event["dx"])
+                            } else {
+                                n(&event["dy"])
+                            },
+                        );
+                    } else if region == "map" {
                         if let Some(c) = &mut self.camera {
                             c.top += n(&event["dy"]);
                             c.left += n(&event["dx"]);
@@ -407,6 +418,21 @@ impl BrowserUi {
             let step = if b(&e["shift"]) { -1 } else { 1 };
             let next = &controls[(index + step).rem_euclid(controls.len() as i64) as usize];
             self.widgets.focus = next.id.clone();
+            if next.id.starts_with("hud-") {
+                let row: Rect =
+                    serde_json::from_value(self.hud.layout["row"].clone()).expect("HUD row");
+                let rect = next.full_rect;
+                let delta = if rect.x < row.x {
+                    rect.x - row.x
+                } else {
+                    (rect.x + rect.w - row.x - row.w).max(0.)
+                };
+                let offset = n(&self.hud.layout["offset"]) + delta;
+                self.scrolls.insert(
+                    "hud".into(),
+                    clamp(offset, 0., n(&self.hud.layout["maxScroll"])),
+                );
+            }
             if next.kind == "field" {
                 self.activate(next, &Value::Null, effects);
             } else {
