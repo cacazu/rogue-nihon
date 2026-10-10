@@ -34,4 +34,4 @@ if ($Lan) {
     throw 'Use -Lan together with -Address.'
 }
 & node @serverArguments
-if ($LASTEXITCODE -ne 0) { throw 'Preview stopped with an error' }
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

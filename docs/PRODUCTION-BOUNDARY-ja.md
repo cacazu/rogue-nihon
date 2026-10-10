@@ -16,7 +16,7 @@
 | 対象 | 実行時の依存と判断 |
 | --- | --- |
 | `start.ps1` | Node起動と、LAN HTTPSを指定した場合の証明書生成・更新だけ。tests/toolsの読み込みや回収なし。`.local/lan` は起動に使う証明書の保存先。 |
-| `web/server.mjs` | Node標準のHTTP/HTTPS・ファイル配信。回収ツール、テスト、検証結果JSONを読まない。 |
+| `web/server.mjs` | Node標準のHTTP/HTTPS・ファイル配信と、ポート使用中の既存サーバー識別。同じ配信元ならURLを案内し、別サーバーは終了せずポート競合を報告する。回収ツール、テスト、検証結果JSONを読まない。 |
 | `web/index.html` / `style.css` | 本番Canvas・ネイティブ入力と4本の本番JSだけ。テスト用scriptや回収処理なし。 |
 | `app.js` / `canvas-ui.js` / `tiles.js` | Rustからの指示をブラウザーAPI・Canvas・画像へ接続。テスト用操作窓口なし。 |
 | `worker.js` / `event-queue.js` / `library.js` | Worker・共有メモリー入力・Emscriptenのコピー接続。製品の `game.js` / `game.wasm` だけを実行する。 |
