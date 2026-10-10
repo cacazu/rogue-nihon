@@ -20,16 +20,16 @@ function rgba(png){
 }
 const decoded=new Map();
 for(const filename of new Set(manifest.entries.map(e=>e.image)))decoded.set(filename,rgba(await readFile(new URL('../web/assets/pixels-v2/'+filename,import.meta.url))));
-test('49 original semantic IDs map to 45 native32 raster sprites with binary alpha and <=16 colors',async()=>{
- assert.deepEqual(manifest.entries.map(e=>e.id),original.entries.map(e=>e.id));assert.equal(decoded.size,45);
+test('49 original semantic IDs map to 46 native32 raster sprites with binary alpha and <=16 colors',async()=>{
+ assert.deepEqual(manifest.entries.map(e=>e.id),original.entries.map(e=>e.id));assert.equal(decoded.size,46);
  for(const entry of manifest.entries){const image=decoded.get(entry.image);assert.equal(image.width,32);assert.equal(image.height,32);const colors=new Set(),alphas=new Set();for(let i=0;i<image.pixels.length;i+=4){const a=image.pixels[i+3];alphas.add(a);assert.ok(a===0||a===255);if(a)colors.add(image.pixels.subarray(i,i+3).toString('hex'));}assert.ok(colors.size>0&&colors.size<=16,entry.id+' palette '+colors.size);if(!['terrain.unexplored','terrain.floor','terrain.passage','terrain.wall_horizontal','terrain.wall_vertical'].includes(entry.id))assert.ok(alphas.has(0),entry.id+' transparent');}
 });
 test('floor/passages are fully opaque and terrain edges align exactly across tile seams',()=>{
  for(const name of ['terrain.floor.png','terrain.passage.png']){const p=decoded.get(name).pixels;for(let i=3;i<p.length;i+=4)assert.equal(p[i],255);for(let i=0;i<32;i++){assert.deepEqual(p.subarray(i*128,i*128+4),p.subarray(i*128+124,i*128+128));assert.deepEqual(p.subarray(i*4,i*4+4),p.subarray(31*128+i*4,31*128+i*4+4));}}
  const walls=manifest.entries.filter(entry=>entry.id.startsWith('terrain.wall_'));
- assert.equal(walls.length,2);assert.ok(walls.every(entry=>entry.image==='terrain.wall.png'&&entry.rotation===0));
- const p=decoded.get('terrain.wall.png').pixels;
- for(let i=3;i<p.length;i+=4)assert.equal(p[i],255,'Square wall fills every pixel, including its center and corners');
+ assert.equal(walls.length,2);assert.ok(walls.every(entry=>entry.image===entry.id+'.png'&&entry.rotation===0));
+ assert.notDeepEqual(decoded.get(walls[0].image).pixels,decoded.get(walls[1].image).pixels,'Wall orientations have different stone patterns');
+ for(const wall of walls){const p=decoded.get(wall.image).pixels;for(let i=3;i<p.length;i+=4)assert.equal(p[i],255,'Square wall fills every pixel, including its center and corners');}
 });
 test('Rust validates persisted view modes and native scales before the browser uses them',async()=>{
  for(const mode of ['ascii','tiles','pixels']){

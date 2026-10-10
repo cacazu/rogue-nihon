@@ -71,12 +71,9 @@ try {
  }
  foreach($entry in $manifest.entries) {
   if($entry.id -in @('terrain.wall_horizontal','terrain.wall_vertical')) {
-   $entry|Add-Member -Force -NotePropertyName image -NotePropertyValue 'terrain.wall.png'
-   if(-not $done.ContainsKey('shared-wall')) {
-    $wallGeneration=Get-Content -LiteralPath (Join-Path $root 'web\assets\walls\generation.json') -Raw|ConvertFrom-Json
-    $records+=@($wallGeneration.outputs|Where-Object {$_.set -eq 'tiles'})
-    $done['shared-wall']='terrain.wall.png'
-   }
+   $entry|Add-Member -Force -NotePropertyName image -NotePropertyValue ($entry.id+'.png')
+   $wallGeneration=Get-Content -LiteralPath (Join-Path $root 'web\assets\walls\generation.json') -Raw|ConvertFrom-Json
+   $records+=@($wallGeneration.outputs|Where-Object {$_.set -eq 'tiles' -and $_.id -eq $entry.id})
    continue
   }
   $key=$entry.sheet+':'+$entry.index

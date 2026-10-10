@@ -46,7 +46,7 @@ manifest=dict(schema_version=1,style='simple fantasy, thick dark outlines, flat 
 out=ROOT/'web/assets/tiles'
 out.mkdir(parents=True,exist_ok=True)
 (out/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-lines=['# Rogue image-tile inventory','',f'{len(entries)} semantic IDs; 45 unique raster tiles (both walls share one square block; four bolt orientations share one image).','',
+lines=['# Rogue image-tile inventory','',f'{len(entries)} semantic IDs; 46 unique raster tiles (square walls have horizontal/vertical stone patterns; four bolt orientations share one image).','',
        '| ID | Glyph | Meaning | Sheet / slot |','|---|---|---|---|']
 for e in entries:
     glyph=e['glyph'].replace('|','&#124;') if e['glyph']!=' ' else 'space'
@@ -55,4 +55,4 @@ lines+=['','Original map remains 80x24 cells. No animation assets are required: 
         '', 'Hook: web/app.js redraw() / canvas#board. Read frame.map_cells and observational effect IDs; never read hidden places/objects/monsters.','',
         'Traps: trapdoor, arrow, sleep, bear, teleport, poison dart, rust, mysterious all retain the same visible trap image. Item subtypes retain their original category image until the text UI identifies them.']
 (ROOT/'docs/TILE-INVENTORY.md').write_text('\n'.join(lines)+'\n',encoding='utf-8')
-print(json.dumps({'ids':len(entries),'raster_tiles':45,'manifest':str(out/'manifest.json'),'monster_names':monsters}))
+print(json.dumps({'ids':len(entries),'raster_tiles':46,'manifest':str(out/'manifest.json'),'monster_names':monsters}))

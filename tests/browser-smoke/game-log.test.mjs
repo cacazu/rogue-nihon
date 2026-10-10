@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {browserUiRuntime} from "../browser-ui-runtime.mjs";
 async function session(){
  const request=await browserUiRuntime();request({type:"boot",environment:{isolated:true,parameters:{}}});
- for(const set of ["tiles","pixels"]){const pixels=set==="pixels"?32:96;request({type:"api",operation:"assets",ok:true,set,images:Array(45).fill({width:pixels,height:pixels})});}
+ for(const set of ["tiles","pixels"]){const pixels=set==="pixels"?32:96;request({type:"api",operation:"assets",ok:true,set,images:Array(46).fill({width:pixels,height:pixels})});}
  request({type:"event",event:{type:"invoke",id:"new-game"}});request({type:"worker",generation:1,data:{type:"ready"}});return request;
 }
 test("Rust history preserves duplicate events, ignores clears and classifies platform errors",async()=>{

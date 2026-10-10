@@ -14,9 +14,9 @@ const partial = process.argv.includes("--partial");
 const records = [];
 for (const entry of manifest.entries.filter((entry, index, all) => all.findIndex(other => other.image === entry.image) === index)) {
   const destination = path.join(directory, entry.image);
-  if (entry.image === "terrain.wall.png") {
+  if (entry.id.startsWith("terrain.wall_")) {
     const generation = JSON.parse(await readFile(path.join(root, "web/assets/walls/generation.json"), "utf8"));
-    records.push(generation.outputs.find(output => output.set === "pixels-v2"));
+    records.push(generation.outputs.find(output => output.set === "pixels-v2" && output.id === entry.id));
     continue;
   }
   if (entry.id === "actor.player") {
@@ -84,7 +84,7 @@ for (const entry of manifest.entries.filter((entry, index, all) => all.findIndex
 }
 await writeFile(path.join(directory, "generation.json"), JSON.stringify({
   tool: "built-in image_gen", native_pixels: 32, semantic_ids: 49, unique_pngs: records.length, max_colors_per_sprite: 16,
-  alpha_values: [0, 255], packing: "Individual new ImageGen sprites; alpha bounds, nearest-neighbor native sampling, limited palette, binary alpha; periodic floor edges and shared opaque square wall block. Approved silver soldier copied unchanged.",
+  alpha_values: [0, 255], packing: "Individual new ImageGen sprites; alpha bounds, nearest-neighbor native sampling, limited palette, binary alpha; periodic floor edges and opaque square walls with directional stone patterns. Approved silver soldier copied unchanged.",
   images: records
 }, null, 2) + "\n");
 console.log(JSON.stringify({ packed: records.length, expected: new Set(manifest.entries.map(entry => entry.image)).size, partial }));

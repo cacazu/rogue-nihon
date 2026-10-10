@@ -96,7 +96,7 @@
         "ja": "横向きの壁",
         "en": "Horizontal wall"
       },
-      "image": "terrain.wall.png"
+      "image": "terrain.wall_horizontal.png"
     },
     {
       "id": "terrain.wall_vertical",
@@ -110,7 +110,7 @@
         "ja": "縦向きの壁",
         "en": "Vertical wall"
       },
-      "image": "terrain.wall.png"
+      "image": "terrain.wall_vertical.png"
     },
     {
       "id": "terrain.stairs",

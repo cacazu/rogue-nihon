@@ -1,38 +1,67 @@
 {
   "tool": "built-in image_gen",
   "requested_at": "2026-10-11",
-  "request": "縦横壁を同じアセットにする。四角い石のブロック（縦横共通）。",
-  "source": "source.png",
-  "prompts": [
-    "Use case: stylized-concept. Asset type: single production Rogue dungeon WALL TILE. Create ONE orientation-independent square gray stone wall block, used unchanged for horizontal and vertical walls. A front-facing flat square BOX silhouette occupying a full square, with a thick dark charcoal outer outline and subtle simple beveled light gray rim around a solid medium gray stone face. NOT a hollow frame; center is solid gray stone. Native 32x32 logical pixel art shown enlarged as uniform square nearest-neighbor blocks. Clean broad flat 2-3 gray stone shades, restrained palette maximum 8 colors, one-logical-pixel dark outline, no fine noise. Symmetric square outer geometry with equal thickness on all four sides. Straight full-square footprint; corner pixels present, no rounded corners, no horizontal/vertical strips. Tiny flat carved stone marks only if useful for a stone material, no separate bricks. Top-down/front-on game sprite; no isometric perspective, no 3D cube visible sides, no shadow, no scene, no floor, no text, numbers, captions, labels, watermark, or grid. Transparent alpha background only outside the one complete square block; square block itself opaque. Intended for a 32x32 game tile which is used without any rotation on both orientations. The user explicitly asked to unify vertical and horizontal walls into the same box asset.",
-    "Use case: precise-object-edit. Edit target: the generated square gray stone block image. Keep ONE flat square gray stone wall tile with the same simple dark charcoal outline and light gray square beveled rim. Fix these issues: fill the entire central HOLE with opaque flat medium gray stone; there must be absolutely NO holes, cracks, transparency, shadows, gradients, smooth shading or blurred texture anywhere. Remove fine noise and use strictly chunky flat pixel art colors. The square block must fill the ENTIRE square image canvas edge to edge, with no margin/background outside the block. Native logical pixel grid is exactly 32 x 32, uniformly enlarged by nearest neighbor. Uniform flat medium gray face inside, a simple 2 logical pixel wide lighter square bevel rim, and a 1 logical pixel wide dark gray square outline along the four canvas edges, all corners present. Maximum 5 solid gray colors. Straight square front face, no visible side planes, no perspective. Use subtle 2-3 pixel stone markings only. ENTIRE IMAGE 100 percent opaque. Suitable for repeating horizontally and vertically as the SAME wall tile in a pixel art roguelike. No hollow frame, no hole, no gradients or soft edges, no extra objects, floor, text or label."
+  "request": "縦と横で模様を変えて。作成してアセット入れ替えるだけでいい。",
+  "reference": "source.png",
+  "variants": [
+    {
+      "id": "terrain.wall_horizontal",
+      "prompt": "Use case: precise-object-edit. Edit target: the existing square stone wall block. Keep the EXACT square full-canvas footprint, fully opaque center, gray stone palette, dark charcoal outer outline and light gray square beveled rim. Change ONLY the pattern INSIDE the rim. Asset for a 32x32 native pixel-art Rogue dungeon wall, shown enlarged on an exact logical 32x32 grid with flat nearest-neighbor square pixel blocks. Broad flat gray shades; maximum 8 colors. Full image edge-to-edge opaque square; every corner pixel present. No hollow center, no holes, no transparency, no thin horizontal or vertical strip, no isometric cube, no perspective, no scenery, no shadow, no text or labels. Preserve the outer border dimensions and colors from the input. Remove tiny random surface speckles and replace them with the requested clean masonry pattern, which must be readable at 32 pixels. Requested pattern: HORIZONTAL masonry courses on the solid stone face. Exactly TWO dark horizontal mortar grooves run left-to-right inside the border, dividing the face into three broad horizontal rows of gray stone. Add one short staggered vertical stone joint in each row. Thin logical-one-pixel dark gray grooves, clearly different from the brighter rim. The horizontal rows must be the dominant readable direction. Keep the square outline unchanged.",
+      "source": "terrain.wall_horizontal.source.png",
+      "source_sha256": "ac0fddb5b54d0b198bc0c5ed28b3959168934c88916104e98dc3d64dd790e4f5"
+    },
+    {
+      "id": "terrain.wall_vertical",
+      "prompt": "Use case: precise-object-edit. Edit target: the existing square stone wall block. Keep the EXACT square full-canvas footprint, fully opaque center, gray stone palette, dark charcoal outer outline and light gray square beveled rim. Change ONLY the pattern INSIDE the rim. Asset for a 32x32 native pixel-art Rogue dungeon wall, shown enlarged on an exact logical 32x32 grid with flat nearest-neighbor square pixel blocks. Broad flat gray shades; maximum 8 colors. Full image edge-to-edge opaque square; every corner pixel present. No hollow center, no holes, no transparency, no thin horizontal or vertical strip, no isometric cube, no perspective, no scenery, no shadow, no text or labels. Preserve the outer border dimensions and colors from the input. Remove tiny random surface speckles and replace them with the requested clean masonry pattern, which must be readable at 32 pixels. Requested pattern: VERTICAL masonry columns on the solid stone face. Exactly TWO dark vertical mortar grooves run top-to-bottom inside the border, dividing the face into three broad vertical columns of gray stone. Add one short staggered horizontal stone joint in each column. Thin logical-one-pixel dark gray grooves, clearly different from the brighter rim. The vertical columns must be the dominant readable direction. Keep the square outline unchanged.",
+      "source": "terrain.wall_vertical.source.png",
+      "source_sha256": "b5ee9fe65d98abc1cb53facbd2101b08d6fd718608dbab55aa0d874c4a9128ae"
+    }
   ],
   "outputs": [
     {
-      "id": "terrain.wall",
-      "file": "terrain.wall.png",
+      "id": "terrain.wall_horizontal",
+      "file": "terrain.wall_horizontal.png",
       "set": "pixels-v2",
-      "source": "../walls/source.png",
+      "source": "../walls/terrain.wall_horizontal.source.png",
       "pixels": 32,
       "semantic_ids": [
-        "terrain.wall_horizontal",
-        "terrain.wall_vertical"
+        "terrain.wall_horizontal"
       ],
-      "sha256": "55e2aad045859c33502285199f5fd3d6e8bc3bf26cc99619d92791e5305ff7b2"
+      "sha256": "5cf981664ac3c3602e805276a203512b5d9226c4d198a1bd5acc7d0ce322b878"
     },
     {
-      "id": "terrain.wall",
-      "file": "terrain.wall.png",
+      "id": "terrain.wall_horizontal",
+      "file": "terrain.wall_horizontal.png",
       "set": "tiles",
-      "source": "../walls/source.png",
+      "source": "../walls/terrain.wall_horizontal.source.png",
       "pixels": 96,
       "semantic_ids": [
-        "terrain.wall_horizontal",
+        "terrain.wall_horizontal"
+      ],
+      "sha256": "78c0daac4eb354cb9db8823481e327a229c9b00e36a30d9d46069911b6cdf630"
+    },
+    {
+      "id": "terrain.wall_vertical",
+      "file": "terrain.wall_vertical.png",
+      "set": "pixels-v2",
+      "source": "../walls/terrain.wall_vertical.source.png",
+      "pixels": 32,
+      "semantic_ids": [
         "terrain.wall_vertical"
       ],
-      "sha256": "6eb593d8ab1f4b6b453ec39cc3bddc092f55cfbf921df74f9ef3d118a8ecf05e"
+      "sha256": "cc15bff1f59dd276147a358710c32cbbb2046c238c8ad82d6a13382f0acab73d"
+    },
+    {
+      "id": "terrain.wall_vertical",
+      "file": "terrain.wall_vertical.png",
+      "set": "tiles",
+      "source": "../walls/terrain.wall_vertical.source.png",
+      "pixels": 96,
+      "semantic_ids": [
+        "terrain.wall_vertical"
+      ],
+      "sha256": "2f5fbb52dc41267bcecc47ad7601bcd54f3819afc8117c260b2bbc7e2f6df8cb"
     }
   ],
-  "source_sha256": "604e4a2025c289b972cc2dcce5c294c5fd9c90c28c3eb8cf344c6239d0517f02",
-  "packing": "Nearest-neighbor 32x32 sampling, at most 8 colors, opaque RGBA, 96x96 nearest-neighbor enlargement. Both wall glyphs share one unrotated PNG per set."
+  "packing": "Nearest-neighbor 32x32 sampling, at most 8 colors, opaque RGBA, 96x96 nearest-neighbor enlargement. Equal square footprints; horizontal courses and vertical columns use separate unrotated PNGs."
 }

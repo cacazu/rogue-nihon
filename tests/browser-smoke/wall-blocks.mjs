@@ -38,7 +38,7 @@ async function open(mobile=false){
   page.on("pageerror",error=>evidence.errors.push(error.message));
   page.on("response",response=>{const url=new URL(response.url());if(url.pathname.includes("terrain.wall"))evidence.responses.push({path:url.pathname,status:response.status()});});
   await page.goto(base+"/?trace=1&view=pixels");
-  await page.waitForFunction(()=>__rogueBrowserTest?.graphics?.images===45&&__rogueBrowserTest.canvas.controls.some(c=>c.id==="new-game"&&!c.disabled));
+  await page.waitForFunction(()=>__rogueBrowserTest?.graphics?.images===46&&__rogueBrowserTest.canvas.controls.some(c=>c.id==="new-game"&&!c.disabled));
   for(const [id,value] of [["name","石壁の勇者"],["seed","17"]]){await click(id);await page.keyboard.press("Control+a");await page.keyboard.insertText(value);await paint();}
   await click("new-game");await page.waitForFunction(()=>__rogueBrowserTest.running&&__rogueBrowserTest.trace&&__rogueBrowserTest.queuePending===0);await paint();
 }
@@ -52,15 +52,15 @@ async function verifyWallPixels(){
     const s=__rogueBrowserTest.canvas,mode=__rogueBrowserTest.graphics.mode,canvas=document.getElementById("rogue-canvas"),ratio=canvas.width/s.width;
     const frame=__rogueBrowserTest.frame,ids=frame.map_tiles;
     const seen={horizontal:ids.filter(id=>id===4).length,vertical:ids.filter(id=>id===5).length};
-    const commands=__rogueBrowserTest.commands.filter(c=>c.op==="image"&&c.image==="terrain.wall.png");
-    if(commands.some(c=>c.rotation!==0))throw Error("Shared wall was rotated");
+    const commands=__rogueBrowserTest.commands.filter(c=>c.op==="image"&&/^terrain\.wall_(horizontal|vertical)\.png$/.test(c.image));
+    if(commands.some(c=>c.rotation!==0))throw Error("Wall pattern was rotated");
     const samples=commands.filter(c=>{const r=c.rect,m=s.mapRect;return r.x>=m.x&&r.y>=m.y+84&&r.x+r.w<=m.x+m.w&&r.y+r.h<=m.y+m.h&&!s.controls.some(control=>{const b=control.rect;return r.x<b.x+b.w&&b.x<r.x+r.w&&r.y<b.y+b.h&&b.y<r.y+r.h;});});
     if(!samples.length)throw Error("No fully visible wall tile to compare");
-    const image=new Image();image.src="/web/assets/"+(mode==="pixels"?"pixels-v2":"tiles")+"/terrain.wall.png";await image.decode();
+    const images=new Map();for(const filename of new Set(commands.map(c=>c.image))){const image=new Image();image.src="/web/assets/"+(mode==="pixels"?"pixels-v2":"tiles")+"/"+filename;await image.decode();images.set(filename,image);}
     const expected=document.createElement("canvas"),context=canvas.getContext("2d");let compared=0;
     for(const c of samples){
       const r=c.rect,w=Math.round(r.w*ratio),h=Math.round(r.h*ratio);expected.width=w;expected.height=h;
-      const target=expected.getContext("2d");target.imageSmoothingEnabled=false;target.drawImage(image,0,0,w,h);
+      const target=expected.getContext("2d");target.imageSmoothingEnabled=false;target.drawImage(images.get(c.image),0,0,w,h);
       const a=target.getImageData(0,0,w,h).data,b=context.getImageData(Math.round(r.x*ratio),Math.round(r.y*ratio),w,h).data;
       if(a.some((value,index)=>value!==b[index]))throw Error("Rendered wall differs from its square asset at "+JSON.stringify(r));
       if(a.some((value,index)=>index%4===3&&value!==255))throw Error("Wall has a transparent hole or edge");
@@ -75,16 +75,16 @@ try{
   runtime=await prepareBrowserRuntime(root);
   browser=await chromium.launch({executablePath:process.env.ROGUE_CHROME||"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",headless:true,args:["--disable-gpu"],downloadsPath:runtime.downloadsPath});
   evidence.browser=browser.version();
-  await check("Both active sets share one unrotated square asset for the two original wall IDs",async()=>{
+  await check("Both active sets have distinct unrotated square patterns for the two original wall IDs",async()=>{
     for(const manifest of Object.values(manifests)){
-      assert.equal(manifest.entries.length,49);assert.equal(new Set(manifest.entries.map(e=>e.image)).size,45);
-      for(const id of ["terrain.wall_horizontal","terrain.wall_vertical"]){const e=manifest.entries.find(e=>e.id===id);assert.equal(e.image,"terrain.wall.png");assert.equal(e.rotation,0);}
+      assert.equal(manifest.entries.length,49);assert.equal(new Set(manifest.entries.map(e=>e.image)).size,46);
+      for(const id of ["terrain.wall_horizontal","terrain.wall_vertical"]){const e=manifest.entries.find(e=>e.id===id);assert.equal(e.image,id+".png");assert.equal(e.rotation,0);}
     }
   });
   await open();
-  await check("Real game loads the shared wall PNGs and both tile sets become ready",async()=>{
-    for(const set of ["pixels-v2","tiles"])assert.ok(evidence.responses.some(r=>r.path==="/web/assets/"+set+"/terrain.wall.png"&&r.status===200));
-    assert.ok(evidence.responses.every(r=>!r.path.includes("wall_horizontal")&&!r.path.includes("wall_vertical")));
+  await check("Real game loads the two directional wall PNGs and both tile sets become ready",async()=>{
+    for(const set of ["pixels-v2","tiles"])for(const id of ["terrain.wall_horizontal","terrain.wall_vertical"])assert.ok(evidence.responses.some(r=>r.path==="/web/assets/"+set+"/"+id+".png"&&r.status===200));
+    assert.ok(evidence.responses.every(r=>!r.path.endsWith("/terrain.wall.png")));
     assert.equal(await page.evaluate(()=>__rogueBrowserTest.diagnostics.runtimeError),null);
   });
   const before=await state();
@@ -94,7 +94,7 @@ try{
       assert.equal(await page.evaluate(()=>__rogueBrowserTest.graphics.tileSize),sizes[index]);
       if((mode==="pixels"&&index===1)||(mode==="tiles"&&index===2))await shot("pc-"+mode);
       if(mode==="pixels"&&index===1){
-        const clip=await page.evaluate(()=>{const rects=__rogueBrowserTest.commands.filter(c=>c.op==="image"&&c.image==="terrain.wall.png").map(c=>c.rect),x=Math.min(...rects.map(r=>r.x))-8,y=Math.min(...rects.map(r=>r.y))-8;return {x,y,width:Math.max(...rects.map(r=>r.x+r.w))-x+8,height:Math.max(...rects.map(r=>r.y+r.h))-y+8};});
+        const clip=await page.evaluate(()=>{const rects=__rogueBrowserTest.commands.filter(c=>c.op==="image"&&/^terrain\.wall_(horizontal|vertical)\.png$/.test(c.image)).map(c=>c.rect),x=Math.min(...rects.map(r=>r.x))-8,y=Math.min(...rects.map(r=>r.y))-8;return {x,y,width:Math.max(...rects.map(r=>r.x+r.w))-x+8,height:Math.max(...rects.map(r=>r.y+r.h))-y+8};});
         await shot("pc-pixels-room",clip);
       }
     });

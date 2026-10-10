@@ -1,6 +1,6 @@
 {
   "tool": "built-in image_gen",
-  "unique_pngs": 45,
+  "unique_pngs": 46,
   "semantic_ids": 49,
   "technical_packing": "Alpha component bounds preserve sprites across imperfect atlas grid margins; resize to 96px",
   "images": [
@@ -53,16 +53,26 @@
       "sha256": "aa88e8b58caa90b35e3fda41b28e90b3fc939a2b782fde81ab9a9b552799fb92"
     },
     {
-      "id": "terrain.wall",
-      "file": "terrain.wall.png",
+      "id": "terrain.wall_horizontal",
+      "file": "terrain.wall_horizontal.png",
       "set": "tiles",
-      "source": "../walls/source.png",
+      "source": "../walls/terrain.wall_horizontal.source.png",
       "pixels": 96,
       "semantic_ids": [
-        "terrain.wall_horizontal",
+        "terrain.wall_horizontal"
+      ],
+      "sha256": "78c0daac4eb354cb9db8823481e327a229c9b00e36a30d9d46069911b6cdf630"
+    },
+    {
+      "id": "terrain.wall_vertical",
+      "file": "terrain.wall_vertical.png",
+      "set": "tiles",
+      "source": "../walls/terrain.wall_vertical.source.png",
+      "pixels": 96,
+      "semantic_ids": [
         "terrain.wall_vertical"
       ],
-      "sha256": "6eb593d8ab1f4b6b453ec39cc3bddc092f55cfbf921df74f9ef3d118a8ecf05e"
+      "sha256": "2f5fbb52dc41267bcecc47ad7601bcd54f3819afc8117c260b2bbc7e2f6df8cb"
     },
     {
       "id": "terrain.stairs",
