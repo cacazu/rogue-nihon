@@ -12,8 +12,8 @@ foreach ($match in [regex]::Matches($header,'(?m)^#define (RG_[A-Z0-9_]+) (0x[0-
     $constants[$name] = $value
     $rustLines.Add(('pub const ' + $name + ': u32 = ' + $number + ';'))
 }
-New-Item -ItemType Directory -Path (Join-Path $project 'rust\src') -Force | Out-Null
-[System.IO.File]::WriteAllText((Join-Path $project 'rust\src\abi.rs'),($rustLines -join "`n") + "`n",[System.Text.UTF8Encoding]::new($false))
+New-Item -ItemType Directory -Path (Join-Path $project 'rust\crates\contract\src') -Force | Out-Null
+[System.IO.File]::WriteAllText((Join-Path $project 'rust\crates\contract\src\abi.rs'),($rustLines -join "`n") + "`n",[System.Text.UTF8Encoding]::new($false))
 $json = $constants | ConvertTo-Json -Compress
 [System.IO.File]::WriteAllText((Join-Path $project 'web\abi.js'),('/* Generated from contract/rogue_abi.h. */' + "`n" + 'globalThis.RG_ABI = Object.freeze(' + $json + ');' + "`n"),[System.Text.UTF8Encoding]::new($false))
 Write-Output ('Generated ' + $constants.Count + ' ABI constants')

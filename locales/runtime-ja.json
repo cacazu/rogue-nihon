@@ -48,11 +48,11 @@
       "conversions": []
     },
     "ui.detect_magic": {
-      "template": "この階に魔法の気配を感じる。スペースキーで戻る。",
+      "template": "この階に魔法の気配を感じる。",
       "conversions": []
     },
     "ui.detect_food": {
-      "template": "鼻がむずむずし、食べ物のにおいを感じる。スペースキーで戻る。",
+      "template": "鼻がむずむずし、食べ物のにおいを感じる。",
       "conversions": []
     },
     "ui.level_map": {

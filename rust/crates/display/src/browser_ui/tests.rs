@@ -1,0 +1,185 @@
+use super::*;
+fn measure(text: &str, size: f64, _bold: bool, _mono: bool) -> TextSize {
+    TextSize {
+        width: text
+            .chars()
+            .map(|c| if c.is_ascii() { size * 0.55 } else { size })
+            .sum(),
+        ascent: 0.,
+        descent: size,
+    }
+}
+fn model() -> Value {
+    json!({"language":"ja","running":true,"ready":true,"displayMode":"pixels","tileSize":32,"frame":{"width":80,"height":24,"player":{"x":10,"y":10},"ui":{"name":"勇者","status":{"args":[{"value":1},{"value":0},{"value":12},{"value":12},{"value":16},{"value":16},{"value":6},{"value":1},{"value":0},{"value":"status.hunger.0"}]}}}})
+}
+fn view(width: f64, height: f64) -> Value {
+    json!({"width":width,"height":height,"inputs":{}})
+}
+fn click(ui: &mut BrowserUi, id: &str) -> Value {
+    let control = ui.widgets.controls.iter().find(|c| c.id == id).unwrap();
+    let x = control.rect.x + control.rect.w / 2.;
+    let y = control.rect.y + control.rect.h / 2.;
+    ui.event(
+        json!({"type":"down","id":1,"x":x,"y":y,"pointerType":"touch","button":0,"primary":true}),
+    );
+    ui.event(json!({"type":"up","id":1,"x":x,"y":y,"pointerType":"touch","captured":true}))
+}
+#[test]
+fn responsive_hud_has_one_row_and_centered_icons() {
+    let mut ui = BrowserUi::new(measure);
+    for (width, height) in [
+        (320., 844.),
+        (390., 844.),
+        (700., 900.),
+        (1240., 900.),
+        (844., 390.),
+    ] {
+        let output = ui.render(model(), view(width, height));
+        let hud = &output["diagnostics"]["hud"];
+        let row: Rect = serde_json::from_value(hud["row"].clone()).unwrap();
+        assert_eq!(array(&hud["items"]).len(), 7);
+        for item in array(&hud["items"]) {
+            let rect: Rect = serde_json::from_value(item["rect"].clone()).unwrap();
+            assert_eq!(rect.y, row.y);
+            assert!(rect.x >= row.x && rect.x + rect.w <= row.x + row.w + 0.01);
+        }
+        let button = ui
+            .widgets
+            .controls
+            .iter()
+            .find(|c| c.id == "settings-toggle")
+            .unwrap();
+        let icon = ui
+            .widgets
+            .icons
+            .iter()
+            .find(|i| i["name"] == "settings")
+            .unwrap();
+        let rect: Rect = serde_json::from_value(icon["rect"].clone()).unwrap();
+        assert_eq!(rect.x + rect.w / 2., button.rect.x + button.rect.w / 2.);
+        assert_eq!(rect.y + rect.h / 2., button.rect.y + button.rect.h / 2.);
+        let mut depth = 0;
+        for command in array(&output["commands"]) {
+            match s(&command["op"]) {
+                "save" | "clip" => depth += 1,
+                "restore" => depth -= 1,
+                _ => {}
+            }
+            assert!(depth >= 0);
+        }
+        assert_eq!(depth, 0);
+    }
+}
+#[test]
+fn hud_click_and_escape_are_local_and_never_send_game_input() {
+    let mut ui = BrowserUi::new(measure);
+    ui.render(model(), view(390., 844.));
+    let clicked = click(&mut ui, "hud-hp");
+    assert!(
+        array(&clicked["effects"])
+            .iter()
+            .all(|e| e["kind"] != "send")
+    );
+    let output = ui.render(model(), view(390., 844.));
+    assert_eq!(output["diagnostics"]["hud"]["tooltip"]["id"], "hp");
+    let escape = ui.event(json!({"type":"key","key":"Escape"}));
+    assert_eq!(escape["consumed"], true);
+    assert!(array(&escape["effects"]).is_empty());
+    ui.render(model(), view(390., 844.));
+    assert!(ui.hud.layout["tooltip"].is_null());
+}
+#[test]
+fn canceled_or_moved_press_never_activates_a_button() {
+    let mut ui = BrowserUi::new(measure);
+    ui.render(model(), view(390., 844.));
+    let r = ui
+        .widgets
+        .controls
+        .iter()
+        .find(|c| c.id == "settings-toggle")
+        .unwrap()
+        .rect;
+    ui.event(json!({"type":"down","id":4,"x":r.x+10.,"y":r.y+10.,"button":0,"primary":true}));
+    ui.event(json!({"type":"cancel","id":4}));
+    assert!(array(&ui.event(json!({"type":"up","id":4,"x":r.x+10.,"y":r.y+10.,"captured":true}))["effects"]).is_empty());
+    ui.event(json!({"type":"down","id":5,"x":r.x+10.,"y":r.y+10.,"button":0,"primary":true}));
+    ui.event(json!({"type":"move","id":5,"x":r.x+30.,"y":r.y+10.,"buttons":1,"captured":true}));
+    let up = ui.event(json!({"type":"up","id":5,"x":r.x+10.,"y":r.y+10.,"captured":true}));
+    assert!(array(&up["effects"]).iter().all(|e| e["kind"] != "invoke"));
+}
+#[test]
+fn modal_keys_and_composition_are_isolated_from_the_game() {
+    let mut ui = BrowserUi::new(measure);
+    let mut m = model();
+    m["settingsOpen"] = json!(true);
+    ui.render(m, view(390., 844.));
+    let arrow = ui.event(json!({"type":"key","key":"ArrowDown"}));
+    assert_eq!(arrow["consumed"], true);
+    assert!(array(&arrow["effects"]).is_empty());
+    let composition = ui.event(json!({"type":"key","key":"Enter","composing":true}));
+    assert_eq!(composition["consumed"], false);
+    assert!(array(&composition["effects"]).is_empty());
+    let escape = ui.event(json!({"type":"key","key":"Escape"}));
+    assert_eq!(
+        escape["effects"][0],
+        json!({"kind":"invoke","id":"settings-close"})
+    );
+}
+
+#[test]
+fn raw_keys_preserve_scalar_and_modifier_contract() {
+    use rogue_contract::*;
+    let mut ui = BrowserUi::new(measure);
+    let output=ui.event(json!({"type":"raw-key","key":"ArrowUp","shiftKey":true,"ctrlKey":true,"altKey":true,"repeat":true}));
+    assert_eq!(
+        output["raw"],
+        json!(RG_KEY_UP | RG_EVENT_SHIFT | RG_EVENT_CTRL | RG_EVENT_ALT | RG_EVENT_REPEAT)
+    );
+    assert_eq!(
+        ui.event(json!({"type":"raw-key","key":"勇"}))["raw"],
+        json!('勇' as u32)
+    );
+    assert!(ui.event(json!({"type":"raw-key","key":"F12"}))["raw"].is_null());
+}
+
+#[test]
+fn hud_is_reusable_without_a_browser_surface() {
+    let mut hud = hud::HudWidget::default();
+    let mut widgets = Widgets::default();
+    let m = model();
+    hud.draw(
+        &mut widgets,
+        hud::HudData {
+            map: Rect::new(0., 0., 320., 500.),
+            viewport_height: 844.,
+            name: "別の画面",
+            status: &m["frame"]["ui"]["status"],
+            settings_disabled: true,
+            label: &|id| id.to_string(),
+        },
+        measure,
+    );
+    assert_eq!(array(&hud.layout["items"]).len(), 7);
+    assert_eq!(hud.layout["items"][2]["text"], "12/12");
+    assert!(
+        widgets
+            .controls
+            .iter()
+            .find(|c| c.id == "settings-toggle")
+            .unwrap()
+            .disabled
+    );
+}
+
+#[test]
+fn settings_blocks_game_input_before_the_next_repaint() {
+    let mut ui = BrowserUi::new(measure);
+    let mut m = model();
+    m["frame"]["ui"]["mode"] = json!("game");
+    ui.render(m.clone(), view(390., 844.));
+    m["settingsOpen"] = json!(true);
+    ui.set_context(m);
+    let event = ui.event(json!({"type":"key","key":"h"}));
+    assert_eq!(event["consumed"], true);
+    assert!(array(&event["effects"]).is_empty());
+}

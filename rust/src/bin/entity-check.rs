@@ -1,8 +1,5 @@
-//! Name/knowledge regression checks; no C state, host callbacks, or RNG.
-#[path = "../display.rs"]
-mod display;
-#[path = "../entities.rs"]
-mod entities;
+use rogue_display::{display, entities};
+// Name/knowledge regression checks; no C state, host callbacks, or RNG.
 use serde_json::{Value, json};
 
 fn rendered(value: Value) -> String {
@@ -163,6 +160,10 @@ fn main() {
     );
     verify(
         json!({"type":"item","category":"amulet","count":1}),
+        "イェンダーの護符",
+    );
+    verify(
+        json!({"type":"item","category":"amulet","count":0}),
         "イェンダーの護符",
     );
     verify(
@@ -331,6 +332,21 @@ fn main() {
     assert_eq!(legacy.text, "Untranslated dynamic fragment");
     assert_eq!(legacy.missing_ids, vec!["message.legacy"]);
     checks += 1;
+    assert_eq!(
+        entities::render(&json!({"type":"item","category":"amulet","count":0}), "en").as_deref(),
+        Some("The Amulet of Yendor"),
+    );
+    assert!(
+        entities::render(&json!({"type":"item","category":"amulet","count":-1}), "ja").is_none()
+    );
+    assert!(
+        entities::render(
+            &json!({"type":"item","category":"food","which":0,"count":0}),
+            "ja"
+        )
+        .is_none()
+    );
+    checks += 3;
     println!(
         "{}",
         json!({"entity_checks":checks,"result":"pass","scope":"semantic name rendering, Japanese display integration, catalogs and hidden-information guards; no C game or browser"})

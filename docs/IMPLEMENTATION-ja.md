@@ -1,21 +1,21 @@
 # Rogueの4層と日本語化
 
-RRP Rogue 5.4.4のCロジックをRust/Wasmの表示・入力・プラットフォームへ接続した。取得原本55ファイル、取得archive、既存Brogueを変更せず、隔離した実装コピーで作業した。
+RRP Rogue 5.4.4のCロジックをBevy 0.19.1を使うRust/Wasmの表示・入力・プラットフォームへ接続した。取得原本55ファイル、取得archive、既存Brogueを変更せず、隔離した実装コピーで作業した。
 
 ## 境界
 
 ```mermaid
 flowchart LR
     Browser[ブラウザ入力] --> Queue[WorkerのSABキュー]
-    Queue --> Input[Rust入力と文字エディター]
+    Queue --> Input[Bevy入力システム・文字エディター]
     Input --> Core[Cルール・RNG・入力待ち]
     Core --> Knowledge[Cの探索記憶・ASCII観測セル]
     Core --> Meaning[意味ID・型付き引数・公開済み名称情報]
-    Knowledge --> Display[Rustの不変frame]
+    Knowledge --> Display[Bevy表示システム・不変frame]
     Meaning --> Display
-    Display --> View[マップCanvas・UTF-8文章DOM]
+    Display --> View[単一Canvas2D・マップと日本語UI]
     Core --> Boundary[外側command境界]
-    Boundary --> Platform[Rust checkpoint・履歴・保存検証]
+    Boundary --> Platform[Bevy Session・checkpoint・履歴・保存検証]
     Platform --> Storage[IndexedDB]
 ```
 
@@ -27,11 +27,33 @@ flowchart LR
 | command・ターン | logic/command.c command、daemon.c do_daemons/do_fuses |
 | 観測と描画 | logic/knowledge.c rg_knowledge_present、Rust rg_host_present |
 | 意味メッセージ | logic/message.c rg_message_prepare/rg_message_flush、semantic.c rg_semantic_argument、Rust rg_host_message |
-| 状態・設定・ヘルプ・一覧・結末 | C rg_ui_line/rg_ui_printf、Rust rg_host_ui、presentation.rs |
+| 状態・設定・ヘルプ・一覧・結末 | C rg_ui_line/rg_ui_printf、Rust rg_host_ui、presentation.rs / game_window.rs |
 | 文字入力 | logic/options.c get_str/strucpy、Rust rg_host_text_mode/rg_host_read_key/rg_host_player_name |
 | 保存・復元 | logic/state.c、save_adapter.c、Rust rg_host_checkpoint/rg_host_restore_data/platform::Envelope |
 
 ABIは固定幅整数と借用byte列を使う。CのunionやWINDOW、FILE、callback pointerは境界を渡さない。保存allocationはCの対応freeで解放する。
+
+## Cargoクレート
+
+RustはCargo workspace内の独立クレートに分ける。`rogue-display`（`rust/crates/display/`）は翻訳・画面構造・地図の観測キャッシュ・足元・フレーム生成、`rogue-input`（`rust/crates/input/`）はキー変換・UTF-8編集・持ち物操作の状態、`rogue-platform`（`rust/crates/platform/`）は保存検証・checkpoint・入力journal・再生状態を所有する。3クレートはBevyに依存し、それぞれのPluginがResource・Component・Systemを登録する。C/JSのFFIは接続用クレートに限定し、3クレートではunsafeを禁止する。
+
+共有の生成済みABI定数は `rogue-contract`（`rust/crates/contract/src/abi.rs`）に置く。同クレートの `runtime.rs` はBevyのSystemSetと確定キーを伝えるJournalPort Resourceを定義する。入力は表示の公開descriptor・選択ポリシーを参照する一方向の依存とし、表示は入力に依存しない。プラットフォームはBevy・共通契約・serdeを使い、表示・入力には依存しない。持ち物の描画は表示の `inventory.rs`、選択・予約は入力の `inventory.rs` が担当し、描画には `InventoryView` を渡す。
+
+既存の `rogue-layers` はこれらを接続するstaticlibを作る。`lib.rs` にC/JSの境界、`session.rs` に初期化データと各層のResourceへの借用ビュー、`engine.rs` にBevy App・実行順序とクレート間の状態投影を残す。実際の状態は各クレートが定義するResourceとComponentに分けて保持する。`layer-check`・`entity-check`・`engine-check` も実際のクレートを参照する。各層の単体テストは `tools/run-clean.ps1 cargo test --offline --locked --manifest-path rust/Cargo.toml --workspace --exclude rogue-layers --lib` で実行できる。
+
+## Bevy ランタイム
+
+`rust/src/engine.rs` は実際の `bevy::App` を所有する。DefaultPlugins、winit、WGPU、TimePlugin は使わず、ブラウザの Worker と Canvas2D に接続する3つの Plugin を登録する。
+
+| Plugin | Resource / Entity とシステム |
+| --- | --- |
+| RogueDisplayPlugin（rogue-display） | GameWindowView と ObservedMap の Entity。翻訳済みウインドウ、直前のマップ、表示効果、不変フレームを生成・保持する。 |
+| RogueInputPlugin（rogue-input） | State と InputPort Resource。ウインドウ内のキーと Unicode scalar を原 C の byte/キーへ変換し、journal確定後に文字編集と持ち物操作へ反映する。 |
+| RoguePlatformPlugin（rogue-platform） | Session・JournalPort・SavePort Resource。実際に消費したキーをjournalへ記録し、checkpointと入力履歴から既存形式の保存envelopeを作る。 |
+
+C の同期入力待ち・表示・保存の FFI 呼出しに合わせて App.update() を呼ぶ。システムの順序は Presentation → Input → Journal → AcceptedInput → Frame → Save に固定し、単一スレッドで実行する。時間経過だけで C のコマンドを実行せず、描画のために C の乱数を呼ばない。保存済みキーは以前と同じ経路で C に再生し、再変換しない。新規セッションでは App/World を作り直し、ウインドウとマップのキャッシュを消す。
+
+原 C のルール・RNG・FFI ABI・保存形式は維持する。ブラウザの再描画はキャッシュだけを使う。フレームの `engine` フィールドで Bevy の版と Canvas2D バックエンドを観測できるが、この診断情報をゲーム画面に表示しない。
 
 ## 日本語表示
 
@@ -39,7 +61,15 @@ ABIは固定幅整数と借用byte列を使う。CのunionやWINDOW、FILE、cal
 
 6系統のカタログはゲーム本文277、ゲームUI137、名称408と語形35、runtime41、結末27、Web UI83の意味IDを含む。系統間で共用する2 IDは内容一致を検査するため、合計を単純なユニークID数として扱わない。catalog再生成でも既存意味IDを保つ。
 
-日本語のCanvasはマップ用ASCIIセルだけを描く。メッセージ、状態、名前、一覧、ヘルプ、設定、死亡・勝利・得点はUTF-8のDOMに表示する。一覧の文字幅・折り返し・スクロールが元のMoreやターンを増減させることはない。比較用のraw cellsは原Cが生成した英語・ASCII観測として別に保つ。
+ゲーム操作は **Rust ゲームウインドウ → Rust 入力 → C 本体 → Rust 表示** の順で処理する。`game_window.rs` がウインドウの種類・翻訳済みタイトル・操作キーを定義し、`rogue-input` が物理入力を C のキーへ変換する。`rg_host_read_key` は入力待ちの直前に Rust の表示を通知する。C の品物選択は公開済みの所持品 descriptor を `choices` として渡し、Rust が選択ボタンに変換する。Canvas2D は Rust の表示データを描画し、当たり判定とフォーカスから既存の入力経路へ送信する。
+
+`rogue-input` の `inventory.rs` は Bevy の Session に保持する持ち物メニューの状態を扱う。C の `i` は公開済み descriptor の一覧を渡して閉じる入力を待ち、Rust は選択・詳細・戻るを `Input::View` として再表示する。表示だけの入力は C の journal に記録しない。確定した操作は C のコマンド待ちへ渡し、その後の対象入力で候補キーを照合して渡す。投げる方向は通常の移動入力を使い、杖の方向、指輪を着ける際の手、命名・識別の追加入力は C のウインドウで受ける。対象入力の前に失敗したり取消した場合は予約を破棄する。
+
+投げる C コマンドの実行範囲を表示専用の `throw_direction` scope で通知する。Rust はこの scope と方向入力待ちを合わせて `ui.movement_direction` を作り、専用ウインドウを出さない。Canvas は通常のマップとスマホの方向ボタンを表示し、キャンセル以外の操作ボタンと待機を無効にする。Rust は方向待ちに限って Shift/Ctrl の移動入力を一方向へ変換し、C の get_dir へ渡す。実際の方向決定・混乱による乱数・投射・回数指定・繰り返しは C の処理を保持する。コマンドの観測情報なので、回数付きの t や保存の再生でも表示を判断できる。
+
+保存 envelope v2 の presentation.input にメニュー対応の印と、方向待ちの対象だけを保持し、C の保存バイト列や乱数状態は変更しない。メニュー途中のロードは一覧から再開する。旧版の入力履歴にある `i` は従来の C 一覧で再生し、保存地点を越えた新しい `i` から操作メニューを使う。表示する詳細は descriptor の visible_fields に従い、未鑑定の which・呪い・強化値を読み出さない。
+
+可視表示はweb/canvas-ui.jsによる単一のCanvas2Dへ集約する。マップ、トップ、メッセージ、状態、名前、一覧、ヘルプ、設定、死亡・勝利・得点、操作ボタン、文字入力欄を描く。透明なネイティブinputでIME・編集・クリップボードを扱い、値・選択範囲・カーソルをCanvasへ描く。読み上げ用HTMLと非表示のHTMLボタン・フォームは置かず、Canvas操作から直接処理を呼ぶ。一覧の文字幅・折り返し・スクロールが元のMoreやターンを増減させることはない。持ち物・ヘルプ・ゲーム内設定・結果表示中は Rust が直前の観測済みマップを保持し、ゲーム画面内のウインドウの背後へ描く。品物・方向・左右の手・確認・文字入力も同じウインドウ層を使う。Space 待ちのウインドウでは Enter/Esc を C が期待する Space へ変換し、消費したキーを journal に記録する。保存済みキーの再生は再変換しない。比較用のraw cellsは原Cが生成した英語・ASCII観測として別に保つ。
 
 原作の英語冠詞・複数形・printf幅はカタログmetadataで扱い、必要な場合だけ理由を付けて省略する。戦闘断片はactor・target・verbを使って日本語の語順へ組み直す。自由な名前やfruit、命名に含まれる%等はデータとして保持し、printfとして再解釈しない。
 
@@ -70,3 +100,5 @@ CのRG4SAVEは論理schema2、探索記憶RGKN、実行・待ち状態RGRTをsec
 過去の実測の件数と対象ビルドSHA-256の説明はtests/RESULTS-ja.mdを参照する。検証JSON、ログ、詳細出力は2026-10-10の整理で削除済みで、現在のビルドを確認する場合は必要な試験を再実行する。異なる粒度の検査を合算してゲーム互換保証の件数にしない。
 
 スマホ専用操作、ゲームパッド、永続ランキング、公開配布、実端末対応は今回の範囲外。日本語カタログは本実装へ接続済みであり、各分岐の実測範囲は保存した検証資料に明示する。
+
+Space 待ちの表示は実際の遷移に合わせて「閉じる」「次のページ」「次の品物」「結果を見る」に分ける。C は `rg_wait_for` で意味を観測として公開し、Rust がウインドウ・ボタン・キー変換を作る。C の待つキーとロジックは保持する。1行ずつの所持品では Enter は送り、Esc は C の取消分岐へ渡す。検出結果は C の描画済みセルからウインドウ内のマップを表示する。全経路の調査とブラウザー検証は [SPACE-WAITS-ja.md](SPACE-WAITS-ja.md) を参照。

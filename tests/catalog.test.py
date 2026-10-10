@@ -50,6 +50,19 @@ void hit(void) {
         self.assertEqual(before_ids, after_ids)
         self.assertEqual(list(before_ids), ['fight.hit.the_arrow_misses'])
 
+    def test_multiline_macro_end_location_and_argument_count(self):
+        calls = self.source('void hit(void) {\n'
+                            '    msg(choose_str("hungry",\n'
+                            '                   "getting hungry"));\n'
+                            '    msg("hit %s",\n'
+                            '        monster_name(obj));\n'
+                            '}\n')
+        self.assertEqual((calls[0]['line'], calls[0]['end_line']), (2, 3))
+        self.assertEqual(calls[0]['argument_count'], 0)
+        self.assertEqual(calls[0]['formats'], ['hungry', 'getting hungry'])
+        self.assertEqual((calls[1]['line'], calls[1]['end_line']), (4, 5))
+        self.assertEqual(calls[1]['argument_count'], 1)
+
     def test_existing_collision_id_retained_when_new_call_precedes_it(self):
         previous = {'fight.hit.ouch': {'template': 'ouch', 'source': 'fight.c:99', 'function': 'hit'}}
         calls = self.source('void hit(void) { msg("ouch!"); msg("ouch"); }\n')
@@ -57,6 +70,26 @@ void hit(void) {
         self.assertEqual(calls[1]['ids']['ouch'], 'fight.hit.ouch')
         self.assertNotEqual(calls[0]['ids']['ouch!'], 'fight.hit.ouch')
         self.assertEqual(ids['fight.hit.ouch'], 'ouch')
+
+    def test_generated_multiline_metadata_resolves_at_both_macro_locations(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            (root / 'logic').mkdir()
+            (root / 'logic' / 'fight.c').write_text(
+                'void hit(void) {\n'
+                '    msg(choose_str("hungry",\n'
+                '                   "getting hungry"));\n'
+                '    msg("hit %s",\n'
+                '        monster_name(obj));\n'
+                '}\n', encoding='utf-8')
+            catalog.generate(root)
+            generated = (root / 'logic' / 'message_catalog.inc').read_text(encoding='utf-8')
+            for line in (2, 3):
+                self.assertIn(f'{{"fight.c", {line}, "hungry", "fight.hit.hungry", 0}}', generated)
+                self.assertIn(f'{{"fight.c", {line}, NULL, NULL, 0}}', generated)
+            for line in (4, 5):
+                self.assertIn(f'{{"fight.c", {line}, "hit %s", "fight.hit.hit", 1}}', generated)
+                self.assertIn(f'{{"fight.c", {line}, NULL, NULL, 1}}', generated)
 
 
 if __name__ == '__main__':

@@ -101,6 +101,7 @@ def source_calls(path):
             yield {
                 'file': path.name,
                 'line': bisect.bisect_left(line_ends, token[2]) + 1,
+                'end_line': bisect.bisect_left(line_ends, items[end][2]) + 1,
                 'function': function,
                 'call': text,
                 'argument_count': max(0, len(groups) - 1),
@@ -185,10 +186,14 @@ def generate(root):
             ident = call['ids'][fmt]
             entries.setdefault(ident, {'template': fmt, 'source': f"{call['file']}:{call['line']}",
                                        'function': call['function'], 'note': 'original English printf format'})
-            sites.append((call['file'], call['line'], fmt, ident, call['argument_count']))
+            # Clang expands __LINE__ at the end of a multiline macro call.
+            # Keep both locations so compiler choice cannot lose the message ID.
+            for line in dict.fromkeys((call['line'], call['end_line'])):
+                sites.append((call['file'], line, fmt, ident, call['argument_count']))
             formats.update(PRINTF.findall(fmt))
         # Fallback metadata is also used to safely handle zero-vararg dynamic text.
-        sites.append((call['file'], call['line'], None, None, call['argument_count']))
+        for line in dict.fromkeys((call['line'], call['end_line'])):
+            sites.append((call['file'], line, None, None, call['argument_count']))
     catalog = {'schema': 1, 'language': 'en', 'messages': dict(sorted(entries.items()))}
     (root / 'locales').mkdir(exist_ok=True)
     (root / 'locales' / 'en.json').write_text(json.dumps(catalog, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')

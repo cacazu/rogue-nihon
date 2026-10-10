@@ -146,18 +146,6 @@ try {
   assert.equal(await page.locator('.action-buttons').isVisible(), false, 'desktop action toolbar hidden');
   assert.equal(await page.locator('#settings-panel .action-buttons').count(), 0, 'actions are not relocated to settings');
   assert.equal(await page.locator('#cancel-text,#more-prompt button').count(), 0, 'no replacement continue/cancel controls');
-  const split = await page.evaluate(() => {
-    const r=s=>document.querySelector(s).getBoundingClientRect();
-    const g=r('.game-panel'), m=r('.map-area'), l=r('.log-column'), gear=r('#settings-toggle');
-    return {width:g.width, viewport:innerWidth, ratio:m.width/(g.width-2), logRatio:l.width/(g.width-2), gearLeft:gear.left, mapLeft:m.left, heading:r('.heading').width};
-  });
-  assert.ok(Math.abs(split.width-split.viewport)<=2, 'PC game spans full viewport width');
-  assert.ok(Math.abs(split.ratio-.8)<.002 && Math.abs(split.logRatio-.2)<.002, 'PC map/log split is 80/20');
-  assert.ok(split.gearLeft-split.mapLeft<20, 'settings at map upper left');
-  assert.ok(split.heading<1440,'title width remains constrained');
-  assert.equal(await page.locator('.direction-pad').isVisible(), false, 'no desktop direction pad');
-  evidence.checks.push('Full-width PC 80/20 map/log, upper-left settings and hidden desktop action toolbar');
-  await openSettings();
   assert.equal(await page.locator("#load").isDisabled(), true, "fresh profile starts without a save");
   await page.locator("#language").selectOption("en");
   assert.equal(await page.evaluate(() => __rogueBrowserTest.language), "en");
@@ -173,22 +161,27 @@ try {
   await settled();
   assert.equal(await page.locator("#settings-panel").isHidden(), true);
   assert.equal(await page.locator("#language").isDisabled(), true, "running language contract remains unchanged");
+  const split = await page.evaluate(() => {
+    const r=s=>document.querySelector(s).getBoundingClientRect();
+    const g=r('.game-panel'), m=r('.map-area'), l=r('.log-column'), gear=r('#settings-toggle');
+    return {width:g.width, viewport:innerWidth, ratio:m.width/(g.width-2), logRatio:l.width/(g.width-2), gearLeft:gear.left, mapLeft:m.left, heading:r('.heading').width};
+  });
+  assert.ok(Math.abs(split.width-split.viewport)<=2, 'PC game spans full viewport width');
+  assert.ok(Math.abs(split.ratio-.8)<.002 && Math.abs(split.logRatio-.2)<.002, 'PC map/log split is 80/20');
+  assert.ok(split.gearLeft-split.mapLeft<20, 'settings at map upper left');
+  assert.ok(split.heading<1440,'title width remains constrained');
+  assert.equal(await page.locator('.direction-pad').isVisible(), false, 'no desktop direction pad');
+  evidence.checks.push('Full-width PC 80/20 map/log, upper-left settings and hidden desktop action toolbar');
   const logState = await snapshot();
-  await openSettings();
-  for (let n=0;n<24;n++) {
-    await page.locator('#seed').fill('-1'); await page.locator('#new-game').click();
-    await page.locator('#seed').fill('12345'); await page.locator('#name').fill('界'.repeat(17)); await page.locator('#new-game').click();
-  }
-  await page.locator('#name').fill('画面検証の勇者');
-  await closeSettings();
+  for (let n=0;n<48;n++) await page.locator('#board').click({position:{x:250,y:200}});
   const bottom = await page.locator('#log-scroll').evaluate(e=>e.scrollHeight-e.clientHeight-e.scrollTop);
   assert.ok(bottom <= 4,'new notices follow bottom');
   assert.equal(await page.locator('.log-entry[data-source=system] .log-label').first().textContent(),'システム');
   await page.locator('#log-scroll').evaluate(e=>e.scrollTop=0);
-  await openSettings(); await page.locator('#seed').fill('-1'); await page.locator('#new-game').click(); await page.locator('#seed').fill('12345'); await closeSettings();
+  await page.locator('#board').click({position:{x:250,y:200}});
   assert.equal(await page.locator('#log-scroll').evaluate(e=>e.scrollTop),0,'new notice does not steal reader history position');
   await page.locator('#log-scroll').focus(); await page.keyboard.press('ArrowDown'); await page.keyboard.press('h');
-  await unchanged(logState,'reading log and failed setting validation never reaches C');
+  await unchanged(logState,'reading log and rejected distant clicks never reach C');
   await page.locator('#board').focus();
   evidence.checks.push('Unified system history follows bottom, preserves manual reading and isolates log navigation keys');
   const before = await snapshot();
@@ -363,7 +356,8 @@ try {
   await settled();
   const inventoryText=await page.locator('#presentation').innerText();
   assert.doesNotMatch(inventoryText,/原作の質問と続行待ちを保っています/,'inventory shows no internal implementation guidance');
-  assert.equal(inventoryText.split('スペースキーで続ける').length-1,1,'inventory has exactly one continuation instruction');
+  assert.doesNotMatch(inventoryText,/続ける|続きを表示/,'inventory labels the action as closing');
+  assert.equal(await page.locator('#window-actions button[data-window-key="32"]').innerText(),'閉じる');
   assert.equal(await page.locator('#presentation-hint').isHidden(),true,'non-selectable inventory has no selection hint');
   await openSettings();
   await page.locator("#save").click();
@@ -371,7 +365,7 @@ try {
   const saved = await snapshot();
   evidence.saved = saved;
   evidence.saved_length = await page.evaluate(() => __rogueBrowserTest.savedLength);
-  await page.locator("#load").click();
+  await page.locator("#settings-top").click(); await page.locator("#load").click();
   await page.waitForFunction((generation) => __rogueBrowserTest.generation > generation && __rogueBrowserTest.frame && __rogueBrowserTest.trace && __rogueBrowserTest.inputRequestCount > 0, saved.generation);
   await settled();
   const restored = await snapshot();
@@ -400,23 +394,23 @@ try {
     await settled();
   };
   const actions='.action-buttons ';
-  await action(actions+'[data-character=" "]',32);
+  await action('#window-actions [data-window-key="32"]',32);
   await page.waitForFunction(()=>__rogueBrowserTest.frame.ui.mode==='game');
   await action(actions+'[data-character="i"]',105);
   await page.waitForFunction(()=>__rogueBrowserTest.frame.ui.mode==='inventory' || __rogueBrowserTest.frame.ui.mode==='menu');
-  await action(actions+'[data-character=" "]',32);
+  await action('#window-actions [data-window-key="32"]',32);
   await action(actions+'[data-character="?"]',63);
-  await action(actions+'[data-key="Escape"]',27);
+  await action('#window-actions [data-window-key="27"]',27);
   await page.waitForFunction(()=>__rogueBrowserTest.frame.ui.mode==='game');
   await action(actions+'[data-character=">"]',62);
   const touchState=await snapshot();
   assert.deepEqual(await page.evaluate(()=>__actionEvents),[32,105,32,63,27,62],'one input per native touch without key leakage');
-  await openSettings(); await page.locator('#load').click();
+  await openSettings(); await page.locator('#settings-top').click(); await page.locator('#load').click();
   await page.waitForFunction(g=>__rogueBrowserTest.generation>g && __rogueBrowserTest.frame && __rogueBrowserTest.queuePending===0,touchState.generation);
   await settled();
   for (const key of [' ','i',' ','?','Escape','>']) {
     const count=await page.evaluate(()=>__rogueBrowserTest.inputRequestCount);
-    await page.locator('#board').focus(); await page.keyboard.press(key===' '?'Space':key);
+    await page.locator(await page.locator('#presentation').isVisible() ? '#presentation' : '#board').focus(); await page.keyboard.press(key===' '?'Space':key);
     await page.waitForFunction(n=>__rogueBrowserTest.inputRequestCount>n && __rogueBrowserTest.queuePending===0,count);
     await settled();
   }

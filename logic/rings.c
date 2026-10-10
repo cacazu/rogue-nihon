@@ -137,7 +137,14 @@ gethand()
 	    msg("left or right ring? ");
 	else
 	    msg("left hand or right hand? ");
-	if ((c = readchar()) == ESCAPE)
+#ifdef ROGUE_LAYERED
+        rg_ui_line("input", -2, 0, "input.hand", "[]", "");
+#endif
+        c = readchar();
+#ifdef ROGUE_LAYERED
+        rg_ui_clear("input");
+#endif
+	if (c == ESCAPE)
 	    return -1;
 	mpos = 0;
 	if (c == 'l' || c == 'L')

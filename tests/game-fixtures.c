@@ -132,12 +132,172 @@ void rg_test_apply_fixture(void)
     name[name_length] = 0;
     name[strcspn(name, "\r\n")] = 0;
     clean_world();
-    if (!strncmp(name, "graphics-beam-", 14)) {
+    if (!strcmp(name,"actor-underfoot-moving")) {
+        int x;
+        for (x = 11; x <= 14; x++) {
+            chat(9,x) = chat(11,x) = '-';
+            mvaddch(9,x,'-'); mvaddch(11,x,'-');
+            chat(10,x) = x == 11 ? PASSAGE : x == 12 ? DOOR : x == 13 ? STAIRS : FLOOR;
+            mvaddch(10,x,chat(10,x));
+        }
+        monster = monster_at('E',14,10);
+        monster->t_flags |= ISRUN;
+        monster->t_dest = &hero;
+        monster->t_stats.s_hpt = monster->t_stats.s_maxhp = 100;
+        enter_room(&hero);
+    } else if (!strncmp(name, "actor-underfoot", 15)) {
+        int i;
+        const char terrain[] = {PASSAGE, DOOR, STAIRS, TRAP, FLOOR};
+        const char types[] = {'E','O','Z','H','F'};
+        for (i = 0; i < 5; i++) {
+            int x = 11 + i;
+            chat(10,x) = terrain[i];
+            mvaddch(10,x,terrain[i]);
+            monster = monster_at(types[i],x,10);
+            monster->t_flags &= ~(ISMEAN | ISRUN);
+            monster->t_stats.s_hpt = monster->t_stats.s_maxhp = 100;
+        }
+        enter_room(&hero);
+        if (!strcmp(name,"actor-underfoot-detected")) {
+            rooms[0].r_flags |= ISDARK;
+            player.t_flags |= ISBLIND | SEEMONST;
+            for (monster = mlist; monster; monster = next(monster)) {
+                monster->t_oldch = ' ';
+                mvaddch(monster->t_pos.y,monster->t_pos.x,monster->t_disguise);
+            }
+        }
+    } else if (!strncmp(name, "inventory-", 10)) {
+        int i;
+        if (!strcmp(name, "inventory-empty") || !strcmp(name, "inventory-single")) {
+            clear_objects(&player.t_pack);
+            cur_weapon = cur_armor = cur_ring[0] = cur_ring[1] = NULL;
+            memset(pack_used, 0, 26 * sizeof(pack_used[0])); inpack = 0;
+            if (!strcmp(name, "inventory-single")) {
+                object = new_item(); object->o_type = FOOD; object->o_count = 1;
+                add_pack(object, TRUE);
+            }
+        } else {
+            potion(P_HEALING); /* f */
+            object = new_item(); object->o_type = SCROLL; object->o_which = S_ARMOR; object->o_count = 1;
+            scr_info[S_ARMOR].oi_know = TRUE; add_pack(object, TRUE); /* g */
+            for (i = 0; i < 2; i++) {
+                object = new_item(); object->o_type = RING; object->o_which = i ? R_ADDSTR : R_PROTECT;
+                object->o_count = 1; object->o_arm = 1; object->o_flags = ISKNOW;
+                ring_info[object->o_which].oi_know = TRUE; add_pack(object, TRUE); /* h, i */
+            }
+            object = new_item(); object->o_type = STICK; object->o_which = WS_LIGHT; object->o_count = 1;
+            object->o_charges = 5; object->o_flags = ISKNOW;
+            ws_info[WS_LIGHT].oi_know = TRUE; add_pack(object, TRUE); /* j */
+            object = new_item(); object->o_type = ARMOR; object->o_which = CHAIN_MAIL; object->o_count = 1;
+            object->o_arm = a_class[CHAIN_MAIL]; add_pack(object, TRUE); /* k */
+            object = new_item(); object->o_type = POTION; object->o_which = P_POISON; object->o_count = 1;
+            pot_info[P_POISON].oi_know = FALSE; object->o_flags = ISCURSED;
+            add_pack(object, TRUE); /* l: all hidden knowledge must stay hidden */
+            object = new_item(); object->o_type = WEAPON; object->o_which = DAGGER; object->o_count = 1;
+            object->o_hplus = 7; object->o_dplus = -3; object->o_flags = ISCURSED;
+            strcpy(object->o_damage, "1x6"); strcpy(object->o_hurldmg, "1x4"); add_pack(object, TRUE); /* m */
+            if (!strcmp(name, "inventory-cursed")) {
+                cur_weapon->o_flags |= ISCURSED; cur_armor->o_flags |= ISCURSED;
+                for (object = pack; object; object = next(object)) {
+                    if (object->o_packch == 'h') cur_ring[LEFT] = object;
+                    if (object->o_packch == 'i') cur_ring[RIGHT] = object;
+                }
+                cur_ring[LEFT]->o_flags |= ISCURSED;
+            } else if (strcmp(name, "inventory-all")) abort();
+        }
+    } else if (!strncmp(name, "graphics-beam-", 14)) {
         coord direction;
         direction.x = name[14] == 'v' ? 0 : 1;
         direction.y = name[14] == 'h' ? 0 : name[14] == 's' ? -1 : 1;
         if (!strchr("hvsb", name[14]) || name[15]) abort();
         fire_bolt(&hero, &direction, "flame");
+    } else if (!strncmp(name, "bug-identify-empty-", 19)) {
+        const char *kind = name + 19;
+        int scroll_type;
+        if (!strcmp(kind, "potion")) scroll_type = S_ID_POTION;
+        else if (!strcmp(kind, "scroll")) scroll_type = S_ID_SCROLL;
+        else if (!strcmp(kind, "weapon")) scroll_type = S_ID_WEAPON;
+        else if (!strcmp(kind, "armor")) scroll_type = S_ID_ARMOR;
+        else if (!strcmp(kind, "ring-stick")) scroll_type = S_ID_R_OR_S;
+        else abort();
+        clear_objects(&player.t_pack);
+        cur_weapon = cur_armor = cur_ring[0] = cur_ring[1] = NULL;
+        memset(pack_used, 0, 26 * sizeof(pack_used[0])); inpack = 0;
+        object = new_item(); object->o_type = FOOD; object->o_count = 1;
+        add_pack(object, TRUE); /* a */
+        object = new_item(); object->o_type = SCROLL; object->o_which = scroll_type;
+        object->o_count = 1; scr_info[scroll_type].oi_know = TRUE;
+        add_pack(object, TRUE); /* b */
+    } else if (!strcmp(name, "bug-identify-potion") || !strcmp(name, "bug-naming")) {
+        potion(P_RESTORE); /* f */
+        pot_info[P_RESTORE].oi_know = FALSE;
+        if (!strcmp(name, "bug-naming")) {
+            potion(P_POISON); /* g, last inventory item overwrites prbuf */
+            pot_info[P_POISON].oi_know = FALSE;
+        } else {
+            object = new_item(); object->o_type = SCROLL; object->o_which = S_ID_POTION;
+            object->o_count = 1; scr_info[S_ID_POTION].oi_know = TRUE;
+            add_pack(object, TRUE); /* g */
+        }
+    } else if (!strcmp(name, "bug-translation")) {
+        food_left = 2 * MORETIME;
+        object = new_item(); object->o_type = SCROLL; object->o_which = S_REMOVE;
+        object->o_count = 1; scr_info[S_REMOVE].oi_know = TRUE;
+        add_pack(object, TRUE); /* f */
+    } else if (!strcmp(name, "bug-death-combat")) {
+        purse = 468;
+        pstats.s_hpt = 6;
+        monster = monster_at('O', 11, 10);
+        monster->t_flags |= ISMEAN | ISRUN;
+        monster->t_flags &= ~ISHELD;
+        monster->t_dest = &hero;
+        strcpy(monster->t_stats.s_dmg, "1x20");
+        monster->t_stats.s_lvl = 100;
+    } else if (!strcmp(name, "item-identify")) {
+        object = new_item();
+        object->o_type = SCROLL; object->o_which = S_ID_WEAPON; object->o_count = 1;
+        object->o_arm = 11;
+        strcpy(object->o_damage, "0x0"); strcpy(object->o_hurldmg, "0x0");
+        scr_info[S_ID_WEAPON].oi_know = TRUE;
+        add_pack(object, TRUE);
+    } else if (!strcmp(name, "space-discoveries")) {
+        int i;
+        for (i = 0; i < MAXPOTIONS; i++) pot_info[i].oi_know = TRUE;
+        for (i = 0; i < MAXSCROLLS; i++) scr_info[i].oi_know = TRUE;
+        for (i = 0; i < MAXRINGS; i++) ring_info[i].oi_know = TRUE;
+        for (i = 0; i < MAXSTICKS; i++) ws_info[i].oi_know = TRUE;
+    } else if (!strcmp(name, "space-detection")) {
+        potion(P_TFIND);
+        object = new_item();
+        object->o_type = SCROLL; object->o_which = S_FDET; object->o_count = 1;
+        object->o_arm = 11;
+        strcpy(object->o_damage, "0x0"); strcpy(object->o_hurldmg, "0x0");
+        scr_info[S_FDET].oi_know = TRUE;
+        add_pack(object, TRUE);
+        object = new_item();
+        object->o_type = FOOD; object->o_which = 0; object->o_count = 1;
+        object->o_pos.x = 12; object->o_pos.y = 10;
+        strcpy(object->o_damage, "0x0"); strcpy(object->o_hurldmg, "0x0");
+        attach(lvl_obj, object);
+        chat(10, 12) = FOOD; mvaddch(10, 12, FOOD);
+        object = new_item();
+        object->o_type = POTION; object->o_which = P_HEALING; object->o_count = 1;
+        object->o_pos.x = 13; object->o_pos.y = 10;
+        object->o_arm = 11;
+        strcpy(object->o_damage, "0x0"); strcpy(object->o_hurldmg, "0x0");
+        attach(lvl_obj, object);
+        chat(10, 13) = POTION; mvaddch(10, 13, POTION);
+    } else if (!strcmp(name, "space-single-item") || !strcmp(name, "space-empty-pack")) {
+        clear_objects(&player.t_pack);
+        cur_weapon = cur_armor = cur_ring[0] = cur_ring[1] = NULL;
+        memset(pack_used, 0, 26 * sizeof(pack_used[0]));
+        inpack = 0;
+        if (!strcmp(name, "space-single-item")) {
+            object = new_item();
+            object->o_type = FOOD; object->o_count = 1;
+            strcpy(object->o_damage, "0x0"); strcpy(object->o_hurldmg, "0x0");
+            add_pack(object, TRUE);
+        }
     } else if (!strcmp(name, "wall")) {
         chat(hero.y, hero.x - 1) = '|';
         mvaddch(hero.y, hero.x - 1, '|');
@@ -176,6 +336,21 @@ void rg_test_apply_fixture(void)
         player.t_flags |= ISHALU;
         start_daemon(visuals, 0, BEFORE);
         fuse(come_down, 0, 50, AFTER);
+    } else if (!strcmp(name, "nymph-stack")) {
+        /* Only the enchanted stack is eligible for theft. Exercise attack(),
+         * pack splitting and the save walker rather than a fake theft event. */
+        clear_objects(&player.t_pack);
+        cur_weapon = cur_armor = cur_ring[0] = cur_ring[1] = NULL;
+        memset(pack_used, 0, 26 * sizeof(pack_used[0]));
+        inpack = 0;
+        object = new_item();
+        init_weapon(object, SHIRAKEN);
+        object->o_count = 14;
+        object->o_hplus = 1;
+        add_pack(object, TRUE);
+        monster = monster_at('N', 11, 10);
+        monster->t_flags |= ISRUN;
+        monster->t_dest = &hero;
     } else if (!strcmp(name, "label-split")) {
         THING *copy;
         for (object = pack; object && !(object->o_type == WEAPON && object->o_which == ARROW); object = next(object)) { }

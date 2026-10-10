@@ -102,7 +102,9 @@ score(int amount, int flags, char monst)
         rg_ui_line("score", LINES - 1, 0, "ui.ending.return", "[]",
             "[Press return to continue]");
         refresh();
+        rg_ui_line("input", -2, 0, "input.show_score", "[]", "");
         wgetnstr(stdscr,prbuf,80);
+        rg_ui_clear("input");
  	endwin();
         printf("\n");
         resetltchars();
@@ -192,6 +194,11 @@ score(int amount, int flags, char monst)
     rg_ending_line("score", 0, 0, "ui.score.heading", "Top %s %s:",
         Numname, allscore ? "Scores" : "Rogueists");
     rg_ui_line("score", 1, 0, "ui.score.columns", "[]", "   Score Name");
+    /* Keep an ending scope alive throughout the transition so intermediate
+     * frames never interpret the ASCII valuation as a dungeon map. */
+    rg_ui_clear("victory");
+    rg_ui_clear("death");
+    rg_ui_clear("tombstone");
     for (scp = top_ten; scp < endp; scp++)
     {
 	if (scp->sc_score) {
@@ -293,6 +300,9 @@ death(char monst)
 
     signal(SIGINT, SIG_IGN);
     purse -= purse / 10;
+#ifdef ROGUE_LAYERED
+    rg_status_publish(0);
+#endif
     signal(SIGINT, leave);
     clear();
     rg_ui_clear("death");
@@ -346,7 +356,9 @@ death(char monst)
     rg_ui_line("death", LINES - 1, 0, "ui.ending.return", "[]",
         "[Press return to continue]");
     fflush(stdout);
+    rg_ui_line("input", -2, 0, "input.finish_game", "[]", "");
     (void) fgets(prbuf,10,stdin);
+    rg_ui_clear("input");
     my_exit(0);
 }
 
@@ -406,7 +418,7 @@ total_winner()
     rg_ui_line("victory", LINES - 1, 0, "ui.ending.space", "[]",
         "--Press space to continue--");
     refresh();
-    wait_for(' ');
+    rg_wait_for(' ', "input.results");
     clear();
     rg_ui_clear("victory");
     mvaddstr(0, 0, "   Worth  Item\n");

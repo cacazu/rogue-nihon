@@ -48,11 +48,11 @@
       "conversions": []
     },
     "ui.detect_magic": {
-      "template": "You sense the presence of magic on this level.--More--",
+      "template": "You sense the presence of magic on this level.",
       "conversions": []
     },
     "ui.detect_food": {
-      "template": "Your nose tingles and you smell food.--More--",
+      "template": "Your nose tingles and you smell food.",
       "conversions": []
     },
     "ui.level_map": {

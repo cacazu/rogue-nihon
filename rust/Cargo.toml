@@ -1,19 +1,44 @@
-[package]
-name = "rogue-layers"
+[workspace]
+members = [".", "crates/contract", "crates/display", "crates/input", "crates/platform", "crates/browser-display"]
+resolver = "3"
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.98"
 publish = false
 
+[workspace.dependencies]
+bevy = { version = "=0.19.1", default-features = false, features = ["std"] }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.151"
+rogue-contract = { path = "crates/contract" }
+rogue-display = { path = "crates/display" }
+rogue-input = { path = "crates/input" }
+rogue-platform = { path = "crates/platform" }
+
+[package]
+name = "rogue-layers"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
 [lib]
 crate-type = ["staticlib", "rlib"]
-# The game library links against C/JS imports. Pure modules are tested by the
-# standalone layer-check/entity-check targets; actual FFI is tested in Wasm.
+# C/JS FFI lives only in this integration crate; layer libraries test independently.
 test = false
 
 [dependencies]
-serde = { version = "=1.0.229", features = ["derive"] }
-serde_json = "=1.0.151"
+bevy.workspace = true
+serde_json.workspace = true
+rogue-contract.workspace = true
+rogue-display.workspace = true
+rogue-input.workspace = true
+rogue-platform.workspace = true
+
+[profile.dev]
+panic = "abort"
 
 [profile.release]
 opt-level = 1

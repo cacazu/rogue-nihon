@@ -9,6 +9,42 @@
 #include "rogue.h"
 #include "semantic.h"
 
+static char actor_terrain(THING *actor)
+{
+    char ch;
+    if (actor == &player) return floor_at();
+    /* Detection alone must not reveal a monster's unobserved surroundings. */
+    if (!see_monst(actor)) return actor->t_oldch;
+    ch = chat(actor->t_pos.y, actor->t_pos.x);
+    if (ch == FLOOR && (actor->t_room->r_flags & ISDARK) && !see_floor)
+        ch = ' ';
+    return ch;
+}
+
+void rg_semantic_map_terrain(const uint8_t *cells,uint32_t rows,uint32_t columns)
+{
+    uint8_t terrain[MAXLINES * MAXCOLS];
+    THING *actor;
+    uint32_t length;
+    int x,y;
+    if (!cells || rows < 2 || !columns || rows > MAXLINES || columns > MAXCOLS) return;
+    length = rows * columns;
+    memset(terrain,255,length);
+    /* Player and enemies share observation, conversion and compositing. Each
+     * refresh replaces the observations, so movement/levels cannot leave tags. */
+    for (actor = &player; actor; actor = actor == &player ? mlist : next(actor)) {
+        x = actor->t_pos.x; y = actor->t_pos.y;
+        if (x < 0 || (uint32_t)x >= columns || y <= 0 || (uint32_t)y >= rows - 1)
+            continue;
+        if (actor == &player) {
+            if (cells[y * columns + x] != PLAYER) continue;
+        } else if (!cells[y * columns + x] || !strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ*!?:)]/=,",cells[y * columns + x]))
+            continue;
+        terrain[y * columns + x] = (uint8_t)actor_terrain(actor);
+    }
+    rg_host_map_terrain(terrain,rows,columns);
+}
+
 #define RG_SEMANTIC_SLOTS 64
 #define RG_SEMANTIC_TEXT 2048
 #define RG_SEMANTIC_JSON 8192

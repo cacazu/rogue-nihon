@@ -678,6 +678,8 @@ void	uncurse(THING *obj);
 void	unlock_sc();
 void	vert(struct room *rp, int startx);
 void	wait_for(int ch);
+void	rg_wait_for(int ch, const char *input_id);
+void    rg_inventory_browser(void);
 THING  *wake_monster(int y, int x);
 void	wanderer();
 void	waste_time();

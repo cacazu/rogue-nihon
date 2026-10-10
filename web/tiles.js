@@ -1,42 +1,33 @@
+/* Canvas image loading and rasterization only; Rust supplies the draw plan. */
 (function(root) {
   "use strict";
   class RogueTiles {
     constructor(manifest, images) {
-      if (manifest.entries?.length !== 49 || ![32, 96].includes(manifest.tile_pixels)) throw new Error("Incomplete tile manifest");
-      this.manifest = manifest; this.entries = manifest.entries; this.images = images;
-      this.drawCount = 0; this.unknown = [];
-      this.pixelArt = manifest.tile_pixels === 32; this.rotated = new Map();
+      this.manifest=manifest;this.entries=manifest.entries;this.images=images;
+      this.drawCount=0;this.rotated=new Map();this.pixelArt=manifest.pixel_art;
     }
-    static async load(url = "/web/assets/tiles/manifest.json") {
-      const response = await fetch(url); if (!response.ok) throw new Error("Tile manifest unavailable");
-      const manifest = await response.json(), images = new Map();
-      if (![32, 96].includes(manifest.tile_pixels)) throw new Error("Invalid tile dimensions");
-      await Promise.all([...new Set(manifest.entries.map(entry => entry.image))].map(async filename => {
-        if (!/^[a-z_.]+\.png$/.test(filename)) throw new Error("Invalid tile path");
-        const image = new Image(); image.src = new URL(filename, new URL(url, location.href)).href;
-        await image.decode(); if (image.naturalWidth !== manifest.tile_pixels || image.naturalHeight !== manifest.tile_pixels) throw new Error("Invalid tile dimensions");
-        images.set(filename, image);
+    static request(value) {return (this.planRequest||((request)=>root.RogueCanvasUi.active.request(request)))(value);}
+    static async load(specification={}) {
+      let plan=specification;
+      if(!plan.files)plan=this.request({type:"asset-plan",url:typeof plan==="string"?plan:plan.url});
+      const images=new Map();
+      await Promise.all(plan.files.map(async filename=>{
+        const image=new Image();image.src=new URL(plan.base+filename,location.href).href;
+        await image.decode();images.set(filename,image);
       }));
-      return new RogueTiles(manifest, images);
+      return new RogueTiles(plan.manifest,images);
     }
-    validate(frame) {
-      if (!Array.isArray(frame.map_tiles) || frame.map_tiles.length !== frame.width * frame.height ||
-          !Array.isArray(frame.map_tile_ids) || frame.map_tile_ids.length !== this.entries.length ||
-          frame.map_tile_ids.some((id, index) => id !== this.entries[index].id) ||
-          frame.map_tiles.some(index => !Number.isInteger(index) || index < 0 || index >= this.entries.length) ||
-          frame.map_unknown_glyphs?.length) throw new Error("Unmapped graphical map cell");
-    }
+    validate(frame) {RogueTiles.request({type:"tile-plan",mode:this.manifest.browser_mode,frame,camera:{size:0}});}
     drawImage(context, entry, x, y, width, height) {
-      let image = this.images.get(entry.image); if (!image) throw new Error("Missing image: " + entry.id);
-      if (entry.rotation && this.pixelArt) {
-        const key = entry.image + ":" + entry.rotation;
-        if (!this.rotated.has(key)) this.rotated.set(key, RogueTiles.pixelRotation(image, entry.rotation));
-        image = this.rotated.get(key);
-        context.drawImage(image, x, y, width, height);
-      } else if (entry.rotation) {
-        context.save(); context.translate(x + width / 2, y + height / 2); context.rotate(entry.rotation * Math.PI / 180);
-        context.drawImage(image, -width / 2, -height / 2, width, height); context.restore();
-      } else context.drawImage(image, x, y, width, height);
+      let image=this.images.get(entry.image);if(!image)throw new Error("Missing image: "+entry.image);
+      if(entry.rotation && entry.pixelArt) {
+        const key=entry.image+":"+entry.rotation;
+        if(!this.rotated.has(key))this.rotated.set(key,RogueTiles.pixelRotation(image,entry.rotation));
+        image=this.rotated.get(key);context.drawImage(image,x,y,width,height);
+      } else if(entry.rotation) {
+        context.save();context.translate(x+width/2,y+height/2);context.rotate(entry.rotation*Math.PI/180);
+        context.drawImage(image,-width/2,-height/2,width,height);context.restore();
+      } else context.drawImage(image,x,y,width,height);
       this.drawCount++;
     }
     // Rasterize rotation once on the native pixel grid; never rotate enlarged clusters.
@@ -57,28 +48,11 @@
       context.putImageData(output, 0, 0); return result;
     }
     draw(context, frame, camera) {
-      this.validate(frame); this.drawCount = 0;
-      context.imageSmoothingEnabled = false;
-      const { size, ratio, left, top, width, height } = camera;
-      const startX = Math.max(0, Math.floor(left / size)), endX = Math.min(frame.width, Math.ceil((left + width) / size));
-      const startY = Math.max(1, 1 + Math.floor(top / size)), endY = Math.min(frame.height - 1, 1 + Math.ceil((top + height) / size));
-      for (let y = startY; y < endY; y++) for (let x = startX; x < endX; x++) {
-        const entry = this.entries[frame.map_tiles[y * frame.width + x]];
-        const px = Math.round((x * size - left) * ratio), py = Math.round(((y - 1) * size - top) * ratio);
-        const w = Math.round(((x + 1) * size - left) * ratio) - px, h = Math.round((y * size - top) * ratio) - py;
-        // Neutral stage below a presented entity, never the hidden C terrain.
-        const base = entry.id === "terrain.unexplored" ? this.entries[0] : entry.id === "terrain.passage" ? this.entries[2] : this.entries[1];
-        this.drawImage(context, base, px, py, w, h);
-        if (entry !== base) this.drawImage(context, entry, px, py, w, h);
-      }
-    }
-    coordinate(event, canvas, frame, camera) {
-      const bounds = canvas.getBoundingClientRect();
-      const x = Math.floor(((event.clientX - bounds.left) * camera.width / bounds.width + camera.left) / camera.size);
-      const y = 1 + Math.floor(((event.clientY - bounds.top) * camera.height / bounds.height + camera.top) / camera.size);
-      return x >= 0 && x < frame.width && y >= 1 && y < frame.height - 1 ? { x, y } : null;
+      const result=RogueTiles.request({type:"tile-plan",mode:this.manifest.browser_mode,frame,camera});
+      this.drawCount=0;context.imageSmoothingEnabled=false;
+      for(const command of result.commands){const r=command.rect;this.drawImage(context,command,r.x*camera.ratio,r.y*camera.ratio,r.w*camera.ratio,r.h*camera.ratio);}
     }
   }
-  if (typeof module !== "undefined" && module.exports) module.exports = RogueTiles;
-  root.RogueTiles = RogueTiles;
-})(typeof globalThis !== "undefined" ? globalThis : this);
+  if(typeof module!=="undefined"&&module.exports)module.exports=RogueTiles;
+  root.RogueTiles=RogueTiles;
+})(typeof globalThis!=="undefined"?globalThis:this);

@@ -1,17 +1,15 @@
-//! Original Rogue C logic connected to Rust display, input and platform layers.
+//! Original Rogue C logic connected to Bevy display, input and platform plugins.
 //! Each game has one single-threaded Wasm instance. Browser repaint never calls C.
-mod abi;
-mod display;
-mod entities;
-mod input;
-mod map_tiles;
-mod platform;
-mod presentation;
+mod engine;
+mod session;
 
 use abi::*;
+use rogue_contract as abi;
+use rogue_display::{display, identity::replace_player_names};
+use rogue_input::{self as input, inventory};
+use rogue_platform as platform;
 use serde_json::{Value, json};
-use std::cell::RefCell;
-use std::collections::VecDeque;
+use session::Session;
 use std::ffi::{CStr, CString, c_char};
 
 unsafe extern "C" {
@@ -27,33 +25,6 @@ unsafe extern "C" {
     fn js_rg_outcome(code: i32, text: *const u8, length: u32);
 }
 
-#[derive(Default)]
-struct Session {
-    seed: u32,
-    message_paging: platform::MessagePaging,
-    name: String,
-    checkpoint: Vec<u8>,
-    journal: Vec<i32>,
-    replay: VecDeque<i32>,
-    restore_checkpoint: Vec<u8>,
-    input_index: u32,
-    last_frame: Option<Value>,
-    map_effects: Vec<(u32, u32, u8)>,
-    checkpoint_error: Option<String>,
-    trace_enabled: bool,
-    language: String,
-    presentation: presentation::Presentation,
-    checkpoint_presentation: Value,
-    text_mode: bool,
-    text_is_name: bool,
-    name_edit_changed: bool,
-    text_limit: usize,
-    text_bytes: Vec<u8>,
-    text_pending: VecDeque<i32>,
-}
-
-thread_local! { static SESSION: RefCell<Session> = RefCell::new(Session::default()); }
-
 fn emit(value: &Value) {
     if let Ok(bytes) = serde_json::to_vec(value)
         && let Ok(length) = u32::try_from(bytes.len())
@@ -66,36 +37,9 @@ fn emit(value: &Value) {
     }
 }
 
-/// Resolve identity at render time so C's fixed-width alias is never displayed.
-fn replace_player_names(value: &mut Value, name: &str) {
-    match value {
-        Value::Object(object)
-            if object.get("type").and_then(Value::as_str) == Some("player_name") =>
-        {
-            *value = json!({"type":"literal","text":name});
-        }
-        Value::Object(object) => {
-            for value in object.values_mut() {
-                replace_player_names(value, name);
-            }
-        }
-        Value::Array(array) => {
-            for value in array {
-                replace_player_names(value, name);
-            }
-        }
-        _ => {}
-    }
-}
-
 fn emit_input_context() {
-    let event = SESSION.with(|session| {
-        let session = session.borrow();
-        Some(json!({"type":"input-context","input":session.presentation.render(&session.language, &session.name)["input"]}))
-    });
-    if let Some(event) = event {
-        emit(&event);
-    }
+    let ui = engine::render_ui();
+    emit(&json!({"type":"input-context","input":ui["input"]}));
 }
 
 /// Observational UI metadata. C still owns its original logical cells.
@@ -126,8 +70,8 @@ pub unsafe extern "C" fn rg_host_ui(
         )
     };
     let args = serde_json::from_slice(args.to_bytes()).unwrap_or(Value::Null);
-    SESSION.with(|session| {
-        session.borrow_mut().presentation.update(
+    engine::with_session_mut(|session| {
+        session.display.presentation.update(
             &scope.to_string_lossy(),
             row,
             column,
@@ -154,19 +98,18 @@ pub unsafe extern "C" fn rg_host_text_mode(enabled: i32, limit: u32, initial: *c
             .to_string_lossy()
             .into_owned()
     };
-    SESSION.with(|session| {
-        let mut session = session.borrow_mut();
-        if enabled == 0 && session.text_is_name {
-            session.name_edit_changed = !session.text_bytes.is_empty();
+    engine::with_session_mut(|session| {
+        if enabled == 0 && session.input.text_is_name {
+            session.input.name_edit_changed = !session.input.text_bytes.is_empty();
         }
-        session.text_mode = enabled != 0;
-        session.text_limit = (limit as usize).min(50);
-        session.text_bytes.clear();
-        session.text_pending.clear();
+        session.input.text_mode = enabled != 0;
+        session.input.text_limit = (limit as usize).min(50);
+        session.input.text_bytes.clear();
+        session.input.text_pending.clear();
         if enabled != 0 {
-            session.text_is_name = enabled == 2;
-            if session.text_is_name {
-                session.name_edit_changed = false;
+            session.input.text_is_name = enabled == 2;
+            if session.input.text_is_name {
+                session.input.name_edit_changed = false;
             }
             let initial = if enabled == 2 {
                 session.name.clone()
@@ -175,21 +118,29 @@ pub unsafe extern "C" fn rg_host_text_mode(enabled: i32, limit: u32, initial: *c
             } else {
                 initial
             };
-            session.presentation.input = json!({"kind":"text","limit_bytes":session.text_limit,
-                "initial":initial,"current_text":initial});
+            let row = session
+                .display
+                .presentation
+                .lines
+                .iter()
+                .rev()
+                .find(|line| line["scope"] == "options")
+                .map(|line| line["row"].clone());
+            session.display.presentation.input = json!({"kind":"text","limit_bytes":session.input.text_limit,
+                "initial":initial,"current_text":initial,"row":row});
             if enabled == 3 && initial.is_empty() {
-                session.presentation.input["placeholder"] = Value::String(
+                session.display.presentation.input["placeholder"] = Value::String(
                     display::message_language(
                         "input.default_fruit",
                         &json!([]),
                         "slime-mold (default)",
-                        &session.language,
+                        &session.display.language,
                     )
                     .text,
                 );
             }
         } else {
-            session.presentation.input = json!({"kind":"command"});
+            session.display.presentation.input = json!({"kind":"command"});
         }
     });
     emit_input_context();
@@ -207,11 +158,10 @@ pub unsafe extern "C" fn rg_host_player_name(name: *const c_char) {
         && name.len() <= 50
         && !name.chars().any(char::is_control)
     {
-        SESSION.with(|session| {
-            let mut session = session.borrow_mut();
+        engine::with_session_mut(|session| {
             // An empty Enter keeps the original name in C. Preserve the real
             // identity too when that C name is only the initial ASCII alias.
-            if session.name_edit_changed {
+            if session.input.name_edit_changed {
                 session.name = name.into();
             }
         });
@@ -219,7 +169,7 @@ pub unsafe extern "C" fn rg_host_player_name(name: *const c_char) {
 }
 
 fn notice(text: &str) {
-    let language = SESSION.with(|session| session.borrow().language.clone());
+    let language = engine::with_session(|session| session.display.language.clone());
     let id = if text.contains("name") {
         "platform.name_error"
     } else if text.contains("journal limit") {
@@ -249,10 +199,10 @@ fn words() -> [u32; RG_SNAPSHOT_WORDS as usize] {
 }
 
 fn trace() {
-    let enabled = SESSION.with(|session| session.borrow().trace_enabled);
+    let enabled = engine::with_session(|session| session.trace_enabled);
     if enabled {
         let snapshot = words();
-        let input_index = SESSION.with(|session| session.borrow().input_index);
+        let input_index = engine::with_session(|session| session.input_index);
         emit(&json!({"type":"trace","words":snapshot,"input_index":input_index}));
     }
 }
@@ -286,15 +236,21 @@ pub unsafe extern "C" fn rg_run(seed: u32, name: *const c_char) -> i32 {
     } else {
         "ja"
     };
-    SESSION.with(|state| state.borrow_mut().language = language.into());
+    engine::with_session_mut(|state| state.display.language = language.into());
     if name.chars().any(char::is_control) {
         notice("invalid player name");
         return -2;
     }
     let mut session = Session {
-        seed,
-        name,
-        language: language.into(),
+        platform: platform::Session {
+            seed,
+            name,
+            ..platform::Session::default()
+        },
+        display: rogue_display::DisplayState {
+            language: language.into(),
+            ..Default::default()
+        },
         ..Session::default()
     };
     session.trace_enabled = std::fs::metadata("/trace.enabled").is_ok();
@@ -315,6 +271,8 @@ pub unsafe extern "C" fn rg_run(seed: u32, name: *const c_char) -> i32 {
                         session.message_paging =
                             platform::MessagePaging::ReplayLegacyUntil(saved.input_index);
                     }
+                    session.input.inventory =
+                        inventory::Inventory::restore(&mut saved.presentation, saved.input_index);
                     platform::MessagePaging::remove_marker(&mut saved.presentation);
                     session.seed = saved.seed;
                     session.name = saved.name;
@@ -323,7 +281,7 @@ pub unsafe extern "C" fn rg_run(seed: u32, name: *const c_char) -> i32 {
                     session.replay = saved.inputs.into();
                     if !saved.presentation.is_null() {
                         match serde_json::from_value(saved.presentation) {
-                            Ok(presentation) => session.presentation = presentation,
+                            Ok(presentation) => session.display.presentation = presentation,
                             Err(_) => {
                                 notice("invalid saved presentation");
                                 return -2;
@@ -359,7 +317,7 @@ pub unsafe extern "C" fn rg_run(seed: u32, name: *const c_char) -> i32 {
         Ok(name) => name,
         Err(_) => return -2,
     };
-    SESSION.with(|state| *state.borrow_mut() = session);
+    engine::reset(session);
     // SAFETY: CString remains live until C returns. All callbacks use the same
     // single-threaded module and hold no RefCell borrow across a call into C.
     unsafe { rg_core_start(initial_seed, name.as_ptr()) }
@@ -369,8 +327,7 @@ pub unsafe extern "C" fn rg_run(seed: u32, name: *const c_char) -> i32 {
 /// This observes session metadata and its input cursor; it never reads a key or changes C state.
 #[unsafe(no_mangle)]
 pub extern "C" fn rg_host_message_requires_acknowledgement() -> i32 {
-    SESSION.with(|session| {
-        let session = session.borrow();
+    engine::with_session(|session| {
         i32::from(
             session
                 .message_paging
@@ -379,98 +336,51 @@ pub extern "C" fn rg_host_message_requires_acknowledgement() -> i32 {
     })
 }
 
+#[unsafe(no_mangle)]
+pub extern "C" fn rg_host_inventory_browser_enabled() -> i32 {
+    engine::with_session(|session| i32::from(session.input.inventory.enabled(session.input_index)))
+}
+
 /// Returns one original game key, consuming raw browser events in Rust.
 #[unsafe(no_mangle)]
 pub extern "C" fn rg_host_read_key() -> i32 {
+    let ui = engine::render_ui();
+    emit(&json!({"type":"presentation","ui":ui}));
     trace();
     loop {
-        let pending = SESSION.with(|session| session.borrow_mut().text_pending.pop_front());
+        let pending = engine::with_session_mut(|session| session.input.text_pending.pop_front());
         let replay = if pending.is_none() {
-            SESSION.with(|session| session.borrow_mut().replay.pop_front())
+            engine::with_session_mut(|session| session.replay.pop_front())
         } else {
             None
         };
-        let key = if let Some(key) = pending.or(replay) {
+        let automatic = if pending.is_none() && replay.is_none() {
+            engine::inventory_key()
+        } else {
+            None
+        };
+        let key = if let Some(key) = pending.or(replay).or(automatic) {
             key
         } else {
             // SAFETY: Synchronous host import waits on the Worker's SAB queue;
             // it does not re-enter Wasm or execute a game update.
             let raw = unsafe { js_rg_read_event() } as u32;
-            let scalar = raw & RG_EVENT_SCALAR_MASK;
-            let text_key = SESSION.with(|state| {
-                let mut state = state.borrow_mut();
-                // The knowledge adapter reports erasechar() == 8. Browser
-                // Backspace/DEL must become that C editor key before journaling.
-                if state.text_mode && scalar == 127 && raw & RG_EVENT_ALT == 0 {
-                    return Some(8);
+            match engine::decode(raw) {
+                input::Input::Key(key) => key,
+                input::Input::Save => {
+                    persist();
+                    continue;
                 }
-                if state.text_mode
-                    && scalar > 127
-                    && scalar <= 0x10ffff
-                    && raw & (RG_EVENT_CTRL | RG_EVENT_ALT) == 0
-                {
-                    if let Some(character) = char::from_u32(scalar).filter(|c| !c.is_control()) {
-                        let mut buffer = [0_u8; 4];
-                        let bytes = character.encode_utf8(&mut buffer).as_bytes();
-                        if state.text_bytes.len() + bytes.len() <= state.text_limit {
-                            state
-                                .text_pending
-                                .extend(bytes.iter().skip(1).map(|b| i32::from(*b)));
-                            return Some(i32::from(bytes[0]));
-                        }
-                    }
-                    return Some(-2);
-                }
-                None
-            });
-            if text_key == Some(-2) {
-                continue;
-            }
-            if let Some(key) = text_key {
-                key
-            } else {
-                match input::decode(raw) {
-                    input::Input::Key(key) => key,
-                    input::Input::Save => {
-                        persist();
-                        continue;
-                    }
-                    input::Input::End => return -1,
-                    input::Input::Ignore => continue,
+                input::Input::End => return -1,
+                input::Input::Ignore => continue,
+                input::Input::View => {
+                    let ui = engine::render_ui();
+                    emit(&json!({"type":"presentation","ui":ui}));
+                    continue;
                 }
             }
         };
-        let accepted = SESSION.with(|session| {
-            let mut session = session.borrow_mut();
-            if session.journal.len() >= platform::MAX_INPUTS || session.input_index == u32::MAX {
-                return false;
-            }
-            session.journal.push(key);
-            session.input_index += 1;
-            if session.text_mode {
-                match key {
-                    21 => session.text_bytes.clear(),
-                    8 | 127 => {
-                        if let Some(last) = session.text_bytes.pop()
-                            && last & 0xc0 == 0x80
-                        {
-                            while session.text_bytes.last().is_some_and(|b| b & 0xc0 == 0x80) {
-                                session.text_bytes.pop();
-                            }
-                            session.text_bytes.pop();
-                        }
-                    }
-                    32..=255 if session.text_bytes.len() < session.text_limit => {
-                        session.text_bytes.push(key as u8)
-                    }
-                    _ => {}
-                }
-                if let Ok(text) = String::from_utf8(session.text_bytes.clone()) {
-                    session.presentation.input["current_text"] = Value::String(text);
-                }
-            }
-            true
-        });
+        let accepted = engine::accept_key(key);
         if !accepted {
             notice("input journal limit reached; restart from a safe checkpoint");
             return -1;
@@ -523,60 +433,31 @@ pub unsafe extern "C" fn rg_host_present(cells: *const u8, rows: u32, columns: u
         "food":snapshot[RG_SNAPSHOT_FOOD as usize],"strength":snapshot[RG_SNAPSHOT_STRENGTH as usize],
         "armor":snapshot[RG_SNAPSHOT_ARMOR as usize],"experience":snapshot[RG_SNAPSHOT_EXPERIENCE as usize],
         "turn":snapshot[RG_SNAPSHOT_TURN as usize]}});
-    let mut value = value;
-    SESSION.with(|session| {
-        let session = session.borrow();
-        {
-            let ui = session
-                .presentation
-                .render(&session.language, &session.name);
-            let mut map = cells.as_bytes().to_vec();
-            if ui["mode"] != "game" {
-                map.fill(b' ');
-            } else {
-                for row in [0, rows.saturating_sub(1)] {
-                    let start = row as usize * columns as usize;
-                    map[start..start + columns as usize].fill(b' ');
-                }
-            }
-            let (tiles, unknown) = map_tiles::map(&map, columns, rows, &session.map_effects);
-            value["map_tiles"] = json!(tiles);
-            value["map_tile_ids"] = json!(&map_tiles::IDS[..]);
-            value["map_unknown_glyphs"] = json!(unknown);
-            value["map_cells"] = Value::String(String::from_utf8(map).unwrap_or_default());
-            value["ui"] = ui;
-        }
-    });
-    SESSION.with(|session| session.borrow_mut().last_frame = Some(value.clone()));
+    let value = engine::present(value);
     emit(&value);
 }
 
 /// Tags a bolt that C has already drawn, without looking up hidden terrain.
 #[unsafe(no_mangle)]
 pub extern "C" fn rg_host_map_effect(x: i32, y: i32, glyph: i32, active: i32) {
-    SESSION.with(|state| {
-        let mut state = state.borrow_mut();
-        if active == 0 {
-            state.map_effects.clear();
-            return;
-        }
-        let (Ok(x), Ok(y), Ok(glyph)) = (u32::try_from(x), u32::try_from(y), u8::try_from(glyph))
-        else {
-            return;
-        };
-        if x >= 80 || y >= 24 || map_tiles::bolt(glyph).is_none() {
-            return;
-        }
-        if let Some(effect) = state
-            .map_effects
-            .iter_mut()
-            .find(|effect| effect.0 == x && effect.1 == y)
-        {
-            effect.2 = glyph;
-        } else if state.map_effects.len() < 6 {
-            state.map_effects.push((x, y, glyph));
-        }
-    });
+    engine::map_effect(x, y, glyph, active);
+}
+
+/// Observes terrain beneath currently perceived actors without changing C state.
+///
+/// # Safety
+/// `glyphs` points to `rows * columns` bytes for this synchronous call.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rg_host_map_terrain(glyphs: *const u8, rows: u32, columns: u32) {
+    let Some(length) = rows.checked_mul(columns).filter(|length| *length <= 4096) else {
+        return;
+    };
+    if glyphs.is_null() {
+        return;
+    }
+    // SAFETY: C guarantees the bounded borrowed observation buffer.
+    let glyphs = unsafe { std::slice::from_raw_parts(glyphs, length as usize) };
+    engine::map_terrain(glyphs.to_vec());
 }
 
 /// Emits semantic message IDs and typed arguments to Rust presentation.
@@ -593,23 +474,39 @@ pub unsafe extern "C" fn rg_host_message(
         return;
     }
     // SAFETY: C owns the three live NUL-terminated buffers under the ABI.
-    let id = unsafe { CStr::from_ptr(id) }.to_string_lossy();
+    let mut id = unsafe { CStr::from_ptr(id) }.to_string_lossy().into_owned();
     // SAFETY: Same caller-owned lifetime and termination contract as id.
     let args = unsafe { CStr::from_ptr(args) }.to_string_lossy();
     // SAFETY: Same caller-owned lifetime and termination contract as id.
     let fallback = unsafe { CStr::from_ptr(fallback) }.to_string_lossy();
     let mut arguments: Value = serde_json::from_str(&args).unwrap_or(Value::Null);
-    let language = SESSION.with(|session| {
-        let session = session.borrow();
-        session.presentation.resolve_recall(&id, &mut arguments);
-        session.language.clone()
+    let language = engine::with_session(|session| {
+        // C's status command exposes the same public values as its HUD.
+        // Translate that observation without changing C's legacy message buffer.
+        if id != "message.clear"
+            && !fallback.is_empty()
+            && let Some(status) = session
+                .display
+                .presentation
+                .lines
+                .iter()
+                .find(|line| line["scope"] == "status_message")
+        {
+            id = status["id"].as_str().unwrap_or("ui.status").into();
+            arguments = status["args"].clone();
+        }
+        session
+            .display
+            .presentation
+            .resolve_recall(&id, &mut arguments, &fallback);
+        session.display.language.clone()
     });
     let mut rendered_arguments = arguments.clone();
-    SESSION.with(|session| replace_player_names(&mut rendered_arguments, &session.borrow().name));
+    engine::with_session(|session| replace_player_names(&mut rendered_arguments, &session.name));
     let text = display::message_language(&id, &rendered_arguments, &fallback, &language);
     let event = json!({"type":"message","id":id,"text":text.text,"args":arguments,"fallback":fallback,
         "fallback_used":!text.missing_ids.is_empty(),"missing_ids":text.missing_ids});
-    SESSION.with(|session| session.borrow_mut().presentation.remember(event.clone()));
+    engine::with_session_mut(|session| session.display.presentation.remember(event.clone()));
     emit(&event);
 }
 
@@ -632,14 +529,13 @@ pub extern "C" fn rg_host_checkpoint() {
         unsafe {
             rg_core_save_free(pointer);
         }
-        SESSION.with(|session| {
-            let mut session = session.borrow_mut();
+        engine::with_session_mut(|session| {
             session.message_paging = session.message_paging.at_checkpoint(session.input_index);
             session.checkpoint = bytes;
             session.journal.clear();
             session.checkpoint_error = None;
             session.checkpoint_presentation =
-                serde_json::to_value(&session.presentation).unwrap_or(Value::Null);
+                serde_json::to_value(&session.display.presentation).unwrap_or(Value::Null);
         });
     } else {
         if !pointer.is_null() {
@@ -648,9 +544,8 @@ pub extern "C" fn rg_host_checkpoint() {
                 rg_core_save_free(pointer);
             }
         }
-        SESSION.with(|session| {
-            session.borrow_mut().checkpoint_error =
-                Some(format!("checkpoint capture failed ({result})"))
+        engine::with_session_mut(|session| {
+            session.checkpoint_error = Some(format!("checkpoint capture failed ({result})"))
         });
     }
 }
@@ -665,8 +560,7 @@ pub unsafe extern "C" fn rg_host_restore_data(out: *mut *const u8, length: *mut 
     if out.is_null() || length.is_null() {
         return -1;
     }
-    SESSION.with(|session| {
-        let session = session.borrow();
+    engine::with_session(|session| {
         if session.restore_checkpoint.is_empty() {
             return 0;
         }
@@ -692,7 +586,7 @@ pub unsafe extern "C" fn rg_host_outcome(code: i32, message: *const c_char) {
         // SAFETY: C callback owns the live NUL-terminated message buffer.
         unsafe { CStr::from_ptr(message) }.to_string_lossy()
     };
-    let language = SESSION.with(|session| session.borrow().language.clone());
+    let language = engine::with_session(|session| session.display.language.clone());
     let id = match text.as_ref() {
         "input ended" => "outcome.input_ended",
         "quit" => "outcome.quit",
@@ -706,20 +600,16 @@ pub unsafe extern "C" fn rg_host_outcome(code: i32, message: *const c_char) {
     };
     let translated = display::message_language(id, &json!([]), &text, &language).text;
     if code >= 0 {
-        let ui = SESSION.with(|session| {
-            let mut session = session.borrow_mut();
+        engine::with_session_mut(|session| {
             session
+                .display
                 .presentation
                 .lines
                 .retain(|line| line["id"] != "ui.ending.return" && line["scope"] != "more");
-            session.presentation.input = json!({"kind":"ended"});
-            session.presentation.last_message = None;
-            let ui = session.presentation.render(&language, &session.name);
-            if let Some(frame) = &mut session.last_frame {
-                frame["ui"] = ui.clone();
-            }
-            ui
+            session.display.presentation.input = json!({"kind":"ended"});
+            session.display.presentation.last_message = None;
         });
+        let ui = engine::finish_ui();
         // This updates presentation only, without inventing another C frame,
         // input read, turn, or RNG event after the game has exited.
         emit(&json!({"type":"presentation","ui":ui}));
@@ -731,31 +621,7 @@ pub unsafe extern "C" fn rg_host_outcome(code: i32, message: *const c_char) {
 }
 
 fn persist() {
-    let value = SESSION.with(|session| {
-        let session = session.borrow();
-        if let Some(error) = &session.checkpoint_error {
-            return Err(error.clone());
-        }
-        platform::Envelope::new_with_presentation(
-            session.seed,
-            session.name.clone(),
-            &session.checkpoint,
-            session.journal.clone(),
-            session.input_index,
-            if session.message_paging != platform::MessagePaging::Legacy
-                || session.language == "ja"
-                || session.name.len() > 49
-                || session.journal.iter().any(|key| *key > 127)
-            {
-                let mut presentation = session.checkpoint_presentation.clone();
-                session.message_paging.mark(&mut presentation);
-                presentation
-            } else {
-                Value::Null
-            },
-        )
-    });
-    match value.and_then(|value| value.bytes()) {
+    match engine::save_bytes() {
         Ok(bytes) => {
             // SAFETY: JS copies the envelope and acknowledges IndexedDB success
             // asynchronously; handing bytes to JS alone does not claim durability.
@@ -770,7 +636,7 @@ fn persist() {
 /// Repaints only the already captured Rust frame. Used by regression tests.
 #[unsafe(no_mangle)]
 pub extern "C" fn rg_test_repaint() {
-    let frame = SESSION.with(|session| session.borrow().last_frame.clone());
+    let frame = engine::cached_frame();
     if let Some(frame) = frame {
         emit(&frame);
     }

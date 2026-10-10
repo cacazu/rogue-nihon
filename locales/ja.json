@@ -4741,7 +4741,18 @@
       "argument_sources": {
         "0": "type_name(type)"
       },
-      "argument_values": {},
+      "argument_values": {
+        "0": {
+          "potion": {"text": "薬"},
+          "scroll": {"text": "巻物"},
+          "food": {"text": "食べ物"},
+          "ring, wand or staff": {"text": "指輪か杖"},
+          "ring": {"text": "指輪"},
+          "wand or staff": {"text": "杖"},
+          "weapon": {"text": "武器"},
+          "suit of armor": {"text": "鎧"}
+        }
+      },
       "unresolved": [],
       "source": "wizard.c:47",
       "function": "whatis"

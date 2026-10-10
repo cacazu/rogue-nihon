@@ -92,7 +92,7 @@ try {
   const before=await snapshot();await openSettings();await page.locator('#save').click();
   await page.waitForFunction(()=>__rogueBrowserTest.savedLength>0&&!__rogueBrowserTest.savePending);
   assert.match(await page.locator('.log-column #notice').textContent(),/保存/);
-  await page.locator('#load').click();await page.waitForFunction(g=>__rogueBrowserTest.generation>g&&__rogueBrowserTest.trace&&__rogueBrowserTest.inputRequestCount>0,before.generation);await settled();
+  await page.locator('#settings-top').click(); await page.locator('#load').click();await page.waitForFunction(g=>__rogueBrowserTest.generation>g&&__rogueBrowserTest.trace&&__rogueBrowserTest.inputRequestCount>0,before.generation);await settled();
   const restored=await snapshot();assert.deepEqual(restored.words,before.words);assert.deepEqual(restored.player,before.player);
   await page.locator('#board').focus();await page.keyboard.press('l');await page.waitForFunction(()=>__rogueBrowserTest.trace.words[13]===4);await settled();
   evidence.checks.push('Combat scratch save restores exact C/RNG state and the next collision still needs no Space');

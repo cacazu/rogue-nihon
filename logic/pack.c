@@ -370,6 +370,37 @@ move_msg(THING *obj)
  *	Allow player to inventory a single item
  */
 
+#ifdef ROGUE_LAYERED
+/* Observe exactly the public inventory descriptors; C still validates choices. */
+static void rg_item_rows(THING *list, int type, const char *scope)
+{
+    int row = 0;
+    rg_ui_clear(scope);
+    for (; list != NULL; list = next(list)) {
+        if (type && type != list->o_type && !(type == CALLABLE &&
+            list->o_type != FOOD && list->o_type != AMULET) &&
+            !(type == R_OR_S && (list->o_type == RING || list->o_type == STICK)))
+            continue;
+        rg_ui_printf(scope, row++, 0, __FILE__, __LINE__, "%c) %s",
+                     list->o_packch, inv_name(list, FALSE));
+    }
+}
+static void rg_item_choices(THING *list, int type) { rg_item_rows(list, type, "choices"); }
+
+/* Observational inventory for Rust's item menu, including empty/single packs.
+ * No look(), game mutation, RNG, or extra commands. C still executes actions. */
+void rg_inventory_browser(void)
+{
+    if (!rg_host_inventory_browser_enabled()) { inventory(pack, 0); return; }
+    rg_ui_line("browse", 0, 0, "ui.text", "[]", "");
+    rg_item_rows(pack, 0, "inventory");
+    if (pack == NULL) rg_ui_line("inventory", 0, 0, "inventory.empty", "[]", "");
+    rg_wait_for(' ', "input.close");
+    rg_ui_clear("inventory");
+    rg_ui_clear("browse");
+}
+#endif
+
 void
 picky_inven()
 {
@@ -384,7 +415,16 @@ picky_inven()
     {
 	msg(terse ? "item: " : "which item do you wish to inventory: ");
 	mpos = 0;
-	if ((mch = readchar()) == ESCAPE)
+#ifdef ROGUE_LAYERED
+        rg_item_choices(pack, 0);
+        rg_ui_line("input", -2, 0, "input.inventory_one", "[]", "");
+#endif
+        mch = readchar();
+#ifdef ROGUE_LAYERED
+        rg_ui_clear("choices");
+        rg_ui_clear("input");
+#endif
+	if (mch == ESCAPE)
 	{
 	    msg("");
 	    return;
@@ -434,6 +474,9 @@ get_item(char *purpose, int type)
 	for (;;)
 	{
 #ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
+        rg_item_choices(pack, !strcmp(purpose, "throw") ? 0 : type);
+        if (purpose_index < sizeof purposes / sizeof purposes[0])
+            rg_ui_line("item_action", 0, 0, purposes[purpose_index].id, "[]", "");
         rg_ui_line("input", -2, 0, "input.choose_item", "[]", "");
 #endif
 	    if (!terse)
@@ -444,6 +487,8 @@ get_item(char *purpose, int type)
 	    msg("? (* for list): ");
 	    ch = readchar();
 #ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
+        rg_ui_clear("choices");
+        rg_ui_clear("item_action");
         rg_ui_clear("input");
 #endif
 	    mpos = 0;

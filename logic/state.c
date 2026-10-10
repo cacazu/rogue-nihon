@@ -2417,8 +2417,10 @@ rs_valid_objects(THING *list)
 {
     int limit;
     for (; list != NULL; list = list->l_next) {
+        /* put_things() creates the unique Amulet with calloc's zero count. */
         if (!rs_valid_coord(list->o_pos) || list->o_count < 0 ||
-            (list->o_type != GOLD && list->o_count == 0)) return 0;
+            (list->o_type != GOLD && list->o_type != AMULET &&
+             list->o_count == 0)) return 0;
         switch (list->o_type) {
             case POTION: limit = MAXPOTIONS; break;
             case SCROLL: limit = MAXSCROLLS; break;

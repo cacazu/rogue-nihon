@@ -62,6 +62,8 @@ def inputs(scope):
     paths = [Path(__file__).resolve()]
     if scope in {"rust_standalone", "entities", "rust_static"}:
         paths += list((ROOT / "rust" / "src").rglob("*.rs"))
+        paths += list((ROOT / "rust" / "crates").rglob("*.rs"))
+        paths += list((ROOT / "rust" / "crates").rglob("Cargo.toml"))
         paths += [ROOT / "rust" / "Cargo.toml", ROOT / "rust" / "Cargo.lock",
                   ROOT / "tools" / "check-rust-layers.ps1"]
         paths += list((ROOT / "locales").glob("*.json"))
@@ -115,7 +117,7 @@ def rust_tests(text):
     if passed < 1 or failed or skipped:
         raise ValueError("Native Cargo checks are empty, failed, or skipped")
     return {"passed": passed, "total_checks": passed, "failed": failed, "skipped": skipped,
-            "count_basis": "native Cargo unit tests from --bins (library tests disabled)"}
+            "count_basis": "native Cargo unit tests from the independent library crates"}
 
 
 def native_artifacts(text):
@@ -127,13 +129,13 @@ def native_artifacts(text):
             continue
         if (isinstance(value, dict) and value.get("reason") == "compiler-artifact"
                 and value.get("profile", {}).get("test") and value.get("executable")
-                and "bin" in value.get("target", {}).get("kind", [])):
+                and "lib" in value.get("target", {}).get("kind", [])):
             path = Path(value["executable"]).resolve()
             if not path.is_relative_to(ROOT.resolve()) or not path.is_file():
                 raise ValueError("Cargo reported a test executable outside the project or missing")
             executables.append(path)
-    if len(executables) != 2 or len(set(executables)) != 2:
-        raise ValueError("Expected both standalone native bin test executables")
+    if len(executables) != 4 or len(set(executables)) != 4:
+        raise ValueError("Expected all four independent crate test executables")
     return executables
 
 
@@ -223,14 +225,14 @@ def specifications(args):
     return {
         "rust_standalone": wasm("layer-check") + [
             {"name": "native-build", "command": [cargo, "test", "--offline", "--locked", "--manifest-path", manifest,
-                "--bins", "--no-run", "--message-format=json"], "build": True, "discover_artifacts": native_artifacts},
-            {"name": "native-bins", "command": [cargo, "test", "--offline", "--locked", "--manifest-path", manifest,
-                "--bins"], "parser": rust_tests, "built_outputs": True}],
+                "--workspace", "--exclude", "rogue-layers", "--lib", "--no-run", "--message-format=json"], "build": True, "discover_artifacts": native_artifacts},
+            {"name": "native-crates", "command": [cargo, "test", "--offline", "--locked", "--manifest-path", manifest,
+                "--workspace", "--exclude", "rogue-layers", "--lib"], "parser": rust_tests, "built_outputs": True}],
         "entities": wasm("entity-check"),
         "rust_static": [
             {"name": "format", "command": [cargo, "fmt", "--manifest-path", manifest, "--all", "--", "--check"]},
             {"name": "clippy", "command": [cargo, "clippy", "--offline", "--locked", "--manifest-path", manifest,
-                                           "--all-targets", "--", "-D", "warnings"]}],
+                                           "--workspace", "--all-targets", "--", "-D", "warnings"]}],
         "host": [{"name": "node", "command": [node, "--test", "--test-reporter=tap", *HOST_TESTS], "parser": node_tests}],
         "catalog": [
             {"name": "unit", "command": [python, "tests/catalog.test.py"], "parser": python_tests},

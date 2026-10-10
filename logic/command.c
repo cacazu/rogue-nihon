@@ -241,10 +241,16 @@ over:
 			goto over;
 		    }
 		when 't':
+#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
+                    rg_ui_line("throw_direction", 0, 0, "ui.text", "[]", "");
+#endif
 		    if (!get_dir())
 			after = FALSE;
 		    else
 			missile(delta.y, delta.x);
+#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
+                    rg_ui_clear("throw_direction");
+#endif
 		when 'a':
 		    if (last_comm == '\0')
 		    {
@@ -263,7 +269,12 @@ over:
 		    q_comm = TRUE;
 		    quit(0);
 		    q_comm = FALSE;
-		when 'i': after = FALSE; inventory(pack, 0);
+		when 'i': after = FALSE;
+#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
+                    rg_inventory_browser();
+#else
+                    inventory(pack, 0);
+#endif
 		when 'I': after = FALSE; picky_inven();
 		when 'd': drop();
 		when 'r': read_scroll();
@@ -580,7 +591,13 @@ help()
     register char helpch;
     register int numprint, cnt;
     msg("character you want help for (* for all): ");
+#ifdef ROGUE_LAYERED
+    rg_ui_line("input", -2, 0, "input.help", "[]", "");
+#endif
     helpch = readchar();
+#ifdef ROGUE_LAYERED
+    rg_ui_clear("input");
+#endif
     mpos = 0;
     /*
      * If its not a *, print the right help string
@@ -645,11 +662,11 @@ help()
     wmove(hw, LINES - 1, 0);
     waddstr(hw, "--Press space to continue--");
 #ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
-    rg_ui_line("help", LINES - 1, 0, "ui.continue", "[]", "--Press space to continue--");
-    rg_ui_line("input", -2, 0, "input.wait_space", "[]", "");
+    rg_ui_line("help", LINES - 1, 0, "ui.close", "[]", "--Press space to continue--");
+    rg_ui_line("input", -2, 0, "input.close", "[]", "");
 #endif
     wrefresh(hw);
-    wait_for(' ');
+    rg_wait_for(' ', "input.close");
 #ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
     rg_ui_clear("help");
     rg_ui_clear("input");
@@ -696,7 +713,13 @@ identify()
     };
 
     msg("what do you want identified? ");
+#ifdef ROGUE_LAYERED
+    rg_ui_line("input", -2, 0, "input.symbol", "[]", "");
+#endif
     ch = readchar();
+#ifdef ROGUE_LAYERED
+    rg_ui_clear("input");
+#endif
     mpos = 0;
     if (ch == ESCAPE)
     {

@@ -1,4 +1,4 @@
-/* Host transport only; game event constants come from generated abi.js. */
+/* SharedArrayBuffer/Atomics transport only. Raw values are opaque to this file. */
 (function (scope) {
   "use strict";
   const WRITE = 0, READ = 1, CLOSED = 2, HEADER = 3;

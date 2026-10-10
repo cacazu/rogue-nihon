@@ -309,7 +309,7 @@ playit()
 void
 quit(int sig)
 {
-    int oy, ox;
+    int oy, ox, answer;
 
     NOOP(sig);
 
@@ -320,7 +320,14 @@ quit(int sig)
 	mpos = 0;
     getyx(curscr, oy, ox);
     msg("really quit?");
-    if (readchar() == 'y')
+#ifdef ROGUE_LAYERED
+    rg_ui_line("input", -2, 0, "input.confirm", "[]", "");
+#endif
+    answer = readchar();
+#ifdef ROGUE_LAYERED
+    rg_ui_clear("input");
+#endif
+    if (answer == 'y')
     {
 #ifdef ROGUE_LAYERED
         rg_core_set_outcome(3, "quit");

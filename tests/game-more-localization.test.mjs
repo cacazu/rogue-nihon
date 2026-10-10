@@ -58,8 +58,8 @@ test('actual Japanese More wait saves and resumes in a fresh module with identic
   assert.equal(context.frame.ui.more.fallback_used, false);
   assert.ok(context.frame.ui.more.text.includes('続きを表示'));
   assert.equal(context.input_context.input.kind, 'space');
-  assert.equal(context.input_context.input.id, 'input.wait_space');
-  assert.ok(context.input_context.input.text.includes('スペース'));
+  assert.equal(context.input_context.input.id, 'input.next_message');
+  assert.ok(context.input_context.input.text.includes('Space'));
   const envelope = JSON.parse(original.stores[0]);
   // Automatic sleep has already crossed an outer-command checkpoint. More is
   // reconstructed by running that command from its saved state, with no keys

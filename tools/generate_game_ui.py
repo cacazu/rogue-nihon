@@ -41,8 +41,9 @@ for key, original, translated in [
     ('options.value.true', 'True', '有効'), ('options.value.false', 'False', '無効'),
     ('options.value.overlay', 'Overlay', '重ねて表示'), ('options.value.slow', 'Slow', '1行ずつ表示'), ('options.value.clear', 'Clear', '画面を切り替え'),
     ('options.hint.bool', '(T or F)', 'T：有効／F：無効'), ('options.hint.inventory', '(O, S, or C)', 'O：重ねる／S：1行ずつ／C：切り替え'),
-    ('input.choose_item', 'Choose an item key, * for list, Escape to cancel.', '品物のキーを入力。*：一覧／Esc：取消'),
+    ('input.choose_item', 'Select an item or enter its key. Esc: Cancel.', '品物を選択。キー入力でも選べます。Esc：取消'),
     ('input.choose_direction', 'Choose a direction, Escape to cancel.', '方向キーを入力。Esc：取消'),
+    ('input.throw_direction', 'Choose a throwing direction with movement keys. Esc: Cancel.', '移動キーで投げる方向を指定。Esc：取消'),
     ('prompt.direction', 'which direction? ', 'どの方向？ '), ('prompt.direction.short', 'direction: ', '方向：'),
     ('equipment.wielding', 'wielding', '構えている'), ('equipment.wearing', 'wearing', '身に着けている'),
     ('equipment.left_hand', 'on left hand', '左手に'), ('equipment.right_hand', 'on right hand', '右手に'),
@@ -73,6 +74,86 @@ for key, original, translated in [
 for key, original, translated in [('potion', 'potions', '薬'), ('scroll', 'scrolls', '巻物'), ('ring', 'rings', '指輪'), ('stick', 'sticks', '杖')]:
     entry('discoveries.none.' + key, "Haven't discovered anything about any " + original, translated + 'についてはまだ何も分かっていない')
     entry('discoveries.none_short.' + key, 'Nothing about any ' + original, translated + 'の発見なし')
+
+for key, original, translated in [
+    ("input.help", "Enter a command key, * for all commands, Escape to cancel.", "コマンドのキーを入力。*：全操作／Esc：取消"),
+    ("input.symbol", "Enter the symbol to identify, Escape to cancel.", "調べる記号を入力。Esc：取消"),
+    ("input.discovery", "Enter an item type, * for all discoveries, Escape to cancel.", "品物の種類を入力。*：全発見／Esc：取消"),
+    ("input.confirm", "Quit the game? Y: Yes / N: No", "ゲームを終了しますか？ Y：はい／N：いいえ"),
+    ("input.inventory_one", "Select an item to examine or enter its key. Esc: Cancel.", "調べる品物を選択。キー入力でも選べます。Esc：取消"),
+    ("window.menu", "Inventory / list", "持ち物・一覧"),
+    ("window.detection", "Detection results", "検出結果"),
+    ("window.help", "Help", "操作ヘルプ"),
+    ("window.options", "Game options", "ゲーム内設定"),
+    ("window.result", "Game result", "ゲーム結果"),
+    ("window.item", "Choose an item", "品物を選択"),
+    ("window.direction", "Choose a direction", "方向を指定"),
+    ("window.text", "Enter text", "文字を入力"),
+    ("window.discovery", "Discoveries", "発見した品物"),
+    ("window.confirm", "Confirm", "確認"),
+    ("window.symbol", "Identify a symbol", "記号を調べる"),
+    ("window.game", "Game window", "ゲームウインドウ"),
+    ("window.close", "Close", "閉じる"),
+    ("window.next_page", "Next page", "次のページ"),
+    ("window.next_item", "Next item", "次の品物"),
+    ("window.next_message", "Next message", "次のメッセージ"),
+    ("window.results", "Show results", "結果を見る"),
+    ("window.score", "Show scores", "スコアを見る"),
+    ("input.show_score", "Enter / Esc: Show scores", "Enter / Esc：スコアを見る"),
+    ("window.finish_game", "Finish", "終了する"),
+    ("ui.close", "Close", "閉じる"),
+    ("ui.next_page", "Next page", "次のページ"),
+    ("input.close", "Space / Enter / Esc: Close", "Space / Enter / Esc：閉じる"),
+    ("input.next_page", "Space / Enter: Next page", "Space / Enter：次のページ"),
+    ("input.next_item", "Space / Enter: Next item; Esc: Close", "Space / Enter：次の品物／Esc：閉じる"),
+    ("input.next_message", "Space / Enter: Next message", "Space / Enter：次のメッセージ"),
+    ("input.results", "Space / Enter: Show results", "Space / Enter：結果を見る"),
+    ("input.finish_game", "Enter / Esc: Finish", "Enter / Esc：終了する"),
+    ("input.results_enter", "Enter / Esc: Show results", "Enter / Esc：結果を見る"),
+    ("window.cancel", "Cancel (Esc)", "取消（Esc）"),
+    ("window.all", "Show all (*)", "すべて表示（*）"),
+    ("window.yes", "Yes (Y)", "はい（Y）"),
+    ("window.no", "No (N)", "いいえ（N）"),
+    ("window.keep", "Keep (Enter)", "変更しない（Enter）"),
+    ("window.back", "Back (-)", "前へ（-）"),
+    ("window.finish", "Finish (Esc)", "終了（Esc）"),
+]: entry(key, original, translated)
+
+entry('input.hand', 'Choose a hand: L / R / Escape to cancel.', '左手：L／右手：R／Esc：取消')
+entry('window.hand', 'Choose a hand', '指輪を着ける手')
+entry('window.left_hand', 'Left hand (L)', '左手（L）')
+entry('window.right_hand', 'Right hand (R)', '右手（R）')
+
+entry('save.browser', 'Save the game using Save in Settings.', '保存は設定ウィンドウの「保存」から行います。')
+entry('inventory.title', 'Inventory', '持ち物')
+entry('inventory.empty', 'You are not carrying anything.', '何も持っていません。')
+entry('inventory.choose', 'Select an item. Space / Enter / Esc: Close', 'アイテムを選択。Space / Enter / Esc：閉じる')
+entry('inventory.actions', 'Item actions', 'アイテムの操作')
+entry('inventory.details', 'View details', '詳細を見る')
+entry('inventory.back', 'Back', '戻る')
+entry('inventory.back_hint', 'Esc: Back', 'Esc：戻る')
+entry('inventory.drop', 'Drop', '落とす')
+entry('inventory.wield', 'Equip', '装備する')
+entry('inventory.take_off', 'Take off', '脱ぐ')
+entry('inventory.remove_ring', 'Remove', '外す')
+entry('inventory.zap', 'Use', '杖を使う')
+entry('inventory.category', 'Type', '種類')
+entry('inventory.count', 'Quantity', '個数')
+entry('inventory.equipment', 'Equipment', '装備状態')
+entry('inventory.knowledge', 'Effect', '効果')
+entry('inventory.known', 'Known (shown in the item name)', '判明済み（アイテム名に表示）')
+entry('inventory.unknown', 'Unknown', '未判明')
+entry('inventory.equipped.none', 'Not equipped', '装備していない')
+entry('inventory.equipped.weapon', 'In hand', '装備中')
+entry('inventory.equipped.armor', 'Worn', '着用中')
+entry('inventory.equipped.left_ring', 'Left hand', '左手に装着中')
+entry('inventory.equipped.right_ring', 'Right hand', '右手に装着中')
+entry('inventory.hplus', 'Accuracy bonus', '命中補正')
+entry('inventory.dplus', 'Damage bonus', 'ダメージ補正')
+entry('inventory.protection', 'Protection', '防御力')
+entry('inventory.enchantment', 'Enchantment', '強化値')
+entry('inventory.charges', 'Charges', '残り使用回数')
+entry('inventory.bonus', 'Bonus', '補正値')
 
 for language, values in [('en', en), ('ja', ja)]:
     catalog = {'schema': 1, 'language': language, 'messages': {key: {'template': value} for key, value in values.items()}}

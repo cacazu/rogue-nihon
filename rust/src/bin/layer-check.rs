@@ -1,15 +1,9 @@
-//! Standalone checks of the three pure Rust layers. No C FFI or game library
-//! is imported, and this executable does not exercise browser DOM/storage.
-#[path = "../abi.rs"]
-mod abi;
-#[path = "../display.rs"]
-mod display;
-#[path = "../entities.rs"]
-mod entities;
-#[path = "../input.rs"]
-mod input;
-#[path = "../platform.rs"]
-mod platform;
+use rogue_contract as abi;
+use rogue_display::display;
+use rogue_input as input;
+use rogue_platform as platform;
+// Standalone checks of the three pure Rust layers. No C FFI or game library
+// is imported, and this executable does not exercise browser DOM/storage.
 
 use abi::*;
 use input::Input;

@@ -125,5 +125,1449 @@
     "included_notices": [
       "COPYRIGHT.html"
     ]
+  },
+  {
+    "package": "accesskit-0.24.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT",
+      "LICENSE.chromium"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\accesskit-0.24.1",
+    "source_urls": [
+      "https://raw.githubusercontent.com/AccessKit/accesskit/a55d3e1a18bb9ef0e4bccc9083fb13c3e0ad8969/LICENSE-APACHE",
+      "https://raw.githubusercontent.com/AccessKit/accesskit/a55d3e1a18bb9ef0e4bccc9083fb13c3e0ad8969/LICENSE-MIT",
+      "https://raw.githubusercontent.com/AccessKit/accesskit/a55d3e1a18bb9ef0e4bccc9083fb13c3e0ad8969/LICENSE.chromium"
+    ]
+  },
+  {
+    "package": "android-activity-0.6.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE",
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\android-activity-0.6.1"
+  },
+  {
+    "package": "android-properties-0.2.2",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\android-properties-0.2.2"
+  },
+  {
+    "package": "approx-0.5.1",
+    "declared_license": "license = \"Apache-2.0\"",
+    "included_notices": [
+      "LICENSE"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\approx-0.5.1"
+  },
+  {
+    "package": "arrayvec-0.7.8",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\arrayvec-0.7.8"
+  },
+  {
+    "package": "assert_type_match-0.1.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\assert_type_match-0.1.1"
+  },
+  {
+    "package": "async-channel-2.5.0",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\async-channel-2.5.0"
+  },
+  {
+    "package": "async-executor-1.14.0",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\async-executor-1.14.0"
+  },
+  {
+    "package": "async-task-4.7.1",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\async-task-4.7.1"
+  },
+  {
+    "package": "atomic-waker-1.1.2",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT",
+      "LICENSE-THIRD-PARTY"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\atomic-waker-1.1.2"
+  },
+  {
+    "package": "autocfg-1.5.1",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\autocfg-1.5.1"
+  },
+  {
+    "package": "bevy-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy-0.19.1"
+  },
+  {
+    "package": "bevy_a11y-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_a11y-0.19.1"
+  },
+  {
+    "package": "bevy_android-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_android-0.19.1"
+  },
+  {
+    "package": "bevy_app-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_app-0.19.1"
+  },
+  {
+    "package": "bevy_color-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_color-0.19.1"
+  },
+  {
+    "package": "bevy_derive-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_derive-0.19.1"
+  },
+  {
+    "package": "bevy_diagnostic-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_diagnostic-0.19.1"
+  },
+  {
+    "package": "bevy_ecs-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_ecs-0.19.1"
+  },
+  {
+    "package": "bevy_ecs_macro_logic-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_ecs_macro_logic-0.19.1"
+  },
+  {
+    "package": "bevy_ecs_macros-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_ecs_macros-0.19.1"
+  },
+  {
+    "package": "bevy_input-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_input-0.19.1"
+  },
+  {
+    "package": "bevy_input_focus-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_input_focus-0.19.1"
+  },
+  {
+    "package": "bevy_internal-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_internal-0.19.1"
+  },
+  {
+    "package": "bevy_macro_utils-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_macro_utils-0.19.1"
+  },
+  {
+    "package": "bevy_math-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_math-0.19.1"
+  },
+  {
+    "package": "bevy_platform-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_platform-0.19.1"
+  },
+  {
+    "package": "bevy_ptr-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_ptr-0.19.1"
+  },
+  {
+    "package": "bevy_reflect-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_reflect-0.19.1"
+  },
+  {
+    "package": "bevy_reflect_derive-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_reflect_derive-0.19.1"
+  },
+  {
+    "package": "bevy_state-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_state-0.19.1"
+  },
+  {
+    "package": "bevy_state_macros-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_state_macros-0.19.1"
+  },
+  {
+    "package": "bevy_tasks-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_tasks-0.19.1"
+  },
+  {
+    "package": "bevy_time-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_time-0.19.1"
+  },
+  {
+    "package": "bevy_transform-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_transform-0.19.1"
+  },
+  {
+    "package": "bevy_utils-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_utils-0.19.1"
+  },
+  {
+    "package": "bevy_window-0.19.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bevy_window-0.19.1"
+  },
+  {
+    "package": "bitflags-2.13.2",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bitflags-2.13.2"
+  },
+  {
+    "package": "block2-0.6.2",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE.md"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\block2-0.6.2",
+    "source_urls": [
+      "https://raw.githubusercontent.com/madsmtm/objc2/b4167b582b2f75f9a1be75495c41b765344fd03c/LICENSE.md"
+    ]
+  },
+  {
+    "package": "bumpalo-3.20.3",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bumpalo-3.20.3"
+  },
+  {
+    "package": "bytemuck-1.25.2",
+    "declared_license": "license = \"Zlib OR Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT",
+      "LICENSE-ZLIB"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bytemuck-1.25.2"
+  },
+  {
+    "package": "bytemuck_derive-1.12.1",
+    "declared_license": "license = \"Zlib OR Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT",
+      "LICENSE-ZLIB"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bytemuck_derive-1.12.1"
+  },
+  {
+    "package": "byteorder-1.5.0",
+    "declared_license": "license = \"Unlicense OR MIT\"",
+    "included_notices": [
+      "COPYING",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\byteorder-1.5.0"
+  },
+  {
+    "package": "bytes-1.12.1",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bytes-1.12.1"
+  },
+  {
+    "package": "cc-1.4.6",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\cc-1.4.6"
+  },
+  {
+    "package": "cfg-if-1.0.5",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\cfg-if-1.0.5"
+  },
+  {
+    "package": "cfg_aliases-0.2.2",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE",
+      "NOTICES.md"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\cfg_aliases-0.2.2"
+  },
+  {
+    "package": "combine-4.6.8",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\combine-4.6.8"
+  },
+  {
+    "package": "concurrent-queue-2.5.0",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\concurrent-queue-2.5.0"
+  },
+  {
+    "package": "const-fnv1a-hash-1.1.0",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\const-fnv1a-hash-1.1.0"
+  },
+  {
+    "package": "convert_case-0.10.0",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\convert_case-0.10.0"
+  },
+  {
+    "package": "critical-section-1.2.0",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\critical-section-1.2.0"
+  },
+  {
+    "package": "crossbeam-channel-0.5.17",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT",
+      "LICENSE-THIRD-PARTY"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\crossbeam-channel-0.5.17"
+  },
+  {
+    "package": "crossbeam-queue-0.3.14",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\crossbeam-queue-0.3.14"
+  },
+  {
+    "package": "crossbeam-utils-0.8.23",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\crossbeam-utils-0.8.23"
+  },
+  {
+    "package": "ctrlc-3.5.2",
+    "declared_license": "license = \"MIT/Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\ctrlc-3.5.2"
+  },
+  {
+    "package": "derive_more-2.1.1",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\derive_more-2.1.1"
+  },
+  {
+    "package": "derive_more-impl-2.1.1",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\derive_more-impl-2.1.1"
+  },
+  {
+    "package": "dispatch2-0.3.1",
+    "declared_license": "license = \"Zlib OR Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE.md"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\dispatch2-0.3.1",
+    "source_urls": [
+      "https://raw.githubusercontent.com/madsmtm/objc2/8852b424193ca41602281b3d7540d7c8ed51e49a/LICENSE.md"
+    ]
+  },
+  {
+    "package": "disqualified-1.1.0",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\disqualified-1.1.0"
+  },
+  {
+    "package": "downcast-rs-2.0.2",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\downcast-rs-2.0.2"
+  },
+  {
+    "package": "either-1.18.0",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\either-1.18.0"
+  },
+  {
+    "package": "equivalent-1.0.2",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\equivalent-1.0.2"
+  },
+  {
+    "package": "erased-serde-0.4.10",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\erased-serde-0.4.10"
+  },
+  {
+    "package": "event-listener-5.4.2",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\event-listener-5.4.2"
+  },
+  {
+    "package": "event-listener-strategy-0.5.4",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\event-listener-strategy-0.5.4"
+  },
+  {
+    "package": "fastrand-2.5.0",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\fastrand-2.5.0"
+  },
+  {
+    "package": "find-msvc-tools-0.1.12",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\find-msvc-tools-0.1.12"
+  },
+  {
+    "package": "fixedbitset-0.5.7",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\fixedbitset-0.5.7"
+  },
+  {
+    "package": "foldhash-0.2.0",
+    "declared_license": "license = \"Zlib\"",
+    "included_notices": [
+      "LICENSE"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\foldhash-0.2.0"
+  },
+  {
+    "package": "futures-channel-0.3.34",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\futures-channel-0.3.34"
+  },
+  {
+    "package": "futures-core-0.3.34",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\futures-core-0.3.34"
+  },
+  {
+    "package": "futures-io-0.3.34",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\futures-io-0.3.34"
+  },
+  {
+    "package": "futures-lite-2.6.1",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT",
+      "LICENSE-THIRD-PARTY"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\futures-lite-2.6.1"
+  },
+  {
+    "package": "futures-task-0.3.34",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\futures-task-0.3.34"
+  },
+  {
+    "package": "futures-util-0.3.34",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\futures-util-0.3.34"
+  },
+  {
+    "package": "getrandom-0.4.3",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\getrandom-0.4.3"
+  },
+  {
+    "package": "glam-0.32.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\glam-0.32.1"
+  },
+  {
+    "package": "hash32-0.3.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\hash32-0.3.1"
+  },
+  {
+    "package": "hashbrown-0.16.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\hashbrown-0.16.1"
+  },
+  {
+    "package": "hashbrown-0.17.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\hashbrown-0.17.1"
+  },
+  {
+    "package": "heapless-0.9.3",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\heapless-0.9.3"
+  },
+  {
+    "package": "indexmap-2.14.2",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\indexmap-2.14.2"
+  },
+  {
+    "package": "itertools-0.14.0",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\itertools-0.14.0"
+  },
+  {
+    "package": "jni-0.22.4",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\jni-0.22.4",
+    "source_urls": [
+      "https://raw.githubusercontent.com/jni-rs/jni-rs/5ae9458a4ec44c5318f37ddc7569c1d4ae8a69e7/LICENSE-APACHE",
+      "https://raw.githubusercontent.com/jni-rs/jni-rs/5ae9458a4ec44c5318f37ddc7569c1d4ae8a69e7/LICENSE-MIT"
+    ]
+  },
+  {
+    "package": "jni-macros-0.22.4",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\jni-macros-0.22.4",
+    "source_urls": [
+      "https://raw.githubusercontent.com/jni-rs/jni-rs/33045a124105c939d1e2cbdcb5a39e5d868ffa03/LICENSE-APACHE",
+      "https://raw.githubusercontent.com/jni-rs/jni-rs/33045a124105c939d1e2cbdcb5a39e5d868ffa03/LICENSE-MIT"
+    ]
+  },
+  {
+    "package": "jni-sys-0.3.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\jni-sys-0.3.1"
+  },
+  {
+    "package": "jni-sys-0.4.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\jni-sys-0.4.1"
+  },
+  {
+    "package": "jni-sys-macros-0.4.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\jni-sys-macros-0.4.1",
+    "source_urls": [
+      "https://raw.githubusercontent.com/jni-rs/jni-sys/64d77b7a5f119d7b55b4e2c169a4668067ff59e6/LICENSE-APACHE",
+      "https://raw.githubusercontent.com/jni-rs/jni-sys/64d77b7a5f119d7b55b4e2c169a4668067ff59e6/LICENSE-MIT"
+    ]
+  },
+  {
+    "package": "jobserver-0.1.35",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\jobserver-0.1.35"
+  },
+  {
+    "package": "js-sys-0.3.105",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\js-sys-0.3.105"
+  },
+  {
+    "package": "libc-0.2.189",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\libc-0.2.189"
+  },
+  {
+    "package": "libm-0.2.16",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE.txt"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\libm-0.2.16"
+  },
+  {
+    "package": "log-0.4.34",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\log-0.4.34"
+  },
+  {
+    "package": "ndk-0.9.0",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\ndk-0.9.0",
+    "source_urls": [
+      "https://raw.githubusercontent.com/rust-mobile/ndk/49bbbba16c58ff63cb8a0ad0eca5a9fb7ecaec25/LICENSE-APACHE",
+      "https://raw.githubusercontent.com/rust-mobile/ndk/49bbbba16c58ff63cb8a0ad0eca5a9fb7ecaec25/LICENSE-MIT"
+    ]
+  },
+  {
+    "package": "ndk-context-0.1.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\ndk-context-0.1.1",
+    "source_urls": [
+      "https://raw.githubusercontent.com/rust-windowing/android-ndk-rs/10f2ba388fca20f7349996ebae26ccda7a6fda5c/LICENSE-APACHE",
+      "https://raw.githubusercontent.com/rust-windowing/android-ndk-rs/10f2ba388fca20f7349996ebae26ccda7a6fda5c/LICENSE-MIT"
+    ]
+  },
+  {
+    "package": "ndk-sys-0.6.0+11769913",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\ndk-sys-0.6.0+11769913",
+    "source_urls": [
+      "https://raw.githubusercontent.com/rust-mobile/ndk/49bbbba16c58ff63cb8a0ad0eca5a9fb7ecaec25/LICENSE-APACHE",
+      "https://raw.githubusercontent.com/rust-mobile/ndk/49bbbba16c58ff63cb8a0ad0eca5a9fb7ecaec25/LICENSE-MIT"
+    ]
+  },
+  {
+    "package": "nix-0.31.3",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\nix-0.31.3"
+  },
+  {
+    "package": "nonmax-0.5.5",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\nonmax-0.5.5"
+  },
+  {
+    "package": "num-traits-0.2.19",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\num-traits-0.2.19"
+  },
+  {
+    "package": "num_enum-0.7.6",
+    "declared_license": "license = \"BSD-3-Clause OR MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-BSD",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\num_enum-0.7.6"
+  },
+  {
+    "package": "num_enum_derive-0.7.6",
+    "declared_license": "license = \"BSD-3-Clause OR MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-BSD",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\num_enum_derive-0.7.6"
+  },
+  {
+    "package": "objc2-0.6.4",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE.md"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\objc2-0.6.4",
+    "source_urls": [
+      "https://raw.githubusercontent.com/madsmtm/objc2/8852b424193ca41602281b3d7540d7c8ed51e49a/LICENSE.md"
+    ]
+  },
+  {
+    "package": "objc2-encode-4.1.0",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE.md"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\objc2-encode-4.1.0",
+    "source_urls": [
+      "https://raw.githubusercontent.com/madsmtm/objc2/8d214f5477365ffcbcbb7de058c86ed9a518efb7/LICENSE.md"
+    ]
+  },
+  {
+    "package": "once_cell-1.21.4",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\once_cell-1.21.4"
+  },
+  {
+    "package": "parking-2.2.1",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT",
+      "LICENSE-THIRD-PARTY"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\parking-2.2.1"
+  },
+  {
+    "package": "pin-project-lite-0.2.17",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\pin-project-lite-0.2.17"
+  },
+  {
+    "package": "portable-atomic-1.15.0",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\portable-atomic-1.15.0"
+  },
+  {
+    "package": "portable-atomic-util-0.2.8",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\portable-atomic-util-0.2.8"
+  },
+  {
+    "package": "proc-macro-crate-3.5.0",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\proc-macro-crate-3.5.0"
+  },
+  {
+    "package": "r-efi-6.0.0",
+    "declared_license": "license = \"MIT OR Apache-2.0 OR LGPL-2.1-or-later\"",
+    "included_notices": [
+      "AUTHORS"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\r-efi-6.0.0",
+    "source_urls": [
+      "https://raw.githubusercontent.com/r-efi/r-efi/7e1b0322d31d625f81a5656096330934f9cd835d/AUTHORS"
+    ]
+  },
+  {
+    "package": "rand-0.10.2",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "COPYRIGHT",
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\rand-0.10.2"
+  },
+  {
+    "package": "rand_core-0.10.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "COPYRIGHT",
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\rand_core-0.10.1"
+  },
+  {
+    "package": "rand_distr-0.6.0",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "COPYRIGHT",
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\rand_distr-0.6.0"
+  },
+  {
+    "package": "raw-window-handle-0.6.2",
+    "declared_license": "license = \"MIT OR Apache-2.0 OR Zlib\"",
+    "included_notices": [
+      "LICENSE-APACHE.md",
+      "LICENSE-MIT.md",
+      "LICENSE-ZLIB.md"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\raw-window-handle-0.6.2"
+  },
+  {
+    "package": "rustc_version-0.4.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\rustc_version-0.4.1"
+  },
+  {
+    "package": "rustversion-1.0.23",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\rustversion-1.0.23"
+  },
+  {
+    "package": "same-file-1.0.6",
+    "declared_license": "license = \"Unlicense/MIT\"",
+    "included_notices": [
+      "COPYING",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\same-file-1.0.6"
+  },
+  {
+    "package": "semver-1.0.28",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\semver-1.0.28"
+  },
+  {
+    "package": "shlex-2.0.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\shlex-2.0.1"
+  },
+  {
+    "package": "simd_cesu8-1.2.0",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\simd_cesu8-1.2.0"
+  },
+  {
+    "package": "simdutf8-0.1.5",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-Apache",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\simdutf8-0.1.5"
+  },
+  {
+    "package": "slab-0.4.12",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\slab-0.4.12"
+  },
+  {
+    "package": "slotmap-1.1.1",
+    "declared_license": "license = \"Zlib\"",
+    "included_notices": [
+      "LICENSE"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\slotmap-1.1.1"
+  },
+  {
+    "package": "smallvec-1.16.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\smallvec-1.16.1"
+  },
+  {
+    "package": "smol_str-0.2.2",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\smol_str-0.2.2"
+  },
+  {
+    "package": "spin-0.10.1",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\spin-0.10.1"
+  },
+  {
+    "package": "stable_deref_trait-1.2.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\stable_deref_trait-1.2.1"
+  },
+  {
+    "package": "syn-2.0.119",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\syn-2.0.119"
+  },
+  {
+    "package": "thiserror-1.0.69",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\thiserror-1.0.69"
+  },
+  {
+    "package": "thiserror-2.0.20",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\thiserror-2.0.20"
+  },
+  {
+    "package": "thiserror-impl-1.0.69",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\thiserror-impl-1.0.69"
+  },
+  {
+    "package": "thiserror-impl-2.0.20",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\thiserror-impl-2.0.20"
+  },
+  {
+    "package": "thread_local-1.1.10",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\thread_local-1.1.10"
+  },
+  {
+    "package": "toml_datetime-1.1.1+spec-1.1.0",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\toml_datetime-1.1.1+spec-1.1.0"
+  },
+  {
+    "package": "toml_edit-0.25.15+spec-1.1.0",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\toml_edit-0.25.15+spec-1.1.0"
+  },
+  {
+    "package": "toml_parser-1.1.3+spec-1.1.0",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\toml_parser-1.1.3+spec-1.1.0"
+  },
+  {
+    "package": "typeid-1.0.3",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\typeid-1.0.3"
+  },
+  {
+    "package": "unicode-segmentation-1.13.3",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "COPYRIGHT",
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\unicode-segmentation-1.13.3"
+  },
+  {
+    "package": "unicode-xid-0.2.6",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "COPYRIGHT",
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\unicode-xid-0.2.6"
+  },
+  {
+    "package": "uuid-1.26.1",
+    "declared_license": "license = \"Apache-2.0 OR MIT\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\uuid-1.26.1"
+  },
+  {
+    "package": "variadics_please-1.1.0",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\variadics_please-1.1.0"
+  },
+  {
+    "package": "version_check-0.9.5",
+    "declared_license": "license = \"MIT/Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\version_check-0.9.5"
+  },
+  {
+    "package": "walkdir-2.5.0",
+    "declared_license": "license = \"Unlicense/MIT\"",
+    "included_notices": [
+      "COPYING",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\walkdir-2.5.0"
+  },
+  {
+    "package": "wasm-bindgen-0.2.128",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\wasm-bindgen-0.2.128"
+  },
+  {
+    "package": "wasm-bindgen-futures-0.4.78",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\wasm-bindgen-futures-0.4.78"
+  },
+  {
+    "package": "wasm-bindgen-macro-0.2.128",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\wasm-bindgen-macro-0.2.128"
+  },
+  {
+    "package": "wasm-bindgen-macro-support-0.2.128",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\wasm-bindgen-macro-support-0.2.128"
+  },
+  {
+    "package": "wasm-bindgen-shared-0.2.128",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\wasm-bindgen-shared-0.2.128"
+  },
+  {
+    "package": "web-sys-0.3.105",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\web-sys-0.3.105"
+  },
+  {
+    "package": "web-task-1.1.3",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE-APACHE",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\web-task-1.1.3"
+  },
+  {
+    "package": "wgpu-types-29.0.4",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "LICENSE.APACHE",
+      "LICENSE.MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\wgpu-types-29.0.4"
+  },
+  {
+    "package": "winapi-util-0.1.11",
+    "declared_license": "license = \"Unlicense OR MIT\"",
+    "included_notices": [
+      "COPYING",
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\winapi-util-0.1.11"
+  },
+  {
+    "package": "windows-link-0.2.1",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "license-apache-2.0",
+      "license-mit"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\windows-link-0.2.1"
+  },
+  {
+    "package": "windows-sys-0.61.2",
+    "declared_license": "license = \"MIT OR Apache-2.0\"",
+    "included_notices": [
+      "license-apache-2.0",
+      "license-mit"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\windows-sys-0.61.2"
+  },
+  {
+    "package": "winnow-1.0.4",
+    "declared_license": "license = \"MIT\"",
+    "included_notices": [
+      "LICENSE-MIT"
+    ],
+    "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\winnow-1.0.4"
   }
 ]

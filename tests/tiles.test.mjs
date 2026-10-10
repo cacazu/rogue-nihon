@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url), Tiles=require('../web/tiles.js');
+import {browserUiRuntime} from './browser-ui-runtime.mjs';
+Tiles.planRequest=await browserUiRuntime();
 const manifest=JSON.parse(await readFile(new URL('../web/assets/tiles/manifest.json',import.meta.url),'utf8'));
 const images=new Map(manifest.entries.map(e=>[e.image,{name:e.image}]));
-const tiles=new Tiles(manifest,images);
+const tiles=new Tiles(Tiles.planRequest({type:'asset-plan'}).manifest,images);
 const fixture=(width,height,ids=Array(width*height).fill(0))=>({width,height,map_tiles:ids,map_tile_ids:manifest.entries.map(e=>e.id),map_unknown_glyphs:[]});
 test('all 49 semantic IDs have localized 96px raster assets; all 26 source monsters match',async()=>{
  assert.equal(new Set(manifest.entries.map(e=>e.id)).size,49);assert.equal(images.size,46);
@@ -36,8 +38,20 @@ test('transparent entities overlay a neutral stage only after a perceived glyph 
  const frame=fixture(1,3,[0,8,0]);tiles.draw(context,frame,{size:32,ratio:1,left:0,top:0,width:32,height:32});
  assert.deepEqual(calls,['terrain.floor.png','actor.player.png']);assert.deepEqual(frame.map_tiles,[0,8,0]);
 });
-test('pointer hit testing preserves map coordinates through camera scroll and CSS zoom',()=>{
- const canvas={getBoundingClientRect:()=>({left:10,top:20,width:400,height:240})};
- const camera={size:32,left:320,top:64,width:200,height:120};
- assert.deepEqual(tiles.coordinate({clientX:42,clientY:52},canvas,fixture(80,24),camera),{x:10,y:3});
+// Pointer/camera integration is exercised on the actual Canvas in canvas.mjs.
+
+test('player and every enemy share terrain compositing, including darkness; stale coordinates never apply',()=>{
+ const camera={size:32,ratio:1,left:0,top:0,width:32,height:32};
+ for(const actor of [8,...Array.from({length:26},(_,i)=>23+i)]){
+ const frame=fixture(1,3,[0,actor,0]);
+ for(const [tile,filename] of [[0,'terrain.unexplored.png'],[1,'terrain.floor.png'],[2,'terrain.passage.png'],[3,'terrain.door.png'],[6,'terrain.stairs.png'],[7,'terrain.trap.png']]){
+  const calls=[],context={drawImage:image=>calls.push(image.name),save(){},restore(){},translate(){},rotate(){}};
+  tiles.draw(context,{...frame,map_underlays:[{x:0,y:1,tile}]},camera);
+  assert.deepEqual(calls,[...([3,6,7].includes(tile)?['terrain.floor.png']:[]),filename,manifest.entries[actor].image]);
+ }
+ const calls=[],context={drawImage:image=>calls.push(image.name),save(){},restore(){},translate(){},rotate(){}};
+ tiles.draw(context,{...frame,map_underlays:[{x:1,y:1,tile:3}]},camera);
+ assert.deepEqual(calls,['terrain.floor.png',manifest.entries[actor].image]);
+ assert.deepEqual(frame.map_tiles,[0,actor,0]);
+ }
 });

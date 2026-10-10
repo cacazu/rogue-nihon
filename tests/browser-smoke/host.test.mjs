@@ -58,8 +58,23 @@ test("private server supplies isolation headers and serves the real entry point"
     assert.equal(response.status, 200);
     assert.equal(response.headers.get("cross-origin-opener-policy"), "same-origin");
     assert.equal(response.headers.get("cross-origin-embedder-policy"), "require-corp");
-    assert.match(await response.text(), /<canvas id="board"/);
+    assert.match(await response.text(), /<canvas id="rogue-canvas"/);
     const denied = await fetch(`http://127.0.0.1:${server.address().port}/`, { method: "POST" });
     assert.equal(denied.status, 405);
+  } finally { await new Promise((resolve) => server.close(resolve)); }
+});
+
+test("server denies private files even when they exist within the project", async () => {
+  const server = createPreviewServer();
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const base = `http://127.0.0.1:${server.address().port}`;
+    for (const resource of ["/.gitignore", "/start.ps1", "/rust/Cargo.toml", "/web/%2e%2e/.gitignore"]) {
+      const response = await fetch(base + resource);
+      assert.equal(response.status, 403, resource);
+    }
+    const wasm = await fetch(base + "/build/game.wasm", { method: "HEAD" });
+    assert.equal(wasm.status, 200);
+    assert.equal(wasm.headers.get("content-type"), "application/wasm");
   } finally { await new Promise((resolve) => server.close(resolve)); }
 });

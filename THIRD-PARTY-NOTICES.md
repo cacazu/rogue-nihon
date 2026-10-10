@@ -6,6 +6,7 @@ The exact dependency versions and registry checksums are locked in `rust/Cargo.l
 
 | Package | Version | Declared license |
 |---|---|---|
+| Bevy and bevy_* runtime / ECS / macro crates | 0.19.1 | MIT OR Apache-2.0 |
 | serde / serde_core / serde_derive | 1.0.229 | MIT OR Apache-2.0 |
 | serde_json | 1.0.151 | MIT OR Apache-2.0 |
 | itoa | 1.0.18 | MIT OR Apache-2.0 |
@@ -16,7 +17,7 @@ The exact dependency versions and registry checksums are locked in `rust/Cargo.l
 | syn | 3.0.6 | MIT OR Apache-2.0 |
 | unicode-ident | 1.0.26 | (MIT OR Apache-2.0) AND Unicode-3.0 |
 
-The proc-macro dependencies run at build time; this list covers the complete locked dependency graph rather than claiming every package is embedded in the final Wasm. Their source license texts are preserved in the corresponding `licenses/<package-version>/` folders.
+The table highlights direct dependencies and the existing serialization dependencies. The complete locked graph, including Bevy transitive and target-specific dependencies, is recorded in `licenses/manifest.json`; not every locked package is embedded in the final Wasm. Source license texts and copyright notices are preserved in the corresponding `licenses/<package-version>/` folders. For crates whose published archive omits workspace license files, `source_urls` records the upstream files at the exact commit from `.cargo_vcs_info.json`. The r-efi copyright and license text is in its AUTHORS file. Proc-macro dependencies run at build time.
 
 The Emscripten license, musl copyright notice, compiler-rt license, and the installed Rust copyright document are copied in `licenses/emscripten/` and `licenses/rust/`. This is a local implementation deliverable, not a public release. A later public release should re-audit the exact bundled toolchain runtime and notices for its chosen distribution.
 

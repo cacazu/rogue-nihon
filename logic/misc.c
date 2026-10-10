@@ -178,7 +178,9 @@ look(bool wakeup)
     if (door_stop && !firstmove && passcount > 1)
 	running = FALSE;
     if (!running || !jump)
+    {
 	mvaddch(hero.y, hero.x, PLAYER);
+    }
 # ifdef DEBUG
     done = FALSE;
 # endif /* DEBUG */
@@ -577,13 +579,16 @@ call_it(struct obj_info *info)
     }
     else if (!info->oi_guess)
     {
+	/* The shared prbuf may still name the last inventory item. A new
+	 * optional name starts empty; an empty answer leaves it unnamed. */
+	char name[MAXSTR] = "";
 	msg(terse ? "call it: " : "what do you want to call it? ");
-	if (get_str(prbuf, stdscr) == NORM)
+	if (get_str(name, stdscr) == NORM && name[0] != '\0')
 	{
 	    if (info->oi_guess != NULL)
 		free(info->oi_guess);
-	    info->oi_guess = malloc((unsigned int) strlen(prbuf) + 1);
-	    strcpy(info->oi_guess, prbuf);
+	    info->oi_guess = malloc((unsigned int) strlen(name) + 1);
+	    strcpy(info->oi_guess, name);
 	}
     }
 }

@@ -1,36 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
-const require = createRequire(import.meta.url);
-test("game history retains repeated events, ignores display clears, separates system notices", () => {
-  const GameLog = require("../../web/game-log.js");
-  const log = new GameLog(3);
-  log.message({id:"hit",text:"Hit"});
-  log.message({id:"hit",text:"Hit"});
-  log.message({id:"message.clear",text:""});
-  log.notice("saved",{},false);
-  assert.deepEqual(log.entries.map(e=>e.source),["game","game","system"]);
-  assert.equal(log.entries.length,3);
-  log.notice("saved",{},false);
-  assert.equal(log.entries.length,3);
-  log.message({id:"miss",text:"Miss"});
-  assert.equal(log.entries.length,3);
-  assert.equal(log.entries.at(-1).message.id,"miss");
+import {browserUiRuntime} from "../browser-ui-runtime.mjs";
+async function session(){
+ const request=await browserUiRuntime();request({type:"boot",environment:{isolated:true,parameters:{}}});
+ for(const set of ["tiles","pixels"]){const pixels=set==="pixels"?32:96;request({type:"api",operation:"assets",ok:true,set,images:Array(46).fill({width:pixels,height:pixels})});}
+ request({type:"event",event:{type:"invoke",id:"new-game"}});request({type:"worker",generation:1,data:{type:"ready"}});return request;
+}
+test("Rust history preserves duplicate events, ignores clears and classifies platform errors",async()=>{
+ const request=await session(),message=data=>request({type:"worker",generation:1,data:{type:"message",...data}});
+ message({id:"hit",text:"Hit"});message({id:"hit",text:"Hit"});let r=message({id:"message.clear",text:""});
+ assert.deepEqual(r.state.entries.filter(e=>e.source==="game").map(e=>e.text),["Hit","Hit"]);
+ r=message({id:"platform.restore_error",text:"Could not restore"});assert.equal(r.state.entries.at(-1).source,"system");assert.equal(r.state.entries.at(-1).error,true);
 });
-test("log following respects readers away from bottom", () => {
-  const GameLog = require("../../web/game-log.js");
-  assert.equal(GameLog.atBottom({scrollHeight:1000,clientHeight:200,scrollTop:400}),false);
-  assert.equal(GameLog.atBottom({scrollHeight:1000,clientHeight:200,scrollTop:799}),true);
-});
-
-test("repeated actual notices remain visible as separate events", () => {
-  const GameLog=require("../../web/game-log.js"), log=new GameLog();
-  log.notice("adjacent",{},true); log.notice("adjacent",{},true);
-  assert.equal(log.entries.length,2);
-});
-
-test("Rust platform notices belong to system history",()=>{
- const GameLog=require("../../web/game-log.js"),log=new GameLog();
- log.message({id:"platform.restore_error",text:"Could not restore"});
- assert.equal(log.entries[0].source,"system");
+test("Rust caps history at 500 events without coalescing repeats",async()=>{
+ const request=await session();let r;
+ for(let n=0;n<501;n++)r=request({type:"worker",generation:1,data:{type:"message",id:"hit",text:"Hit"}});
+ assert.equal(r.state.entries.length,500);assert.ok(r.state.entries.every(e=>e.text==="Hit"));
 });

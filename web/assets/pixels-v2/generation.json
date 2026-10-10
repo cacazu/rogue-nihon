@@ -1,0 +1,605 @@
+{
+  "tool": "built-in image_gen",
+  "native_pixels": 32,
+  "semantic_ids": 49,
+  "unique_pngs": 46,
+  "max_colors_per_sprite": 16,
+  "alpha_values": [
+    0,
+    255
+  ],
+  "packing": "Individual new ImageGen sprites; alpha bounds, nearest-neighbor native sampling, limited palette, binary alpha; periodic floor/wall edges. Approved silver soldier copied unchanged.",
+  "images": [
+    {
+      "id": "terrain.unexplored",
+      "file": "terrain.unexplored.png",
+      "source": "source/terrain.unexplored.png",
+      "crop": [
+        433,
+        436,
+        349,
+        275
+      ],
+      "colors": 1,
+      "sha256": "9758557f78db06b82c3b96fbdafd0e0f37af183104f6ae1f88053b54ee736aa0"
+    },
+    {
+      "id": "terrain.floor",
+      "file": "terrain.floor.png",
+      "source": "source/terrain.floor.png",
+      "crop": [
+        0,
+        0,
+        1254,
+        1254
+      ],
+      "colors": 16,
+      "sha256": "f63129c234d11ba711850ac4023ea9da70ca4aaeec504253095e8f02631d9016"
+    },
+    {
+      "id": "terrain.passage",
+      "file": "terrain.passage.png",
+      "source": "source/terrain.passage.png",
+      "crop": [
+        0,
+        0,
+        1254,
+        1254
+      ],
+      "colors": 16,
+      "sha256": "9cdc87b3cf16c431ce9370b17e587b29d0592e2da090043bc83f41b431c54df2"
+    },
+    {
+      "id": "terrain.door",
+      "file": "terrain.door.png",
+      "source": "source/terrain.door.png",
+      "crop": [
+        254,
+        166,
+        747,
+        917
+      ],
+      "colors": 14,
+      "sha256": "91fc46b69a62704b31cc40ea1aa52b38e090e7248486507579f73864f0e08b96"
+    },
+    {
+      "id": "terrain.wall_horizontal",
+      "file": "terrain.wall_horizontal.png",
+      "source": "source/terrain.wall_horizontal.png",
+      "crop": [
+        0,
+        470,
+        1254,
+        298
+      ],
+      "colors": 15,
+      "sha256": "de7e5d922598cabf8884ab1a25982e57aa8be013faf1a66807405c8e0ea062ba"
+    },
+    {
+      "id": "terrain.wall_vertical",
+      "file": "terrain.wall_vertical.png",
+      "source": "source/terrain.wall_vertical.png",
+      "crop": [
+        452,
+        0,
+        350,
+        1254
+      ],
+      "colors": 15,
+      "sha256": "fddac47bf0ef57a9dfbeddc7a9c4637ec5ff098672aa3a17f72db6d2ed229096"
+    },
+    {
+      "id": "terrain.stairs",
+      "file": "terrain.stairs.png",
+      "source": "source/terrain.stairs.png",
+      "crop": [
+        237,
+        235,
+        780,
+        784
+      ],
+      "colors": 15,
+      "sha256": "10ae64d5b4ec7fcc5ff7d22efdbe0301cbc948db35fd1f736485a5848c3fba43"
+    },
+    {
+      "id": "terrain.trap",
+      "file": "terrain.trap.png",
+      "source": "source/terrain.trap.png",
+      "crop": [
+        177,
+        394,
+        900,
+        547
+      ],
+      "colors": 15,
+      "sha256": "25b395d4d2673d6a7104ea594ba7a54910b5ae232982ee9b7bcec8ddc6feea5d"
+    },
+    {
+      "id": "actor.player",
+      "file": "actor.player.png",
+      "source": "../gameboy/actor.player.32.silver.png",
+      "sha256": "fcc001fa4a6456b2d39eaa7665e5f0c17618846ed8dd0d7bea0a3f29b731a760"
+    },
+    {
+      "id": "marker.magic",
+      "file": "marker.magic.png",
+      "source": "source/marker.magic.png",
+      "crop": [
+        345,
+        337,
+        564,
+        567
+      ],
+      "colors": 15,
+      "sha256": "5c6114c60588d7418d2088315690cc4d5a2a5e028c17a3b2fd0c604157c46d08"
+    },
+    {
+      "id": "effect.bolt_horizontal",
+      "file": "effect.bolt_horizontal.png",
+      "source": "source/effect.bolt_horizontal.png",
+      "crop": [
+        83,
+        428,
+        1103,
+        408
+      ],
+      "colors": 15,
+      "sha256": "93d832d6d1e2bd8221963d8c45f770926c03aeb3edd0c750e3b301b5d032aae2"
+    },
+    {
+      "id": "item.gold",
+      "file": "item.gold.png",
+      "source": "source/item.gold.png",
+      "crop": [
+        290,
+        373,
+        701,
+        531
+      ],
+      "colors": 15,
+      "sha256": "2783afe24db35a637c877553fec0c2ed78b2fe33e81bcb846af5d1002dd48f8f"
+    },
+    {
+      "id": "item.potion",
+      "file": "item.potion.png",
+      "source": "source/item.potion.png",
+      "crop": [
+        384,
+        306,
+        486,
+        652
+      ],
+      "colors": 15,
+      "sha256": "a6fdcde6063e80fe3847e397ca3c754593ed84186da90d10a473c32a3befee02"
+    },
+    {
+      "id": "item.scroll",
+      "file": "item.scroll.png",
+      "source": "source/item.scroll.png",
+      "crop": [
+        133,
+        306,
+        994,
+        709
+      ],
+      "colors": 14,
+      "sha256": "3b7daa1d7ba105f5c80acde6d4fff1dbc04feabb75b6158efebebde0691713b6"
+    },
+    {
+      "id": "item.food",
+      "file": "item.food.png",
+      "source": "source/item.food.png",
+      "crop": [
+        212,
+        334,
+        832,
+        615
+      ],
+      "colors": 15,
+      "sha256": "71095bf66780427608c2315ce2da4b00a92a0731fd62188e29bb40c57c6d95ae"
+    },
+    {
+      "id": "item.weapon",
+      "file": "item.weapon.png",
+      "source": "source/item.weapon.png",
+      "crop": [
+        215,
+        166,
+        874,
+        944
+      ],
+      "colors": 15,
+      "sha256": "e8f78dbdbd0e0da99599e1d4aaea0a06498ad9a71a25ec2c113dd07ed051940b"
+    },
+    {
+      "id": "item.armor",
+      "file": "item.armor.png",
+      "source": "source/item.armor.png",
+      "crop": [
+        237,
+        321,
+        781,
+        689
+      ],
+      "colors": 15,
+      "sha256": "29c44a9a891305168e488dbbd7025c5bd528f1db477db81e0452184d71210290"
+    },
+    {
+      "id": "item.ring",
+      "file": "item.ring.png",
+      "source": "source/item.ring.png",
+      "crop": [
+        313,
+        293,
+        654,
+        663
+      ],
+      "colors": 15,
+      "sha256": "be61b36244877146e1ec867ad45f11d795b5af6285ddb5fb00c37380f4fd4d84"
+    },
+    {
+      "id": "item.stick",
+      "file": "item.stick.png",
+      "source": "source/item.stick.png",
+      "crop": [
+        268,
+        140,
+        834,
+        999
+      ],
+      "colors": 15,
+      "sha256": "95594d73fc2b05350d8df0eb51886b4aacdcc47f5cce5898b810de72fb97a2ac"
+    },
+    {
+      "id": "item.amulet",
+      "file": "item.amulet.png",
+      "source": "source/item.amulet.png",
+      "crop": [
+        379,
+        338,
+        497,
+        582
+      ],
+      "colors": 15,
+      "sha256": "8c5a442939b3a340eb377ab4efffa6bdb6545295ec94711d90d9c0e4a56d0449"
+    },
+    {
+      "id": "monster.aquator",
+      "file": "monster.aquator.png",
+      "source": "source/monster.aquator.png",
+      "crop": [
+        100,
+        194,
+        1053,
+        903
+      ],
+      "colors": 15,
+      "sha256": "db7a25181e724eb40da50fb023373341bcfa9c06d75fcdf78df53cc4d050fd62"
+    },
+    {
+      "id": "monster.bat",
+      "file": "monster.bat.png",
+      "source": "source/monster.bat.png",
+      "crop": [
+        59,
+        373,
+        1136,
+        526
+      ],
+      "colors": 15,
+      "sha256": "c54bb4d6eee9f67e29daea950af6f6a7f858c4d88f4ee5c172c2ebbb7e18b520"
+    },
+    {
+      "id": "monster.centaur",
+      "file": "monster.centaur.png",
+      "source": "source/monster.centaur.png",
+      "crop": [
+        168,
+        184,
+        978,
+        934
+      ],
+      "colors": 15,
+      "sha256": "e2c809e5d14eafa77e68dd60e9a02a6fd690b5d137b53427c0c4e1808fd55893"
+    },
+    {
+      "id": "monster.dragon",
+      "file": "monster.dragon.png",
+      "source": "source/monster.dragon.png",
+      "crop": [
+        221,
+        176,
+        902,
+        922
+      ],
+      "colors": 15,
+      "sha256": "bd6284b78c682ec387ffff650e02e0d61c88f9a177fb0b1ba4ec4520a4a992ef"
+    },
+    {
+      "id": "monster.emu",
+      "file": "monster.emu.png",
+      "source": "source/monster.emu.png",
+      "crop": [
+        267,
+        151,
+        720,
+        969
+      ],
+      "colors": 15,
+      "sha256": "3903b5029456a5aa8ecddbe034f9474d4917455ef4cb3dcd564d8ca3bd060f93"
+    },
+    {
+      "id": "monster.venus_flytrap",
+      "file": "monster.venus_flytrap.png",
+      "source": "source/monster.venus_flytrap.png",
+      "crop": [
+        255,
+        124,
+        744,
+        1014
+      ],
+      "colors": 14,
+      "sha256": "7089bdc20da8846297feb7832b0e4ec2dcfbf63d194acd189d1c5a796da5e69f"
+    },
+    {
+      "id": "monster.griffin",
+      "file": "monster.griffin.png",
+      "source": "source/monster.griffin.png",
+      "crop": [
+        149,
+        73,
+        1029,
+        1122
+      ],
+      "colors": 15,
+      "sha256": "bfca40db5916bf0d1a8c9f8d596578a20c4860abb0d0a4c82bfc4b9e32c2c715"
+    },
+    {
+      "id": "monster.hobgoblin",
+      "file": "monster.hobgoblin.png",
+      "source": "source/monster.hobgoblin.png",
+      "crop": [
+        297,
+        234,
+        704,
+        814
+      ],
+      "colors": 15,
+      "sha256": "ecd71645e2986bc6b8a4151bb68dd2d8c9271872cc5f7f9eb64f27c991c7613b"
+    },
+    {
+      "id": "monster.ice_monster",
+      "file": "monster.ice_monster.png",
+      "source": "source/monster.ice_monster.png",
+      "crop": [
+        230,
+        199,
+        835,
+        897
+      ],
+      "colors": 15,
+      "sha256": "dd681e0838256be23388d02372f17d9c5dfa4b05fb92bfa0263619d3b37daf15"
+    },
+    {
+      "id": "monster.jabberwock",
+      "file": "monster.jabberwock.png",
+      "source": "source/monster.jabberwock.png",
+      "crop": [
+        59,
+        118,
+        1156,
+        1058
+      ],
+      "colors": 15,
+      "sha256": "7fca74cb91f463b5c65752aa0485de54195b21830f02285f6b350811328b9a24"
+    },
+    {
+      "id": "monster.kestrel",
+      "file": "monster.kestrel.png",
+      "source": "source/monster.kestrel.png",
+      "crop": [
+        158,
+        157,
+        923,
+        940
+      ],
+      "colors": 15,
+      "sha256": "4e31d439815fe5e392d90de295147bd4ee5378f69e06920c9a9de31236c34912"
+    },
+    {
+      "id": "monster.leprechaun",
+      "file": "monster.leprechaun.png",
+      "source": "source/monster.leprechaun.png",
+      "crop": [
+        399,
+        283,
+        526,
+        730
+      ],
+      "colors": 15,
+      "sha256": "5f07bbbc997a65910f59c8aec8e325e5760b5f2cedf69e92a8b546b1a4559274"
+    },
+    {
+      "id": "monster.medusa",
+      "file": "monster.medusa.png",
+      "source": "source/monster.medusa.png",
+      "crop": [
+        372,
+        147,
+        526,
+        981
+      ],
+      "colors": 15,
+      "sha256": "7b4570253dc0bbd96446e6ca8aee4b24e68ddd1bf74a3ff4c0e73b649eb34d48"
+    },
+    {
+      "id": "monster.nymph",
+      "file": "monster.nymph.png",
+      "source": "source/monster.nymph.png",
+      "crop": [
+        380,
+        138,
+        506,
+        1017
+      ],
+      "colors": 15,
+      "sha256": "85aa6efd462bdbb1fa6dc411fde44cc034f7e2f88852159d9a887e6030854e89"
+    },
+    {
+      "id": "monster.orc",
+      "file": "monster.orc.png",
+      "source": "source/monster.orc.png",
+      "crop": [
+        127,
+        268,
+        969,
+        829
+      ],
+      "colors": 15,
+      "sha256": "006bc48d97a6ee9aeb3be46ec671af0f92dda3c033089c2203fbf644eaa46c82"
+    },
+    {
+      "id": "monster.phantom",
+      "file": "monster.phantom.png",
+      "source": "source/monster.phantom.png",
+      "crop": [
+        314,
+        189,
+        646,
+        908
+      ],
+      "colors": 15,
+      "sha256": "1b55b73647400f346ece22aefed4cd03a4ce61ac2a90a361029850f6a7f93e89"
+    },
+    {
+      "id": "monster.quagga",
+      "file": "monster.quagga.png",
+      "source": "source/monster.quagga.png",
+      "crop": [
+        181,
+        229,
+        899,
+        820
+      ],
+      "colors": 15,
+      "sha256": "339df3e17a381733ee129a2f59c20df6f53483eb0fcb599e40b2444163febb07"
+    },
+    {
+      "id": "monster.rattlesnake",
+      "file": "monster.rattlesnake.png",
+      "source": "source/monster.rattlesnake.png",
+      "crop": [
+        227,
+        215,
+        838,
+        883
+      ],
+      "colors": 15,
+      "sha256": "100bbe9391308c1f08869a01c9f5fa851832a202269ed021ebdac7231ff893c0"
+    },
+    {
+      "id": "monster.snake",
+      "file": "monster.snake.png",
+      "source": "source/monster.snake.png",
+      "crop": [
+        335,
+        293,
+        663,
+        724
+      ],
+      "colors": 15,
+      "sha256": "cc2b13f821c66a711e8cfbfae3284460a5b81d22fc9b555890162e3eb508f197"
+    },
+    {
+      "id": "monster.troll",
+      "file": "monster.troll.png",
+      "source": "source/monster.troll.png",
+      "crop": [
+        70,
+        158,
+        1092,
+        966
+      ],
+      "colors": 15,
+      "sha256": "d284cc685ec1e2bc974d193cad7b87ac48fe55f37df3e65b0896e7a198c3d83a"
+    },
+    {
+      "id": "monster.black_unicorn",
+      "file": "monster.black_unicorn.png",
+      "source": "source/monster.black_unicorn.png",
+      "crop": [
+        89,
+        179,
+        1093,
+        927
+      ],
+      "colors": 15,
+      "sha256": "c344fec3c4f4a59227bfa3040acbdee36768f861c7036f4cd573a6dc564f68f8"
+    },
+    {
+      "id": "monster.vampire",
+      "file": "monster.vampire.png",
+      "source": "source/monster.vampire.png",
+      "crop": [
+        253,
+        146,
+        835,
+        978
+      ],
+      "colors": 15,
+      "sha256": "87b4f1d4e156999c11669b0c0788dd6ab3c100526f971c25c6bd815515794e22"
+    },
+    {
+      "id": "monster.wraith",
+      "file": "monster.wraith.png",
+      "source": "source/monster.wraith.png",
+      "crop": [
+        338,
+        205,
+        577,
+        843
+      ],
+      "colors": 15,
+      "sha256": "4de30788f5707db5249306dc53ea6ca72c0ad5ebc37f20762b4e6804980ca34a"
+    },
+    {
+      "id": "monster.xeroc",
+      "file": "monster.xeroc.png",
+      "source": "source/monster.xeroc.png",
+      "crop": [
+        130,
+        236,
+        1020,
+        835
+      ],
+      "colors": 15,
+      "sha256": "0342149d5b680d1c7f0648fd7a5650396c516bb568972cf83fc437ff426c8b82"
+    },
+    {
+      "id": "monster.yeti",
+      "file": "monster.yeti.png",
+      "source": "source/monster.yeti.png",
+      "crop": [
+        177,
+        216,
+        882,
+        881
+      ],
+      "colors": 15,
+      "sha256": "d7ee574a4f852d79a7134976600f9d518dff0f4ed0f380841e35447741481f26"
+    },
+    {
+      "id": "monster.zombie",
+      "file": "monster.zombie.png",
+      "source": "source/monster.zombie.png",
+      "crop": [
+        358,
+        196,
+        640,
+        900
+      ],
+      "colors": 15,
+      "sha256": "f8fcbaf41f3906c29d32740f5a79d6e5eb7e0bd55dc37877dc5a9d851023e490"
+    }
+  ]
+}

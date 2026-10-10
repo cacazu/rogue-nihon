@@ -367,7 +367,13 @@ discovered()
 	if (!terse)
 	    addmsg(" of object do you want a list");
 	msg("? (* for all)");
+#ifdef ROGUE_LAYERED
+        rg_ui_line("input", -2, 0, "input.discovery", "[]", "");
+#endif
 	ch = readchar();
+#ifdef ROGUE_LAYERED
+        rg_ui_clear("input");
+#endif
 	switch (ch)
 	{
 	    case ESCAPE:
@@ -527,8 +533,8 @@ add_line(char *fmt, char *arg)
 	    if (inv_type == INV_OVER && fmt == NULL && !newpage)
 	    {
 #ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
-        rg_ui_line("menu", line_cnt, 0, "ui.continue", "[]", prompt);
-        rg_ui_line("input", -2, 0, "input.wait_space", "[]", "");
+        rg_ui_line("menu", line_cnt, 0, "ui.close", "[]", prompt);
+        rg_ui_line("input", -2, 0, "input.close", "[]", "");
 #endif
 		msg("");
 		refresh();
@@ -554,7 +560,7 @@ add_line(char *fmt, char *arg)
 		}
 		touchwin(tw);
 		wrefresh(tw);
-		wait_for(' ');
+		rg_wait_for(' ', "input.close");
                 if (md_hasclreol())
 		{
 		    werase(tw);
@@ -567,13 +573,13 @@ add_line(char *fmt, char *arg)
 	    else
 	    {
 #ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
-        rg_ui_line("menu", LINES - 1, 0, "ui.continue", "[]", prompt);
-        rg_ui_line("input", -2, 0, "input.wait_space", "[]", "");
+        rg_ui_line("menu", LINES - 1, 0, fmt == NULL ? "ui.close" : "ui.next_page", "[]", prompt);
+        rg_ui_line("input", -2, 0, fmt == NULL ? "input.close" : "input.next_page", "[]", "");
 #endif
 		wmove(hw, LINES - 1, 0);
 		waddstr(hw, prompt);
 		wrefresh(hw);
-		wait_for(' ');
+		rg_wait_for(' ', fmt == NULL ? "input.close" : "input.next_page");
 		clearok(curscr, TRUE);
 		wclear(hw);
 		touchwin(stdscr);
@@ -589,7 +595,8 @@ add_line(char *fmt, char *arg)
 	if (fmt != NULL && !(line_cnt == 0 && *fmt == '\0'))
 	{
 #ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
-        rg_ui_printf("menu", line_cnt, 0, __FILE__, __LINE__, fmt, arg);
+        if (*fmt != '\0')
+            rg_ui_printf("menu", line_cnt, 0, __FILE__, __LINE__, fmt, arg);
 #endif
 	    mvwprintw(hw, line_cnt++, 0, fmt, arg);
 	    getyx(hw, y, x);

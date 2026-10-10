@@ -56,6 +56,8 @@ void rg_core_save_free(uint8_t *bytes);
 
 /* Rust-owned host callbacks. The C caller lends buffers only for the call. */
 int32_t rg_host_read_key(void);
+/* Preserve recorded legacy inventory reads while replaying older saves. */
+int32_t rg_host_inventory_browser_enabled(void);
 /* Presentation policy for ordinary narration only. No input/RNG/turn.
  * Important selections and cancelable pagination keep their C input waits. */
 int32_t rg_host_message_requires_acknowledgement(void);
@@ -64,6 +66,9 @@ void rg_host_present(const uint8_t *cells, uint32_t rows, uint32_t columns);
 /* Presentation-only observation of a currently drawn bolt. active=0 clears
  * transient tags. This never changes cells, game state, RNG or save bytes. */
 void rg_host_map_effect(int32_t x, int32_t y, int32_t glyph, int32_t active);
+/* Per-frame terrain beneath perceived actors. 255 means no observation.
+ * Borrows rows*columns bytes; never changes world, RNG, or saved state. */
+void rg_host_map_terrain(const uint8_t *glyphs, uint32_t rows, uint32_t columns);
 void rg_host_message(const char *message_id, const char *arguments_json,
                      const char *legacy_english);
 /* UTF-8 semantic UI is presentation data only. row=-1 clears a scope;

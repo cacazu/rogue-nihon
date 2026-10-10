@@ -125,11 +125,11 @@ option()
     wmove(hw, LINES - 1, 0);
     waddstr(hw, "--Press space to continue--");
 #ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
-    rg_ui_line("options", LINES - 1, 0, "ui.continue", "[]", "--Press space to continue--");
-    rg_ui_line("input", -2, 0, "input.wait_space", "[]", "");
+    rg_ui_line("options", LINES - 1, 0, "ui.close", "[]", "--Press space to continue--");
+    rg_ui_line("input", -2, 0, "input.close", "[]", "");
 #endif
     wrefresh(hw);
-    wait_for(' ');
+    rg_wait_for(' ', "input.close");
 #ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
     rg_ui_clear("options");
     rg_ui_clear("input");
@@ -227,7 +227,7 @@ get_bool(void *vp, WINDOW *win)
     {
 #ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
         rg_option_value(win, oy, ox, *bp ? "options.value.true" : "options.value.false", *bp ? "True" : "False");
-        rg_ui_line("input", -2, 0, "input.option_bool", "[]", "");
+        rg_ui_line("input", -2, oy, "input.option_bool", "[]", "");
 #endif
 	wmove(win, oy, ox);
 	wrefresh(win);
@@ -435,7 +435,7 @@ get_inv_t(void *vp, WINDOW *win)
 #ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
         static const char *const ids[] = {"options.value.overlay", "options.value.slow", "options.value.clear"};
         rg_option_value(win, oy, ox, ids[*ip], inv_t_name[*ip]);
-        rg_ui_line("input", -2, 0, "input.option_inventory", "[]", "");
+        rg_ui_line("input", -2, oy, "input.option_inventory", "[]", "");
 #endif
 	wmove(win, oy, ox);
 	wrefresh(win);

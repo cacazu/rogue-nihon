@@ -240,10 +240,13 @@
       "template": "O：重ねる／S：1行ずつ／C：切り替え"
     },
     "input.choose_item": {
-      "template": "品物のキーを入力。*：一覧／Esc：取消"
+      "template": "品物を選択。キー入力でも選べます。Esc：取消"
     },
     "input.choose_direction": {
       "template": "方向キーを入力。Esc：取消"
+    },
+    "input.throw_direction": {
+      "template": "移動キーで投げる方向を指定。Esc：取消"
     },
     "prompt.direction": {
       "template": "どの方向？ "
@@ -412,6 +415,231 @@
     },
     "discoveries.none_short.stick": {
       "template": "杖の発見なし"
+    },
+    "input.help": {
+      "template": "コマンドのキーを入力。*：全操作／Esc：取消"
+    },
+    "input.symbol": {
+      "template": "調べる記号を入力。Esc：取消"
+    },
+    "input.discovery": {
+      "template": "品物の種類を入力。*：全発見／Esc：取消"
+    },
+    "input.confirm": {
+      "template": "ゲームを終了しますか？ Y：はい／N：いいえ"
+    },
+    "input.inventory_one": {
+      "template": "調べる品物を選択。キー入力でも選べます。Esc：取消"
+    },
+    "window.menu": {
+      "template": "持ち物・一覧"
+    },
+    "window.detection": {
+      "template": "検出結果"
+    },
+    "window.help": {
+      "template": "操作ヘルプ"
+    },
+    "window.options": {
+      "template": "ゲーム内設定"
+    },
+    "window.result": {
+      "template": "ゲーム結果"
+    },
+    "window.item": {
+      "template": "品物を選択"
+    },
+    "window.direction": {
+      "template": "方向を指定"
+    },
+    "window.text": {
+      "template": "文字を入力"
+    },
+    "window.discovery": {
+      "template": "発見した品物"
+    },
+    "window.confirm": {
+      "template": "確認"
+    },
+    "window.symbol": {
+      "template": "記号を調べる"
+    },
+    "window.game": {
+      "template": "ゲームウインドウ"
+    },
+    "window.close": {
+      "template": "閉じる"
+    },
+    "window.next_page": {
+      "template": "次のページ"
+    },
+    "window.next_item": {
+      "template": "次の品物"
+    },
+    "window.next_message": {
+      "template": "次のメッセージ"
+    },
+    "window.results": {
+      "template": "結果を見る"
+    },
+    "window.score": {
+      "template": "スコアを見る"
+    },
+    "input.show_score": {
+      "template": "Enter / Esc：スコアを見る"
+    },
+    "window.finish_game": {
+      "template": "終了する"
+    },
+    "ui.close": {
+      "template": "閉じる"
+    },
+    "ui.next_page": {
+      "template": "次のページ"
+    },
+    "input.close": {
+      "template": "Space / Enter / Esc：閉じる"
+    },
+    "input.next_page": {
+      "template": "Space / Enter：次のページ"
+    },
+    "input.next_item": {
+      "template": "Space / Enter：次の品物／Esc：閉じる"
+    },
+    "input.next_message": {
+      "template": "Space / Enter：次のメッセージ"
+    },
+    "input.results": {
+      "template": "Space / Enter：結果を見る"
+    },
+    "input.finish_game": {
+      "template": "Enter / Esc：終了する"
+    },
+    "input.results_enter": {
+      "template": "Enter / Esc：結果を見る"
+    },
+    "window.cancel": {
+      "template": "取消（Esc）"
+    },
+    "window.all": {
+      "template": "すべて表示（*）"
+    },
+    "window.yes": {
+      "template": "はい（Y）"
+    },
+    "window.no": {
+      "template": "いいえ（N）"
+    },
+    "window.keep": {
+      "template": "変更しない（Enter）"
+    },
+    "window.back": {
+      "template": "前へ（-）"
+    },
+    "window.finish": {
+      "template": "終了（Esc）"
+    },
+    "input.hand": {
+      "template": "左手：L／右手：R／Esc：取消"
+    },
+    "window.hand": {
+      "template": "指輪を着ける手"
+    },
+    "window.left_hand": {
+      "template": "左手（L）"
+    },
+    "window.right_hand": {
+      "template": "右手（R）"
+    },
+    "save.browser": {
+      "template": "保存は設定ウィンドウの「保存」から行います。"
+    },
+    "inventory.title": {
+      "template": "持ち物"
+    },
+    "inventory.empty": {
+      "template": "何も持っていません。"
+    },
+    "inventory.choose": {
+      "template": "アイテムを選択。Space / Enter / Esc：閉じる"
+    },
+    "inventory.actions": {
+      "template": "アイテムの操作"
+    },
+    "inventory.details": {
+      "template": "詳細を見る"
+    },
+    "inventory.back": {
+      "template": "戻る"
+    },
+    "inventory.back_hint": {
+      "template": "Esc：戻る"
+    },
+    "inventory.drop": {
+      "template": "落とす"
+    },
+    "inventory.wield": {
+      "template": "装備する"
+    },
+    "inventory.take_off": {
+      "template": "脱ぐ"
+    },
+    "inventory.remove_ring": {
+      "template": "外す"
+    },
+    "inventory.zap": {
+      "template": "杖を使う"
+    },
+    "inventory.category": {
+      "template": "種類"
+    },
+    "inventory.count": {
+      "template": "個数"
+    },
+    "inventory.equipment": {
+      "template": "装備状態"
+    },
+    "inventory.knowledge": {
+      "template": "効果"
+    },
+    "inventory.known": {
+      "template": "判明済み（アイテム名に表示）"
+    },
+    "inventory.unknown": {
+      "template": "未判明"
+    },
+    "inventory.equipped.none": {
+      "template": "装備していない"
+    },
+    "inventory.equipped.weapon": {
+      "template": "装備中"
+    },
+    "inventory.equipped.armor": {
+      "template": "着用中"
+    },
+    "inventory.equipped.left_ring": {
+      "template": "左手に装着中"
+    },
+    "inventory.equipped.right_ring": {
+      "template": "右手に装着中"
+    },
+    "inventory.hplus": {
+      "template": "命中補正"
+    },
+    "inventory.dplus": {
+      "template": "ダメージ補正"
+    },
+    "inventory.protection": {
+      "template": "防御力"
+    },
+    "inventory.enchantment": {
+      "template": "強化値"
+    },
+    "inventory.charges": {
+      "template": "残り使用回数"
+    },
+    "inventory.bonus": {
+      "template": "補正値"
     }
   }
 }

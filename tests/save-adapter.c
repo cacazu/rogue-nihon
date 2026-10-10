@@ -143,6 +143,14 @@ void rg_host_text_mode(int32_t enabled,uint32_t limit_bytes,const char *initial)
 void rg_host_player_name(const char *name) {(void)name;}
 void rg_host_outcome(int32_t code,const char *text) {(void)code;(void)text;}
 void rg_host_flush_input(void) {}
+int32_t rg_host_inventory_browser_enabled(void) {return 0;}
+int32_t rg_host_message_requires_acknowledgement(void) {return 0;}
+void rg_host_map_effect(int32_t x,int32_t y,int32_t glyph,int32_t active) {
+    (void)x;(void)y;(void)glyph;(void)active;
+}
+void rg_host_map_terrain(const uint8_t *glyphs,uint32_t rows,uint32_t columns) {
+    (void)glyphs;(void)rows;(void)columns;
+}
 int32_t rg_host_restore_data(const uint8_t **bytes,uint32_t *length) {
     *bytes=NULL;*length=0;return 0;
 }
@@ -191,6 +199,30 @@ void rg_host_checkpoint(void) {
     if(mlist && lvl_obj) {
         mlist->t_dest=&lvl_obj->o_pos;
         roundtrip_variant("monster target resolves to restored level object");
+    }
+    {
+        THING *amulet_item=new_item();
+        check(amulet_item!=NULL,"original Amulet allocation");
+        amulet_item->o_type=AMULET;amulet_item->o_pos=hero;
+        check(amulet_item->o_count==0,"original Amulet has zero count");
+        attach(lvl_obj,amulet_item);
+        roundtrip_variant("original zero-count floor Amulet restores");
+        amulet_item=new_item();
+        check(amulet_item!=NULL,"carried Amulet allocation");
+        amulet_item->o_type=AMULET;amulet_item->o_pos=hero;
+        attach(pack,amulet_item);
+        roundtrip_variant("original zero-count carried Amulet restores");
+        {
+            uint8_t *invalid=NULL;uint32_t invalid_length=0;
+            amulet_item=new_item();
+            check(amulet_item!=NULL,"zero-count food allocation");
+            amulet_item->o_type=FOOD;amulet_item->o_pos=hero;
+            attach(lvl_obj,amulet_item);
+            check(rg_core_save_bytes(&invalid,&invalid_length)==0,"capture invalid zero-count food");
+            check(rg_core_load_bytes(baseline,baseline_length)==0,"restore before invalid food rejection");
+            rejected(invalid,invalid_length,"ordinary zero-count objects remain invalid");
+            rg_core_save_free(invalid);
+        }
     }
     if(mlist && mlist->l_next) {
         mlist->t_dest=&mlist->l_next->t_pos;

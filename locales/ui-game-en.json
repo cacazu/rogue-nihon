@@ -240,10 +240,13 @@
       "template": "(O, S, or C)"
     },
     "input.choose_item": {
-      "template": "Choose an item key, * for list, Escape to cancel."
+      "template": "Select an item or enter its key. Esc: Cancel."
     },
     "input.choose_direction": {
       "template": "Choose a direction, Escape to cancel."
+    },
+    "input.throw_direction": {
+      "template": "Choose a throwing direction with movement keys. Esc: Cancel."
     },
     "prompt.direction": {
       "template": "which direction? "
@@ -412,6 +415,231 @@
     },
     "discoveries.none_short.stick": {
       "template": "Nothing about any sticks"
+    },
+    "input.help": {
+      "template": "Enter a command key, * for all commands, Escape to cancel."
+    },
+    "input.symbol": {
+      "template": "Enter the symbol to identify, Escape to cancel."
+    },
+    "input.discovery": {
+      "template": "Enter an item type, * for all discoveries, Escape to cancel."
+    },
+    "input.confirm": {
+      "template": "Quit the game? Y: Yes / N: No"
+    },
+    "input.inventory_one": {
+      "template": "Select an item to examine or enter its key. Esc: Cancel."
+    },
+    "window.menu": {
+      "template": "Inventory / list"
+    },
+    "window.detection": {
+      "template": "Detection results"
+    },
+    "window.help": {
+      "template": "Help"
+    },
+    "window.options": {
+      "template": "Game options"
+    },
+    "window.result": {
+      "template": "Game result"
+    },
+    "window.item": {
+      "template": "Choose an item"
+    },
+    "window.direction": {
+      "template": "Choose a direction"
+    },
+    "window.text": {
+      "template": "Enter text"
+    },
+    "window.discovery": {
+      "template": "Discoveries"
+    },
+    "window.confirm": {
+      "template": "Confirm"
+    },
+    "window.symbol": {
+      "template": "Identify a symbol"
+    },
+    "window.game": {
+      "template": "Game window"
+    },
+    "window.close": {
+      "template": "Close"
+    },
+    "window.next_page": {
+      "template": "Next page"
+    },
+    "window.next_item": {
+      "template": "Next item"
+    },
+    "window.next_message": {
+      "template": "Next message"
+    },
+    "window.results": {
+      "template": "Show results"
+    },
+    "window.score": {
+      "template": "Show scores"
+    },
+    "input.show_score": {
+      "template": "Enter / Esc: Show scores"
+    },
+    "window.finish_game": {
+      "template": "Finish"
+    },
+    "ui.close": {
+      "template": "Close"
+    },
+    "ui.next_page": {
+      "template": "Next page"
+    },
+    "input.close": {
+      "template": "Space / Enter / Esc: Close"
+    },
+    "input.next_page": {
+      "template": "Space / Enter: Next page"
+    },
+    "input.next_item": {
+      "template": "Space / Enter: Next item; Esc: Close"
+    },
+    "input.next_message": {
+      "template": "Space / Enter: Next message"
+    },
+    "input.results": {
+      "template": "Space / Enter: Show results"
+    },
+    "input.finish_game": {
+      "template": "Enter / Esc: Finish"
+    },
+    "input.results_enter": {
+      "template": "Enter / Esc: Show results"
+    },
+    "window.cancel": {
+      "template": "Cancel (Esc)"
+    },
+    "window.all": {
+      "template": "Show all (*)"
+    },
+    "window.yes": {
+      "template": "Yes (Y)"
+    },
+    "window.no": {
+      "template": "No (N)"
+    },
+    "window.keep": {
+      "template": "Keep (Enter)"
+    },
+    "window.back": {
+      "template": "Back (-)"
+    },
+    "window.finish": {
+      "template": "Finish (Esc)"
+    },
+    "input.hand": {
+      "template": "Choose a hand: L / R / Escape to cancel."
+    },
+    "window.hand": {
+      "template": "Choose a hand"
+    },
+    "window.left_hand": {
+      "template": "Left hand (L)"
+    },
+    "window.right_hand": {
+      "template": "Right hand (R)"
+    },
+    "save.browser": {
+      "template": "Save the game using Save in Settings."
+    },
+    "inventory.title": {
+      "template": "Inventory"
+    },
+    "inventory.empty": {
+      "template": "You are not carrying anything."
+    },
+    "inventory.choose": {
+      "template": "Select an item. Space / Enter / Esc: Close"
+    },
+    "inventory.actions": {
+      "template": "Item actions"
+    },
+    "inventory.details": {
+      "template": "View details"
+    },
+    "inventory.back": {
+      "template": "Back"
+    },
+    "inventory.back_hint": {
+      "template": "Esc: Back"
+    },
+    "inventory.drop": {
+      "template": "Drop"
+    },
+    "inventory.wield": {
+      "template": "Equip"
+    },
+    "inventory.take_off": {
+      "template": "Take off"
+    },
+    "inventory.remove_ring": {
+      "template": "Remove"
+    },
+    "inventory.zap": {
+      "template": "Use"
+    },
+    "inventory.category": {
+      "template": "Type"
+    },
+    "inventory.count": {
+      "template": "Quantity"
+    },
+    "inventory.equipment": {
+      "template": "Equipment"
+    },
+    "inventory.knowledge": {
+      "template": "Effect"
+    },
+    "inventory.known": {
+      "template": "Known (shown in the item name)"
+    },
+    "inventory.unknown": {
+      "template": "Unknown"
+    },
+    "inventory.equipped.none": {
+      "template": "Not equipped"
+    },
+    "inventory.equipped.weapon": {
+      "template": "In hand"
+    },
+    "inventory.equipped.armor": {
+      "template": "Worn"
+    },
+    "inventory.equipped.left_ring": {
+      "template": "Left hand"
+    },
+    "inventory.equipped.right_ring": {
+      "template": "Right hand"
+    },
+    "inventory.hplus": {
+      "template": "Accuracy bonus"
+    },
+    "inventory.dplus": {
+      "template": "Damage bonus"
+    },
+    "inventory.protection": {
+      "template": "Protection"
+    },
+    "inventory.enchantment": {
+      "template": "Enchantment"
+    },
+    "inventory.charges": {
+      "template": "Charges"
+    },
+    "inventory.bonus": {
+      "template": "Bonus"
     }
   }
 }

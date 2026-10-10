@@ -25,4 +25,4 @@
 
 詳細トレース、ブラウザ画面画像、fixture用Wasm、補助テストバイナリ、ローカル配達manifestはGit管理対象外です。これらの不要なローカル成果物、Rustのビルドキャッシュ、Emscriptenのプロジェクト内キャッシュ、ログ、Pythonキャッシュを削除しました。ライセンス通知、翻訳の編集入力、継続的な検証用のソースとスクリプト、LAN起動用証明書は保持します。
 
-Rogueの起動に必要な `build/game.js`、`game.wasm`、`build-manifest.json` と、翻訳生成に使うPython・JSON入力はGitで管理します。再ビルドと試験の手順は [README.md](../README.md)、[tests/BASELINE-ja.md](../tests/BASELINE-ja.md)、[tests/browser-smoke/README-ja.md](../tests/browser-smoke/README-ja.md) にあります。通常のビルド・検証は専用の一時領域を使い、終了時に自動で削除します。詳細出力を保存する場合だけ `-KeepArtifacts` または `ROGUE_KEEP_ARTIFACTS=1` を指定します。
+Rogueの起動に必要な `build/game.js`、`game.wasm`、`browser-ui.wasm`、`build-manifest.json` と、翻訳生成に使うPython・JSON入力はGitで管理します。再ビルドと試験の手順は [README.md](../README.md)、[tests/BASELINE-ja.md](../tests/BASELINE-ja.md)、[tests/browser-smoke/README-ja.md](../tests/browser-smoke/README-ja.md) にあります。通常のビルド・検証は専用の一時領域を使い、終了時に自動で削除します。詳細出力を保存する場合だけ `-KeepArtifacts` または `ROGUE_KEEP_ARTIFACTS=1` を指定します。

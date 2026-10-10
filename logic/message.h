@@ -26,6 +26,7 @@ void rg_message_discard(void);
 void rg_ui_line(const char *scope, int row, int column, const char *id,
                 const char *arguments_json, const char *fallback);
 void rg_ui_clear(const char *scope);
+void rg_status_publish(int hp);
 void rg_ui_printf(const char *scope, int row, int column, const char *file,
                   int line, const char *format, ...);
 #endif

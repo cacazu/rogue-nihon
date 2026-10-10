@@ -3,6 +3,7 @@
 !/build/game.js
 !/build/game.wasm
 !/build/build-manifest.json
+!/build/browser-ui.wasm
 !/build/assemble-ja.py
 !/build/ja-main-translations.json
 !/build/ja-message-subset.json

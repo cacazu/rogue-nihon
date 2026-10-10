@@ -1,6 +1,7 @@
 /* Portable virtual screen; no terminal, DOM, timing, or game updates. */
 #include "knowledge.h"
 #include "core.h"
+#include "semantic.h"
 #include "../contract/rogue_abi.h"
 #include <stdlib.h>
 #include <string.h>
@@ -161,7 +162,10 @@ const uint8_t *rg_knowledge_view(void) {
 const uint16_t *rg_knowledge_cells(void) {return stdscr?stdscr->_cells:NULL;}
 void rg_knowledge_present(void) {
     const uint8_t *bytes=rg_knowledge_view();
-    if(bytes) rg_host_present(bytes,RG_ROWS,RG_COLS);
+    if(bytes) {
+        rg_semantic_map_terrain(bytes,RG_ROWS,RG_COLS);
+        rg_host_present(bytes,RG_ROWS,RG_COLS);
+    }
 }
 int wrefresh(WINDOW*w) {
     int y,x,dy,dx;

@@ -33,15 +33,30 @@ whatis(bool insist, int type)
 	return;
     }
 
+    /* A type-specific scroll may have no remaining eligible item. Match the
+     * original empty '*' path without requiring an invisible list command. */
+    if (insist && type)
+    {
+	for (obj = pack; obj != NULL; obj = next(obj))
+	    if (obj->o_type == type ||
+		(type == R_OR_S && (obj->o_type == RING || obj->o_type == STICK)))
+		break;
+	if (obj == NULL)
+	{
+	    n_objs = 0;
+	    after = FALSE;
+	    msg("you don't have anything in your pack to identify");
+	    return;
+	}
+    }
+
     for (;;)
     {
 	obj = get_item("identify", type);
 	if (insist)
 	{
-	    if (n_objs == 0)
+	    if (n_objs == 0 || obj == NULL)
 		return;
-	    else if (obj == NULL)
-		msg("you must identify something");
 	    else if (type && obj->o_type != type &&
 	       !(type == R_OR_S && (obj->o_type == RING || obj->o_type == STICK)) )
 		    msg("you must identify a %s", type_name(type));

@@ -2,6 +2,10 @@
 #ifndef RG_SEMANTIC_H
 #define RG_SEMANTIC_H
 #include <stddef.h>
+#include <stdint.h>
+
+/* Observe terrain beneath actors already present in the copied screen. */
+void rg_semantic_map_terrain(const uint8_t *cells,uint32_t rows,uint32_t columns);
 
 /* Return 1 for a descriptor, 0 for an ordinary literal, -1 for insufficient
  * space. The result is a JSON value object, not an English reverse translation.

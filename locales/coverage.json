@@ -2,12 +2,13 @@
   "schema": 1,
   "count_basis": "all C source msg/addmsg/debug sites, including inactive conditional and legacy OS code",
   "calls": 296,
-  "literal_template_ids": 274,
+  "literal_template_ids": 273,
   "literal_or_choice_calls": 277,
   "dynamic_calls": [
     {
       "file": "command.c",
-      "line": 313,
+      "line": 324,
+      "end_line": 324,
       "function": "command",
       "call": "msg",
       "argument_count": 0,
@@ -16,7 +17,8 @@
     },
     {
       "file": "command.c",
-      "line": 315,
+      "line": 326,
+      "end_line": 326,
       "function": "command",
       "call": "msg",
       "argument_count": 0,
@@ -25,7 +27,8 @@
     },
     {
       "file": "command.c",
-      "line": 529,
+      "line": 540,
+      "end_line": 540,
       "function": "search",
       "call": "msg",
       "argument_count": 0,
@@ -34,7 +37,8 @@
     },
     {
       "file": "command.c",
-      "line": 531,
+      "line": 542,
+      "end_line": 542,
       "function": "search",
       "call": "msg",
       "argument_count": 0,
@@ -43,7 +47,8 @@
     },
     {
       "file": "fight.c",
-      "line": 539,
+      "line": 541,
+      "end_line": 541,
       "function": "hit",
       "call": "addmsg",
       "argument_count": 0,
@@ -52,7 +57,8 @@
     },
     {
       "file": "fight.c",
-      "line": 553,
+      "line": 555,
+      "end_line": 555,
       "function": "hit",
       "call": "addmsg",
       "argument_count": 0,
@@ -61,7 +67,8 @@
     },
     {
       "file": "fight.c",
-      "line": 555,
+      "line": 557,
+      "end_line": 557,
       "function": "hit",
       "call": "addmsg",
       "argument_count": 0,
@@ -70,7 +77,8 @@
     },
     {
       "file": "fight.c",
-      "line": 572,
+      "line": 574,
+      "end_line": 574,
       "function": "miss",
       "call": "addmsg",
       "argument_count": 0,
@@ -79,7 +87,8 @@
     },
     {
       "file": "fight.c",
-      "line": 580,
+      "line": 582,
+      "end_line": 582,
       "function": "miss",
       "call": "addmsg",
       "argument_count": 0,
@@ -88,7 +97,8 @@
     },
     {
       "file": "fight.c",
-      "line": 600,
+      "line": 602,
+      "end_line": 602,
       "function": "bounce",
       "call": "addmsg",
       "argument_count": 0,
@@ -97,7 +107,8 @@
     },
     {
       "file": "fight.c",
-      "line": 691,
+      "line": 693,
+      "end_line": 693,
       "function": "killed",
       "call": "msg",
       "argument_count": 0,
@@ -107,6 +118,7 @@
     {
       "file": "mach_dep.c",
       "line": 330,
+      "end_line": 330,
       "function": "chmsg",
       "call": "msg",
       "argument_count": 1,
@@ -115,7 +127,8 @@
     },
     {
       "file": "misc.c",
-      "line": 271,
+      "line": 273,
+      "end_line": 273,
       "function": "find_obj",
       "call": "msg",
       "argument_count": 0,
@@ -124,7 +137,8 @@
     },
     {
       "file": "misc.c",
-      "line": 511,
+      "line": 513,
+      "end_line": 513,
       "function": "get_dir",
       "call": "msg",
       "argument_count": 0,
@@ -133,7 +147,8 @@
     },
     {
       "file": "pack.c",
-      "line": 441,
+      "line": 484,
+      "end_line": 484,
       "function": "get_item",
       "call": "addmsg",
       "argument_count": 0,
@@ -143,6 +158,7 @@
     {
       "file": "potions.c",
       "line": 395,
+      "end_line": 395,
       "function": "do_pot",
       "call": "msg",
       "argument_count": 0,
@@ -151,7 +167,8 @@
     },
     {
       "file": "things.c",
-      "line": 517,
+      "line": 523,
+      "end_line": 523,
       "function": "add_line",
       "call": "msg",
       "argument_count": 1,
@@ -160,7 +177,8 @@
     },
     {
       "file": "things.c",
-      "line": 618,
+      "line": 625,
+      "end_line": 625,
       "function": "end_line",
       "call": "msg",
       "argument_count": 1,
@@ -169,7 +187,8 @@
     },
     {
       "file": "wizard.c",
-      "line": 72,
+      "line": 87,
+      "end_line": 87,
       "function": "whatis",
       "call": "msg",
       "argument_count": 0,

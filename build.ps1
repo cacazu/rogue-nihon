@@ -40,7 +40,11 @@ if (-not $SkipCatalogGeneration) {
 if (-not $SkipRust) {
     & cargo build --offline --locked --manifest-path $rustManifest --release --lib --target wasm32-unknown-emscripten
     if ($LASTEXITCODE -ne 0) { throw 'Rust build failed' }
+    & (Join-Path $project 'build-ui.ps1') -OutputDirectory $buildPath
+} elseif ($buildPath -ne (Join-Path $project 'build') -and (Test-Path -LiteralPath (Join-Path $project 'build\browser-ui.wasm'))) {
+    Copy-Item -LiteralPath (Join-Path $project 'build\browser-ui.wasm') -Destination (Join-Path $buildPath 'browser-ui.wasm') -Force
 }
+if (-not (Test-Path -LiteralPath (Join-Path $buildPath 'browser-ui.wasm'))) { throw 'Rust browser UI Wasm missing' }
 if (-not (Test-Path -LiteralPath $rustLibrary)) { throw 'Rust library missing' }
 $sources = @('vers','extern','armor','chase','command','daemon','daemons','fight','init','io','list','mach_dep','main','mdport','misc','monsters','move','new_level','options','pack','passages','potions','rings','rip','rooms','save','scrolls','state','sticks','things','weapons','wizard','xcrypt','core','knowledge','message','save_adapter','semantic')
 $compilerArguments = [System.Collections.Generic.List[string]]::new()
@@ -73,15 +77,15 @@ try {
     $env:EMSDK_PYTHON=$previousSdkPython
     $env:PATH=$previousSdkPath
 }
-$files = @((Join-Path $buildPath ($OutputName+'.js')),(Join-Path $buildPath ($OutputName+'.wasm')))
+$files = @((Join-Path $buildPath ($OutputName+'.js')),(Join-Path $buildPath ($OutputName+'.wasm')),(Join-Path $buildPath 'browser-ui.wasm'))
 $records = foreach ($file in $files) { [ordered]@{file=[System.IO.Path]::GetFileName($file);bytes=(Get-Item -LiteralPath $file).Length;sha256=(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()} }
 $manifestName = if ($OutputName -eq 'game') { 'build-manifest.json' } else { 'build-manifest-'+$OutputName+'.json' }
-$manifestRecord = [ordered]@{built_at_utc=(Get-Date).ToUniversalTime().ToString('o');logic_source_directory=$logicPath;c_source_files=$sources.Count;rust_library=$rustLibrary;sdk_root=$SdkRoot;rust_version=((& rustc --version) -join '');c_flags=@('-DROGUE_LAYERED','-std=gnu11','-fwrapv','-fno-strict-aliasing','-O1');wasm_flags=@('MODULARIZE','ALLOW_MEMORY_GROWTH','STACK_SIZE=4194304','ASSERTIONS=1','Worker+SAB input; no Asyncify');outputs=$records}
+$manifestRecord = [ordered]@{built_at_utc=(Get-Date).ToUniversalTime().ToString('o');logic_source_directory=$logicPath;c_source_files=$sources.Count;rust_library=$rustLibrary;rust_engine='Bevy 0.19.1';sdk_root=$SdkRoot;rust_version=((& rustc --version) -join '');c_flags=@('-DROGUE_LAYERED','-std=gnu11','-fwrapv','-fno-strict-aliasing','-O1');wasm_flags=@('MODULARIZE','ALLOW_MEMORY_GROWTH','STACK_SIZE=4194304','ASSERTIONS=1','Worker+SAB input; no Asyncify');outputs=$records}
 $manifestJson = ($manifestRecord | ConvertTo-Json -Depth 8).Replace("`r`n", "`n") + "`n"
 [System.IO.File]::WriteAllText((Join-Path $buildPath $manifestName), $manifestJson, [System.Text.UTF8Encoding]::new($false))
 if ($OutputName -eq 'game' -or $artifactScope.Keep) {
     # Publish the runnable files only after compilation and hashing have succeeded.
-    foreach ($outputFile in @(($OutputName + '.js'),($OutputName + '.wasm'),$manifestName)) {
+    foreach ($outputFile in @(($OutputName + '.js'),($OutputName + '.wasm'),'browser-ui.wasm',$manifestName)) {
         Copy-Item -LiteralPath (Join-Path $buildPath $outputFile) -Destination (Join-Path $project ('build\' + $outputFile)) -Force
     }
 }

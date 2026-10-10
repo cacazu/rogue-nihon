@@ -10,6 +10,7 @@ const modulePath = fileURLToPath(new URL('../build/game.js', import.meta.url));
 const output = artifactDirectory(fileURLToPath(new URL('./ui-results/', import.meta.url)));
 await mkdir(output, { recursive: true });
 const scalarEvents = (text) => Array.from(text, (character) => character.codePointAt(0));
+const views = result => [...result.frames, ...result.presentations].map(event => event.ui).filter(Boolean);
 
 async function record(label, config) {
   const result = await runGame(modulePath, { ...config, locale: 'ja' });
@@ -35,7 +36,7 @@ test('Japanese help/options/inventory preserve all English C frames and state', 
   assertEquivalent(en.traces, ja.traces, 'Locale must not change C input, state or RNG');
   assertEquivalent(en.final, ja.final);
   assertEquivalent(originalFrames(en.frames), originalFrames(ja.frames), 'Locale must not change raw English cells');
-  for (const mode of ['help', 'options', 'menu']) assert.ok(ja.frames.some((frame) => frame.ui?.mode === mode), mode);
+  for (const mode of ['help', 'options', 'menu']) assert.ok(views(ja).some(ui => ui.mode === mode), mode);
   assert.ok(ja.frames.flatMap((frame) => frame.ui?.lines ?? []).some((line) => line.text.includes('左へ移動')));
   assert.ok(ja.frames.flatMap((frame) => frame.ui?.lines ?? []).some((line) => line.text.includes('簡潔な表示')));
   assert.ok(ja.messages.some((message) => message.text.includes('部屋の壁')));
@@ -44,7 +45,7 @@ test('Japanese help/options/inventory preserve all English C frames and state', 
 test('Japanese custom item label and scalar Backspace reach the real inventory', async () => {
   const events = [...textEvents('cc'), ...scalarEvents('名😀'), 127, ...scalarEvents('前\n'), ...textEvents('i ')];
   const result = await record('japanese-label-backspace', { seed: 1, events });
-  const menu = result.frames.flatMap((frame) => frame.ui?.lines ?? []).filter((line) => line.scope === 'menu');
+  const menu = views(result).flatMap(ui => ui.lines).filter(line => line.scope === 'menu' || line.scope === 'inventory');
   assert.ok(menu.some((line) => line.text.includes('名前')), JSON.stringify(menu));
   assert.ok(menu.every((line) => !line.text.includes('😀')));
   assert.equal(result.final[8], 1300);
@@ -65,7 +66,7 @@ test('Japanese mid-text checkpoint replays bytes and resumes the same label/stat
   assertEquivalent(original.final, restored.final);
   assertEquivalent(originalFrames(original.frames).at(-1), originalFrames(restored.frames).at(-1));
   assert.deepEqual(original.frames.at(-1).ui, restored.frames.at(-1).ui);
-  assert.ok(restored.frames.flatMap((frame) => frame.ui?.lines ?? []).some((line) => line.text.includes('名前')));
+  assert.ok(views(restored).flatMap(ui => ui.lines).some(line => line.text.includes('名前')));
 });
 
 test('Japanese player name editor preserves scalars and updates the visible name', async () => {

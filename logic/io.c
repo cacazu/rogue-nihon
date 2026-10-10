@@ -88,6 +88,7 @@ endmsg()
 	    rg_wait_message_ack();
 	else
 	{
+	    rg_ui_line("input", -2, 0, "input.next_item", "[]", "");
 	    while ((ch = readchar()) != ' ')
 		if (ch == ESCAPE)
 		{
@@ -96,8 +97,11 @@ endmsg()
 		    newpos = 0;
 		    msgbuf[0] = '\0';
 		    rg_message_discard();
+		    rg_ui_clear("input");
+		    rg_ui_clear("more");
 		    return ESCAPE;
 		}
+	    rg_ui_clear("input");
 	}
 	rg_ui_clear("more");
     }
@@ -251,6 +255,25 @@ static int s_arm = 0;
 static str_t s_str = 0;
 static int s_exp = 0;
 
+/* Publish current values without changing the C screen or status cache. Death
+ * displays zero HP while the original health and score calculation stay intact. */
+void
+rg_status_publish(int hp)
+{
+    char arguments[1024];
+    int armor = cur_armor != NULL ? cur_armor->o_arm : pstats.s_arm;
+    snprintf(arguments, sizeof arguments,
+        "[{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"signed\",\"value\":%d},"
+        "{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"signed\",\"value\":%d},"
+        "{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"signed\",\"value\":%d},"
+        "{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"signed\",\"value\":%d},"
+        "{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"term\",\"value\":\"status.hunger.%d\"}]",
+        level, purse, hp, max_hp, pstats.s_str, max_stats.s_str,
+        10 - armor, pstats.s_lvl, pstats.s_exp, hungry_state);
+    rg_ui_line("status", STATLINE, 0, "ui.status", arguments, "");
+    if (stat_msg) rg_ui_line("status_message", 0, 0, "ui.status", arguments, "");
+}
+
 void
 status()
 {
@@ -292,18 +315,7 @@ status()
     s_str = pstats.s_str;
     s_exp = pstats.s_exp; 
     s_hungry = hungry_state;
-    {
-        char arguments[1024];
-        snprintf(arguments, sizeof arguments,
-            "[{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"signed\",\"value\":%d},"
-            "{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"signed\",\"value\":%d},"
-            "{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"signed\",\"value\":%d},"
-            "{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"signed\",\"value\":%d},"
-            "{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"term\",\"value\":\"status.hunger.%d\"}]",
-            level, purse, pstats.s_hpt, max_hp, pstats.s_str, max_stats.s_str,
-            10 - s_arm, pstats.s_lvl, pstats.s_exp, hungry_state);
-        rg_ui_line("status", STATLINE, 0, "ui.status", arguments, "");
-    }
+    rg_status_publish(pstats.s_hpt);
 
     if (stat_msg)
     {
@@ -312,6 +324,7 @@ status()
 	    level, purse, hpwidth, pstats.s_hpt, hpwidth, max_hp, pstats.s_str,
 	    max_stats.s_str, 10 - s_arm, pstats.s_lvl, pstats.s_exp,
 	    state_name[hungry_state]);
+        rg_ui_clear("status_message");
     }
     else
     {
@@ -345,9 +358,16 @@ void rg_status_state_set(const uint32_t *in) {
 void
 wait_for(int ch)
 {
+    rg_wait_for(ch, ch == '\n' ? "input.wait_enter" : "input.wait_space");
+}
+
+/* Publish the action the acknowledgement performs, without changing C keys. */
+void
+rg_wait_for(int ch, const char *input_id)
+{
     register char c;
 
-    rg_ui_line("input", -2, 0, ch == '\n' ? "input.wait_enter" : "input.wait_space", "[]", "");
+    rg_ui_line("input", -2, 0, input_id, "[]", "");
 
     if (ch == '\n')
         while ((c = readchar()) != '\n' && c != '\r')
@@ -379,7 +399,7 @@ show_win(char *message)
     touchwin(win);
     wmove(win, hero.y, hero.x);
     wrefresh(win);
-    wait_for(' ');
+    rg_wait_for(' ', "input.close");
     rg_ui_clear("game");
     clearok(curscr, TRUE);
     touchwin(stdscr);
@@ -392,7 +412,7 @@ show_win(char *message)
 static void rg_wait_message_ack(void)
 {
     if (!rg_host_message_requires_acknowledgement()) return;
-    rg_ui_line("input", -2, 0, "input.wait_space", "[]", "");
+    rg_ui_line("input", -2, 0, "input.next_message", "[]", "");
     while (rg_host_message_requires_acknowledgement() && readchar() != ' ') continue;
     rg_ui_clear("input");
 }

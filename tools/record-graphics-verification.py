@@ -44,7 +44,7 @@ data = {
    'command':'node --test tests/tiles.test.mjs tests/graphics-logic.test.mjs tests/graphics-beams.test.mjs tests/browser-smoke/host.test.mjs tests/browser-smoke/localization.test.mjs',
    'environment':{'ROGUE_GRAPHICS_BASELINE':str(baseline/'game.js')}},
   {'suite':'Pure Rust map semantics','passed':4,'failed':0,
-   'command':'rustc --edition=2024 --test rust/src/map_tiles.rs -o build/map-tiles-tests.exe; build/map-tiles-tests.exe'},
+   'command':'rustc --edition=2024 --test rust/crates/display/src/map_tiles.rs -o build/map-tiles-tests.exe; build/map-tiles-tests.exe'},
   {'suite':'Rust formatting and lint','status':'passed',
    'commands':['cargo fmt --manifest-path rust/Cargo.toml --check','cargo clippy --offline --manifest-path rust/Cargo.toml --lib -- -D warnings']},
   {'suite':'Actual Chrome graphical map','passed':7,'failed':0,

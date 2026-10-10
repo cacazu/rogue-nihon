@@ -289,7 +289,7 @@ void
 save_game(void)
 {
     after = FALSE;
-    rg_host_message("save.browser", "{}",
+    rg_host_message("save.browser", "[]",
         "Use the Save button to persist the current checkpoint.");
 }
 #endif

@@ -42,13 +42,13 @@ export async function japaneseScenarios(cdp, until, evidence, output) {
   await key("?", "help question");
   await key("*", "full help listing");
   await until(() => cdp.evaluate("__rogueBrowserTest.frame.ui.mode === 'help'"), "Japanese help view");
-  const help = await cdp.evaluate("({ui:__rogueBrowserTest.frame.ui,text:document.getElementById('presentation-lines').innerText,height:document.getElementById('log-scroll').scrollHeight,client:document.getElementById('log-scroll').clientHeight})");
+  const help = await cdp.evaluate("({ui:__rogueBrowserTest.frame.ui,text:document.getElementById('presentation-lines').innerText,height:document.getElementById('presentation-lines').scrollHeight,client:document.getElementById('presentation-lines').clientHeight})");
   assert.ok(help.ui.lines.length >= 20);
   assert.match(help.text, /[\u3040-\u30ff\u3400-\u9fff]/u);
   assert.ok(help.height > help.client, "help remains vertically scrollable");
-  assert.equal(await cdp.evaluate("document.querySelector('.board-scroll').hidden"), false, "map area remains while menu lives in logs");
+  assert.equal(await cdp.evaluate("document.querySelector('.board-scroll').hidden"), false, "map remains behind the game window");
   await screenshot("ja-help-top.png");
-  await cdp.evaluate("document.getElementById('log-scroll').scrollTop=document.getElementById('log-scroll').scrollHeight;");
+  await cdp.evaluate("document.getElementById('presentation-lines').scrollTop=document.getElementById('presentation-lines').scrollHeight;");
   await screenshot("ja-help-bottom.png");
   const measureWrapping = () => cdp.evaluate("(()=>{const e=document.getElementById('presentation-lines');return {viewport:innerWidth,text:e.innerText,scroll:e.scrollWidth,client:e.clientWidth,wrapped:[...e.children].some(l=>l.getBoundingClientRect().height>parseFloat(getComputedStyle(l).lineHeight)*1.5),lines:[...e.children].map(l=>{const r=document.createRange();r.selectNodeContents(l);return {text:l.textContent,textWidth:r.getBoundingClientRect().width,width:l.getBoundingClientRect().width,height:l.getBoundingClientRect().height,lineHeight:getComputedStyle(l).lineHeight,font:getComputedStyle(l).fontSize}})}})()");
   await cdp.call("Emulation.setDeviceMetricsOverride", { width: 360, height: 850, deviceScaleFactor: 1, mobile: false });
@@ -89,7 +89,7 @@ export async function japaneseScenarios(cdp, until, evidence, output) {
   await cdp.evaluate("document.getElementById('save').click();");
   await until(() => cdp.evaluate("__rogueBrowserTest.savedLength > 0 && !__rogueBrowserTest.savePending && __rogueBrowserTest.queuePending === 0"), "partial Japanese text save");
   const saved = await cdp.evaluate("({trace:__rogueBrowserTest.trace,generation:__rogueBrowserTest.generation})");
-  await cdp.evaluate("document.getElementById('load').click();");
+  await cdp.evaluate("document.getElementById('settings-top').click();document.getElementById('load').click();");
   await until(() => cdp.evaluate("__rogueBrowserTest.generation > " + saved.generation + " && __rogueBrowserTest.inputRequestCount > 0 && !document.getElementById('text-prompt').hidden"), "pending UTF-8 text restore");
   assert.deepEqual(await cdp.evaluate("__rogueBrowserTest.trace.words"), saved.trace.words);
   assert.equal(await cdp.evaluate("document.getElementById('prompt-text').value"), "旅人");

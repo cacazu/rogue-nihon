@@ -30,7 +30,7 @@ export async function runGame(modulePath, config = {}) {
   if (!Array.isArray(events) || events.some((event) => !Number.isInteger(event) || event < 0 || event > 0xffffffff)) {
     throw new Error('events must be uint32 browser event values');
   }
-  const result = { seed: config.seed ?? 1, traces: [], frames: [], frame_contexts: [],
+  const result = { seed: config.seed ?? 1, traces: [], frames: [], frame_contexts: [], presentations: [],
     input_contexts: [], messages: [], reads: [], flushes: [], stores: [],
     store_contexts: [], outcomes: [], stderr: [] };
   const jsBytes = await readFile(resolve(modulePath));
@@ -56,6 +56,8 @@ export async function runGame(modulePath, config = {}) {
         result.frame_contexts.push({ read_position: position, trace_index: result.traces.length - 1 });
       } else if (value.type === 'input-context') {
         result.input_contexts.push(value);
+      } else if (value.type === 'presentation') {
+        result.presentations.push(value);
       } else if (value.type === 'message') {
         result.messages.push(value);
       }

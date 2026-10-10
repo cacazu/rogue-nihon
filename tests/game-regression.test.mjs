@@ -86,7 +86,7 @@ test('actual original-rule baseline equals split module for fixed inputs and see
   await access(baseline);
   const cases = [
     { seed: 1, text: 'v .hljk' },
-    { seed: 17, text: 'i w\x1bq\x1bT Wb ml a .vv ' },
+    { seed: 17, text: 'i w\x1bq\x1bT Wb ml a .vv ', rustInventoryAt: 1 },
     { seed: 12345, text: '3.6s99.v.\x1b? 5.\x1b' },
   ];
   for (const seed of [2, 7, 31, 257, 65537]) {
@@ -103,6 +103,20 @@ test('actual original-rule baseline equals split module for fixed inputs and see
     assertEquivalent(expected.outcomes, actual.outcomes);
     assertEquivalent(expected.traces, actual.traces, `seed ${config.seed} original-rule trace`);
     assertEquivalent(expected.final, actual.final, `seed ${config.seed} original-rule final`);
-    assertEquivalent(originalFrames(expected.frames), originalFrames(actual.frames), `seed ${config.seed} original-rule English frames`);
+    let expectedFrames = expected.frames;
+    if (config.rustInventoryAt) {
+      // i now publishes a Rust inventory window instead of drawing a C terminal
+      // inventory frame. Keep the exact C comparison for every other frame,
+      // including the first resumed frame, and retain all state/trace checks above.
+      const atInventory = (_, index) => expected.frame_contexts[index].read_position === config.rustInventoryAt;
+      const terminalInventory = expectedFrames.filter(atInventory).length;
+      if (terminalInventory === 0) {
+        assert.ok(expected.presentations.some(event => event.ui.inventory),
+          'A baseline with Rust inventory must publish its inventory view');
+      } else assert.equal(terminalInventory, 1);
+      assert.equal(actual.frame_contexts.filter(frame => frame.read_position === config.rustInventoryAt).length, 0);
+      expectedFrames = expectedFrames.filter((frame, index) => !atInventory(frame, index));
+    }
+    assertEquivalent(originalFrames(expectedFrames), originalFrames(actual.frames), `seed ${config.seed} original-rule English frames`);
   }
 });
