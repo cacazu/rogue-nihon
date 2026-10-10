@@ -37,6 +37,6 @@
 
 HUDの大きな値を使う試験はPlaywrightの `addInitScript` でテスト内のWorker接続を差し替えてpresentationを送る。本番にはfixture・データ差し替え用の分岐を置かない。一時フォルダーとダウンロード先の問題への対処も `tests/browser-smoke/browser-runtime.mjs` 内に置く。
 
-Playwrightは `canvas.mjs`（31件）、`hud-widgets.mjs`（27件）、`save-export.mjs`（6件）を実行する。主要操作、IME編集・保存・新規Workerへの復元、終了、全画面、PC・スマホ・日英、DPR 2、実ファイル6回の書き出しを確認する。名前と8項目のステータスはRustで左詰めの1行に配置し、設定ボタンはHUD外に置く。狭い画面での横スワイプ、横スクロールとTabでの項目表示もRustが扱う。画面操作だけでC/RNG/ターン/入力回数が変わらないことも確認する。証拠とスクリーンショットは各 `tests/browser-smoke/output/` に保持した出力に記録する。
+Playwrightは `canvas.mjs`（32件）、`hud-widgets.mjs`（33件）、`save-export.mjs`（6件）を実行する。主要操作、IME編集・保存・新規Workerへの復元、終了、全画面、PC・スマホ・日英、DPR 2、実ファイル6回の書き出しを確認する。名前と8項目のステータスはRustで左詰めの1行に配置する。設定と全画面のボタンはゲーム画面右上のHUD枠外に置き、全画面中も同じ場所から設定・解除を操作する。ゲームウインドウの上にはボタンの操作領域を確保する。狭い画面での横スワイプ、横スクロールとTabでの項目表示もRustが扱う。画面操作だけでC/RNG/ターン/入力回数が変わらないことも確認する。証拠とスクリーンショットは各 `tests/browser-smoke/output/` に保持した出力に記録する。
 
 過去のCanvas化前のWasmアーカイブは今回の環境にないため、その歴史的バイナリーとの比較は実行していない。現在のゲームでのC/RNG状態の一致、保存・復元、次のターンは確認する。Windowsの実IME製品の手動操作は自動化の範囲に含めない。

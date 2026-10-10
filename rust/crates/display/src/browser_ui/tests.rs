@@ -27,14 +27,21 @@ fn click(ui: &mut BrowserUi, id: &str) -> Value {
 #[test]
 fn responsive_hud_has_one_row_and_centered_icons() {
     let mut ui = BrowserUi::new(measure);
-    for (width, height) in [
-        (320., 844.),
-        (390., 844.),
-        (700., 900.),
-        (1240., 900.),
-        (844., 390.),
+    for (width, height, fullscreen) in [
+        (320., 844., false),
+        (320., 844., true),
+        (390., 844., false),
+        (390., 844., true),
+        (700., 900., false),
+        (700., 900., true),
+        (1240., 900., false),
+        (1240., 900., true),
+        (844., 390., false),
+        (844., 390., true),
     ] {
-        let output = ui.render(model(), view(width, height));
+        let mut surface = view(width, height);
+        surface["fullscreen"] = json!(fullscreen);
+        let output = ui.render(model(), surface);
         let hud = &output["diagnostics"]["hud"];
         let row: Rect = serde_json::from_value(hud["row"].clone()).unwrap();
         assert_eq!(array(&hud["items"]).len(), 8);
@@ -76,6 +83,22 @@ fn responsive_hud_has_one_row_and_centered_icons() {
         assert!(!button.rect.overlaps(panel));
         assert_eq!(rect.x + rect.w / 2., button.rect.x + button.rect.w / 2.);
         assert_eq!(rect.y + rect.h / 2., button.rect.y + button.rect.h / 2.);
+        let map: Rect = serde_json::from_value(output["diagnostics"]["mapRect"].clone()).unwrap();
+        for id in ["settings-toggle", "header-fullscreen"] {
+            let control = ui.widgets.controls.iter().find(|c| c.id == id).unwrap();
+            assert!(map.contains(control.rect.x, control.rect.y));
+            assert!(control.rect.x + control.rect.w <= map.x + map.w);
+            assert!(control.rect.y + control.rect.h <= map.y + map.h);
+            assert!(!control.rect.overlaps(panel));
+            assert_eq!(control.rect.w, 44.);
+            assert_eq!(control.rect.h, 44.);
+        }
+        assert!(
+            ui.widgets
+                .icons
+                .iter()
+                .any(|icon| icon["name"] == if fullscreen { "collapse" } else { "expand" })
+        );
         let mut depth = 0;
         for command in array(&output["commands"]) {
             match s(&command["op"]) {

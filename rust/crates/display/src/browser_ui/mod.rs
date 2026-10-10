@@ -93,7 +93,7 @@ impl BrowserUi {
         self.hud.draw(
             &mut self.widgets,
             hud::HudData {
-                map,
+                map: Rect::new(map.x, map.y, map.w - 104., map.h),
                 name: s(&self.model["frame"]["ui"]["name"]),
                 status: &self.model["frame"]["ui"]["status"],
                 offset: self.scrolls["hud"],
@@ -254,15 +254,8 @@ impl BrowserUi {
         self.widgets
             .rect(Rect::new(0., 0., self.width, self.height), BG);
         if !self.fullscreen {
-            let playing = !b(&self.model["topOpen"]);
-            let inline_fullscreen = self.width >= 500.;
             let title = self.t("app.heading");
-            let title_width = self.width
-                - if playing {
-                    if inline_fullscreen { 136. } else { 88. }
-                } else {
-                    32.
-                };
+            let title_width = self.width - 32.;
             let mut title_size = if self.width < 700. { 24. } else { 30. };
             while title_size > 18.
                 && (self.measure)(&title, title_size, true, false).width > title_width
@@ -279,26 +272,6 @@ impl BrowserUi {
                 },
                 self.measure,
             );
-            if playing {
-                self.settings_button(Rect::new(
-                    self.width - if inline_fullscreen { 108. } else { 60. },
-                    14.,
-                    44.,
-                    44.,
-                ));
-                if inline_fullscreen {
-                    self.button(
-                        "header-fullscreen",
-                        &self.t("action.fullscreen"),
-                        Rect::new(self.width - 60., 14., 44., 44.),
-                        ControlStyle {
-                            icon: Some("expand"),
-                            icon_size: 24.,
-                            ..Default::default()
-                        },
-                    );
-                }
-            }
             self.footer();
         }
         if b(&self.model["topOpen"]) {

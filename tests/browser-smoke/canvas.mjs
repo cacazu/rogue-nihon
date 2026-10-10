@@ -173,15 +173,36 @@ try{
     await page.waitForFunction(()=>Boolean(document.fullscreenElement)&&__rogueBrowserTest.canvas.fullscreen);
     const full=await scene();
     assert.equal(full.mapRect.y,0);assert.equal(full.mapRect.h,full.height);
-    assert.ok(!full.controls.some(c=>["header-fullscreen","credits-repository","credits-license"].includes(c.id)));
+    assert.ok(!full.controls.some(c=>["credits-repository","credits-license"].includes(c.id)));
     assert.ok(!full.text.some(t=>t.includes("ROGUE")));
-    assert.ok(full.controls.some(c=>c.id==="settings-toggle"));await shot("game-fullscreen-desktop");
+    for(const id of ["settings-toggle","header-fullscreen"]){
+      const r=full.controls.find(c=>c.id===id).rect;
+      assert.ok(r.x>=full.mapRect.x&&r.y>=full.mapRect.y&&r.x+r.w<=full.mapRect.x+full.mapRect.w&&r.y+r.h<=full.mapRect.y+full.mapRect.h);
+    }
+    await shot("game-fullscreen-desktop");
     assert.equal((await state()).input,before.input);assert.deepEqual((await state()).words,before.words);
     await page.keyboard.press("Escape");
     await page.waitForFunction(()=>!document.fullscreenElement&&!__rogueBrowserTest.canvas.fullscreen);
     assert.deepEqual((await scene()).mapRect,normal.mapRect);
     assert.ok((await scene()).controls.some(c=>c.id==="credits-license"));
     assert.equal((await state()).input,before.input);assert.deepEqual((await state()).words,before.words);
+  });
+  await check("In-game settings and fullscreen buttons remain clear of the inventory window",async()=>{
+    await key("i");await page.waitForFunction(()=>__rogueBrowserTest.frame.ui.window);const before=await state();
+    for(const fullscreen of [true,false]){
+      const s=await scene();
+      for(const id of ["settings-toggle","header-fullscreen"]){
+        const a=s.controls.find(c=>c.id===id).rect,b=s.dialogRect;
+        assert.ok(a.x+a.w<=b.x||b.x+b.w<=a.x||a.y+a.h<=b.y||b.y+b.h<=a.y,"buttons must not cover inventory content");
+      }
+      await click("header-fullscreen");
+      await page.waitForFunction(fullscreen=>Boolean(document.fullscreenElement)===fullscreen&&__rogueBrowserTest.canvas.fullscreen===fullscreen,fullscreen);
+      assert.deepEqual((await state()).frame.ui.window,before.frame.ui.window);
+      assert.equal((await state()).input,before.input);assert.deepEqual((await state()).words,before.words);
+    }
+    await click("settings-toggle");await click("settings-close");
+    assert.deepEqual((await state()).frame.ui.window,before.frame.ui.window);
+    await shot("inventory-in-game-buttons");await click("window-32");await page.waitForFunction(()=>!__rogueBrowserTest.frame.ui.window);
   });
   await check("Canvas map hit testing reaches an actual adjacent C floor cell",async()=>{
     const before=await state(),f=before.frame,s=await scene();

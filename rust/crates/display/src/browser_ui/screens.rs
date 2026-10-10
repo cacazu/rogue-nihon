@@ -13,6 +13,27 @@ impl BrowserUi {
             },
         );
     }
+    fn game_buttons(&mut self, map: Rect) {
+        self.settings_button(Rect::new(map.x + map.w - 104., map.y + 10., 44., 44.));
+        self.button(
+            "header-fullscreen",
+            &self.t(if self.fullscreen {
+                "action.exit_fullscreen"
+            } else {
+                "action.fullscreen"
+            }),
+            Rect::new(map.x + map.w - 52., map.y + 10., 44., 44.),
+            ControlStyle {
+                icon: Some(if self.fullscreen {
+                    "collapse"
+                } else {
+                    "expand"
+                }),
+                icon_size: 24.,
+                ..Default::default()
+            },
+        );
+    }
     pub(super) fn footer(&mut self) {
         let y = self.height - 44.;
         let repository_width = 110_f64.min(self.width * 0.3);
@@ -268,10 +289,11 @@ impl BrowserUi {
         {
             self.touch_controls(map);
         }
-        self.draw_hud_details(map);
         if self.model["frame"]["ui"]["window"].is_object() && !b(&self.model["settingsOpen"]) {
             self.draw_dialog(game);
         }
+        self.game_buttons(map);
+        self.draw_hud_details(map);
         if b(&self.model["settingsOpen"]) {
             self.draw_settings(game);
         }
@@ -390,14 +412,11 @@ impl BrowserUi {
             &title,
             r.x + 12.,
             r.y + 11.,
-            r.w - if self.fullscreen { 76. } else { 24. },
+            r.w - 24.,
             18.,
             "#c9e4d5",
             false,
         );
-        if self.fullscreen {
-            self.settings_button(Rect::new(r.x + r.w - 52., r.y + 4., 44., 44.));
-        }
         let viewport = Rect::new(r.x + 10., r.y + 52., r.w - 20., (r.h - 60.).max(10.));
         let mut rows = Vec::new();
         let mut total = 0.;
@@ -512,10 +531,10 @@ impl BrowserUi {
         }
     }
     fn draw_dialog(&mut self, game: Rect) {
-        self.widgets
-            .controls
-            .retain(|c| matches!(c.id.as_str(), "settings-toggle" | "header-fullscreen"));
+        self.widgets.controls.clear();
         self.widgets.rect(game, "#0006");
+        // Keep the in-game buttons visible and clear of modal contents.
+        let game = Rect::new(game.x, game.y + 60., game.w, (game.h - 60.).max(1.));
         let ui = self.model["frame"]["ui"].clone();
         let d = &ui["window"];
         let mobile = self.width < 700.;

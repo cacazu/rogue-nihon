@@ -102,6 +102,16 @@ function assertLayout(s){
   const gear=s.icons.find(icon=>icon.name==="settings"),button=s.controls.find(control=>control.id==="settings-toggle");
   assert.ok(gear&&button);for(const axis of ["x","y"]){const dimension=axis==="x"?"w":"h";assert.equal(gear.rect[axis]+gear.rect[dimension]/2,button.rect[axis]+button.rect[dimension]/2);}
   const a=button.rect,b=hud.panel;assert.ok(a.x+a.w<=b.x||b.x+b.w<=a.x||a.y+a.h<=b.y||b.y+b.h<=a.y,"settings stays outside the name/status panel");
+  const fullscreen=s.controls.find(control=>control.id==="header-fullscreen"),fullscreenIcon=s.icons.find(icon=>icon.name===(s.fullscreen?"collapse":"expand"));
+  assert.ok(fullscreen&&fullscreenIcon,"fullscreen button is directly available on PC and mobile");
+  for(const control of [button,fullscreen]){
+    const r=control.rect,map=s.mapRect;
+    assert.equal(r.w,44);assert.equal(r.h,44);
+    assert.ok(r.x>=map.x&&r.y>=map.y&&r.x+r.w<=map.x+map.w&&r.y+r.h<=map.y+map.h,"buttons stay inside the map");
+    assert.ok(r.x>=hud.panel.x+hud.panel.w,"buttons stay outside the HUD panel");
+  }
+  assert.equal(button.rect.y,fullscreen.rect.y);
+  for(const [axis,dimension] of [["x","w"],["y","h"]])assert.equal(fullscreenIcon.rect[axis]+fullscreenIcon.rect[dimension]/2,fullscreen.rect[axis]+fullscreen.rect[dimension]/2);
   assert.ok(s.icons.some(icon=>icon.name==="stairs"&&!icon.glyph));
   assert.ok(!s.icons.some(icon=>icon.glyph==="F"||icon.glyph==="Lv"));
   assert.equal(s.icons.find(icon=>icon.name==="strength").glyph,"💪");
@@ -201,15 +211,16 @@ try{
       for(const [axis,dimension] of [["x","w"],["y","h"]])assert.equal(icon.rect[axis]+icon.rect[dimension]/2,button.rect[axis]+button.rect[dimension]/2);
       await shot(`${lang}-${touch?"touch":"pc"}-settings`);await click("settings-close",touch);assert.equal((await scene()).scope,"game");assert.deepEqual(await state(),before);
     });
-    if(touch)await check(`${lang} mobile fullscreen keeps settings outside the HUD and preserves game state`,async()=>{
-      const before=await state();await click("settings-toggle",true);await click("fullscreen",true);
+    await check(`${lang} ${touch?"mobile":"PC"} in-game buttons enter and exit fullscreen without game input`,async()=>{
+      const before=await state();await click("header-fullscreen",touch);
       await page.waitForFunction(()=>Boolean(document.fullscreenElement)&&__rogueBrowserTest.canvas.fullscreen);
-      await click("settings-close",true);const s=await scene();assertLayout(s);
+      const s=await scene();assertLayout(s);
       assert.ok(!s.text.some(text=>text.includes("ROGUE")));
-      await shot(`${lang}-touch-fullscreen`);
-      await click("settings-toggle",true);await click("settings-close",true);
-      await page.keyboard.press("Escape");
+      await shot(`${lang}-${touch?"touch":"pc"}-fullscreen`);
+      await click("settings-toggle",touch);await click("settings-close",touch);
+      await click("header-fullscreen",touch);
       await page.waitForFunction(()=>!document.fullscreenElement&&!__rogueBrowserTest.canvas.fullscreen);
+      assertLayout(await scene());
       assert.deepEqual(await state(),before);
     });
     await check(`${lang} large values and all hunger states remain visible at 320px`,async()=>{

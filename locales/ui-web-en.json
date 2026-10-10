@@ -108,6 +108,7 @@
     "form.zoom": "Zoom",
     "action.center": "Center on player",
     "action.fullscreen": "Fullscreen",
+    "action.exit_fullscreen": "Exit fullscreen",
     "error.tiles": "Map images could not load. Please reload the page.",
     "error.fullscreen": "Fullscreen is unavailable.",
     "view.pixels": "Pixel art",
