@@ -29,6 +29,7 @@ async function open({fixture="",width=1240,height=900,lang="ja",scale=1}={}){
   page=await context.newPage();await installBrowserTestAdapter(page);page.on("pageerror",e=>evidence.errors.push(e.message));
   await page.goto(base+"?trace=1&view=pixels&lang="+lang);
   await page.waitForFunction(()=>window.__rogueBrowserTest?.canvas?.paintCount>0);
+  assert.deepEqual((await scene()).controls.filter(c=>c.id.startsWith("credits-")).map(c=>c.id),["credits-repository"]);
 }
 async function scene(){return page.evaluate(()=>__rogueBrowserTest.canvas);}
 async function click(id){
@@ -84,11 +85,10 @@ try{
     assert.equal(await page.evaluate(()=>__rogueBrowserTest.generation),0);await shot("top-desktop");
   });
   await check("Hiding the title Canvas leaves a uniform screenshot with no DOM pixels",onlyCanvas);
-  await check("Canvas footer opens its links directly without HTML anchors",async()=>{
-    for(const [id,url] of [["credits-repository","https://github.com/cacazu/jrogue/tree/main/rogue-nihon"],["credits-license","https://github.com/cacazu/jrogue/blob/main/rogue-nihon/docs/LICENSES-ja.md"]]){
-      await context.route(url,r=>r.fulfill({body:"Canvas link target",contentType:"text/plain"}));
-      const opened=page.waitForEvent("popup");await click(id);const popup=await opened;await popup.waitForURL(url);assert.equal(popup.url(),url);await popup.close();
-    }
+  await check("Canvas footer opens only GitHub directly without HTML anchors",async()=>{
+    const url="https://github.com/cacazu/jrogue/tree/main/rogue-nihon";
+    await context.route(url,r=>r.fulfill({body:"Canvas link target",contentType:"text/plain"}));
+    const opened=page.waitForEvent("popup");await click("credits-repository");const popup=await opened;await popup.waitForURL(url);assert.equal(popup.url(),url);await popup.close();
     assert.equal(await page.locator("a,button,form,select").count(),0);
   });
   await start();
@@ -173,7 +173,7 @@ try{
     await page.waitForFunction(()=>Boolean(document.fullscreenElement)&&__rogueBrowserTest.canvas.fullscreen);
     const full=await scene();
     assert.equal(full.mapRect.y,0);assert.equal(full.mapRect.h,full.height);
-    assert.ok(!full.controls.some(c=>["credits-repository","credits-license"].includes(c.id)));
+    assert.ok(!full.controls.some(c=>c.id.startsWith("credits-")));
     assert.ok(!full.text.some(t=>t.includes("ROGUE")));
     for(const id of ["settings-toggle","header-fullscreen"]){
       const r=full.controls.find(c=>c.id===id).rect;
@@ -184,7 +184,7 @@ try{
     await page.keyboard.press("Escape");
     await page.waitForFunction(()=>!document.fullscreenElement&&!__rogueBrowserTest.canvas.fullscreen);
     assert.deepEqual((await scene()).mapRect,normal.mapRect);
-    assert.ok((await scene()).controls.some(c=>c.id==="credits-license"));
+    assert.deepEqual((await scene()).controls.filter(c=>c.id.startsWith("credits-")).map(c=>c.id),["credits-repository"]);
     assert.equal((await state()).input,before.input);assert.deepEqual((await state()).words,before.words);
   });
   await check("In-game settings and fullscreen buttons remain clear of the inventory window",async()=>{

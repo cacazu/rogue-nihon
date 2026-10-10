@@ -369,7 +369,6 @@ impl Controller {
     fn invoke(&mut self, id: &str) {
         match id {
             "credits-repository"=>self.effects.push(json!({"kind":"open","url":"https://github.com/cacazu/jrogue/tree/main/rogue-nihon"})),
-            "credits-license"=>self.effects.push(json!({"kind":"open","url":"https://github.com/cacazu/jrogue/blob/main/rogue-nihon/docs/LICENSES-ja.md"})),
             "new-game" if flag(&self.model["topOpen"]) && !flag(&self.model["starting"]) && !self.composing && flag(&self.model["ready"]) =>self.start(false),
             "load" if flag(&self.model["topOpen"]) && !flag(&self.model["starting"]) => {
                 self.model["starting"]=json!(true);self.effects.push(json!({"kind":"save-read","operation":"load","generation":self.model["generation"]}));

@@ -44,7 +44,6 @@
     "instruction.selection": "表示された持ち物キーで選びます。",
     "credits.title": "版とライセンス",
     "credits.description": "配布元とライセンスは GitHub で確認できます。",
-    "credits.license": "ライセンス・一括取得",
     "credits.repository": "GitHub",
     "action.settings": "設定",
     "action.close_settings": "設定を閉じる",

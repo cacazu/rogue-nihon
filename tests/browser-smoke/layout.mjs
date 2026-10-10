@@ -155,7 +155,7 @@ try {
   assert.equal(await page.evaluate(() => __rogueBrowserTest.generation), 0);
   const repo = page.locator('a[href="https://github.com/cacazu/jrogue/tree/main/rogue-nihon"]');
   assert.ok(await repo.count() > 0, "distribution repository is linked");
-  evidence.checks.push("Title, unified map/UI/HUD game screen and source/license footer are present; pre-start language selection creates no Worker");
+  evidence.checks.push("Title, unified map/UI/HUD game screen and GitHub footer are present; pre-start language selection creates no Worker");
   await page.locator("#seed").fill("12345");
   await page.locator("#name").fill("画面検証の勇者");
   await page.locator("#new-game").click();

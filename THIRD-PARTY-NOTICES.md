@@ -1,26 +1,13 @@
 # Third-party notices
 
-The original Rogue notices and three BSD-style license blocks are retained verbatim in `logic/LICENSE.TXT` and the original source headers. The upstream build helpers retain their own GPL/Autoconf exception and X Consortium notices. This project is a derivative of RRP Rogue 5.4.4; it is not endorsed by the original authors.
+The original Rogue copyright notices and three BSD-style license blocks remain verbatim in [logic/LICENSE.TXT](logic/LICENSE.TXT) and the original source headers. Upstream build helpers retain their GPL/Autoconf exception and X Consortium notices. This project is a derivative of RRP Rogue 5.4.4; it is not endorsed by the original authors.
 
-The exact dependency versions and registry checksums are locked in `rust/Cargo.lock`. Copied license texts and their local source paths are recorded in `licenses/manifest.json`:
+[licenses/THIRD-PARTY.txt](licenses/THIRD-PARTY.txt) contains the full notices for the shipped Web targets. [licenses/manifest.json](licenses/manifest.json) records each component's version, declared and selected license, targets, source and notice references. Identical notice bytes are shared without dropping component attribution.
 
-| Package | Version | Declared license |
-|---|---|---|
-| Bevy and bevy_* runtime / ECS / macro crates | 0.19.1 | MIT OR Apache-2.0 |
-| serde / serde_core / serde_derive | 1.0.229 | MIT OR Apache-2.0 |
-| serde_json | 1.0.151 | MIT OR Apache-2.0 |
-| itoa | 1.0.18 | MIT OR Apache-2.0 |
-| memchr | 2.8.3 | Unlicense OR MIT |
-| zmij | 1.0.23 | MIT |
-| proc-macro2 | 1.0.107 | MIT OR Apache-2.0 |
-| quote | 1.0.47 | MIT OR Apache-2.0 |
-| syn | 3.0.6 | MIT OR Apache-2.0 |
-| unicode-ident | 1.0.26 | (MIT OR Apache-2.0) AND Unicode-3.0 |
+The inventory covers the `normal,build` dependencies of `rogue-layers` for `wasm32-unknown-emscripten` and `rogue-browser-display` for `wasm32-unknown-unknown`. Build dependencies are retained to cover code generation; this does not assert that all of them are linked at runtime. Unused Cargo.lock packages and dependencies for other targets are excluded. Where an MIT alternative is available it is selected; additional copyrights, Unicode licenses, third-party notices and mandatory combined terms remain.
 
-The table highlights direct dependencies and the existing serialization dependencies. The complete locked graph, including Bevy transitive and target-specific dependencies, is recorded in `licenses/manifest.json`; not every locked package is embedded in the final Wasm. Source license texts and copyright notices are preserved in the corresponding `licenses/<package-version>/` folders. For crates whose published archive omits workspace license files, `source_urls` records the upstream files at the exact commit from `.cargo_vcs_info.json`. The r-efi copyright and license text is in its AUTHORS file. Proc-macro dependencies run at build time.
+Rust standard-library notices come from the matching `rust-src` dependency graph for those targets, including the installed libraries' backtrace/unwind support. Compiler-builtins notices retain their MIT and Apache/LLVM terms. Rust compiler and test-tool notices are excluded. Emscripten-generated JavaScript, musl and compiler-rt notices remain for the game runtime.
 
-The Emscripten license, musl copyright notice, compiler-rt license, and the installed Rust copyright document are copied in `licenses/emscripten/` and `licenses/rust/`. This is a local implementation deliverable, not a public release. A later public release should re-audit the exact bundled toolchain runtime and notices for its chosen distribution.
+The HUD's stairs icon is adapted from [Lucide Lab's stairs.svg](https://github.com/lucide-icons/lucide-lab/blob/main/icons/stairs.svg) as a Rust vector path. Its ISC license and copyright notice are included in the consolidated notices. No third-party web font or external JavaScript package is used by the browser UI.
 
-The browser HUD's stairs icon is adapted from [Lucide Lab's stairs.svg](https://github.com/lucide-icons/lucide-lab/blob/main/icons/stairs.svg). Its four rectangles and side outline are represented as a Rust vector path. The ISC license and original copyright notice are retained in `licenses/lucide-lab/LICENSE` and the downloadable license bundle.
-
-No third-party web font or external JavaScript package is used by the browser UI. The upstream `rogue.png` remains among the source acquisition files but is not used as a browser asset.
+The [license guide](docs/LICENSES-ja.md) links to the downloadable bundle.

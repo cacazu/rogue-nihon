@@ -46,20 +46,6 @@ impl BrowserUi {
                 ..Default::default()
             },
         );
-        self.button(
-            "credits-license",
-            &self.t("credits.license"),
-            Rect::new(
-                20. + repository_width,
-                y,
-                280_f64.min(self.width - repository_width - 32.),
-                36.,
-            ),
-            ControlStyle {
-                size: 16.,
-                ..Default::default()
-            },
-        );
     }
     pub(super) fn draw_top(&mut self) {
         let mobile = self.width < 700.;
