@@ -5,36 +5,12 @@
   "source_release": "RRP Rogue 5.4.4",
   "tile_pixels": 96,
   "default_display_pixels": 32,
-  "sheets": {
-    "terrain-actors": {
-      "columns": 4,
-      "rows": 3
-    },
-    "items": {
-      "columns": 3,
-      "rows": 3
-    },
-    "monsters-1": {
-      "columns": 3,
-      "rows": 3
-    },
-    "monsters-2": {
-      "columns": 3,
-      "rows": 3
-    },
-    "monsters-3": {
-      "columns": 3,
-      "rows": 3
-    }
-  },
   "entries": [
     {
       "id": "terrain.unexplored",
       "glyph": " ",
       "meaning": "Unexplored or unlit",
       "group": "terrain",
-      "sheet": "terrain-actors",
-      "index": 0,
       "rotation": 0,
       "labels": {
         "ja": "暗闇",
@@ -47,8 +23,6 @@
       "glyph": ".",
       "meaning": "Room floor",
       "group": "terrain",
-      "sheet": "terrain-actors",
-      "index": 1,
       "rotation": 0,
       "labels": {
         "ja": "床",
@@ -61,8 +35,6 @@
       "glyph": "#",
       "meaning": "Passage",
       "group": "terrain",
-      "sheet": "terrain-actors",
-      "index": 2,
       "rotation": 0,
       "labels": {
         "ja": "通路",
@@ -75,8 +47,6 @@
       "glyph": "+",
       "meaning": "Door",
       "group": "terrain",
-      "sheet": "terrain-actors",
-      "index": 3,
       "rotation": 0,
       "labels": {
         "ja": "扉",
@@ -89,8 +59,6 @@
       "glyph": "-",
       "meaning": "Horizontal wall",
       "group": "terrain",
-      "sheet": "terrain-actors",
-      "index": 4,
       "rotation": 0,
       "labels": {
         "ja": "横向きの壁",
@@ -103,8 +71,6 @@
       "glyph": "|",
       "meaning": "Vertical wall",
       "group": "terrain",
-      "sheet": "terrain-actors",
-      "index": 5,
       "rotation": 0,
       "labels": {
         "ja": "縦向きの壁",
@@ -117,8 +83,6 @@
       "glyph": "%",
       "meaning": "Stairs down",
       "group": "terrain",
-      "sheet": "terrain-actors",
-      "index": 6,
       "rotation": 0,
       "labels": {
         "ja": "下り階段",
@@ -131,8 +95,6 @@
       "glyph": "^",
       "meaning": "Visible trap (all eight types)",
       "group": "terrain",
-      "sheet": "terrain-actors",
-      "index": 7,
       "rotation": 0,
       "labels": {
         "ja": "罠",
@@ -145,8 +107,6 @@
       "glyph": "@",
       "meaning": "Player adventurer",
       "group": "actor",
-      "sheet": "terrain-actors",
-      "index": 8,
       "rotation": 0,
       "labels": {
         "ja": "あなた",
@@ -159,8 +119,6 @@
       "glyph": "$",
       "meaning": "Magic detection marker",
       "group": "marker",
-      "sheet": "terrain-actors",
-      "index": 9,
       "rotation": 0,
       "labels": {
         "ja": "魔力の反応",
@@ -173,8 +131,6 @@
       "glyph": "-",
       "meaning": "Visible bolt horizontal",
       "group": "effect",
-      "sheet": "terrain-actors",
-      "index": 10,
       "rotation": 0,
       "labels": {
         "ja": "横向きの光線",
@@ -187,8 +143,6 @@
       "glyph": "|",
       "meaning": "Visible bolt vertical",
       "group": "effect",
-      "sheet": "terrain-actors",
-      "index": 10,
       "rotation": 90,
       "labels": {
         "ja": "縦向きの光線",
@@ -201,8 +155,6 @@
       "glyph": "/",
       "meaning": "Visible bolt slash",
       "group": "effect",
-      "sheet": "terrain-actors",
-      "index": 10,
       "rotation": -45,
       "labels": {
         "ja": "右上がりの光線",
@@ -215,8 +167,6 @@
       "glyph": "\\",
       "meaning": "Visible bolt backslash",
       "group": "effect",
-      "sheet": "terrain-actors",
-      "index": 10,
       "rotation": 45,
       "labels": {
         "ja": "右下がりの光線",
@@ -229,8 +179,6 @@
       "glyph": "*",
       "meaning": "Gold coins",
       "group": "item",
-      "sheet": "items",
-      "index": 0,
       "rotation": 0,
       "labels": {
         "ja": "金貨",
@@ -243,8 +191,6 @@
       "glyph": "!",
       "meaning": "Unidentified potion",
       "group": "item",
-      "sheet": "items",
-      "index": 1,
       "rotation": 0,
       "labels": {
         "ja": "薬",
@@ -257,8 +203,6 @@
       "glyph": "?",
       "meaning": "Unidentified scroll",
       "group": "item",
-      "sheet": "items",
-      "index": 2,
       "rotation": 0,
       "labels": {
         "ja": "巻物",
@@ -271,8 +215,6 @@
       "glyph": ":",
       "meaning": "Food",
       "group": "item",
-      "sheet": "items",
-      "index": 3,
       "rotation": 0,
       "labels": {
         "ja": "食料",
@@ -285,8 +227,6 @@
       "glyph": ")",
       "meaning": "Weapon / thrown weapon",
       "group": "item",
-      "sheet": "items",
-      "index": 4,
       "rotation": 0,
       "labels": {
         "ja": "武器",
@@ -299,8 +239,6 @@
       "glyph": "]",
       "meaning": "Armor",
       "group": "item",
-      "sheet": "items",
-      "index": 5,
       "rotation": 0,
       "labels": {
         "ja": "防具",
@@ -313,8 +251,6 @@
       "glyph": "=",
       "meaning": "Ring",
       "group": "item",
-      "sheet": "items",
-      "index": 6,
       "rotation": 0,
       "labels": {
         "ja": "指輪",
@@ -327,8 +263,6 @@
       "glyph": "/",
       "meaning": "Wand or staff",
       "group": "item",
-      "sheet": "items",
-      "index": 7,
       "rotation": 0,
       "labels": {
         "ja": "杖",
@@ -341,8 +275,6 @@
       "glyph": ",",
       "meaning": "Amulet of Yendor",
       "group": "item",
-      "sheet": "items",
-      "index": 8,
       "rotation": 0,
       "labels": {
         "ja": "イェンダーの魔除け",
@@ -355,8 +287,6 @@
       "glyph": "A",
       "meaning": "aquator",
       "group": "monster",
-      "sheet": "monsters-1",
-      "index": 0,
       "rotation": 0,
       "labels": {
         "ja": "アクアター",
@@ -369,8 +299,6 @@
       "glyph": "B",
       "meaning": "bat",
       "group": "monster",
-      "sheet": "monsters-1",
-      "index": 1,
       "rotation": 0,
       "labels": {
         "ja": "コウモリ",
@@ -383,8 +311,6 @@
       "glyph": "C",
       "meaning": "centaur",
       "group": "monster",
-      "sheet": "monsters-1",
-      "index": 2,
       "rotation": 0,
       "labels": {
         "ja": "ケンタウロス",
@@ -397,8 +323,6 @@
       "glyph": "D",
       "meaning": "dragon",
       "group": "monster",
-      "sheet": "monsters-1",
-      "index": 3,
       "rotation": 0,
       "labels": {
         "ja": "ドラゴン",
@@ -411,8 +335,6 @@
       "glyph": "E",
       "meaning": "emu",
       "group": "monster",
-      "sheet": "monsters-1",
-      "index": 4,
       "rotation": 0,
       "labels": {
         "ja": "エミュー",
@@ -425,8 +347,6 @@
       "glyph": "F",
       "meaning": "venus flytrap",
       "group": "monster",
-      "sheet": "monsters-1",
-      "index": 5,
       "rotation": 0,
       "labels": {
         "ja": "ハエトリグサ",
@@ -439,8 +359,6 @@
       "glyph": "G",
       "meaning": "griffin",
       "group": "monster",
-      "sheet": "monsters-1",
-      "index": 6,
       "rotation": 0,
       "labels": {
         "ja": "グリフィン",
@@ -453,8 +371,6 @@
       "glyph": "H",
       "meaning": "hobgoblin",
       "group": "monster",
-      "sheet": "monsters-1",
-      "index": 7,
       "rotation": 0,
       "labels": {
         "ja": "ホブゴブリン",
@@ -467,8 +383,6 @@
       "glyph": "I",
       "meaning": "ice monster",
       "group": "monster",
-      "sheet": "monsters-1",
-      "index": 8,
       "rotation": 0,
       "labels": {
         "ja": "氷の怪物",
@@ -481,8 +395,6 @@
       "glyph": "J",
       "meaning": "jabberwock",
       "group": "monster",
-      "sheet": "monsters-2",
-      "index": 0,
       "rotation": 0,
       "labels": {
         "ja": "ジャバウォック",
@@ -495,8 +407,6 @@
       "glyph": "K",
       "meaning": "kestrel",
       "group": "monster",
-      "sheet": "monsters-2",
-      "index": 1,
       "rotation": 0,
       "labels": {
         "ja": "チョウゲンボウ",
@@ -509,8 +419,6 @@
       "glyph": "L",
       "meaning": "leprechaun",
       "group": "monster",
-      "sheet": "monsters-2",
-      "index": 2,
       "rotation": 0,
       "labels": {
         "ja": "レプラコーン",
@@ -523,8 +431,6 @@
       "glyph": "M",
       "meaning": "medusa",
       "group": "monster",
-      "sheet": "monsters-2",
-      "index": 3,
       "rotation": 0,
       "labels": {
         "ja": "メデューサ",
@@ -537,8 +443,6 @@
       "glyph": "N",
       "meaning": "nymph",
       "group": "monster",
-      "sheet": "monsters-2",
-      "index": 4,
       "rotation": 0,
       "labels": {
         "ja": "ニンフ",
@@ -551,8 +455,6 @@
       "glyph": "O",
       "meaning": "orc",
       "group": "monster",
-      "sheet": "monsters-2",
-      "index": 5,
       "rotation": 0,
       "labels": {
         "ja": "オーク",
@@ -565,8 +467,6 @@
       "glyph": "P",
       "meaning": "phantom",
       "group": "monster",
-      "sheet": "monsters-2",
-      "index": 6,
       "rotation": 0,
       "labels": {
         "ja": "ファントム",
@@ -579,8 +479,6 @@
       "glyph": "Q",
       "meaning": "quagga",
       "group": "monster",
-      "sheet": "monsters-2",
-      "index": 7,
       "rotation": 0,
       "labels": {
         "ja": "クアッガ",
@@ -593,8 +491,6 @@
       "glyph": "R",
       "meaning": "rattlesnake",
       "group": "monster",
-      "sheet": "monsters-2",
-      "index": 8,
       "rotation": 0,
       "labels": {
         "ja": "ガラガラヘビ",
@@ -607,8 +503,6 @@
       "glyph": "S",
       "meaning": "snake",
       "group": "monster",
-      "sheet": "monsters-3",
-      "index": 0,
       "rotation": 0,
       "labels": {
         "ja": "ヘビ",
@@ -621,8 +515,6 @@
       "glyph": "T",
       "meaning": "troll",
       "group": "monster",
-      "sheet": "monsters-3",
-      "index": 1,
       "rotation": 0,
       "labels": {
         "ja": "トロール",
@@ -635,8 +527,6 @@
       "glyph": "U",
       "meaning": "black unicorn",
       "group": "monster",
-      "sheet": "monsters-3",
-      "index": 2,
       "rotation": 0,
       "labels": {
         "ja": "黒いユニコーン",
@@ -649,8 +539,6 @@
       "glyph": "V",
       "meaning": "vampire",
       "group": "monster",
-      "sheet": "monsters-3",
-      "index": 3,
       "rotation": 0,
       "labels": {
         "ja": "吸血鬼",
@@ -663,8 +551,6 @@
       "glyph": "W",
       "meaning": "wraith",
       "group": "monster",
-      "sheet": "monsters-3",
-      "index": 4,
       "rotation": 0,
       "labels": {
         "ja": "レイス",
@@ -677,8 +563,6 @@
       "glyph": "X",
       "meaning": "xeroc",
       "group": "monster",
-      "sheet": "monsters-3",
-      "index": 5,
       "rotation": 0,
       "labels": {
         "ja": "ゼロック",
@@ -691,8 +575,6 @@
       "glyph": "Y",
       "meaning": "yeti",
       "group": "monster",
-      "sheet": "monsters-3",
-      "index": 6,
       "rotation": 0,
       "labels": {
         "ja": "イエティ",
@@ -705,8 +587,6 @@
       "glyph": "Z",
       "meaning": "zombie",
       "group": "monster",
-      "sheet": "monsters-3",
-      "index": 7,
       "rotation": 0,
       "labels": {
         "ja": "ゾンビ",

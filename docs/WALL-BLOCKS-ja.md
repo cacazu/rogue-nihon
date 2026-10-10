@@ -4,10 +4,8 @@
 
 - 横壁: `web/assets/pixels-v2/terrain.wall_horizontal.png`（32×32）、`web/assets/tiles/terrain.wall_horizontal.png`（96×96）
 - 縦壁: `web/assets/pixels-v2/terrain.wall_vertical.png`（32×32）、`web/assets/tiles/terrain.wall_vertical.png`（96×96）
-- 生成元: `web/assets/walls/terrain.wall_horizontal.source.png`、`web/assets/walls/terrain.wall_vertical.source.png`
-- 生成プロンプト・梱包内容・SHA-256: `web/assets/walls/generation.json`
 
-組み込みImageGenで既存の四角い石ブロックを編集し、内側の模様を横3段・縦3列の石積みに変えた。生成指示は、同じ正方形の輪郭・灰色の石・明るい縁・全面不透明・32×32の論理画素・8色以下を保持し、模様だけを変更すること。画像の生成・加工はプロジェクト外で行い、ゲームでは完成したPNGを読み込む。
+画像の生成・加工はプロジェクト外で行い、ゲームでは完成したPNGと表示IDの対応定義を読み込む。
 
 49表示ID、各セット46枚のPNG。Cの縦横の壁、弾道との区別、移動・衝突・扉・探索・乱数・セーブ形式は保持している。Rustに埋め込まれるmanifestの参照先を差し替えるため、`build-ui.ps1` でUI配布ファイルも更新する。
 
