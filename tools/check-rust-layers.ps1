@@ -1,15 +1,19 @@
 param(
     [string]$SdkRoot = 'C:\Users\kit\emsdk',
-    [ValidateSet('layer-check','entity-check')][string]$Binary = 'layer-check'
+    [ValidateSet('layer-check','entity-check')][string]$Binary = 'layer-check',
+    [switch]$KeepArtifacts
 )
 $ErrorActionPreference = 'Stop'
 $projectPath = Split-Path -Parent $PSScriptRoot
-$taskPath = Split-Path -Parent $projectPath
+. (Join-Path $PSScriptRoot 'temporary-artifacts.ps1')
+$checkScope = New-RogueArtifactScope -ProjectPath $projectPath -KeepArtifacts:$KeepArtifacts
+try {
+Set-RogueSdkEnvironment -Scope $checkScope -SdkRoot $SdkRoot
 $linkerPath = Join-Path $SdkRoot 'upstream\emscripten\emcc.exe'
 $configPath = Join-Path $SdkRoot '.emscripten'
-$cachePath = Join-Path $taskPath 'rogue-toolchain\em-cache'
+$cachePath = $env:EM_CACHE
 $manifestPath = Join-Path $projectPath 'rust\Cargo.toml'
-$executablePath = Join-Path $projectPath ('rust\target\wasm32-unknown-emscripten\release\' + $Binary + '.js')
+$executablePath = Join-Path $env:CARGO_TARGET_DIR ('wasm32-unknown-emscripten\release\' + $Binary + '.js')
 foreach ($toolPath in @($linkerPath, $configPath, $manifestPath)) {
     if (-not (Test-Path -LiteralPath $toolPath -PathType Leaf)) { throw ('Missing tool or manifest: ' + $toolPath) }
 }
@@ -26,3 +30,4 @@ try {
     $env:EM_CONFIG = $previousConfig
     $env:EM_CACHE = $previousCache
 }
+} finally { Close-RogueArtifactScope $checkScope }

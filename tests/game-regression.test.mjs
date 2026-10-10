@@ -1,3 +1,4 @@
+import { artifactDirectory } from "../tools/temporary-artifacts.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { writeFile, mkdir, access } from 'node:fs/promises';
@@ -6,7 +7,7 @@ import { runGame, textEvents, SAVE_EVENT, originalFrames } from './run-game.mjs'
 import { assertEquivalent } from './compare-traces.mjs';
 
 const split = fileURLToPath(new URL('../build/game.js', import.meta.url));
-const output = fileURLToPath(new URL('./actual-results/', import.meta.url));
+const output = artifactDirectory(fileURLToPath(new URL('./actual-results/', import.meta.url)));
 await mkdir(output, { recursive: true });
 
 async function recorded(label, config, module = split) {

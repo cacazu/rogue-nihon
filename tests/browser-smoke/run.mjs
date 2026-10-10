@@ -1,3 +1,4 @@
+import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { readFile, mkdir, mkdtemp, writeFile } from "node:fs/promises";
@@ -11,7 +12,7 @@ import { createPlaywrightCdp } from "./playwright-cdp.mjs";
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const jaScenario = process.env.ROGUE_JA_SCENARIO === "1";
-const output = path.join(directory, jaScenario ? (process.env.ROGUE_VIEW === "pixels" ? "../pixel-output/japanese" : "output-ja") : "output");
+const output = artifactDirectory(path.join(directory, jaScenario ? (process.env.ROGUE_VIEW === "pixels" ? "../pixel-output/japanese" : "output-ja") : "output"));
 const chrome = process.env.ROGUE_CHROME || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let readBrowserDiagnostics = null;
@@ -34,7 +35,7 @@ class CDP {
 }
 
 await mkdir(output, { recursive: true });
-const profile = await mkdtemp(path.join(process.env.ROGUE_PLAYWRIGHT_MODULE ? output : os.tmpdir(), "rogue-browser-smoke-"));
+const profile = await mkdtemp(path.join(output, "rogue-browser-smoke-"));
 const server = createPreviewServer();
 await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const base = `http://127.0.0.1:${server.address().port}/`;

@@ -1,3 +1,4 @@
+import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
@@ -10,7 +11,7 @@ import { createPreviewServer } from "../../web/server.mjs";
 const require = createRequire(import.meta.url);
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const project = path.resolve(directory, "../..");
-const output = path.join(directory, "output/layout");
+const output = artifactDirectory(path.join(directory, "output/layout"));
 const executable = process.env.ROGUE_CHROME || "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe";
 const launchArgs = ["--disable-gpu", "--no-first-run", "--no-default-browser-check", "--disable-background-networking", "--disable-component-update"];
 const candidates = [process.env.ROGUE_PLAYWRIGHT_MODULE, "playwright", "playwright-core",

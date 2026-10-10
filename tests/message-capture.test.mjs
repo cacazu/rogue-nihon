@@ -1,8 +1,9 @@
+import { resolve } from 'node:path';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-const harness = fileURLToPath(new URL('../build/message-capture.cjs', import.meta.url));
+const harness = process.env.ROGUE_ARTIFACT_BUILD ? resolve(process.env.ROGUE_ARTIFACT_BUILD, 'message-capture.cjs') : fileURLToPath(new URL('../build/message-capture.cjs', import.meta.url));
 const lines = execFileSync(process.execPath, [harness], { encoding: 'utf8' }).trim().split(/\r?\n/).map(JSON.parse);
 assert.deepEqual(lines[0], [
   { kind: 'signed', value: 7 }, { kind: 'signed', value: 3 },

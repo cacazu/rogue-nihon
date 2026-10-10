@@ -1,3 +1,4 @@
+import { artifactDirectory } from "../tools/temporary-artifacts.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -6,7 +7,7 @@ import { runGame, textEvents, originalFrames, SAVE_EVENT } from './run-game.mjs'
 import { assertEquivalent } from './compare-traces.mjs';
 
 const modulePath = fileURLToPath(new URL('../build/game.js', import.meta.url));
-const output = fileURLToPath(new URL('./ui-results/', import.meta.url));
+const output = artifactDirectory(fileURLToPath(new URL('./ui-results/', import.meta.url)));
 await mkdir(output, { recursive: true });
 const scalarEvents = (text) => Array.from(text, (character) => character.codePointAt(0));
 

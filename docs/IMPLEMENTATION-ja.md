@@ -67,6 +67,6 @@ CのRG4SAVEは論理schema2、探索記憶RGKN、実行・待ち状態RGRTをsec
 
 20語の論理state/RNG、全raw英語frame、入力読み取り位置を比較する。双方が共用するadapterの誤りは比較だけでは検出できない。実端末ncurses・全seed・全展開との網羅的互換を保証しない。元のlabel aliasや%再表示等の未定義動作は、壊れる原本を動かして一致させず製品の安全性試験として扱う。
 
-最終実測の件数、対象ビルドSHA-256、ログとソースの照合はverification.json、tests/RESULTS-ja.md、tests/browser-smoke/output-ja/evidence.json、build/supplementary-results.jsonを参照する。異なる粒度の検査を合算してゲーム互換保証の件数にしない。
+過去の実測の件数と対象ビルドSHA-256の説明はtests/RESULTS-ja.mdを参照する。検証JSON、ログ、詳細出力は2026-10-10の整理で削除済みで、現在のビルドを確認する場合は必要な試験を再実行する。異なる粒度の検査を合算してゲーム互換保証の件数にしない。
 
 スマホ専用操作、ゲームパッド、永続ランキング、公開配布、実端末対応は今回の範囲外。日本語カタログは本実装へ接続済みであり、各分岐の実測範囲は保存した検証資料に明示する。

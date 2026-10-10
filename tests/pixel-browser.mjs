@@ -1,3 +1,4 @@
+import { artifactDirectory } from "../tools/temporary-artifacts.mjs";
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {readFile,mkdir,mkdtemp,writeFile} from 'node:fs/promises';
@@ -6,7 +7,7 @@ import os from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {createPreviewServer} from '../web/server.mjs';
 import {createPlaywrightCdp} from './browser-smoke/playwright-cdp.mjs';
-const directory=path.dirname(fileURLToPath(import.meta.url)),output=path.join(directory,'pixel-output');
+const directory=path.dirname(fileURLToPath(import.meta.url)),output=artifactDirectory(path.join(directory,'pixel-output'));
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function until(fn,label){const end=Date.now()+30000;while(Date.now()<end){if(await fn())return;await pause(100);}throw new Error('Timed out: '+label);}
 class CDP{
@@ -15,7 +16,7 @@ class CDP{
  async evaluate(expression,userGesture=false){const r=await this.call('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true,userGesture});if(r.exceptionDetails)throw new Error(JSON.stringify(r.exceptionDetails));return r.result.value;}
 }
 await mkdir(output,{recursive:true});
-const profile=await mkdtemp(path.join(process.env.ROGUE_PLAYWRIGHT_MODULE?output:os.tmpdir(),'rogue-pixels-'));
+const profile=await mkdtemp(path.join(output,'rogue-pixels-'));
 const server=createPreviewServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base=`http://127.0.0.1:${server.address().port}/`;
 const browser=process.env.ROGUE_PLAYWRIGHT_MODULE?null:spawn(process.env.ROGUE_CHROME||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',['--headless=new','--disable-gpu','--no-first-run','--no-default-browser-check','--disable-background-networking','--disable-component-update','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{windowsHide:true,stdio:'ignore'});

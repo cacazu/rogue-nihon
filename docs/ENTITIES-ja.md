@@ -1,6 +1,6 @@
 # 動的名称の日本語表示
 
-`rust/src/entities.rs` の `render(&serde_json::Value, language)` は、Cが渡した可視情報だけを使って、アイテム名・外見・モンスター名・罠・死因・戦闘文を組み立てる。Cのゲーム状態や乱数を参照しない。表示を繰り返してもゲームの識別状態、乱数、ターンは進まない。
+`rust/crates/display/src/entities.rs` の `render(&serde_json::Value, language)` は、Cが渡した可視情報だけを使って、アイテム名・外見・モンスター名・罠・死因・戦闘文を組み立てる。Cのゲーム状態や乱数を参照しない。表示を繰り返してもゲームの識別状態、乱数、ターンは進まない。
 
 名称は `locales/entities-en.json` / `entities-ja.json` の同じ408件の意味IDで管理する。例は `item.weapon.mace`、`item.potion.healing`、`appearance.color.amber`、`monster.orc`。数量、強化値、命名、装備状態を35個の語形テンプレートで組み立てる。
 

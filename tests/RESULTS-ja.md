@@ -1,5 +1,7 @@
 # 日本語4層版の実ゲーム検証結果
 
+この文書は2026-10-02の実行当時の記録です。2026-10-10の整理で集約JSON、raw結果、実行ログ、比較用ビルドを削除しました。現在のビルドを保証する結果ではなく、比較範囲と再実行手順を残しています。
+
 最終成果物で **36/36件通過、失敗0、skip0**。通常7件、fixture17件、日本語UI5件、戦闘・終了・薬6件、実More中の日本語保存・復元1件を実行した。計測日時は 2026-10-02T11:40:21.473311+00:00。ゲームC/Rustの最終版と同じRust libraryで比較版・試験専用版も再リンクした。ここで数える36件はコンパイルした実ゲームの試験で、harness自身のunit試験とは合算していない。
 
 | 検証 | 結果 |
@@ -22,7 +24,7 @@
 
 12誘導比較は壁・無料操作、初期加速、加速薬、二重加速、加速中睡眠、255回反復、無料操作の数字反復、方向取消と再実行、防具時間消費、敵の起床、Medusa視線、幻覚のcommand再描画である。防具の `T W b .` は脱衣2周期＋着用2周期＋休息1周期で食糧1000→995、turn5となり、`waste_time()` の追加更新も両版で一致した。label分割後の独立所有とCtrl+Pのpercent文字再表示は分離版の安全性試験で、原本の未定義動作を基準にしない。
 
-実行した全91 raw JSONを現在の4 moduleへ照合し、各JSONのbytes・SHA-256と使用したJS/WasmのSHA-256を [game-results-summary.json](game-results-summary.json) の `all_raw_results` に結合した。通常・fixture・日本語ケースの明細、3実行logのhashも同ファイルに保存した。rawは `actual-results/`、`fixture-results/`、`ui-results/`、`localization-results/`、`more-localization-results/` にある。
+実行当時は全91 raw JSONを4 moduleへ照合し、各JSONのbytes・SHA-256と使用したJS/WasmのSHA-256を集約JSONの `all_raw_results` に結合した。通常・fixture・日本語ケースの明細、3実行logのhashも記録した。これらの集約JSONとrawは整理済みで、必要なビルドと試験を再実行して生成する。
 
 | 最終実行module | Wasm SHA-256 |
 |---|---|

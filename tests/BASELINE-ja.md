@@ -20,8 +20,8 @@ daemon呼出しはWasmの関数signatureに合わせ、登録13 callbackのう�
 
 日本語向けの表示observerは比較版から除きます。`options.c` は原本ASCIIエディタを使うため、UTF-8名前入力・Unicode scalar Backspace・日本語名aliasは分離版の追加機能として試験します。分離版 `pack.c` のlabel深いコピーとCtrl+Pの `msg("%s", huh)` は安全修正です。原本の浅いlabel共有やユーザー文字列のformat再解釈を同一性の基準にしません。`%s%n%%` を含む任意の果物名も分離版EN/JA比較だけに使い、原本の未定義printf入力を実行しません。
 
-実ゲーム試験は通常7件、fixture17件、日本語UI5件、日本語戦闘・終了・薬6件、日本語More中保存・復元1件です。原規則の比較は通常8組、誘導fixture12組、戦闘・終了・標準薬の5組と、実More入力1組で行います。日本語UI5件はlocaleによるC状態不変、Unicode名前編集、途中保存のfresh-module再生を検証します。任意果物名の薬1件は分離版EN/JA比較です。最新の実測結果と実行binaryのSHA-256は `RESULTS-ja.md` と `game-results-summary.json` を参照してください。
+実ゲーム試験は通常7件、fixture17件、日本語UI5件、日本語戦闘・終了・薬6件、日本語More中保存・復元1件です。原規則の比較は通常8組、誘導fixture12組、戦闘・終了・標準薬の5組と、実More入力1組で行います。日本語UI5件はlocaleによるC状態不変、Unicode名前編集、途中保存のfresh-module再生を検証します。任意果物名の薬1件は分離版EN/JA比較です。過去の実測範囲と実行binaryのSHA-256の説明は `RESULTS-ja.md` を参照してください。詳細出力と集約JSONは2026-10-10の整理で削除済みで、再検証時に生成します。
 
 誘導状態は `RG_TEST_FIXTURES` ビルドの `game-fixtures.c` でのみ用意します。MEMFS `/fixture.id` を読み、原本setup APIで状態を作り、seedを揃えます。productionにfixture codeを含めず、fixture専用のexportも追加しません。この方法は自然なseedから各効果へ至る経路を証明しません。幻覚のraw名 `hallu-more/hallu-midmore` は実際にはcommand再描画・command境界復元で、幻覚中Moreの待機・保存は未検証です。呪われた防具の脱衣、着用途中のhaste失効、直接呼ぶ `look(FALSE)/after=FALSE`、`msg_esc=TRUE` の単独分岐など、未実行の組合せも残ります。`REGRESSION-CASES-ja.md` の設計上の期待値を実行済みcoverageとして扱いません。
 
-再作成には既存SDK Pythonで `tests/prepare-baseline.py`、`tests/audit-baseline.py` を実行し、通常の `build.ps1` に `-LogicDirectory tests/baseline-src` と別 `-OutputName` を指定します。fixtureは同じscriptの `-TestFixtures` を使います。元ディレクトリは読取り専用です。
+再作成には既存SDK Pythonで `tests/prepare-baseline.py`、`tests/audit-baseline.py` を実行し、通常の `build.ps1` に `-LogicDirectory tests/baseline-src` と別 `-OutputName`、`-KeepArtifacts` を指定します。fixtureは同じscriptの `-TestFixtures` を使います。元ディレクトリは読取り専用です。

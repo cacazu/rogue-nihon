@@ -1,6 +1,9 @@
 """Test evidence parsing with synthetic records; never claim gameplay was run."""
 from __future__ import annotations
 
+import sys
+sys.dont_write_bytecode = True
+
 import copy
 import importlib.util
 import json
@@ -10,6 +13,9 @@ import unittest
 from unittest import mock
 
 SCRIPT = Path(__file__).resolve().parents[1] / 'tools/record-verification.py'
+sys.path.insert(0, str(SCRIPT.parent))
+from temporary_artifacts import TemporaryArtifacts
+
 SPEC = importlib.util.spec_from_file_location('record_verification', SCRIPT)
 recorder = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(recorder)
@@ -172,4 +178,5 @@ class VerificationRecorderTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    with TemporaryArtifacts(SCRIPT.parent.parent):
+        unittest.main(verbosity=2)

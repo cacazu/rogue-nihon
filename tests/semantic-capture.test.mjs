@@ -1,8 +1,9 @@
+import { resolve } from 'node:path';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-const harness = fileURLToPath(new URL('../build/semantic-capture.cjs', import.meta.url));
+const harness = process.env.ROGUE_ARTIFACT_BUILD ? resolve(process.env.ROGUE_ARTIFACT_BUILD, 'semantic-capture.cjs') : fileURLToPath(new URL('../build/semantic-capture.cjs', import.meta.url));
 const values = execFileSync(process.execPath, [harness], { encoding: 'utf8' }).trim().split(/\r?\n/).map(JSON.parse);
 const [unknownPotion, knownPotion, unknownRing, calledRing, unknownWeapon, knownWeapon, armor,
   hallucinated, subject, player, trap, weaponName, projectile, color, fruit, playerName, copiedName,

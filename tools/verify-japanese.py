@@ -15,6 +15,8 @@ import re
 import shutil
 import subprocess
 import sys
+sys.dont_write_bytecode = True
+from temporary_artifacts import TemporaryArtifacts
 import time
 from datetime import datetime, timezone
 
@@ -210,7 +212,7 @@ def specifications(args):
                  "--release", "--target", "wasm32-unknown-emscripten", "--", "-C", "linker=" + linker,
                  "-C", "panic=abort", "-C", "link-arg=-sENVIRONMENT=node", "-C", "link-arg=-sEXIT_RUNTIME=1",
                  "-C", "link-arg=-sALLOW_MEMORY_GROWTH=1"]
-        base = ROOT / "rust" / "target" / "wasm32-unknown-emscripten" / "release"
+        base = Path(os.environ.get("CARGO_TARGET_DIR", ROOT / "rust" / "target")) / "wasm32-unknown-emscripten" / "release"
         js = base / (binary + ".js")
         output = [js, base / (binary.replace("-", "_") + ".wasm")]
         key = "total_checks" if binary == "layer-check" else "entity_checks"
@@ -387,40 +389,43 @@ def main():
         print(json.dumps({scope: {"commands": [operation["command"] for operation in operations[scope]],
                                  "input_files": len(inputs(scope))} for scope in args.scopes}, indent=2))
         return 0
-    sdk = Path(args.sdk_root).resolve()
-    environment = os.environ.copy()
-    environment.update({"EM_CONFIG": str(sdk / ".emscripten"),
-                        "EM_CACHE": str(ROOT.parent / "rogue-toolchain" / "em-cache"),
-                        "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"})
-    log_directory = ROOT / "build" / "verification-logs"
-    log_directory.mkdir(parents=True, exist_ok=True)
-    output = local(args.output)
-    tests = existing_evidence(output, bool(args.merge)) if args.merge_only else {}
-    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    for scope in ([] if args.merge_only else args.scopes):
-        print(f"Running {scope}", flush=True)
-        tests[scope] = run_scope(scope, operations[scope], environment, log_directory, run_id)
-        print(json.dumps({"scope": scope, "status": tests[scope]["status"],
-                          "passed": tests[scope]["passed"], "errors": tests[scope]["errors"]}), flush=True)
-        write_evidence(output, tests)
-    evidence_errors = []
-    for name in args.merge:
-        try:
-            merge_evidence(tests, name, replace=args.merge_only)
-        except (OSError, ValueError, KeyError) as error:
-            evidence_errors.append(str(error))
-    # Cross-scope changes invalidate old evidence instead of silently binding
-    # a prior run to the current source bytes.
-    for scope, result in tests.items():
-        for item in result["files"]:
-            if file_record(local(item["path"]))["sha256"] != item["sha256"]:
-                result["status"] = "failed"
-                result["exit_code"] = 1
-                result.setdefault("errors", []).append("Evidence changed after scope: " + item["path"])
-    write_evidence(output, tests, evidence_errors)
-    print(json.dumps({"supplementary_results": output.relative_to(ROOT).as_posix(),
-                      "scopes": {name: result["status"] for name, result in tests.items()}}), flush=True)
-    return 1 if evidence_errors or any(result["status"] != "passed" for result in tests.values()) else 0
+    with TemporaryArtifacts(ROOT) as artifacts:
+        operations = specifications(args)
+        sdk = Path(args.sdk_root).resolve()
+        environment = os.environ.copy()
+        environment.update({"EM_CONFIG": str(sdk / ".emscripten"),
+                            "EMSDK_PYTHON": str(sdk / "python" / "3.13.3_64bit" / "python.exe"),
+                            "EM_CACHE": os.environ["EM_CACHE"],
+                            "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"})
+        log_directory = artifacts.path("build/verification-logs")
+        log_directory.mkdir(parents=True, exist_ok=True)
+        output = artifacts.path(args.output)
+        tests = existing_evidence(output, bool(args.merge)) if args.merge_only else {}
+        run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+        for scope in ([] if args.merge_only else args.scopes):
+            print(f"Running {scope}", flush=True)
+            tests[scope] = run_scope(scope, operations[scope], environment, log_directory, run_id)
+            print(json.dumps({"scope": scope, "status": tests[scope]["status"],
+                              "passed": tests[scope]["passed"], "errors": tests[scope]["errors"]}), flush=True)
+            write_evidence(output, tests)
+        evidence_errors = []
+        for name in args.merge:
+            try:
+                merge_evidence(tests, name, replace=args.merge_only)
+            except (OSError, ValueError, KeyError) as error:
+                evidence_errors.append(str(error))
+        # Cross-scope changes invalidate old evidence instead of silently binding
+        # a prior run to the current source bytes.
+        for scope, result in tests.items():
+            for item in result["files"]:
+                if file_record(local(item["path"]))["sha256"] != item["sha256"]:
+                    result["status"] = "failed"
+                    result["exit_code"] = 1
+                    result.setdefault("errors", []).append("Evidence changed after scope: " + item["path"])
+        write_evidence(output, tests, evidence_errors)
+        print(json.dumps({"supplementary_results": output.relative_to(ROOT).as_posix(),
+                          "scopes": {name: result["status"] for name, result in tests.items()}}), flush=True)
+        return 1 if evidence_errors or any(result["status"] != "passed" for result in tests.values()) else 0
 
 
 if __name__ == "__main__":

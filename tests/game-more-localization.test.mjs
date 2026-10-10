@@ -1,3 +1,4 @@
+import { artifactDirectory } from "../tools/temporary-artifacts.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -7,7 +8,7 @@ import { assertEquivalent } from './compare-traces.mjs';
 
 const split = fileURLToPath(new URL('../build/game-fixtures.js', import.meta.url));
 const baseline = fileURLToPath(new URL('../build/baseline-fixtures.js', import.meta.url));
-const output = fileURLToPath(new URL('./more-localization-results/', import.meta.url));
+const output = artifactDirectory(fileURLToPath(new URL('./more-localization-results/', import.meta.url)));
 await mkdir(output, { recursive: true });
 
 async function recorded(label, module, config) {

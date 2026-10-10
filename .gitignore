@@ -24,3 +24,12 @@
 # Local delivery inventory, not a source checkout manifest.
 /artifacts-manifest.json
 /delivery.json
+
+# Regenerated historical verification summaries.
+/verification.json
+/graphics-verification.json
+/pixel-verification.json
+/tests/game-results-summary.json
+
+# Local HTTPS private keys and server logs.
+/.local/

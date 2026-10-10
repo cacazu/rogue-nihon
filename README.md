@@ -26,13 +26,13 @@
 
 マップの49種類の表示IDを、太い輪郭のファンタジー調PNG46枚で表示します。画像／文字表示の切替、50〜200%の拡大、自分の位置へのセンタリング、全画面表示に対応します。スマホではマップ内をドラッグできます。表示設定はゲームのターン・乱数・保存形式へ影響しません。
 
-[画像一覧](web/assets/tiles/contact-sheet.png)、[実装と検証](docs/GRAPHICS-ja.md)、[画像版の検証記録](graphics-verification.json)を参照してください。旧 verification.json は画像追加前の検証履歴です。
+[画像一覧](web/assets/tiles/contact-sheet.png)、[実装と検証](docs/GRAPHICS-ja.md)を参照してください。過去の検証JSONと詳細出力は整理済みです。
 
 ## 32×32ドット絵
 
 「地図の表示」で **文字／イラスト／ドット絵** を選べます。ドット絵は新規生成した実寸32×32 PNG46枚で、100〜400%の整数倍表示に対応します。表示モードと倍率はこのブラウザに保存されます。直接開く場合は `http://127.0.0.1:4173/?view=pixels` です。
 
-[ドット絵一覧](web/assets/pixels/contact-sheet.png)、[仕様と検証](docs/PIXELS-ja.md)、[ドット絵版の検証記録](pixel-verification.json)を参照してください。従来のイラスト・ゲーム本体・保存形式は保持しています。
+[ドット絵一覧](web/assets/pixels/contact-sheet.png)、[仕様と検証](docs/PIXELS-ja.md)を参照してください。従来のイラスト・ゲーム本体・保存形式は保持しています。
 
 ## 翻訳と4層
 
@@ -72,7 +72,13 @@ node tests/browser-smoke/run.mjs
 
 ビルドは明示した38CとRustを使います。取得コードのconfigure/installスクリプトを実行しません。配布フォルダには build/game.js と game.wasm を含め、SDK・コンパイラーキャッシュは含めません。
 
-実行した試験と対象SHA-256は verification.json、各raw結果、tests/browser-smoke/output-ja/evidence.json に記録します。構造と検証の限界は docs/IMPLEMENTATION-ja.md、日本語の組立ては docs/MESSAGES-ja.md と docs/ENTITIES-ja.md、ゲーム比較は tests/RESULTS-ja.md にあります。今回の試験が全seed・全展開の網羅であるとは主張しません。
+ビルド、Rust検査、Cの補助検査、ブラウザー検証とゲーム回帰テストは、通常終了・例外終了のどちらでも、その実行が作った一時ファイルを自動で削除します。コンパイラーキャッシュ、テスト用バイナリ、ログ、結果JSON、画像、ブラウザープロファイルは実行ごとの `.local/tasks/` 内へ分け、他の実行や既存ファイルを削除しません。通常の `build.ps1` は、コンパイル成功後に `build/game.js`、`game.wasm`、`build-manifest.json` を配置して保持します。ソース、翻訳の編集入力、画像、ライセンス、LAN証明書も保持します。キャッシュは残さないため、次回ビルド時に再コンパイルします。
+
+直接のCargo／Pythonコマンドも `.\tools\run-clean.ps1 <コマンド> <引数...>` で実行すると、終了時にコンパイラーキャッシュと一時領域を片付けます。保持が必要な比較用ビルドには `build.ps1 -OutputName game-fixtures -TestFixtures -KeepArtifacts`、PowerShellの検査には `-KeepArtifacts` を指定してください。Node／Pythonの検証結果を後で確認・集約する場合は、実行前に `$env:ROGUE_KEEP_ARTIFACTS='1'` を設定します。その場合だけ従来の出力先と一時領域を保持します。確認後は `Remove-Item Env:ROGUE_KEEP_ARTIFACTS` で通常の自動削除へ戻してください。
+
+Windowsでは、強制終了で残った一時領域も、次の `start.ps1`／サーバー起動またはビルド・検証開始時に自動で回収します。専用領域の `.rogue-owner.json` にPID・プロセス開始時刻・保持指定を記録し、作成元が終了したことを確認できる領域だけを削除します。実行中の所有者や残存する子プロセス、領域を使用しているプロセスが見つかれば保持します。保持指定の結果、所有者情報のない旧領域、壊れた記録、プロセス状態を照会できない領域、ジャンクション／シンボリックリンクを含む領域も自動削除しません。プロセス一覧が制限されている環境では回収を保留し、通常の起動時に再試行します。起動用の `build/` や編集用データは回収対象に含めません。
+
+検証結果と対象SHA-256、画像を後で確認する場合は保持指定で試験を実行してください。通常は実行専用の一時領域へ保存して終了時に削除します。2026-10-10の整理で過去の検証JSON、詳細出力、比較用ビルド、コンパイラーキャッシュを削除しました。fixtureや比較版を使う試験は、必要なビルドを再生成してから実行してください。構造と検証の限界は docs/IMPLEMENTATION-ja.md、日本語の組立ては docs/MESSAGES-ja.md と docs/ENTITIES-ja.md、ゲーム比較の過去の説明は tests/RESULTS-ja.md にあります。今回の試験が全seed・全展開の網羅であるとは主張しません。
 
 ## 出典と保護
 
@@ -80,4 +86,4 @@ node tests/browser-smoke/run.mjs
 
 原著作権と3条項BSD形式の本文は logic/LICENSE.TXT にあります。依存とSDKの通知は THIRD-PARTY-NOTICES.md と licenses/ に残します。スマホ専用操作、ゲームパッド、永続ランキング、端末対応は今回の実装範囲に含めません。
 
-Gitには起動用Wasm・JavaScriptとソースを含め、詳細トレース、画面画像、補助テストバイナリ、キャッシュ、配達manifestは含めません。verification.json とテスト説明資料は2026-10-02のローカル検証記録です。参照する詳細出力はローカル成果物に保持し、Gitのチェックアウト後は試験で再生成します。
+Gitには起動用Wasm・JavaScriptとソースを含め、詳細トレース、画面画像、補助テストバイナリ、キャッシュ、配達manifestは含めません。テスト説明資料には実行当時の結果と制約を残し、詳細出力は必要な試験を実行して再生成します。

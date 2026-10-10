@@ -21,8 +21,8 @@
 
 ## 検証出力の扱い
 
-`verification.json`、`tests/game-results-summary.json`、各説明資料は、2026-10-02に実施したローカル検証の記録です。記載されたビルドハッシュと当時の絶対パスを履歴として保持します。Gitのチェックアウトだけでは参照先の詳細トレースや画面画像がすべて揃うとは限りません。
+各説明資料には実行当時の検証結果、ビルドハッシュ、制約を履歴として残しています。2026-10-10の整理で `verification.json`、画像版・ドット絵版の検証JSON、`tests/game-results-summary.json`、詳細トレース、ブラウザ画面画像、動画、比較用コピーを削除しました。過去の説明に記載した出力パスは保存済み成果物の存在を保証しません。
 
-詳細トレース、ブラウザ画面画像、fixture用Wasm、補助テストバイナリ、ローカル配達manifestはGit管理対象外です。既存のローカル成果物は削除せず保持します。SDK・依存物・キャッシュも含めません。ライセンス通知一式は保持します。
+詳細トレース、ブラウザ画面画像、fixture用Wasm、補助テストバイナリ、ローカル配達manifestはGit管理対象外です。これらの不要なローカル成果物、Rustのビルドキャッシュ、Emscriptenのプロジェクト内キャッシュ、ログ、Pythonキャッシュを削除しました。ライセンス通知、翻訳の編集入力、継続的な検証用のソースとスクリプト、LAN起動用証明書は保持します。
 
-Rogueの起動に必要な `build/game.js`、`game.wasm`、`build-manifest.json` と、翻訳生成に使うPython・JSON入力はGitで管理します。再ビルドと試験の手順は [README.md](../README.md)、[tests/BASELINE-ja.md](../tests/BASELINE-ja.md)、[tests/browser-smoke/README-ja.md](../tests/browser-smoke/README-ja.md) にあります。詳細出力は試験を実行して再生成します。
+Rogueの起動に必要な `build/game.js`、`game.wasm`、`build-manifest.json` と、翻訳生成に使うPython・JSON入力はGitで管理します。再ビルドと試験の手順は [README.md](../README.md)、[tests/BASELINE-ja.md](../tests/BASELINE-ja.md)、[tests/browser-smoke/README-ja.md](../tests/browser-smoke/README-ja.md) にあります。通常のビルド・検証は専用の一時領域を使い、終了時に自動で削除します。詳細出力を保存する場合だけ `-KeepArtifacts` または `ROGUE_KEEP_ARTIFACTS=1` を指定します。

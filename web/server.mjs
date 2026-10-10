@@ -3,6 +3,7 @@ import { createReadStream } from "node:fs";
 import { stat, realpath } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { recoverTemporaryArtifacts } from "../tools/temporary-artifacts.mjs";
 
 const defaultRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const mime = new Map([[".html", "text/html; charset=utf-8"], [".js", "text/javascript; charset=utf-8"], [".mjs", "text/javascript; charset=utf-8"], [".css", "text/css; charset=utf-8"], [".json", "application/json; charset=utf-8"], [".png", "image/png"], [".wasm", "application/wasm"], [".txt", "text/plain; charset=utf-8"], [".md", "text/plain; charset=utf-8"]]);
@@ -39,6 +40,7 @@ export function createPreviewServer({ root = defaultRoot } = {}) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  recoverTemporaryArtifacts();
   const port = Number(process.env.ROGUE_PORT || process.argv[2] || 4173);
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error("Invalid port");
   const server = createPreviewServer();

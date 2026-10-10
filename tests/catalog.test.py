@@ -1,10 +1,16 @@
 """Check source mapping and stable IDs without editing the source checkout."""
+import sys
+sys.dont_write_bytecode = True
+
 import importlib.util
 import pathlib
 import tempfile
 import unittest
 
 MODULE_PATH = pathlib.Path(__file__).resolve().parents[1] / 'tools' / 'generate_catalog.py'
+sys.path.insert(0, str(MODULE_PATH.parent))
+from temporary_artifacts import TemporaryArtifacts
+
 spec = importlib.util.spec_from_file_location('catalog', MODULE_PATH)
 catalog = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(catalog)
@@ -54,4 +60,5 @@ void hit(void) {
 
 
 if __name__ == '__main__':
-    unittest.main()
+    with TemporaryArtifacts(MODULE_PATH.parent.parent):
+        unittest.main()
