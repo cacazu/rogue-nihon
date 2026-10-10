@@ -1569,5 +1569,16 @@
       "LICENSE-MIT"
     ],
     "source": "C:\\Users\\kit\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\winnow-1.0.4"
+  },
+  {
+    "package": "lucide-lab",
+    "declared_license": "ISC",
+    "included_notices": [
+      "LICENSE"
+    ],
+    "source_urls": [
+      "https://raw.githubusercontent.com/lucide-icons/lucide-lab/main/LICENSE",
+      "https://raw.githubusercontent.com/lucide-icons/lucide-lab/main/icons/stairs.svg"
+    ]
   }
 ]

@@ -21,4 +21,6 @@ The table highlights direct dependencies and the existing serialization dependen
 
 The Emscripten license, musl copyright notice, compiler-rt license, and the installed Rust copyright document are copied in `licenses/emscripten/` and `licenses/rust/`. This is a local implementation deliverable, not a public release. A later public release should re-audit the exact bundled toolchain runtime and notices for its chosen distribution.
 
-No third-party web font, external JavaScript package, or image is used by the browser UI. The upstream `rogue.png` remains among the source acquisition files but is not used as a browser asset.
+The browser HUD's stairs icon is adapted from [Lucide Lab's stairs.svg](https://github.com/lucide-icons/lucide-lab/blob/main/icons/stairs.svg). Its four rectangles and side outline are represented as a Rust vector path. The ISC license and original copyright notice are retained in `licenses/lucide-lab/LICENSE` and the downloadable license bundle.
+
+No third-party web font or external JavaScript package is used by the browser UI. The upstream `rogue.png` remains among the source acquisition files but is not used as a browser asset.

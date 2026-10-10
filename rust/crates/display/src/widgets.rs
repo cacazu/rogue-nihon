@@ -248,7 +248,8 @@ impl Widgets {
         let r = Rect::new(r.x + (r.w - size) / 2., r.y + (r.h - size) / 2., size, size);
         let path=match name {
             "heart"=>"M12 21 3.5 12.5C-2 7 5 0 12 7C19 0 26 7 20.5 12.5Z".into(),
-            "stairs"=>"M3 21H9V15H15V9H21V3M3 3H10M3 3V10M3 3 12 12".into(),
+            // Lucide Lab stairs (ISC); see licenses/lucide-lab/LICENSE.
+            "stairs"=>"M2 16H12V20H2ZM4 12H14V16H4ZM6 8H16V12H6ZM8 4H18V8H8ZM12 20H22V4H18".into(),
             "coins"=>"M20 7C20 9.2 16.4 11 12 11S4 9.2 4 7 7.6 3 12 3 20 4.8 20 7ZM4 7V12C4 14.2 7.6 16 12 16S20 14.2 20 12V7M4 12V17C4 19.2 7.6 21 12 21S20 19.2 20 17V12".into(),
             "expand"=>"M3 9V3H9M15 3H21V9M21 15V21H15M9 21H3V15".into(),
             "shield"=>"M12 3 21 6V12C21 17 16 20 12 22C8 20 3 17 3 12V6ZM12 7V16".into(),
