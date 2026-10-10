@@ -1,3 +1,4 @@
+import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
@@ -26,7 +27,7 @@ async function start(fixture='',legacy=false){
  await context.route('**/web/worker.js',r=>r.fulfill({body:source,contentType:'text/javascript',headers:{'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'}}));
  }
  if(fixture)await context.route('**/build/game.js',r=>r.fulfill({path:path.join(root,'build/game-fixtures.js'),contentType:'text/javascript',headers:{'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'}}));
- page=await context.newPage();page.on('pageerror',e=>evidence.errors.push(String(e)));
+ page=await context.newPage();await installBrowserTestAdapter(page);page.on('pageerror',e=>evidence.errors.push(String(e)));
  await page.goto(base+'?trace=1');await page.locator('#seed').fill('17');await page.locator('#new-game').click();await settled();
  if(!((await snapshot()).ui.window))await page.locator('#board').focus();
 }

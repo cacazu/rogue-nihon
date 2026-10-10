@@ -1,3 +1,4 @@
+import { installBrowserTestAdapter } from "./browser-smoke/test-adapter.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
@@ -69,6 +70,7 @@ async function owner(runtime = "node", keep = false, extra = "") {
     command = "pwsh";
     arguments_ = ["-NoProfile", "-Command", `. '${path.join(root, "tools/temporary-artifacts.ps1").replaceAll("'", "''")}';
       $scope=New-RogueArtifactScope -ProjectPath '${root.replaceAll("'", "''")}';
+      & '${registry.replaceAll("'", "''")}' -Mode Register -ProjectPath '${root.replaceAll("'", "''")}' -ScopePath $scope.Path -OwnerPid $PID -Keep '0';
       try {Set-Content -LiteralPath (Join-Path $scope.Path 'partial.wasm') -Value 'partial';Write-Output $scope.Path;[Console]::In.ReadToEnd() | Out-Null}
       finally {Close-RogueArtifactScope $scope}`];
   } else {
@@ -85,7 +87,7 @@ with TemporaryArtifacts(${JSON.stringify(root)}) as scope:
 }
 
 const windows = { skip: process.platform !== "win32" };
-test("preview startup recovers a killed run while preserving a live run and playable files", windows, async () => {
+test("preview startup preserves interrupted and live run directories and playable files", windows, async () => {
   const before = hashes();
   const dead = await owner(), live = await owner();
   let server, browser, runtime;
@@ -95,13 +97,13 @@ test("preview startup recovers a killed run while preserving a live run and play
     server = spawn(process.execPath, [path.join(root, "web/server.mjs"), "0"], { cwd: root, env: environment, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
     const ready = await firstLine(server);
     assert.match(ready, /^Rogue (?:private )?preview: http:\/\/127\.0\.0\.1:\d+\/$/);
-    assert.equal(existsSync(dead.directory), false);
+    assert.equal(existsSync(dead.directory), true);
     assert.ok(existsSync(live.directory));
     const { prepareBrowserRuntime } = await import('./browser-smoke/browser-runtime.mjs');
     runtime = await prepareBrowserRuntime(root);
     const { chromium } = createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE || path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'));
     browser = await chromium.launch({ executablePath: process.env.ROGUE_CHROME || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', headless: true, downloadsPath: runtime.downloadsPath });
-    const page = await browser.newPage({ viewport: { width: 1240, height: 900 } });
+    const page = await browser.newPage({ viewport: { width: 1240, height: 900 } });await installBrowserTestAdapter(page);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(ready.replace(/^Rogue (?:private )?preview: /, '') + '?trace=1&lang=ja');

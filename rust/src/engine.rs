@@ -159,6 +159,7 @@ pub(crate) fn map_terrain(glyphs: Vec<u8>) {
         runtime.app.update();
     });
 }
+#[cfg(feature = "test-hooks")]
 pub(crate) fn cached_frame() -> Option<Value> {
     RUNTIME.with(|runtime| {
         let mut runtime = runtime.borrow_mut();

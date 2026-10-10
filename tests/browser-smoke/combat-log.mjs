@@ -1,3 +1,4 @@
+import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
@@ -75,7 +76,7 @@ try {
   browser=context.browser();
   await context.route('**/web/worker.js',route=>route.fulfill({headers:{'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'},contentType:'text/javascript',body:workerSource.replace('    module.FS.writeFile("/locale.txt",','    module.FS.writeFile("/fixture.id", "combat");\n    module.FS.writeFile("/locale.txt",')}));
   await context.route('**/build/game.js',route=>route.fulfill({headers:{'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'},path:path.join(project,'build/game-fixtures.js'),contentType:'text/javascript'}));
-  page=await context.newPage();page.on('pageerror',error=>evidence.errors.push(error.message));
+  page=await context.newPage();await installBrowserTestAdapter(page);page.on('pageerror',error=>evidence.errors.push(error.message));
   await page.goto(base+'?trace=1');await page.waitForFunction(()=>window.__rogueBrowserTest?.graphics.images===46);
   await page.locator('#seed').fill('17');await page.locator('#new-game').click();await settled();
   assert.deepEqual(await page.evaluate(()=>__rogueBrowserTest.frame.player),{x:10,y:10},'real controlled combat fixture loaded');

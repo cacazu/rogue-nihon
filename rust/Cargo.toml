@@ -37,6 +37,16 @@ rogue-display.workspace = true
 rogue-input.workspace = true
 rogue-platform.workspace = true
 
+[features]
+default = []
+# Regression entry points are linked only by explicit non-production builds.
+test-hooks = []
+
+[[bin]]
+name = "engine-check"
+path = "src/bin/engine-check.rs"
+required-features = ["test-hooks"]
+
 [profile.dev]
 panic = "abort"
 

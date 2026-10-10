@@ -84,6 +84,9 @@ export async function runGame(modulePath, config = {}) {
   };
   const factory = require(resolve(modulePath));
   const module = await factory({ printErr: (line) => result.stderr.push(String(line)), print: () => {} });
+  if (config.repaint > 0 && typeof module._rg_test_repaint !== 'function') {
+    throw new Error('Repaint regression checks require an explicit test-hooks (-TestHooks or -TestFixtures) build');
+  }
   module.FS.writeFile('/trace.enabled', '1');
   module.FS.writeFile('/locale.txt', config.locale ?? 'en');
   if (config.messagePaging !== undefined) module.FS.writeFile('/message-paging.txt', config.messagePaging);

@@ -16,6 +16,7 @@ unsafe extern "C" {
     fn rg_core_start(seed: u32, name: *const c_char) -> i32;
     fn rg_core_inspect(out: *mut u32, capacity: u32) -> u32;
     fn rg_core_save_bytes(out: *mut *mut u8, length: *mut u32) -> i32;
+    #[cfg(feature = "test-hooks")]
     fn rg_core_load_bytes(bytes: *const u8, length: u32) -> i32;
     fn rg_core_save_free(bytes: *mut u8);
     fn js_rg_read_event() -> i32;
@@ -634,6 +635,7 @@ fn persist() {
 }
 
 /// Repaints only the already captured Rust frame. Used by regression tests.
+#[cfg(feature = "test-hooks")]
 #[unsafe(no_mangle)]
 pub extern "C" fn rg_test_repaint() {
     let frame = engine::cached_frame();
@@ -682,6 +684,7 @@ pub unsafe extern "C" fn rg_validate_envelope(bytes: *const u8, length: u32) -> 
 }
 
 /// Test-only roundtrip interface; a complete command boundary is required.
+#[cfg(feature = "test-hooks")]
 #[unsafe(no_mangle)]
 pub extern "C" fn rg_test_save_roundtrip() -> i32 {
     let before = words();

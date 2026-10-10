@@ -4,14 +4,18 @@ import {fileURLToPath} from 'node:url';
 import {runGame,SAVE_EVENT,textEvents} from './run-game.mjs';
 const old=process.env.ROGUE_GRAPHICS_BASELINE;
 const current=fileURLToPath(new URL('../build/game.js',import.meta.url));
+const instrumented=fileURLToPath(new URL('../build/game-fixtures.js',import.meta.url));
 test('graphical semantic observations preserve exact original rules, RNG, knowledge and save bytes',{skip:!old?'Set ROGUE_GRAPHICS_BASELINE to the pre-graphics build/game.js':false},async()=>{
  for(const seed of [1,12345,987654321]){
-  const config={seed,text:'v .hljki \x1b..',repaint:25};
+  const config={seed,text:'v .hljki \x1b..'};
   const before=await runGame(old,config),after=await runGame(current,config);
   assert.deepEqual(after.final,before.final,'All 20 C snapshot words must match');
   assert.deepEqual(after.traces.map(t=>t.words),before.traces.map(t=>t.words));
   assert.deepEqual(after.frames.map(f=>f.cells),before.frames.map(f=>f.cells));
-  assert.equal(after.repaint_pure,25);
+  const repainted=await runGame(instrumented,{...config,repaint:25});
+  assert.deepEqual(repainted.final,after.final);
+  assert.deepEqual(repainted.traces,after.traces);
+  assert.equal(repainted.repaint_pure,25);
   for(const frame of after.frames){assert.equal(frame.map_tiles.length,1920);assert.equal(frame.map_tile_ids.length,49);assert.deepEqual(frame.map_unknown_glyphs,[]);}
  }
  const config={seed:12345,locale:'ja',events:[...textEvents('.'),SAVE_EVENT,...textEvents('.') ]};

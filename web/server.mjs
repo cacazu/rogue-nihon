@@ -4,7 +4,6 @@ import { createReadStream } from "node:fs";
 import { readFile, stat, realpath } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { recoverTemporaryArtifacts } from "../tools/temporary-artifacts.mjs";
 
 const defaultRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const publicDirectories = ["web", "build", "locales", "docs", "distribution"];
@@ -45,7 +44,6 @@ export function createPreviewServer({ root = defaultRoot, tls } = {}) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  recoverTemporaryArtifacts();
   const port = Number(process.env.ROGUE_PORT || process.argv[2] || 4173);
   const host = process.env.ROGUE_HOST || process.argv[3] || "127.0.0.1";
   const certificate = process.env.ROGUE_TLS_CERT || process.argv[4];

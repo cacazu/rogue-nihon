@@ -1,3 +1,4 @@
+import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
@@ -27,7 +28,7 @@ try {
   const headers = { "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Embedder-Policy": "require-corp", "Cross-Origin-Resource-Policy": "same-origin" };
   await context.route("**/web/worker.js", route => route.fulfill({ body: worker.replace('    module.FS.writeFile("/locale.txt",', '    module.FS.writeFile("/fixture.id", "plain");\n    module.FS.writeFile("/locale.txt",'), contentType: "text/javascript", headers }));
   await context.route("**/build/game.js", route => route.fulfill({ path: path.join(root, "build/game-fixtures.js"), contentType: "text/javascript", headers }));
-  page = await context.newPage(); page.setDefaultTimeout(15000);
+  page = await context.newPage();await installBrowserTestAdapter(page); page.setDefaultTimeout(15000);
   page.on("pageerror", error => evidence.errors.push(error.message));
   await page.goto(new URL("?trace=1&view=pixels&lang=ja", base).href);
   await page.waitForFunction(() => window.__rogueBrowserTest?.canvas?.paintCount > 0);

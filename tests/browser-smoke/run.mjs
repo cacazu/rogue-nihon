@@ -1,3 +1,4 @@
+import { browserTestAdapterSource } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -61,6 +62,7 @@ try {
     cdp = new CDP(socket);
   }
   await cdp.call("Runtime.enable"); await cdp.call("Page.enable");
+  await cdp.call("Page.addScriptToEvaluateOnNewDocument", {source: browserTestAdapterSource()});
   readBrowserDiagnostics = () => cdp.evaluate("window.__rogueBrowserTest ? __rogueBrowserTest.diagnostics : null");
   await cdp.call("Emulation.setDeviceMetricsOverride", { width: 1240, height: 900, deviceScaleFactor: 1, mobile: false });
   await cdp.call("Page.navigate", { url: base + "?trace=1" + (process.env.ROGUE_VIEW ? "&view=" + encodeURIComponent(process.env.ROGUE_VIEW) : "") });

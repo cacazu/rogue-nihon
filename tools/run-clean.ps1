@@ -12,6 +12,7 @@ $runProject = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot 'temporary-artifacts.ps1')
 $runScope = New-RogueArtifactScope -ProjectPath $runProject -KeepArtifacts:$runKeep
 try {
+& (Join-Path $PSScriptRoot 'artifact-registry.ps1') -Mode Register -ProjectPath $runProject -ScopePath $runScope.Path -OwnerPid $PID -Keep $(if ($runScope.Keep) {'1'} else {'0'})
     Push-Location -LiteralPath $runProject
     try {
         $global:LASTEXITCODE = 0

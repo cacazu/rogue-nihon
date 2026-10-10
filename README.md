@@ -77,6 +77,9 @@ cargo fetch --locked --manifest-path rust/Cargo.toml # 初回に依存を取得
 .\tools\check-rust-layers.ps1
 .\tools\check-rust-layers.ps1 -Binary entity-check
 .\tools\check-rust-layers.ps1 -Binary engine-check
+./build.ps1 -SdkRoot C:\Users\kit\emsdk -OutputName game-fixtures -TestFixtures -KeepArtifacts
+node --test tests/production-boundary.test.mjs
+node tests/browser-smoke/production-boundary.mjs
 node tests/browser-smoke/canvas.mjs
 ```
 
@@ -86,7 +89,7 @@ node tests/browser-smoke/canvas.mjs
 
 直接のCargo／Pythonコマンドも `.\tools\run-clean.ps1 <コマンド> <引数...>` で実行すると、終了時にコンパイラーキャッシュと一時領域を片付けます。保持が必要な比較用ビルドには `build.ps1 -OutputName game-fixtures -TestFixtures -KeepArtifacts`、PowerShellの検査には `-KeepArtifacts` を指定してください。Node／Pythonの検証結果を後で確認・集約する場合は、実行前に `$env:ROGUE_KEEP_ARTIFACTS='1'` を設定します。その場合だけ従来の出力先と一時領域を保持します。確認後は `Remove-Item Env:ROGUE_KEEP_ARTIFACTS` で通常の自動削除へ戻してください。
 
-Windowsでは、強制終了で残った一時領域も、次の `start.ps1`／サーバー起動またはビルド・検証開始時に自動で回収します。専用領域の `.rogue-owner.json` にPID・プロセス開始時刻・保持指定を記録し、作成元が終了したことを確認できる領域だけを削除します。実行中の所有者や残存する子プロセス、領域を使用しているプロセスが見つかれば保持します。保持指定の結果、所有者情報のない旧領域、壊れた記録、プロセス状態を照会できない領域、ジャンクション／シンボリックリンクを含む領域も自動削除しません。プロセス一覧が制限されている環境では回収を保留し、通常の起動時に再試行します。起動用の `build/` や編集用データは回収対象に含めません。
+中断した登録済みの検証領域は、検証ツールまたは `./tools/artifact-registry.ps1 -Mode Recover -ProjectPath .` の明示的な実行で回収します。本番の起動・配信・通常ビルドでは回収ツールやプロセス列挙を呼びません。実行中の所有者・残存する子プロセス・保持指定・所有者不明・壊れた記録・照会不能・ジャンクションを含む領域は保持します。通常ビルドが自分で作った専用コンパイラー領域を終了時に閉じる処理は、他の実行を回収する処理と分離しています。テスト用JS入口・Wasm関数の分離と実際の独立性の確認は [本番と検証の境界](docs/PRODUCTION-BOUNDARY-ja.md) に記載します。
 
 検証結果の保持を指定した場合、現行Canvas版のPlaywright結果と対象SHA-256は tests/browser-smoke/output/canvas/evidence.json へ、画像は同じフォルダーへ記録します。通常は実行専用の一時領域へ保存して終了時に削除します。2026-10-10の整理で過去の検証JSON、詳細出力、比較用ビルド、コンパイラーキャッシュを削除しました。fixtureや比較版を使う試験は、必要なビルドを再生成してから実行してください。構造と検証の限界は docs/IMPLEMENTATION-ja.md、日本語の組立ては docs/MESSAGES-ja.md と docs/ENTITIES-ja.md、ゲーム比較の過去の説明は tests/RESULTS-ja.md にあります。今回の試験が全seed・全展開の網羅であるとは主張しません。
 

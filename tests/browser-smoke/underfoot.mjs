@@ -1,3 +1,4 @@
+import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
@@ -48,7 +49,7 @@ async function open(mode, touch = false, fixture = "") {
     await context.route("**/web/worker.js", route => route.fulfill({ body: worker.replace('    module.FS.writeFile("/locale.txt",', '    module.FS.writeFile("/fixture.id", ' + JSON.stringify(fixture) + ');\n    module.FS.writeFile("/locale.txt",'), contentType: "text/javascript", headers }));
     await context.route("**/build/game.js", route => route.fulfill({ path: path.join(root, "build/game-fixtures.js"), contentType: "text/javascript", headers }));
   }
-  page = await context.newPage(); page.on("pageerror", error => evidence.errors.push(error.message)); page.setDefaultTimeout(15000);
+  page = await context.newPage();await installBrowserTestAdapter(page); page.on("pageerror", error => evidence.errors.push(error.message)); page.setDefaultTimeout(15000);
   await page.goto(new URL("?trace=1&lang=ja&view=" + mode, base).href);
   await page.waitForFunction(() => window.__rogueBrowserTest?.canvas?.paintCount > 0);
   await click("seed"); await page.keyboard.press("Control+a"); await page.keyboard.insertText("17"); await click("new-game"); await settled();

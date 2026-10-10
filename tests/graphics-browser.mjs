@@ -1,3 +1,4 @@
+import { browserTestAdapterSource } from "./browser-smoke/test-adapter.mjs";
 import { artifactDirectory } from "../tools/temporary-artifacts.mjs";
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
@@ -25,6 +26,7 @@ try{
  let port;await until(async()=>{try{port=Number((await readFile(path.join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0]);return port;}catch{return false;}},'Chrome');
  const pages=await(await fetch(`http://127.0.0.1:${port}/json/list`)).json();socket=new WebSocket(pages.find(p=>p.type==='page').webSocketDebuggerUrl);await new Promise((resolve,reject)=>{socket.addEventListener('open',resolve,{once:true});socket.addEventListener('error',reject,{once:true});});cdp=new CDP(socket);
  await cdp.call('Runtime.enable');await cdp.call('Page.enable');
+  await cdp.call("Page.addScriptToEvaluateOnNewDocument", {source: browserTestAdapterSource()});
  await cdp.call('Emulation.setDeviceMetricsOverride',{width:1280,height:960,deviceScaleFactor:1,mobile:false});
  await cdp.call('Page.navigate',{url:base+'?trace=1'});
  await until(()=>cdp.evaluate('Boolean(window.__rogueBrowserTest?.graphics?.images===46)'),'46 images decoded');

@@ -1,3 +1,4 @@
+import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
 import {createRequire} from "node:module";
@@ -29,7 +30,7 @@ async function click(id,touch=false){
 async function shot(name,clip){await page.screenshot({path:path.join(output,name+".png"),...(clip?{clip}:{})});evidence.screenshots.push(name+".png");}
 async function start(lang,touch=false,scale=1){
   await context?.close();context=await browser.newContext({viewport:touch?{width:390,height:844}:{width:1240,height:900},hasTouch:touch,isMobile:touch,deviceScaleFactor:scale});
-  page=await context.newPage();page.on("pageerror",error=>evidence.errors.push(error.message));
+  page=await context.newPage();await installBrowserTestAdapter(page);page.on("pageerror",error=>evidence.errors.push(error.message));
   await page.addInitScript(()=>{
     const NativeWorker=Worker;
     window.Worker=class extends NativeWorker {

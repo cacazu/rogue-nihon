@@ -7,6 +7,7 @@ import { runGame, textEvents, SAVE_EVENT, originalFrames } from './run-game.mjs'
 import { assertEquivalent } from './compare-traces.mjs';
 
 const split = fileURLToPath(new URL('../build/game.js', import.meta.url));
+const instrumented = fileURLToPath(new URL('../build/game-fixtures.js', import.meta.url));
 const output = artifactDirectory(fileURLToPath(new URL('./actual-results/', import.meta.url)));
 await mkdir(output, { recursive: true });
 
@@ -21,11 +22,18 @@ async function recorded(label, config, module = split) {
 
 test('actual game is deterministic and Rust repaint preserves every inspected C word', async () => {
   const config = { seed: 1, text: 'v .hljki w\x1ba', repaint: 100 };
-  const first = await recorded('determinism-a', config);
-  const second = await recorded('determinism-b', config);
+  const first = await recorded('determinism-a', config, instrumented);
+  const second = await recorded('determinism-b', config, instrumented);
   assertEquivalent(first.traces, second.traces);
   assertEquivalent(first.final, second.final);
   assert.equal(first.repaint_pure, 100);
+  const production = await recorded('determinism-production', {...config, repaint: 0});
+  assertEquivalent(production.traces, first.traces);
+  assertEquivalent(production.final, first.final);
+});
+
+test('production game cannot call regression-only repaint hooks', async () => {
+  await assert.rejects(runGame(split, {seed: 1, text: '.', repaint: 1}), /explicit test-hooks/);
 });
 
 test('free version/space/escape consume no game turn; successful moves consume food', async () => {

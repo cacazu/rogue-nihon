@@ -98,11 +98,13 @@ void js_rg_outcome(int32_t code, const uint8_t *text_utf8, uint32_t length);
 /* Rust application exports. Browser glue enters the game only through rg_run;
  * diagnostic exports do not advance a turn. CString results have a paired free. */
 int32_t rg_run(uint32_t seed, const char *player_name);
-void rg_test_repaint(void);
 char *rg_snapshot_json(void);
 void rg_string_free(char *string);
 int32_t rg_validate_envelope(const uint8_t *bytes, uint32_t length);
+#ifdef RG_TEST_HOOKS
+void rg_test_repaint(void);
 int32_t rg_test_save_roundtrip(void);
+#endif
 #ifdef __cplusplus
 }
 #endif

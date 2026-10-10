@@ -20,7 +20,6 @@ function New-RogueArtifactScope {
     $scopeToken = [guid]::NewGuid().ToString('N')
     Set-Content -LiteralPath (Join-Path $scopePath 'owner.txt') -Value $scopeToken -NoNewline
     $scopeKeep = $KeepArtifacts -or $env:ROGUE_KEEP_ARTIFACTS -eq '1'
-    & (Join-Path $PSScriptRoot 'artifact-registry.ps1') -Mode Register -ProjectPath $scopeProject -ScopePath $scopePath -OwnerPid $PID -Keep $(if ($scopeKeep) {'1'} else {'0'})
     $scopeBuild = if ($scopeKeep) { Join-Path $scopeProject 'build' } else { Join-Path $scopePath 'build' }
     $scopeSettings = @{
         ROGUE_ARTIFACT_SCOPE=$scopePath; ROGUE_ARTIFACT_BUILD=$scopeBuild

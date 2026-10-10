@@ -1,3 +1,4 @@
+import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
@@ -49,7 +50,7 @@ async function open({ mobile = false, before = false, lang = "ja" } = {}) {
   await context.route("**/web/worker.js", r => r.fulfill({ body: worker.replace('    module.FS.writeFile("/locale.txt",', '    module.FS.writeFile("/fixture.id", "inventory-all");\n    module.FS.writeFile("/locale.txt",'), contentType: "text/javascript", headers }));
   await context.route("**/build/game.js", r => r.fulfill({ path: before ? baseline : path.join(root, "build/game-fixtures.js"), contentType: "text/javascript", headers }));
   if (before) await context.route("**/build/game-fixtures.wasm", r => r.fulfill({ path: baseline.replace(/\.js$/, ".wasm"), contentType: "application/wasm", headers }));
-  page = await context.newPage(); page.setDefaultTimeout(10000);
+  page = await context.newPage();await installBrowserTestAdapter(page); page.setDefaultTimeout(10000);
   page.on("pageerror", e => evidence.errors.push(e.message));
   await page.goto(base + "?trace=1&view=pixels&lang=" + lang);
   await page.waitForFunction(() => window.__rogueBrowserTest?.canvas.paintCount > 0);

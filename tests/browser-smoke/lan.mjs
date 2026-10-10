@@ -1,3 +1,4 @@
+import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
@@ -18,7 +19,7 @@ const browser = await chromium.launch({ executablePath: process.env.ROGUE_CHROME
 let page;
 try {
   const context = await browser.newContext({ ignoreHTTPSErrors: true, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
-  page = await context.newPage();
+  page = await context.newPage();await installBrowserTestAdapter(page);
   page.setDefaultTimeout(15000);
   page.on("pageerror", error => evidence.errors.push(error.message));
   async function check(label, run) { await run(); evidence.checks.push(label); console.log("PASS " + label); }

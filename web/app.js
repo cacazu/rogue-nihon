@@ -65,14 +65,4 @@
   canvasUi=await RogueCanvasUi.create(board,{execute,tileSets});
   let preference=null;try{preference=localStorage.getItem("rogue-map-display-v1");}catch{}
   canvasUi.dispatchRequest({type:"boot",preference,environment:{parameters:Object.fromEntries(new URLSearchParams(location.search)),isolated:crossOriginIsolated&&typeof SharedArrayBuffer!=="undefined"}});
-  const enqueueMany=events=>canvasUi.dispatch({type:"enqueue",events}).accepted;
-  const descriptors={
-    canvas:{get:()=>canvasUi.diagnostics()},enqueue:{value:key=>enqueueMany([key])},enqueueMany:{value:enqueueMany},
-    rawKey:{value:(key,flags={})=>canvasUi.rawKey(key,flags)},redraw:{value:()=>canvasUi.invalidate()},centerMap:{value:()=>canvasUi.center()},
-    graphics:{get:()=>({...canvasUi.state.graphics,camera:canvasUi.camera,images:tileSets.get(canvasUi.state.graphics.set)?.images.size||0,drawCount:canvasUi.drawCount})},
-    queuePending:{get:()=>queue?.pending||0},diagnostics:{get:()=>canvasUi.state}
-  };
-  // Read-only snapshots; these adapters call the same Rust entry points as the UI.
-  for(const key of ["language","generation","running","topOpen","frame","frameCount","inputRequestCount","trace","traces","messages","savedLength","savePending","translationFallbacks","uiMissing"])descriptors[key]={get:()=>canvasUi.state[key]};
-  window.__rogueBrowserTest=Object.freeze(Object.defineProperties({},descriptors));
 })().catch(error=>console.error("Browser host startup failed",error));

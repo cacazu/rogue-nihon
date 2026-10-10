@@ -5,6 +5,7 @@ param(
     [string]$LogicDirectory,
     [switch]$SkipCatalogGeneration,
     [switch]$TestFixtures,
+    [switch]$TestHooks,
     [switch]$KeepArtifacts
 )
 $ErrorActionPreference = 'Stop'
@@ -31,14 +32,17 @@ foreach ($toolPath in @($pythonPath,$emccPath,$configPath)) {
     if (-not (Test-Path -LiteralPath $toolPath -PathType Leaf)) { throw ('Missing tool: ' + $toolPath) }
 }
 if ($OutputName -notmatch '^[a-zA-Z0-9_-]+$') { throw 'Invalid output name' }
-if ($OutputName -eq 'game' -and ($TestFixtures -or $LogicDirectory)) { throw 'Use a different -OutputName for a fixture or comparison build; game is reserved for the playable build.' }
+if ($OutputName -eq 'game' -and ($TestFixtures -or $TestHooks -or $LogicDirectory)) { throw 'Use a different -OutputName for a fixture, test-hook or comparison build; game is reserved for the playable build.' }
+$includeTestHooks = $TestFixtures -or $TestHooks
 & (Join-Path $project 'generate-abi.ps1')
 if (-not $SkipCatalogGeneration) {
     & $pythonPath (Join-Path $project 'tools\generate_catalog.py')
     if ($LASTEXITCODE -ne 0) { throw 'Catalog generation failed' }
 }
-if (-not $SkipRust) {
-    & cargo build --offline --locked --manifest-path $rustManifest --release --lib --target wasm32-unknown-emscripten
+if (-not $SkipRust -or $includeTestHooks) {
+    $rustArguments = @('build','--offline','--locked','--manifest-path',$rustManifest,'--release','--lib','--target','wasm32-unknown-emscripten','--no-default-features')
+    if ($includeTestHooks) { $rustArguments += @('--features','test-hooks') }
+    & cargo @rustArguments
     if ($LASTEXITCODE -ne 0) { throw 'Rust build failed' }
     & (Join-Path $project 'build-ui.ps1') -OutputDirectory $buildPath
 } elseif ($buildPath -ne (Join-Path $project 'build') -and (Test-Path -LiteralPath (Join-Path $project 'build\browser-ui.wasm'))) {
@@ -58,7 +62,13 @@ if ($TestFixtures) {
     $compilerArguments.Add('-DRG_TEST_FIXTURES')
     $compilerArguments.Add((Join-Path $project 'tests\game-fixtures.c'))
 }
-foreach ($argument in @('-DROGUE_LAYERED','-I'+$logicPath,'-I'+(Join-Path $project 'contract'),'-std=gnu11','-fwrapv','-fno-strict-aliasing','-Wno-deprecated-non-prototype','-O1','--no-entry','--js-library',(Join-Path $project 'web\library.js'),'-sMODULARIZE=1','-sEXPORT_NAME=createRogueModule','-sENVIRONMENT=web,worker,node','-sALLOW_MEMORY_GROWTH=1','-sSTACK_SIZE=4194304','-sASSERTIONS=1','-sEXPORTED_FUNCTIONS=["_rg_run","_rg_test_repaint","_rg_snapshot_json","_rg_string_free","_rg_validate_envelope","_rg_test_save_roundtrip","_malloc","_free"]','-sEXPORTED_RUNTIME_METHODS=["ccall","FS","UTF8ToString"]','-o',(Join-Path $buildPath ($OutputName + '.js')))) { $compilerArguments.Add($argument) }
+$exports = @('_rg_run','_rg_snapshot_json','_rg_string_free','_rg_validate_envelope','_malloc','_free')
+if ($includeTestHooks) {
+    $compilerArguments.Add('-DRG_TEST_HOOKS')
+    $exports += @('_rg_test_repaint','_rg_test_save_roundtrip')
+}
+$compilerArguments.Add('-sEXPORTED_FUNCTIONS=' + ($exports | ConvertTo-Json -Compress))
+foreach ($argument in @('-DROGUE_LAYERED','-I'+$logicPath,'-I'+(Join-Path $project 'contract'),'-std=gnu11','-fwrapv','-fno-strict-aliasing','-Wno-deprecated-non-prototype','-O1','--no-entry','--js-library',(Join-Path $project 'web\library.js'),'-sMODULARIZE=1','-sEXPORT_NAME=createRogueModule','-sENVIRONMENT=web,worker,node','-sALLOW_MEMORY_GROWTH=1','-sSTACK_SIZE=4194304','-sASSERTIONS=1','-sEXPORTED_RUNTIME_METHODS=["ccall","FS","UTF8ToString"]','-o',(Join-Path $buildPath ($OutputName + '.js')))) { $compilerArguments.Add($argument) }
 $previousConfig = $env:EM_CONFIG
 $previousCache = $env:EM_CACHE
 $previousSdkPython = $env:EMSDK_PYTHON
@@ -80,7 +90,7 @@ try {
 $files = @((Join-Path $buildPath ($OutputName+'.js')),(Join-Path $buildPath ($OutputName+'.wasm')),(Join-Path $buildPath 'browser-ui.wasm'))
 $records = foreach ($file in $files) { [ordered]@{file=[System.IO.Path]::GetFileName($file);bytes=(Get-Item -LiteralPath $file).Length;sha256=(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()} }
 $manifestName = if ($OutputName -eq 'game') { 'build-manifest.json' } else { 'build-manifest-'+$OutputName+'.json' }
-$manifestRecord = [ordered]@{built_at_utc=(Get-Date).ToUniversalTime().ToString('o');logic_source_directory=$logicPath;c_source_files=$sources.Count;rust_library=$rustLibrary;rust_engine='Bevy 0.19.1';sdk_root=$SdkRoot;rust_version=((& rustc --version) -join '');c_flags=@('-DROGUE_LAYERED','-std=gnu11','-fwrapv','-fno-strict-aliasing','-O1');wasm_flags=@('MODULARIZE','ALLOW_MEMORY_GROWTH','STACK_SIZE=4194304','ASSERTIONS=1','Worker+SAB input; no Asyncify');outputs=$records}
+$manifestRecord = [ordered]@{built_at_utc=(Get-Date).ToUniversalTime().ToString('o');logic_source_directory=$logicPath;c_source_files=$sources.Count;rust_library=$rustLibrary;rust_engine='Bevy 0.19.1';sdk_root=$SdkRoot;rust_version=((& rustc --version) -join '');test_hooks=[bool]$includeTestHooks;test_fixtures=[bool]$TestFixtures;c_flags=@('-DROGUE_LAYERED','-std=gnu11','-fwrapv','-fno-strict-aliasing','-O1');wasm_flags=@('MODULARIZE','ALLOW_MEMORY_GROWTH','STACK_SIZE=4194304','ASSERTIONS=1','Worker+SAB input; no Asyncify');outputs=$records}
 $manifestJson = ($manifestRecord | ConvertTo-Json -Depth 8).Replace("`r`n", "`n") + "`n"
 [System.IO.File]::WriteAllText((Join-Path $buildPath $manifestName), $manifestJson, [System.Text.UTF8Encoding]::new($false))
 if ($OutputName -eq 'game' -or $artifactScope.Keep) {

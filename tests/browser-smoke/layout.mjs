@@ -1,3 +1,4 @@
+import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
@@ -130,7 +131,7 @@ try {
     args: launchArgs });
   browser = context.browser();
   evidence.browser_version = browser.version();
-  page = await context.newPage();
+  page = await context.newPage();await installBrowserTestAdapter(page);
   page.on("pageerror", (error) => evidence.errors.push(error.message));
   await page.goto(base + "?trace=1");
   await page.waitForFunction(() => window.__rogueBrowserTest?.graphics?.images === 46);

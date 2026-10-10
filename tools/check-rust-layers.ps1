@@ -22,7 +22,7 @@ $previousCache = $env:EM_CACHE
 try {
     $env:EM_CONFIG = $configPath
     $env:EM_CACHE = $cachePath
-    & cargo rustc --offline --locked --manifest-path $manifestPath --bin $Binary --release --target wasm32-unknown-emscripten -- -C ('linker=' + $linkerPath) -C panic=abort -C link-arg=-sENVIRONMENT=node -C link-arg=-sEXIT_RUNTIME=1 -C link-arg=-sALLOW_MEMORY_GROWTH=1
+    & cargo rustc --offline --locked --manifest-path $manifestPath --bin $Binary --release --target wasm32-unknown-emscripten --features test-hooks -- -C ('linker=' + $linkerPath) -C panic=abort -C link-arg=-sENVIRONMENT=node -C link-arg=-sEXIT_RUNTIME=1 -C link-arg=-sALLOW_MEMORY_GROWTH=1
     if ($LASTEXITCODE -ne 0) { throw ('Pure Rust build failed: ' + $Binary) }
     & node $executablePath
     if ($LASTEXITCODE -ne 0) { throw ('Pure Rust execution failed: ' + $Binary) }

@@ -78,14 +78,14 @@ test("PowerShell removes a partial build and restores absent environment variabl
     finally { Close-RogueArtifactScope $scope }
     if ((Test-Path -LiteralPath $owned) -or $null -ne $env:CARGO_TARGET_DIR) { throw 'Incomplete cleanup or environment restoration' }
     Write-Output 'PASS'`;
-  const run = spawnSync("pwsh", ["-NoProfile", "-Command", script], { encoding: "utf8" });
+  const run = spawnSync("pwsh", ["-NoProfile", "-Command", script], { encoding: "utf8", env: {...process.env, ROGUE_KEEP_ARTIFACTS: "0"} });
   assert.equal(run.status, 0, run.stderr);
   assert.equal(run.stdout.trim(), "PASS");
 });
 
 test("the command wrapper cleans up and preserves native failure status", { skip: process.platform !== "win32" }, () => {
   const run = spawnSync("pwsh", ["-NoProfile", "-File", path.join(root, "tools/run-clean.ps1"),
-    process.execPath, "-e", "console.log(process.env.ROGUE_ARTIFACT_SCOPE);process.exit(23)"], { encoding: "utf8" });
+    process.execPath, "-e", "console.log(process.env.ROGUE_ARTIFACT_SCOPE);process.exit(23)"], { encoding: "utf8", env: {...process.env, ROGUE_KEEP_ARTIFACTS: "0"} });
   assert.equal(run.status, 23, run.stderr);
   assert.equal(existsSync(run.stdout.trim()), false);
 });

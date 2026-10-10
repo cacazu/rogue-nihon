@@ -1,3 +1,4 @@
+import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
@@ -40,7 +41,7 @@ async function open({ baseline = false, fixture = '', mobile = false, locale = '
     await context.route('**/web/worker.js', route => route.fulfill({ body: source, contentType: 'text/javascript', headers }));
     await context.route('**/build/game.js', route => route.fulfill({ path: path.join(root, 'build/game-fixtures.js'), contentType: 'text/javascript', headers }));
   }
-  page = await context.newPage(); page.on('pageerror', error => evidence.errors.push(error.message));
+  page = await context.newPage();await installBrowserTestAdapter(page); page.on('pageerror', error => evidence.errors.push(error.message));
   await page.goto(base + '?trace=1&view=pixels&lang=' + locale);
   await page.waitForFunction(() => window.__rogueBrowserTest?.graphics?.images > 0);
 }

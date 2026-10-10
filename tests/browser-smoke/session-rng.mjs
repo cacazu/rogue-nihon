@@ -1,3 +1,4 @@
+import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
@@ -23,7 +24,7 @@ async function start(role='current',fixture=false){
  await context?.close();context=await browser.newContext({viewport:{width:1240,height:900}});
  if(role==='before')await context.route('**/*',route=>{const name=new URL(route.request().url()).pathname;if(name==='/build/game.js')return route.fulfill({body:previousJavaScript,contentType:'text/javascript',headers});if(name==='/build/game.wasm')return route.fulfill({body:previousWasm,contentType:'application/wasm',headers});if(old[name])return route.fulfill({body:old[name],contentType:name.endsWith('.js')?'text/javascript':name.endsWith('.css')?'text/css':name.endsWith('.json')?'application/json':'text/html',headers});return route.continue();});
  if(fixture){await context.route('**/web/worker.js',r=>r.fulfill({body:fixtureWorker,contentType:'text/javascript',headers}));await context.route('**/build/game.js',r=>r.fulfill({path:path.join(root,'build/game-fixtures.js'),contentType:'text/javascript',headers}));}
- page=await context.newPage();page.on('pageerror',e=>evidence.errors.push(e.message));
+ page=await context.newPage();await installBrowserTestAdapter(page);page.on('pageerror',e=>evidence.errors.push(e.message));
  await page.goto(base+'?trace=1&view=pixels');await page.locator('#seed').fill('17');await page.locator('#name').fill('Audit');await page.locator('#new-game').click();await settled();await page.locator('#board').focus();
 }
 async function key(value){const n=(await state()).input;await page.keyboard.press(value);await page.waitForFunction(n=>__rogueBrowserTest.inputRequestCount>n&&__rogueBrowserTest.queuePending===0,n);}

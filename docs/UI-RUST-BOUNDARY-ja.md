@@ -18,18 +18,20 @@
 
 | ファイル | 残した処理と境界 |
 | --- | --- |
-| `app.js` | Rustの命令に対応するWorker・IndexedDB・localStorage・crypto・全画面・Blobダウンロード・リンク・文書・console API。保存の実バイトはAPIへ渡すための不透明なバッファ。操作IDのaction表、ゲーム状態、入力検証、翻訳、ログ分類は持たない。診断はRustの出力を読む。 |
+| `app.js` | Rustの命令に対応するWorker・IndexedDB・localStorage・crypto・全画面・Blobダウンロード・リンク・文書・console API。保存の実バイトはAPIへ渡すための不透明なバッファ。操作IDのaction表、ゲーム状態、入力検証、翻訳、ログ分類、テスト用操作窓口は持たない。 |
 | `canvas-ui.js` | WasmメモリーとJSONの接続、イベントと入力値・選択範囲・画面寸法の観測、Canvas2D描画・文字計測、ネイティブ入力欄・pointer capture・requestAnimationFrame・timer API。イベント取消とフォーカス先はRustに従う。 |
-| `tiles.js` | Rust指定画像のデコードと描画、ピクセルを保つ回転のラスタライズ。従来の `draw` / `validate` 接続もRustのタイル計画を呼ぶ。地形・役者・可視性の判断は持たない。 |
+| `tiles.js` | Rust指定画像のデコードと描画、ピクセルを保つ回転のラスタライズ。従来の `draw` / `validate` はテスト専用アダプターへ移した。地形・役者・可視性の判断は持たない。 |
 | `event-queue.js` | SharedArrayBuffer/Atomicsのリング転送、待機・起床・切断・残量・容量の検査。配列の全公開または全拒否は転送の整合性のために必要。生の整数を転送し、保存キーやゲームキーを解釈しない。 |
 | `worker.js` | EmscriptenとWorker、仮想FS、入力・フレーム・保存の転送。Rust指定の言語とファイル内容を渡し、フラッシュした生入力をRustへ報告する。 |
 | `library.js` | Wasmの借用メモリーをコピーしてHost APIへ渡すFFI。 |
 | `abi.js` | 契約ヘッダーから生成した定数宣言。通常ページとWorkerでは読み込まない。 |
-| `server.mjs` | HTTP/HTTPSの静的配信、隔離ヘッダー、公開パス・HTTP method・port・TLSの検査。ブラウザーUIや入力処理には接続しない。 |
+| `server.mjs` | HTTP/HTTPSの静的配信、隔離ヘッダー、公開パス・HTTP method・port・TLSの検査。ブラウザーUI、入力処理、テスト、一時領域の回収には接続しない。 |
 
 `localization.js`、`view-settings.js`、`game-log.js` は削除した。HTMLにはネイティブ編集用入力欄を残し、名前・seedの既定値と検証制約はRustで決める。`build/game.js` はEmscriptenが生成するWasm・メモリー・仮想FSの接続であり、今回のUI変更は独立した `build/browser-ui.wasm` にビルドする。
 
 ## 検証と本番からの分離
+
+本番のテスト窓口・通常Wasmの回帰専用関数・サーバーから一時領域回収への依存を切り離した。[全起動・配信・ビルド経路と独立性の実行検証](PRODUCTION-BOUNDARY-ja.md)に対象と結果を記録する。
 
 `tests/browser-boundary.test.mjs` は全手書きJSの残存規則・テストimportを検査し、JSのmodelを差し替えてもRustのセッションを変えられないことを実際のUI Wasmで確認する。Rustの8件のテストは入力制限、設定の破損、履歴、保存transaction、キュー失敗、IME制限、古いWorker、ランダム値の重複を確認する。タイルの描画試験も実際のRustの計画を使う。
 

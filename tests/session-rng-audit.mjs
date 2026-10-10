@@ -45,7 +45,7 @@ try {
   ['named-item','ccAudit\nIci .'],['slow-list','o'+'\n'.repeat(6)+'s\x1b i  \x1b.'],
   ['clear-list','o'+'\n'.repeat(6)+'c\x1b i .']
  ];
- for(const locale of ['en','ja'])for(const [label,text] of commands)await compare('head-'+locale+'-'+label,old,current,{seed:17,locale,text,messagePaging:'log',repaint:20});
+ for(const locale of ['en','ja'])for(const [label,text] of commands)await compare('head-'+locale+'-'+label,old,current,{seed:17,locale,text,messagePaging:'log'});
  for(const seed of [1,2,7,31,257,12345,65537])await compare('head-movement-'+seed,old,current,{seed,locale:'ja',text:'hljkyubn'.repeat(4)+'2.3s',messagePaging:'log'});
  const fixtureCases=[
   ['hall-q-empty','hallucination','q*'],['hall-w-list','hallucination','w* \x1b.'],

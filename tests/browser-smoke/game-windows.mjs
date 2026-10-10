@@ -1,3 +1,4 @@
+import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
@@ -48,7 +49,7 @@ async function start(locale='ja',view='tiles') {
 }
 try {
   browser=await chromium.launch({executablePath,headless:true,args:['--disable-gpu']});
-  page=await browser.newPage({viewport:{width:1240,height:900}});
+  page=await browser.newPage({viewport:{width:1240,height:900}});await installBrowserTestAdapter(page);
   page.on('pageerror',error=>evidence.errors.push(String(error)));
   await start();
   await record('Bevy 0.19.1 generates game frames in the real browser Worker',async()=>{

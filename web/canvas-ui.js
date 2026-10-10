@@ -8,7 +8,7 @@
       const {instance}=await WebAssembly.instantiateStreaming(fetch("/build/browser-ui.wasm"),{
         canvas:{measure_text:(pointer,length,size,flags,metric)=>ui.measure(pointer,length,size,flags,metric)}
       });
-      ui.wasm=instance.exports;ui.connect();RogueCanvasUi.active=ui;return ui;
+      ui.wasm=instance.exports;ui.connect();return ui;
     }
     constructor(canvas,host) {
       this.canvas=canvas;this.ctx=canvas.getContext("2d",{alpha:false});this.host=host;
@@ -87,8 +87,6 @@
         default:return this.host.execute(effect);
       }
     }
-    center() {this.dispatch({type:"center"});}
-    rawKey(key,flags) {return this.request({type:"event",event:{type:"raw-key",key,...flags}}).raw;}
     invalidate() {if(this.pending||!this.wasm)return;this.pending=true;requestAnimationFrame(()=>{this.pending=false;this.paint();});}
     paint() {
       const result=this.request({type:"render",...this.observations(),captured:[...this.captured],view:{width:this.canvas.parentElement.clientWidth,height:this.canvas.parentElement.clientHeight,ratio:devicePixelRatio,coarse:matchMedia("(pointer: coarse)").matches,fullscreen:Boolean(document.fullscreenElement),now:Date.now()}});
@@ -114,8 +112,6 @@
         default:throw new Error("Unknown Rust draw command: "+command.op);
       }
     }
-    get camera() {return this.scene.camera;}
-    diagnostics() {return this.scene;}
   }
   root.RogueCanvasUi=RogueCanvasUi;
 })(globalThis);

@@ -1,3 +1,4 @@
+import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
 import {createRequire} from "node:module";
@@ -41,7 +42,7 @@ try{
   for(const [lang,touch] of [["ja",false],["ja",true],["en",true]]){
     const label=lang+"-"+(touch?"mobile":"pc");
     await context?.close();context=await browser.newContext({viewport:touch?{width:390,height:844}:{width:1240,height:900},hasTouch:touch,isMobile:touch,deviceScaleFactor:touch?2:1,acceptDownloads:true});
-    page=await context.newPage();page.on("pageerror",error=>evidence.errors.push(error.message));
+    page=await context.newPage();await installBrowserTestAdapter(page);page.on("pageerror",error=>evidence.errors.push(error.message));
     await page.goto(base+"?trace=1&view=pixels&lang="+lang);await page.waitForFunction(()=>window.__rogueBrowserTest?.canvas?.paintCount>0);
     for(const [id,value] of [["name","書き出し勇者"],["seed","17"]]){await click(id,touch);await page.keyboard.press("Control+a");await page.keyboard.insertText(value);}
     await click("new-game",touch);await page.waitForFunction(()=>__rogueBrowserTest.running&&__rogueBrowserTest.trace&&__rogueBrowserTest.queuePending===0);await paint();

@@ -4779,8 +4779,6 @@ var _fflush = makeInvalidEarlyAccess('_fflush');
 var _rg_run = Module['_rg_run'] = makeInvalidEarlyAccess('_rg_run');
 var _rg_snapshot_json = Module['_rg_snapshot_json'] = makeInvalidEarlyAccess('_rg_snapshot_json');
 var _rg_string_free = Module['_rg_string_free'] = makeInvalidEarlyAccess('_rg_string_free');
-var _rg_test_repaint = Module['_rg_test_repaint'] = makeInvalidEarlyAccess('_rg_test_repaint');
-var _rg_test_save_roundtrip = Module['_rg_test_save_roundtrip'] = makeInvalidEarlyAccess('_rg_test_save_roundtrip');
 var _rg_validate_envelope = Module['_rg_validate_envelope'] = makeInvalidEarlyAccess('_rg_validate_envelope');
 var _emscripten_stack_get_end = makeInvalidEarlyAccess('_emscripten_stack_get_end');
 var _emscripten_stack_get_base = makeInvalidEarlyAccess('_emscripten_stack_get_base');
@@ -4807,8 +4805,6 @@ function assignWasmExports(wasmExports) {
   assert(typeof wasmExports['rg_run'] != 'undefined', 'missing Wasm export: rg_run');
   assert(typeof wasmExports['rg_snapshot_json'] != 'undefined', 'missing Wasm export: rg_snapshot_json');
   assert(typeof wasmExports['rg_string_free'] != 'undefined', 'missing Wasm export: rg_string_free');
-  assert(typeof wasmExports['rg_test_repaint'] != 'undefined', 'missing Wasm export: rg_test_repaint');
-  assert(typeof wasmExports['rg_test_save_roundtrip'] != 'undefined', 'missing Wasm export: rg_test_save_roundtrip');
   assert(typeof wasmExports['rg_validate_envelope'] != 'undefined', 'missing Wasm export: rg_validate_envelope');
   assert(typeof wasmExports['emscripten_stack_get_end'] != 'undefined', 'missing Wasm export: emscripten_stack_get_end');
   assert(typeof wasmExports['emscripten_stack_get_base'] != 'undefined', 'missing Wasm export: emscripten_stack_get_base');
@@ -4831,8 +4827,6 @@ function assignWasmExports(wasmExports) {
   _rg_run = Module['_rg_run'] = createExportWrapper('rg_run', wasmExports['rg_run'], 2);
   _rg_snapshot_json = Module['_rg_snapshot_json'] = createExportWrapper('rg_snapshot_json', wasmExports['rg_snapshot_json'], 0);
   _rg_string_free = Module['_rg_string_free'] = createExportWrapper('rg_string_free', wasmExports['rg_string_free'], 1);
-  _rg_test_repaint = Module['_rg_test_repaint'] = createExportWrapper('rg_test_repaint', wasmExports['rg_test_repaint'], 0);
-  _rg_test_save_roundtrip = Module['_rg_test_save_roundtrip'] = createExportWrapper('rg_test_save_roundtrip', wasmExports['rg_test_save_roundtrip'], 0);
   _rg_validate_envelope = Module['_rg_validate_envelope'] = createExportWrapper('rg_validate_envelope', wasmExports['rg_validate_envelope'], 2);
   _emscripten_stack_get_end = wasmExports['emscripten_stack_get_end'];
   _emscripten_stack_get_base = wasmExports['emscripten_stack_get_base'];

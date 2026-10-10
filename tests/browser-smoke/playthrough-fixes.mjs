@@ -1,3 +1,4 @@
+import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -41,7 +42,7 @@ async function open(f, mobile=false, lang='ja', module='game-fixtures'){
  context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1240,height:900},isMobile:mobile,hasTouch:mobile});
  if(f)await context.route('**/web/worker.js',r=>r.fulfill({body:worker.replace('    module.FS.writeFile("/locale.txt",','    module.FS.writeFile("/fixture.id", '+JSON.stringify(f)+');\n    module.FS.writeFile("/locale.txt",'),contentType:'text/javascript',headers}));
  if(module!=='game')await context.route('**/build/game.js',r=>r.fulfill({path:path.join(root,'build',module+'.js'),contentType:'text/javascript',headers}));
- page=await context.newPage();page.setDefaultTimeout(12000);page.on('pageerror',e=>evidence.errors.push(e.message));
+ page=await context.newPage();await installBrowserTestAdapter(page);page.setDefaultTimeout(12000);page.on('pageerror',e=>evidence.errors.push(e.message));
  await page.goto(base+'?trace=1&view=pixels&lang='+lang);await page.waitForFunction(()=>window.__rogueBrowserTest?.canvas.paintCount>0);
  await field('name','BugAudit');await field('seed','17');await click('new-game');
  await page.waitForFunction(()=>__rogueBrowserTest.running&&__rogueBrowserTest.trace&&__rogueBrowserTest.inputRequestCount>0&&!__rogueBrowserTest.queuePending);await draw();

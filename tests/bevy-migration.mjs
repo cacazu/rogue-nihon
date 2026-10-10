@@ -23,7 +23,7 @@ async function compare(label,config,fixture=false) {
  const expected=await runGame(path.join(before,name),config);
  const actual=await runGame(path.join(root,'build',name),config);
  for(const key of ['code','consumed','traces','final','reads','flushes','messages','input_contexts','outcomes','stores']) assert.deepEqual(actual[key],expected[key],label+' '+key);
- assert.deepEqual(frames(actual.frames),frames(expected.frames),label+' all UI, original cells, map tiles and cached repaints');
+ assert.deepEqual(frames(actual.frames),frames(expected.frames),label+' all UI, original cells and map tiles');
  assert.ok(actual.frames.length>0,label+' exercises actual frames');
  for(const f of actual.frames) assert.deepEqual(f.engine,{name:'Bevy',version:'0.19.1',renderer:'browser-canvas'});
  evidence.comparisons.push({label,config,checkpoints:actual.traces.length,repaints:actual.repaint_pure||0,frames:actual.frames.length});
@@ -32,13 +32,13 @@ async function compare(label,config,fixture=false) {
 }
 try {
  const commands=[['inventory','i\r.'],['help','?*\x1b?i.'],['options','o\x1b.'],['candidates','q\x1bw\x1br\x1be\x1bW\x1bP\x1bd\x1bt\x1bz\x1bI\x1b.'],['lists','w* \x1b.'],['rename','ccAudit\nIci .'],['slow','o'+'\n'.repeat(6)+'s\x1bi\r\r\x1b.'],['quit','Qy\n']];
- for(const locale of ['en','ja']) for(const [label,text] of commands) await compare(locale+'-'+label,{seed:17,locale,text,messagePaging:'log',repaint:40});
- for(const seed of [1,2,7,31,257,12345,65537]) await compare('movement-'+seed,{seed,locale:'ja',text:'hljkyubn'.repeat(4)+'2.3s',messagePaging:'log',repaint:40});
+ for(const locale of ['en','ja']) for(const [label,text] of commands) await compare(locale+'-'+label,{seed:17,locale,text,messagePaging:'log'});
+ for(const seed of [1,2,7,31,257,12345,65537]) await compare('movement-'+seed,{seed,locale:'ja',text:'hljkyubn'.repeat(4)+'2.3s',messagePaging:'log'});
  for(const [label,fixture,text] of [['hall-inventory','hallucination','i .'],['hall-candidates','hallucination','q\x1bw* \x1br\x1be\x1b.'],['hall-slow','hallucination','o'+'\n'.repeat(6)+'s\x1bi  \x1b.'],['combat','combat','lll'],['identify','item-identify','rf*\x1b'],['death','ending-death','\n\n'],['no-tomb','ending-no-tomb','\n\n'],['victory','ending-victory',' \n\n']]) await compare(label,{fixture,seed:17,locale:'ja',text,messagePaging:'log',repaint:40},true);
- await compare('unicode-name',{seed:17,name:'勇者🗡',locale:'ja',events:Array.from('cc日本語🗡\nIci\r.',c=>c.codePointAt(0)),messagePaging:'log',repaint:40});
+ await compare('unicode-name',{seed:17,name:'勇者🗡',locale:'ja',events:Array.from('cc日本語🗡\nIci\r.',c=>c.codePointAt(0)),messagePaging:'log'});
  for(const [label,prefix,suffix] of [['inventory','.i','\r.'],['item','.w','d.'],['text','cc勇者','🗡\n.']]) {
   const events=s=>Array.from(s,c=>c.codePointAt(0));
-  await compare('save-'+label,{seed:17,locale:'ja',messagePaging:'log',events:[...events(prefix),SAVE_EVENT,...events(suffix)],repaint:40});
+  await compare('save-'+label,{seed:17,locale:'ja',messagePaging:'log',events:[...events(prefix),SAVE_EVENT,...events(suffix)]});
  }
  for(const [label,prefix,suffix] of [['inventory','.i','\r.'],['item','.w','d.'],['text','cc勇者','🗡\n.']]) {
   const events=s=>Array.from(s,c=>c.codePointAt(0));

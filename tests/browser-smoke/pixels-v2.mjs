@@ -1,3 +1,4 @@
+import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
@@ -57,7 +58,7 @@ try {
     args:["--disable-gpu","--no-first-run","--no-default-browser-check","--disable-background-networking","--disable-component-update"]
   });
   evidence.browser=context.browser().version();
-  const page=await context.newPage();
+  const page=await context.newPage();await installBrowserTestAdapter(page);
   page.on("pageerror",error=>evidence.errors.push(error.message));
   await page.goto(base+"/web/tiles.js");
   await page.setContent('<!doctype html><html lang="ja"><meta charset="utf-8"><body></body></html>');

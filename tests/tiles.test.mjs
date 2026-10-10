@@ -4,10 +4,12 @@ import {readFile} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url), Tiles=require('../web/tiles.js');
 import {browserUiRuntime} from './browser-ui-runtime.mjs';
-Tiles.planRequest=await browserUiRuntime();
+import {installTileTestAdapter} from './tile-test-adapter.mjs';
+const request=await browserUiRuntime();
+installTileTestAdapter(Tiles,request);
 const manifest=JSON.parse(await readFile(new URL('../web/assets/tiles/manifest.json',import.meta.url),'utf8'));
 const images=new Map(manifest.entries.map(e=>[e.image,{name:e.image}]));
-const tiles=new Tiles(Tiles.planRequest({type:'asset-plan'}).manifest,images);
+const tiles=new Tiles(request({type:'asset-plan'}).manifest,images);
 const fixture=(width,height,ids=Array(width*height).fill(0))=>({width,height,map_tiles:ids,map_tile_ids:manifest.entries.map(e=>e.id),map_unknown_glyphs:[]});
 test('all 49 semantic IDs have localized 96px raster assets; all 26 source monsters match',async()=>{
  assert.equal(new Set(manifest.entries.map(e=>e.id)).size,49);assert.equal(images.size,46);

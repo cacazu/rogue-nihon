@@ -6,10 +6,7 @@
       this.manifest=manifest;this.entries=manifest.entries;this.images=images;
       this.drawCount=0;this.rotated=new Map();this.pixelArt=manifest.pixel_art;
     }
-    static request(value) {return (this.planRequest||((request)=>root.RogueCanvasUi.active.request(request)))(value);}
-    static async load(specification={}) {
-      let plan=specification;
-      if(!plan.files)plan=this.request({type:"asset-plan",url:typeof plan==="string"?plan:plan.url});
+    static async load(plan) {
       const images=new Map();
       await Promise.all(plan.files.map(async filename=>{
         const image=new Image();image.src=new URL(plan.base+filename,location.href).href;
@@ -17,7 +14,6 @@
       }));
       return new RogueTiles(plan.manifest,images);
     }
-    validate(frame) {RogueTiles.request({type:"tile-plan",mode:this.manifest.browser_mode,frame,camera:{size:0}});}
     drawImage(context, entry, x, y, width, height) {
       let image=this.images.get(entry.image);if(!image)throw new Error("Missing image: "+entry.image);
       if(entry.rotation && entry.pixelArt) {
@@ -46,11 +42,6 @@
         }
       }
       context.putImageData(output, 0, 0); return result;
-    }
-    draw(context, frame, camera) {
-      const result=RogueTiles.request({type:"tile-plan",mode:this.manifest.browser_mode,frame,camera});
-      this.drawCount=0;context.imageSmoothingEnabled=false;
-      for(const command of result.commands){const r=command.rect;this.drawImage(context,command,r.x*camera.ratio,r.y*camera.ratio,r.w*camera.ratio,r.h*camera.ratio);}
     }
   }
   if(typeof module!=="undefined"&&module.exports)module.exports=RogueTiles;

@@ -1,3 +1,4 @@
+import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -21,7 +22,7 @@ try{
   await context?.close();context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1400,height:1050},isMobile:mobile,hasTouch:mobile});
   await context.route('**/web/worker.js',r=>r.fulfill({body:worker.replace('    module.FS.writeFile("/locale.txt",','    module.FS.writeFile("/fixture.id", '+JSON.stringify(fixture)+');\n    module.FS.writeFile("/locale.txt",'),contentType:'text/javascript',headers}));
   await context.route('**/build/game.js',r=>r.fulfill({path:path.join(root,'build/game-fixtures.js'),contentType:'text/javascript',headers}));
-  page=await context.newPage();page.setDefaultTimeout(12000);page.on('pageerror',e=>evidence.errors.push(e.message));
+  page=await context.newPage();await installBrowserTestAdapter(page);page.setDefaultTimeout(12000);page.on('pageerror',e=>evidence.errors.push(e.message));
   const state=()=>page.evaluate(()=>({ui:__rogueBrowserTest.frame?.ui,running:__rogueBrowserTest.running,input:__rogueBrowserTest.inputRequestCount,diagnostics:__rogueBrowserTest.diagnostics}));
   const draw=()=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   async function click(id){await draw();const c=await page.evaluate(id=>__rogueBrowserTest.canvas.controls.find(c=>c.id===id&&!c.disabled),id);assert.ok(c,id);const x=c.rect.x+c.rect.w/2,y=c.rect.y+c.rect.h/2;if(mobile)await page.touchscreen.tap(x,y);else await page.mouse.click(x,y);await draw();}
