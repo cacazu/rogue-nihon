@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import os from "node:os";
-import { createPreviewServer } from "../../web/server.mjs";
+import { createPreviewServer } from "../../../tools/server.mjs";
 import { runGame } from "../run-game.mjs";
 import { prepareBrowserRuntime } from "./browser-runtime.mjs";
 

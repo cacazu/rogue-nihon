@@ -6,7 +6,7 @@ import {readFile,mkdir,mkdtemp,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import {fileURLToPath} from 'node:url';
-import {createPreviewServer} from '../web/server.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';
 import {createPlaywrightCdp} from './browser-smoke/playwright-cdp.mjs';
 const directory=path.dirname(fileURLToPath(import.meta.url)),output=artifactDirectory(path.join(directory,'pixel-output'));
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));

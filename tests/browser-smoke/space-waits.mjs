@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { createPreviewServer } from '../../web/server.mjs';
+import { createPreviewServer } from '../../../tools/server.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const output=artifactDirectory(path.join(root,'tests/browser-smoke/output/space-waits'));
 const modulePath=process.env.ROGUE_PLAYWRIGHT_MODULE||path.join(os.homedir(),'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');

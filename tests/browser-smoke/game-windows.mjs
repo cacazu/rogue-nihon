@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import os from 'node:os';
-import { createPreviewServer } from '../../web/server.mjs';
+import { createPreviewServer } from '../../../tools/server.mjs';
 const require = createRequire(import.meta.url);
 const modulePath = process.env.ROGUE_PLAYWRIGHT_MODULE || path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 const { chromium } = require(modulePath);

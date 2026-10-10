@@ -1,7 +1,13 @@
-param([int]$Port = 4173, [switch]$Lan, [string]$Address)
+param(
+    [int]$Port = 4173,
+    [switch]$Lan,
+    [string]$Address,
+    [string]$PreviewServer = (Join-Path (Split-Path -Parent $PSScriptRoot) 'tools\server.mjs')
+)
 $ErrorActionPreference = 'Stop'
 if ($Port -lt 1 -or $Port -gt 65535) { throw 'Port must be 1..65535' }
-$serverArguments = @((Join-Path $PSScriptRoot 'web\server.mjs'), $Port)
+if (-not (Test-Path -LiteralPath $PreviewServer -PathType Leaf)) { throw 'Local preview tool missing: use start.ps1 from the jrouge checkout.' }
+$serverArguments = @($PreviewServer, '--root', $PSScriptRoot, $Port)
 if ($Lan) {
     if (-not $Address) {
         $networks = @(Get-NetIPConfiguration | Where-Object { $_.IPv4DefaultGateway -and $_.IPv4Address })

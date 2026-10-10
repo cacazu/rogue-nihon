@@ -7,7 +7,7 @@ import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createPreviewServer } from "../../web/server.mjs";
+import { createPreviewServer } from "../../../tools/server.mjs";
 
 const require = createRequire(import.meta.url);
 const directory = path.dirname(fileURLToPath(import.meta.url));

@@ -7,12 +7,13 @@ import {cp, mkdir, mkdtemp, writeFile} from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import {fileURLToPath} from "node:url";
-import {createPreviewServer} from "../../web/server.mjs";
+import {createPreviewServer} from "../../../tools/server.mjs";
 import {artifactDirectory} from "../../tools/temporary-artifacts.mjs";
 import {prepareBrowserRuntime} from "./browser-runtime.mjs";
 import {installBrowserTestAdapter} from "./test-adapter.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
+const previewServer = fileURLToPath(new URL("../../../tools/server.mjs", import.meta.url));
 const output = artifactDirectory(path.join(root, "tests/browser-smoke/output/startup"));
 await mkdir(output, {recursive: true});
 const {chromium} = createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE ||
@@ -70,7 +71,7 @@ async function click(page, id, touch = false) {
 }
 
 try {
-  const first = launch([path.join(root, "web/server.mjs"), "0"]);
+  const first = launch([previewServer, "--root", root, "0"]);
   const base = await ready(first), port = Number(new URL(base).port);
   await check("fresh Node launcher serves the real game with isolation headers", async () => {
     const response = await fetch(base);
@@ -98,7 +99,7 @@ try {
   const stalled = http.createServer(() => {}), stalledPort = await listen(stalled);
   await check("unresponsive port owner cannot stall startup indefinitely", async () => {
     const started = Date.now();
-    const result = await completed(launch([path.join(root, "web/server.mjs"), String(stalledPort)]));
+    const result = await completed(launch([previewServer, "--root", root, String(stalledPort)]));
     assert.equal(result.code, 1);
     assert.match(result.stderr, /別のサーバーが使用/);
     assert.ok(Date.now() - started < 5000);
@@ -120,7 +121,7 @@ try {
     assert.equal(result.code, 0, result.stderr);
     assert.match(result.stdout, /既に起動/);
   });
-  await cp(path.join(root, "web/server.mjs"), path.join(otherRoot, "web/server.mjs"));
+  await cp(path.join(root, "web/worker.js"), path.join(otherRoot, "web/worker.js"));
   await mkdir(path.join(otherRoot, "build"));
   await writeFile(path.join(otherRoot, "build/build-manifest.json"), "different build");
   const mismatch = createPreviewServer({root: otherRoot});
@@ -140,9 +141,9 @@ try {
     const openssl = process.env.ROGUE_OPENSSL || (process.platform === "win32" ? path.join(process.env.ProgramFiles, "Git/mingw64/bin/openssl.exe") : "openssl");
     execFileSync(openssl, ["req", "-x509", "-newkey", "rsa:2048", "-sha256", "-nodes", "-days", "1", "-keyout", key,
       "-out", certificate, "-subj", "/CN=Rogue startup", "-addext", "subjectAltName=IP:127.0.0.1"], {windowsHide: true, stdio: "ignore"});
-    const secure = launch([path.join(root, "web/server.mjs"), "0", "127.0.0.1", certificate, key]);
+    const secure = launch([previewServer, "--root", root, "0", "127.0.0.1", certificate, key]);
     const secureBase = await ready(secure), securePort = new URL(secureBase).port;
-    const duplicate = await completed(launch([path.join(root, "web/server.mjs"), securePort, "127.0.0.1", certificate, key]));
+    const duplicate = await completed(launch([previewServer, "--root", root, securePort, "127.0.0.1", certificate, key]));
     assert.equal(duplicate.code, 0, duplicate.stderr);
     assert.ok(duplicate.stdout.includes(secureBase));
     const context = await browser.newContext({ignoreHTTPSErrors: true});

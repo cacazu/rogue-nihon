@@ -7,7 +7,7 @@ import path from "node:path";
 import os from "node:os";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { createPreviewServer } from "../../web/server.mjs";
+import { createPreviewServer } from "../../../tools/server.mjs";
 import { prepareJapanese, japaneseScenarios } from "./ja-scenarios.mjs";
 import { createPlaywrightCdp } from "./playwright-cdp.mjs";
 

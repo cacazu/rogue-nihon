@@ -1,6 +1,6 @@
 # ブラウザーUIとRustの境界
 
-2026-10-10に本番の `web/` 内のJS/MJS全8ファイル、HTMLの入力制約、ゲーム用Emscriptenの接続を確認した。UI・入力・セッションの判断は `rust/crates/browser-display/src/controller.rs`、入力検証・履歴・設定値・翻訳は `policies.rs`、画面とウィジェットは `rogue-display::browser_ui` / `widgets` に置く。
+本番の `web/` 内のJS全7ファイル、HTMLの入力制約、ゲーム用Emscriptenの接続を確認した。UI・入力・セッションの判断は `rust/crates/browser-display/src/controller.rs`、入力検証・履歴・設定値・翻訳は `policies.rs`、画面とウィジェットは `rogue-display::browser_ui` / `widgets` に置く。
 
 ## Rustへ移した処理
 
@@ -25,7 +25,8 @@
 | `worker.js` | EmscriptenとWorker、仮想FS、入力・フレーム・保存の転送。Rust指定の言語とファイル内容を渡し、フラッシュした生入力をRustへ報告する。 |
 | `library.js` | Wasmの借用メモリーをコピーしてHost APIへ渡すFFI。 |
 | `abi.js` | 契約ヘッダーから生成した定数宣言。通常ページとWorkerでは読み込まない。 |
-| `server.mjs` | HTTP/HTTPSの静的配信、隔離ヘッダー、公開パス・HTTP method・port・TLSの検査。ブラウザーUI、入力処理、テスト、一時領域の回収には接続しない。 |
+
+ローカルのHTTP/HTTPS配信・既存サーバー識別は、作品フォルダー外の開発・テスト用 `../tools/server.mjs` に分離した。本番のHTML・JS・Workerからは読み込まない。本番公開には静的ファイル配信とCOOP/COEPヘッダー・WasmのContent-Type設定を使う。
 
 `localization.js`、`view-settings.js`、`game-log.js` は削除した。HTMLにはネイティブ編集用入力欄を残し、名前・seedの既定値と検証制約はRustで決める。`build/game.js` はEmscriptenが生成するWasm・メモリー・仮想FSの接続であり、今回のUI変更は独立した `build/browser-ui.wasm` にビルドする。
 

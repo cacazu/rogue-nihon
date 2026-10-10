@@ -11,6 +11,7 @@ import { createRequire } from "node:module";
 import os from "node:os";
 
 const root = realpathSync(fileURLToPath(new URL("../", import.meta.url)));
+const previewServer = fileURLToPath(new URL("../../tools/server.mjs", import.meta.url));
 const base = path.join(root, ".local", "tasks");
 const helper = new URL("../tools/temporary-artifacts.mjs", import.meta.url).href;
 const registry = path.join(root, "tools/artifact-registry.ps1");
@@ -94,7 +95,7 @@ test("preview startup preserves interrupted and live run directories and playabl
   try {
     await stop(dead.child);
     assert.ok(existsSync(dead.directory));
-    server = spawn(process.execPath, [path.join(root, "web/server.mjs"), "0"], { cwd: root, env: environment, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
+    server = spawn(process.execPath, [previewServer, "--root", root, "0"], { cwd: root, env: environment, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
     const ready = await firstLine(server);
     assert.match(ready, /^Rogue (?:private )?preview: http:\/\/127\.0\.0\.1:\d+\/$/);
     assert.equal(existsSync(dead.directory), true);

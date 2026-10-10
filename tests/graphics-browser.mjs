@@ -6,7 +6,7 @@ import {readFile,mkdir,mkdtemp,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import {fileURLToPath} from 'node:url';
-import {createPreviewServer} from '../web/server.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';
 const directory=path.dirname(fileURLToPath(import.meta.url)),output=artifactDirectory(path.join(directory,'graphics-output'));
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function until(fn,label){const end=Date.now()+30000;while(Date.now()<end){if(await fn())return;await pause(100);}throw new Error('Timed out: '+label);}

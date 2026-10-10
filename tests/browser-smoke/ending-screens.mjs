@@ -5,7 +5,7 @@ import {createRequire} from 'node:module';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {createPreviewServer} from '../../web/server.mjs';
+import {createPreviewServer} from '../../../tools/server.mjs';
 
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const output=artifactDirectory(path.join(root,'tests/browser-smoke/output/ending-screens'));

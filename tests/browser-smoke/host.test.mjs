@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { Worker } from "node:worker_threads";
-import { createPreviewServer } from "../../web/server.mjs";
+import { createPreviewServer } from "../../../tools/server.mjs";
 const require = createRequire(import.meta.url), EventQueue = require("../../web/event-queue.js");
 
 test("bounded transport rejects saturation and preserves command order across uint32 wrap", () => {
@@ -69,10 +69,11 @@ test("server denies private files even when they exist within the project", asyn
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   try {
     const base = `http://127.0.0.1:${server.address().port}`;
-    for (const resource of ["/.gitignore", "/start.ps1", "/rust/Cargo.toml", "/web/%2e%2e/.gitignore"]) {
+    for (const resource of ["/.gitignore", "/start.ps1", "/rust/Cargo.toml", "/web/%2e%2e/.gitignore", "/tools/server.mjs"]) {
       const response = await fetch(base + resource);
       assert.equal(response.status, 403, resource);
     }
+    assert.equal((await fetch(base + "/web/server.mjs")).status, 404);
     const wasm = await fetch(base + "/build/game.wasm", { method: "HEAD" });
     assert.equal(wasm.status, 200);
     assert.equal(wasm.headers.get("content-type"), "application/wasm");

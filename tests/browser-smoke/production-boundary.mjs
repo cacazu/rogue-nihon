@@ -12,6 +12,7 @@ import {prepareBrowserRuntime} from "./browser-runtime.mjs";
 import {installBrowserTestAdapter} from "./test-adapter.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
+const previewServer = fileURLToPath(new URL("../../../tools/server.mjs", import.meta.url));
 const output = artifactDirectory(path.join(root, "tests/browser-smoke/output/production-boundary"));
 await mkdir(output, {recursive: true});
 const {chromium} = createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE ||
@@ -46,8 +47,8 @@ async function unusedPort() {
 }
 
 async function start(destination, launcher) {
-  const args = launcher === "node" ? [path.join(destination, "web/server.mjs"), "0"] :
-    ["-NoProfile", "-File", path.join(destination, "start.ps1"), "-Port", String(await unusedPort())];
+  const args = launcher === "node" ? [previewServer, "--root", destination, "0"] :
+    ["-NoProfile", "-File", path.join(destination, "start.ps1"), "-PreviewServer", previewServer, "-Port", String(await unusedPort())];
   const environment = {...process.env, ROGUE_KEEP_ARTIFACTS: "0"};
   for (const name of ["ROGUE_PORT", "ROGUE_HOST", "ROGUE_TLS_CERT", "ROGUE_TLS_KEY"]) delete environment[name];
   // Observe the Node grandchild PID without querying unrelated OS processes.
@@ -116,11 +117,14 @@ try {
       isMobile: touch, hasTouch: touch, deviceScaleFactor: touch ? 2 : 1, acceptDownloads: true});
     let page = await context.newPage();
     page.on("pageerror", error => evidence.errors.push(error.message));
-    await check(label + " real launcher renders with no test adapter or development files", async () => {
+    await check(label + " external preview tool renders runtime with no test adapter or development files", async () => {
+      assert.ok(!(await readdir(path.join(destination, "web"))).includes("server.mjs"));
       await page.goto(base);
       await page.waitForFunction(() => document.getElementById("rogue-canvas").width > 300);
       assert.equal(await page.evaluate(() => "__rogueBrowserTest" in window), false);
       assert.equal(await page.evaluate(() => "active" in RogueCanvasUi), false);
+      assert.equal((await context.request.get(base + "web/server.mjs")).status(), 404);
+      assert.equal((await context.request.get(base + "tools/server.mjs")).status(), 403);
       await page.screenshot({path: path.join(output, label + "-top.png")});
       evidence.screenshots.push(label + "-top.png");
     });

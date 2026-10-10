@@ -8,17 +8,21 @@ import {fileURLToPath} from "node:url";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const text = file => readFile(path.join(root, file), "utf8");
 
-test("every shipped browser/server module has no test or artifact-management dependency", async () => {
+test("shipped browser modules exclude the local server, tests and artifact management", async () => {
   const files = (await readdir(path.join(root, "web"))).filter(file => /\.m?js$/.test(file));
+  assert.ok(!files.includes("server.mjs"));
   for (const file of files) {
     const source = await text("web/" + file);
-    assert.doesNotMatch(source, /__rogueBrowserTest|RogueCanvasUi\.active|recoverTemporaryArtifacts|artifact-registry|temporary.artifacts|ROGUE_KEEP_ARTIFACTS/, file);
+    assert.doesNotMatch(source, /__rogueBrowserTest|RogueCanvasUi\.active|recoverTemporaryArtifacts|artifact-registry|temporary.artifacts|ROGUE_KEEP_ARTIFACTS|node:/, file);
     for (const [, dependency] of source.matchAll(/(?:from\s*|import\s*\(|importScripts\s*\(|require\s*\()\s*["']([^"']+)/g)) {
-      assert.ok(dependency.startsWith("node:") || dependency.startsWith("/web/") || dependency === "/build/game.js", file + " -> " + dependency);
+      assert.ok(dependency.startsWith("/web/") || dependency === "/build/game.js", file + " -> " + dependency);
     }
   }
   assert.doesNotMatch(await text("web/index.html"), /tests\/|tools\/|fixture|artifact/i);
-  assert.doesNotMatch(await text("start.ps1"), /tests[\\/]|tools[\\/]|artifact|recover/i);
+  assert.doesNotMatch(await text("start.ps1"), /tests[\\/]|artifact|recover/i);
+  assert.doesNotMatch(await text("start.ps1"), /web[\\/]server\.mjs/);
+  const previewSource = await readFile(new URL("../../tools/server.mjs", import.meta.url), "utf8");
+  assert.doesNotMatch(previewSource, /tests[\\/]|recoverTemporaryArtifacts|artifact-registry|temporary.artifacts/);
 });
 
 test("production compiler entry points do not register or recover interrupted runs", async () => {

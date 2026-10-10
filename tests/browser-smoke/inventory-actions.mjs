@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import os from 'node:os';
 import {createHash} from 'node:crypto';
-import {createPreviewServer} from '../../web/server.mjs';
+import {createPreviewServer} from '../../../tools/server.mjs';
 import {runGame} from '../run-game.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const {chromium}=createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE||path.join(os.homedir(),'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'));

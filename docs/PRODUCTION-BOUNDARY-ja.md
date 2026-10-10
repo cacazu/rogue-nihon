@@ -1,10 +1,10 @@
 # 本番実行と検証・一時領域回収の境界
 
-`start.ps1 → web/server.mjs → web/index.html → ブラウザー接続JS → Rust UI Wasm / Worker → ゲームWasm` の全経路と、通常ビルドの入力・生成物を調べた。
+本番の `web/index.html → ブラウザー接続JS → Rust UI Wasm / Worker → ゲームWasm` と、通常ビルドの入力・生成物を調べた。ローカル起動は `start.ps1 → ../tools/server.mjs` という開発専用経路で、配信サーバーを作品フォルダーの外へ分離している。
 
 ## 分離した依存
 
-- `web/server.mjs` の `temporary-artifacts.mjs` importと、起動時の `recoverTemporaryArtifacts()` 呼び出しを削除した。Node標準モジュールだけでHTTP/HTTPSを起動できる。
+- 開発・テスト用のローカル配信サーバーは `../tools/server.mjs` に置く。本番の `web/` には含めず、ブラウザーから読み込む経路もない。Node標準モジュールだけでHTTP/HTTPSを起動し、一時領域の回収を呼ばない。
 - `web/app.js` から `__rogueBrowserTest`、操作注入用アダプター、診断値のテスト用getterを削除した。`canvas-ui.js` からテストのためだけに公開していたactive instanceと補助メソッドを削除した。
 - 同じ実Rust入口を使うテストアダプターを `tests/browser-smoke/test-adapter.mjs` へ移した。Playwrightの `addInitScript` または検証側CDPでだけ注入する。HTML・本番JSから読み込む経路はない。
 - 旧タイル検査の `RogueCanvasUi.active` / `planRequest` を使う入口と、フレームからの直接描画・検証アダプターも `tests/tile-test-adapter.mjs` へ移した。本番 `tiles.js` はRustが渡した画像計画の読み込みと描画だけを行う。
@@ -15,8 +15,8 @@
 
 | 対象 | 実行時の依存と判断 |
 | --- | --- |
-| `start.ps1` | Node起動と、LAN HTTPSを指定した場合の証明書生成・更新だけ。tests/toolsの読み込みや回収なし。`.local/lan` は起動に使う証明書の保存先。 |
-| `web/server.mjs` | Node標準のHTTP/HTTPS・ファイル配信と、ポート使用中の既存サーバー識別。同じ配信元ならURLを案内し、別サーバーは終了せずポート競合を報告する。回収ツール、テスト、検証結果JSONを読まない。 |
+| `start.ps1`（ローカル起動用） | 作品フォルダー外の開発用サーバーをNodeで起動し、配信対象を明示する。LAN HTTPSを指定した場合は証明書を生成・更新する。回収処理は呼ばない。`.local/lan` は起動に使う証明書の保存先。 |
+| `../tools/server.mjs`（開発・テスト用） | Node標準のHTTP/HTTPS・ファイル配信と、ポート使用中の既存サーバー識別。同じ配信元ならURLを案内し、別サーバーは終了せずポート競合を報告する。本番配布に含めず、回収ツール、テスト、検証結果JSONを読まない。 |
 | `web/index.html` / `style.css` | 本番Canvas・ネイティブ入力と4本の本番JSだけ。テスト用scriptや回収処理なし。 |
 | `app.js` / `canvas-ui.js` / `tiles.js` | Rustからの指示をブラウザーAPI・Canvas・画像へ接続。テスト用操作窓口なし。 |
 | `worker.js` / `event-queue.js` / `library.js` | Worker・共有メモリー入力・Emscriptenのコピー接続。製品の `game.js` / `game.wasm` だけを実行する。 |
@@ -31,6 +31,6 @@
 
 通常の `./build.ps1` はfeature無効でビルドし、公開manifestにも `test_hooks: false` / `test_fixtures: false` を記録する。テスト用は `./build.ps1 -OutputName game-fixtures -TestFixtures -KeepArtifacts`、fixture不要の回帰入口だけなら `-OutputName game-check -TestHooks` を明示する。テストビルドが公開済み `game.js` / `game.wasm` を上書きすることはない。
 
-`tests/production-boundary.test.mjs` は全本番JS・起動・ビルドの依存、実Wasmのexportとfixture不在、テスト版の入口を確認する。`tests/browser-smoke/production-boundary.mjs` は、製品ファイルだけの別配置と、読み込むと例外になる回収ツールを置いた配置を作る。Nodeの実CLIと `start.ps1` を起動し、PlaywrightでPC・スマホの表示、開始、ターン、持ち物、設定、保存、実ファイル書き出し、再読み込み後の復元と次のターンを実行する。最初のページはテストアダプターなしで描画を確認する。
+`tests/production-boundary.test.mjs` は全本番JS・起動・ビルドの依存、実Wasmのexportとfixture不在、テスト版の入口を確認する。`tests/browser-smoke/production-boundary.mjs` は、製品ファイルだけの別配置と、読み込むと例外になる回収ツールを置いた配置を作る。どちらも作品の外にある開発用サーバーで配信し、Nodeの実CLIと `start.ps1` の両経路を確認する。PlaywrightでPC・スマホの表示、開始、ターン、持ち物、設定、保存、実ファイル書き出し、再読み込み後の復元と次のターンを実行する。最初のページはテストアダプターなしで描画を確認し、サーバーソースが公開されないことも確認する。
 
 通常の `canvas.mjs` / `hud-widgets.mjs` / `save-export.mjs` も本番ファイルに依存しているテスト入口を使わず、検証側からアダプターを注入して実行する。歴史的な比較アーカイブがない環境での旧Wasm比較と、実機スマートフォン・Windows IMEの手操作は今回の自動検証に含めない。

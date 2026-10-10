@@ -8,7 +8,7 @@ import os from "node:os";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { inflateSync } from "node:zlib";
-import { createPreviewServer } from "../../web/server.mjs";
+import { createPreviewServer } from "../../../tools/server.mjs";
 import { runGame } from "../run-game.mjs";
 import { prepareBrowserRuntime } from "./browser-runtime.mjs";
 const root=fileURLToPath(new URL("../../",import.meta.url)),output=artifactDirectory(path.join(root,"tests/browser-smoke/output/canvas"));

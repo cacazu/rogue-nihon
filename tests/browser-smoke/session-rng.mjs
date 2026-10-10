@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import os from 'node:os';import path from 'node:path';import { fileURLToPath } from 'node:url';
-import { createPreviewServer } from '../../web/server.mjs';
+import { createPreviewServer } from '../../../tools/server.mjs';
 import { runGame } from '../run-game.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));const output=artifactDirectory(path.join(root,'tests/browser-smoke/output/session-rng'));await mkdir(output,{recursive:true});
 const {chromium}=createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE||path.join(os.homedir(),'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'));
