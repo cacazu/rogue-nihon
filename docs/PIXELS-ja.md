@@ -13,7 +13,7 @@
 - 床・通路は上下左右の辺が一致。横壁は左右、縦壁は上下を一致させています。表示済みのセルだけを描画し、敵やアイテムの下地は従来の中立的な床です。
 - 斜め弾道は、拡大した絵を回転せず、元の32px格子へ最近傍で回転した一時画像をキャッシュしてから拡大します。輪郭に半透明のぼけを追加しません。
 
-画像は `web/assets/pixels/`、[全49種の画像一覧](../web/assets/pixels/contact-sheet.png)、[manifest](../web/assets/pixels/manifest.json)、切り出し範囲とSHA-256は `generation.json` にあります。`source/` に新しく生成した5枚、`generation-prompts.json` に全生成指示を保存しました。技術的な梱包は `tools/pack-pixels.ps1`、一覧生成は `tools/pixel-contact-sheet.ps1` で再実行できます。
+画像は `web/assets/pixels/`、[全49種の画像一覧](../web/assets/pixels/contact-sheet.png)、[manifest](../web/assets/pixels/manifest.json)、切り出し範囲とSHA-256は `generation.json` にあります。`source/` に新しく生成した5枚、`generation-prompts.json` に全生成指示を保存しました。
 
 ## 設定・ゲーム本体
 
@@ -38,8 +38,6 @@ node tests/pixel-browser.mjs
 $env:ROGUE_JA_SCENARIO='1'
 $env:ROGUE_VIEW='pixels'
 node tests/browser-smoke/run.mjs
-.\tools\pack-pixels.ps1
-.\tools\pixel-contact-sheet.ps1
 ```
 
 他のゲームフォルダ、Gitのコミット・プッシュ、外部公開はこの変更の対象に含めていません。旧イラスト版の資料と検証履歴も残しています。

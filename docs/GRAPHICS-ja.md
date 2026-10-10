@@ -58,11 +58,6 @@ node --test tests/tiles.test.mjs tests/graphics-logic.test.mjs tests/graphics-be
 node tests/graphics-browser.mjs
 $env:ROGUE_JA_SCENARIO='1'
 node tests/browser-smoke/run.mjs
-
-# 元画像の技術的な切り出し・再梱包
-.\tools\pack-tiles.ps1
-python .\tools\localize-tiles.py
-.\tools\tile-contact-sheet.ps1
 ```
 
 旧版を指定しない場合、比較テストは理由付きでskipします。今回の比較は `39469d7b4509037aa2b206f47b561133b5d02dc6` の配布ビルドを別の作業ディレクトリへ保存して実施しました。新旧どちらのハッシュも検証JSONに記録しています。Gitへのコミット・プッシュや外部公開は、この作業では行っていません。
