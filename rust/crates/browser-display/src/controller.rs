@@ -667,7 +667,7 @@ impl Controller {
         self.model["entries"] = json!(
             entries
                 .iter()
-                .map(|e| json!({"source":e["source"],"error":e["error"],"text":self.entry_text(e)}))
+                .map(|e| json!({"source":e["source"],"id":e["id"],"error":e["error"],"text":self.entry_text(e)}))
                 .collect::<Vec<_>>()
         );
         self.model["input"] = self.input.clone();

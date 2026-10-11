@@ -21,7 +21,7 @@ pub fn seed(value: &str) -> Option<u32> {
 }
 pub fn sizes(mode: &str) -> &'static [u64] {
     if mode == "pixels" {
-        &[32, 64, 96, 128]
+        &[16, 32, 64, 96, 128]
     } else {
         &[16, 24, 32, 48, 64]
     }

@@ -3,10 +3,18 @@ use super::*;
 
 impl BrowserUi {
     pub(super) fn draw_mobile_top(&mut self) {
-        let width = (self.width - 48.).min(480.);
-        let x = (self.width - width) / 2.;
-        let viewport = Rect::new(0., 76., self.width, (self.height - 88.).max(1.));
+        let landscape = self.width > self.height;
+        let width = if landscape {
+            ((self.width - 72.) / 2.).min(480.)
+        } else {
+            (self.width - 48.).min(480.)
+        };
+        let gap = 24.;
+        let total = if landscape { width * 2. + gap } else { width };
+        let x = (self.width - total) / 2.;
+        let viewport = Rect::new(0., 64., self.width, (self.height - 72.).max(1.));
         let busy = b(&self.model["starting"]) || b(&self.model["savePending"]);
+        let content_height = if landscape { 200. } else { 404. };
         let notice = if b(&self.model["topNotice"]["error"]) {
             self.model["topNotice"].clone()
         } else {
@@ -18,18 +26,12 @@ impl BrowserUi {
             String::new()
         };
         let notice_height = if notice.is_object() {
-            self.wrap(&notice_text, width - 24., 17.).len() as f64 * 26. + 24.
+            self.wrap(&notice_text, total, 17.).len() as f64 * 26. + 12.
         } else {
             0.
         };
-        let content_height = 482.
-            + if notice.is_object() {
-                notice_height + 12.
-            } else {
-                0.
-            };
-        let offset = ((viewport.h - content_height) / 2.).clamp(0., 48.);
-        let max = (content_height + offset - viewport.h).max(0.);
+        let height = content_height + notice_height;
+        let max = (height - viewport.h).max(0.);
         self.regions.insert(
             "top".into(),
             Region {
@@ -39,22 +41,20 @@ impl BrowserUi {
         );
         self.scrolls
             .insert("top".into(), clamp(self.scrolls["top"], 0., max));
-        let mut y = viewport.y + offset - self.scrolls["top"];
+        let y0 = viewport.y + ((viewport.h - height) / 2.).clamp(0., 48.) - self.scrolls["top"];
         self.widgets.begin_clip(viewport);
+        let action_x = if landscape { x + width + gap } else { x };
         self.widgets.single_line(
             "ROGUE",
-            Rect::new(x, y, width, 60.),
+            Rect::new(action_x, y0, width, 36.),
             LineStyle {
-                text: TextStyle::new(46., TEXT, true),
+                text: TextStyle::new(30., TEXT, true),
                 center: true,
                 ellipsis: false,
             },
             self.measure,
         );
-        y += 60.;
-        y += 8.;
-        self.text(&self.t("top.title"), x, y, width, 24., TEXT, true);
-        y += 38.;
+        let mut y = y0 + if landscape { 0. } else { 40. };
         for id in ["name", "seed"] {
             self.text(
                 &self.t(&format!("form.{id}")),
@@ -65,7 +65,7 @@ impl BrowserUi {
                 MUTED,
                 false,
             );
-            y += 28.;
+            y += 22.;
             self.field(id, Rect::new(x, y, width - 104., 48.), busy);
             self.button(
                 &format!("random-{id}"),
@@ -77,57 +77,50 @@ impl BrowserUi {
                     ..Default::default()
                 },
             );
-            y += 60.;
+            y += 54.;
         }
-        y += 8.;
-        self.button(
-            "new-game",
-            &self.t("action.new"),
-            Rect::new(x, y, width, 56.),
-            ControlStyle {
-                primary: true,
-                size: 19.,
-                disabled: busy || !b(&self.model["ready"]),
-                ..Default::default()
-            },
-        );
-        y += 68.;
-        self.button(
-            "load",
-            &self.t("action.load"),
-            Rect::new(x, y, width, 52.),
-            ControlStyle {
-                size: 17.,
-                disabled: busy || !b(&self.model["saved"]),
-                ..Default::default()
-            },
-        );
-        y += 64.;
-        self.button(
-            "credits-repository",
-            &self.t("credits.repository"),
-            Rect::new(x, y, width, 48.),
-            ControlStyle {
-                size: 17.,
-                ..Default::default()
-            },
-        );
-        y += 60.;
+        self.dropdown_control("language", Rect::new(x, y, width, 48.), busy);
+        y += 54.;
+        if landscape {
+            y = y0 + 40.;
+        }
+        for (id, label) in [
+            ("new-game", "action.new"),
+            ("load", "action.load"),
+            ("credits-repository", "credits.repository"),
+        ] {
+            self.button(
+                id,
+                &self.t(label),
+                Rect::new(action_x, y, width, 48.),
+                ControlStyle {
+                    primary: id == "new-game",
+                    size: 17.,
+                    disabled: if id == "new-game" {
+                        busy || !b(&self.model["ready"])
+                    } else if id == "load" {
+                        busy || !b(&self.model["saved"])
+                    } else {
+                        false
+                    },
+                    ..Default::default()
+                },
+            );
+            y += 54.;
+        }
         if notice.is_object() {
-            self.widgets
-                .box_rect(Rect::new(x, y, width, notice_height), PANEL, Some(LINE), 9.);
             self.text(
                 &notice_text,
-                x + 12.,
-                y + 12.,
-                width - 24.,
+                x,
+                y0 + content_height,
+                total,
                 17.,
-                if b(&notice["error"]) { ERROR } else { MUTED },
+                ERROR,
                 false,
             );
         }
         self.widgets.end_clip();
         self.widgets
-            .scrollbar(viewport, content_height + offset, self.scrolls["top"]);
+            .scrollbar(viewport, height, self.scrolls["top"]);
     }
 }

@@ -287,7 +287,10 @@ impl BrowserUi {
                                 )
                                 && !drag.hit.as_ref().is_some_and(|c| c.kind == "slider");
                             if drag.moved
-                                && (drag.hit.is_none() || drag.region == "hud" || drag.region == "log" || mobile_panel)
+                                && (drag.hit.is_none()
+                                    || drag.region == "hud"
+                                    || drag.region == "log"
+                                    || mobile_panel)
                             {
                                 if drag.region == "hud" {
                                     self.scroll_by("hud", -dx);
@@ -372,11 +375,7 @@ impl BrowserUi {
                             },
                         );
                     } else if region == "map" {
-                        if let Some(c) = &mut self.camera {
-                            c.top += n(&event["dy"]);
-                            c.left += n(&event["dx"]);
-                        }
-                        self.constrain_camera();
+                        self.wheel_zoom(&event, &mut effects);
                     } else {
                         self.scroll_by(&region, n(&event["dy"]));
                     }

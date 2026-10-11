@@ -319,7 +319,7 @@ fn mobile_top_uses_controller_state_and_never_draws_a_game_map() {
     ui.event(json!({"type":"move","id":3,"x":x,"y":100.,"pointerType":"touch","buttons":1,"captured":true}));
     let released =
         ui.event(json!({"type":"up","id":3,"x":x,"y":100.,"pointerType":"touch","captured":true}));
-    assert!(ui.scrolls["top"] > 0.);
+    assert_eq!(ui.scrolls["top"], 0.);
     assert!(
         array(&released["effects"])
             .iter()

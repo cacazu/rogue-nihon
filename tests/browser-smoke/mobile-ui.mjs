@@ -54,26 +54,21 @@ try{
     await page.goto(base+"?trace=1&view=pixels&lang="+lang);await page.waitForFunction(()=>__rogueBrowserTest.canvas?.paintCount>0);
     await check(lang+" phone top shows title, start and load without a game map",async()=>{
       const s=await scene();assert.equal(s.scope,"top");assert.equal(s.mapRect,null);assert.ok(s.text.includes("ROGUE"));
-      assert.deepEqual(s.controls.map(c=>c.id),["name","random-name","seed","random-seed","new-game","load","credits-repository","header-fullscreen","settings-toggle"]);
+      assert.deepEqual(s.controls.map(c=>c.id),["name","random-name","seed","random-seed","select-language","new-game","load","credits-repository","settings-toggle"]);
       assert.ok(s.controls.find(c=>c.id==="load").disabled);
       for(const c of s.controls)assert.ok(c.rect.w>=48&&c.rect.h>=48,c.id);
       assert.equal(s.regions.log,undefined);await shot(lang+"-initial");
     });
-    await check(lang+" top remains usable in small portrait and scrolls in landscape",async()=>{
-      await page.setViewportSize({width:320,height:568});await paint();
-      for(const id of ["name","seed","new-game","load"]){
-        await reveal(id,"top");const c=(await scene()).controls.find(c=>c.id===id);assert.ok(c&&c.rect.w>=48&&c.rect.h>=48,id);
+    await check(lang+" top fits small portrait and landscape without scrolling",async()=>{
+      for(const viewport of [{width:320,height:568},{width:844,height:390},{width:568,height:320}]){
+        await page.setViewportSize(viewport);await paint();const s=await scene();
+        assert.equal(s.regions.top.max,0);assert.equal(s.scrolls.top,0);
+        for(const id of ["name","random-name","seed","random-seed","select-language","new-game","load","credits-repository","settings-toggle"]){
+          const c=s.controls.find(c=>c.id===id);assert.ok(c&&c.rect.w>=48&&c.rect.h>=48,id);assert.ok(c.rect.y>=0&&c.rect.y+c.rect.h<=s.height,id);
+        }
+        assert.equal(await page.evaluate(()=>__rogueBrowserTest.generation),0);await shot(lang+"-top-"+viewport.width+"x"+viewport.height);
       }
-      await shot(lang+"-top-320x568");
-      await page.setViewportSize({width:844,height:390});await paint();
-      const s=await scene(),r=s.regions.top.rect,c=s.controls.find(c=>c.id==="random-seed");
-      await swipe(c.rect.x+c.rect.w/2,c.rect.y+c.rect.h/2,r.y+30);
-      assert.ok((await scene()).scrolls.top>0);await reveal("new-game","top");
-      assert.equal(await page.evaluate(()=>__rogueBrowserTest.generation),0);
-      await shot(lang+"-top-landscape");await page.setViewportSize({width:390,height:844});await paint();
-      assert.equal((await scene()).scrolls.top,0);
-      const commands=await page.evaluate(()=>__rogueBrowserTest.commands);
-      for(const c of commands.filter(c=>c.op==="text"&&c.text.trim()))assert.ok(c.size>=17,c.text);
+      await page.setViewportSize({width:390,height:844});await paint();
     });
     await tap("settings-toggle");
     for(const id of ["name","seed","random-name","random-seed","new-game","load","settings-load"])assert.ok(!(await scene()).controls.some(c=>c.id===id),id);
@@ -93,18 +88,16 @@ try{
     await check(lang+" map overview and fullscreen do not consume C/RNG input",async()=>{
       const before=await state();assert.equal((await scene()).camera.size,32);
       await tap("mobile-map");assert.equal((await scene()).camera.size,16);await tap("mobile-map");assert.equal((await scene()).camera.size,32);
-      await tap("header-fullscreen");await page.waitForFunction(()=>!!document.fullscreenElement);await tap("header-fullscreen");await page.waitForFunction(()=>!document.fullscreenElement);
+      await tap("settings-toggle");assert.equal(await page.evaluate(()=>!!document.fullscreenElement),false);
+      await tap("fullscreen");await page.waitForFunction(()=>!!document.fullscreenElement);await tap("fullscreen");await page.waitForFunction(()=>!document.fullscreenElement);await tap("settings-close");
       assert.deepEqual(await state(),before);
     });
     await check(lang+" zoom controls, center location and touch cancellation preserve C/RNG",async()=>{
       const before=await state();
       await tap("mobile-map");assert.equal((await scene()).camera.size,16);await tap("settings-toggle");assert.ok(!(await scene()).controls.some(c=>c.id==="center-map"));
-      await reveal("tile-zoom");
-      for(const index of [3,0,2,1,0]){
-        const c=(await scene()).controls.find(c=>c.id==="tile-zoom"),b=await page.locator("#rogue-canvas").boundingBox();
-        await page.touchscreen.tap(b.x+c.rect.x+14+(c.rect.w-28)*index/3,b.y+c.rect.y+c.rect.h/2);await paint();
-      }
-      await tap("settings-close");assert.equal((await scene()).camera.size,32);
+      assert.ok(!(await scene()).controls.some(c=>["select-language","tile-zoom"].includes(c.id)));
+      assert.ok(!(await scene()).text.some(t=>t.includes("迷宮に入りました")||t.includes("地図の表示")||t.includes("倍率")));
+      await tap("settings-close");await tap("mobile-map");assert.equal((await scene()).camera.size,32);
       await tap("mobile-operations");await reveal("center-map","mobile-operations");await tap("center-map");await tap("mobile-operations-close");
       assert.deepEqual(await state(),before);
       const r=(await scene()).mapRect,b=await page.locator("#rogue-canvas").boundingBox();
@@ -187,10 +180,10 @@ try{
       assert.equal((await state()).words[13],saved.words[13]+1);
     });
     await check(lang+" settings swipe on buttons reaches system controls without a game turn",async()=>{
-      const before=await state();await tap("settings-toggle");const r=(await scene()).controls.find(c=>c.id==="save").rect;
+      const before=await state();await page.setViewportSize({width:390,height:568});await paint();await tap("settings-toggle");const r=(await scene()).controls.find(c=>c.id==="save").rect;
       await swipe(r.x+r.w/2,r.y+r.h/2,80);assert.ok((await scene()).scrolls.settings>0);
       for(const key of [111,81])await reveal("mobile-system-"+key);
-      await shot(lang+"-system-settings");assert.deepEqual(await state(),before);await tap("settings-close");
+      await shot(lang+"-system-settings");assert.deepEqual(await state(),before);await tap("settings-close");await page.setViewportSize({width:390,height:844});await paint();
     });
     await check(lang+" 320px portrait and phone landscape retain 48px targets and usable map",async()=>{
       const before=await state();for(const viewport of [{width:320,height:568},{width:844,height:390},{width:390,height:844}]){

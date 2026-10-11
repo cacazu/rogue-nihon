@@ -75,14 +75,23 @@ impl BrowserUi {
         }
         self.gestures.wheel = 0.;
         let sizes = self.zoom_sizes();
-        let current = sizes
-            .iter()
-            .position(|&size| size == n(&self.model["tileSize"]))
-            .unwrap_or(2);
+        let actual = self
+            .camera
+            .map(|c| {
+                if self.model["displayMode"] == "ascii" {
+                    c.size * 32. / 12.
+                } else {
+                    c.size
+                }
+            })
+            .unwrap_or(n(&self.model["tileSize"]));
         let next = if delta < 0. {
-            (current + 1).min(sizes.len() - 1)
+            sizes.iter().position(|&size| size > actual + 0.001)
         } else {
-            current.saturating_sub(1)
+            sizes.iter().rposition(|&size| size < actual - 0.001)
+        };
+        let Some(next) = next else {
+            return;
         };
         self.zoom_at(next, n(&event["x"]), n(&event["y"]), effects);
     }
@@ -116,7 +125,18 @@ impl BrowserUi {
                     let distance = (points[0].0 - points[1].0)
                         .hypot(points[0].1 - points[1].1)
                         .max(1.);
-                    self.gestures.pinch = Some((distance, self.camera.map(|c| if self.model["displayMode"] == "ascii" { c.size * 32. / 12. } else { c.size }).unwrap_or(n(&self.model["tileSize"]))));
+                    self.gestures.pinch = Some((
+                        distance,
+                        self.camera
+                            .map(|c| {
+                                if self.model["displayMode"] == "ascii" {
+                                    c.size * 32. / 12.
+                                } else {
+                                    c.size
+                                }
+                            })
+                            .unwrap_or(n(&self.model["tileSize"])),
+                    ));
                     effects.push(json!({"kind":"capture","id":id}));
                     return true;
                 }
@@ -170,7 +190,8 @@ impl BrowserUi {
     }
 
     pub(super) fn start_hold(&mut self, control: &Control, id: i64, effects: &mut Vec<Value>) {
-        if false && control.id.starts_with("touch-")
+        if false
+            && control.id.starts_with("touch-")
             && control.id.len() == 7
             && !control.disabled
             && self.mobile_movement == 0

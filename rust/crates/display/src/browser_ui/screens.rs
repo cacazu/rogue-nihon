@@ -52,16 +52,12 @@ impl BrowserUi {
             .insert("top".into(), clamp(self.scrolls["top"], 0., max));
         self.widgets.begin_clip(viewport);
         let mut y = 28. - self.scrolls["top"];
-        self.text(
-            &self.t("top.title"),
-            x,
-            y,
-            if mobile { w } else { w - 220. },
-            if mobile { 25. } else { 34. },
-            TEXT,
-            true,
+        self.dropdown_control(
+            "language",
+            Rect::new(x, y, 220., 48.),
+            b(&self.model["starting"]),
         );
-        y += if mobile { 106. } else { 66. };
+        y += 66.;
         let left_w = if mobile { w } else { (w * 0.57).floor() };
         let right_x = if mobile { x } else { x + left_w + 20. };
         let right_w = if mobile { w } else { w - left_w - 20. };
@@ -514,20 +510,39 @@ impl BrowserUi {
             {
                 continue;
             }
-            if mobile && line["id"] == "ui.help.entry" && matches!(s(&line["args"][1]["value"]), "help.shell" | "help.redraw" | "help.version" | "help.recall") { continue; }
+            if mobile
+                && line["id"] == "ui.help.entry"
+                && matches!(
+                    s(&line["args"][1]["value"]),
+                    "help.shell" | "help.redraw" | "help.version" | "help.recall"
+                )
+            {
+                continue;
+            }
             let text = if mobile && line["id"] == "ui.help.entry" {
                 self.mobile_help(s(&line["args"][1]["value"]))
             } else if mobile && b(&line["selectable"]) && !s(&line["key"]).is_empty() {
                 let prefix = format!("{}) ", s(&line["key"]));
-                s(&line["text"]).strip_prefix(&prefix).unwrap_or(s(&line["text"])).to_string()
+                s(&line["text"])
+                    .strip_prefix(&prefix)
+                    .unwrap_or(s(&line["text"]))
+                    .to_string()
             } else if mobile && s(&line["id"]).starts_with("help.") {
                 self.mobile_help(s(&line["id"]))
             } else {
                 s(&line["text"]).to_string()
             };
-            let text = if mobile && (b(&ui["inventory"]) || ui["input"]["kind"] == "item" || matches!(s(&d["kind"]), "inventory_actions" | "inventory_details")) && text.as_bytes().first().is_some_and(u8::is_ascii_lowercase) && text.get(1..3) == Some(") ") {
+            let text = if mobile
+                && (b(&ui["inventory"])
+                    || ui["input"]["kind"] == "item"
+                    || matches!(s(&d["kind"]), "inventory_actions" | "inventory_details"))
+                && text.as_bytes().first().is_some_and(u8::is_ascii_lowercase)
+                && text.get(1..3) == Some(") ")
+            {
                 text[3..].to_string()
-            } else { text };
+            } else {
+                text
+            };
             let height = self
                 .wrap(
                     &text,
@@ -540,11 +555,33 @@ impl BrowserUi {
             rows.push((text, line.clone(), height, total, false));
             total += height;
         }
-        if ui["mode"] == "game" && !s(&d["message"]["text"]).is_empty() && !(mobile && matches!(s(&ui["input"]["kind"]), "direction" | "hand" | "help" | "discovery")) {
+        if ui["mode"] == "game"
+            && !s(&d["message"]["text"]).is_empty()
+            && !(mobile
+                && matches!(
+                    s(&ui["input"]["kind"]),
+                    "direction" | "hand" | "help" | "discovery"
+                ))
+        {
             let text = if mobile && ui["input"]["kind"] == "item" {
-                let hint = crate::display::message_language("pack.get_item.for_list", &json!([]), "", s(&self.model["language"])).text;
-                s(&d["message"]["text"]).replace(&hint, if self.model["language"] == "ja" { "？" } else { "?" })
-            } else { s(&d["message"]["text"]).to_string() };
+                let hint = crate::display::message_language(
+                    "pack.get_item.for_list",
+                    &json!([]),
+                    "",
+                    s(&self.model["language"]),
+                )
+                .text;
+                s(&d["message"]["text"]).replace(
+                    &hint,
+                    if self.model["language"] == "ja" {
+                        "？"
+                    } else {
+                        "?"
+                    },
+                )
+            } else {
+                s(&d["message"]["text"]).to_string()
+            };
             let height = self.wrap(&text, inner - 8., font).len() as f64 * line_h + 8.;
             rows.push((text, json!({}), height, total, false));
             total += height;
@@ -836,79 +873,12 @@ impl BrowserUi {
         let busy = b(&self.model["starting"])
             || b(&self.model["savePending"])
             || b(&self.model["returnAfterEnd"]);
-        self.text(
-            &self.t("form.language"),
-            viewport.x,
-            row,
-            viewport.w,
-            17.,
-            MUTED,
-            false,
-        );
-        row += 30.;
-        self.dropdown_control(
-            "language",
-            Rect::new(viewport.x, row, viewport.w, 48.),
-            busy || !b(&self.model["topOpen"]),
-        );
-        row += 60.;
-        self.text(
-            &self.t("form.display_mode"),
-            viewport.x,
-            row,
-            viewport.w,
-            16.,
-            MUTED,
-            false,
-        );
-        row += 26.;
         self.dropdown_control(
             "display-mode",
             Rect::new(viewport.x, row, viewport.w, 48.),
             busy,
         );
         row += 62.;
-        if self.model["displayMode"] != "ascii" {
-            self.text(
-                &format!(
-                    "{}  {}%",
-                    self.t("form.zoom"),
-                    (n(&self.model["tileSize"]) / 32. * 100.).round()
-                ),
-                viewport.x,
-                row,
-                viewport.w,
-                16.,
-                ACCENT,
-                false,
-            );
-            row += 28.;
-            let r = Rect::new(viewport.x, row, viewport.w, 38.);
-            self.control(
-                "tile-zoom",
-                "",
-                r,
-                json!({"kind":"zoom"}),
-                ControlStyle {
-                    kind: Some("slider"),
-                    ..Default::default()
-                },
-            );
-            self.widgets
-                .rect(Rect::new(r.x + 14., r.y + 17., r.w - 28., 4.), "#527769");
-            let sizes = self.zoom_sizes();
-            let index = sizes
-                .iter()
-                .position(|&v| v == n(&self.model["tileSize"]))
-                .unwrap_or(0);
-            self.widgets.circle(
-                r.x + 14. + (r.w - 28.) * index as f64 / (sizes.len() - 1).max(1) as f64,
-                r.y + 19.,
-                8.,
-                ACCENT,
-            );
-            row += 60.;
-        }
         self.button(
             "center-map",
             &self.t("action.center"),
@@ -944,7 +914,7 @@ impl BrowserUi {
     }
     pub(super) fn zoom_sizes(&self) -> &'static [f64] {
         if self.model["displayMode"] == "pixels" {
-            &[32., 64., 96., 128.]
+            &[16., 32., 64., 96., 128.]
         } else {
             &[16., 24., 32., 48., 64.]
         }

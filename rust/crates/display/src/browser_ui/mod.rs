@@ -261,7 +261,7 @@ impl BrowserUi {
         if b(&self.model["topOpen"]) || b(&self.model["settingsOpen"]) {
             self.history_open = false;
         }
-        if !b(&self.model["settingsOpen"]) {
+        if !b(&self.model["settingsOpen"]) && !b(&self.model["topOpen"]) {
             self.dropdown.clear();
         }
         if !mobile || b(&self.model["topOpen"]) || !b(&self.model["running"]) {

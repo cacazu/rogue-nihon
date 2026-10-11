@@ -123,33 +123,17 @@ impl BrowserUi {
             }
         }
         self.button(
-            "header-fullscreen",
-            &self.t(if b(&self.view["fullscreen"]) {
-                "action.exit_fullscreen"
-            } else {
-                "action.fullscreen"
-            }),
-            Rect::new(self.width - 112., 8., TARGET, TARGET),
-            ControlStyle {
-                icon: Some(if b(&self.view["fullscreen"]) {
-                    "collapse"
-                } else {
-                    "expand"
-                }),
-                icon_size: 24.,
-                ..Default::default()
-            },
-        );
-        self.button(
             "settings-toggle",
             &self.t("action.settings"),
             Rect::new(self.width - 56., 8., TARGET, TARGET),
             ControlStyle {
                 icon: Some("settings"),
-                icon_size: 26.,
+                icon_size: 20.,
                 ..Default::default()
             },
         );
+        self.widgets
+            .icon("expand", Rect::new(self.width - 50., 14., 36., 36.), TEXT);
         if self.mobile_operations && !b(&self.model["settingsOpen"]) {
             self.mobile_operations_sheet(game);
         }
@@ -275,84 +259,18 @@ impl BrowserUi {
         let notice = array(&self.model["entries"])
             .iter()
             .rfind(|e| e["source"] == "system")
+            .filter(|e| e["id"] != "notice.entered")
             .map(|e| s(&e["text"]).to_string())
             .unwrap_or_default();
         if !notice.is_empty() {
             row += self.text(&notice, viewport.x, row, viewport.w, FONT, ACCENT, false) + 12.;
         }
-        self.text(
-            &self.t("form.language"),
-            viewport.x,
-            row,
-            viewport.w,
-            FONT,
-            MUTED,
-            false,
-        );
-        row += 30.;
-        self.dropdown_control(
-            "language",
-            Rect::new(viewport.x, row, viewport.w, TARGET),
-            busy || !top,
-        );
-        row += 60.;
-        self.text(
-            &self.t("form.display_mode"),
-            viewport.x,
-            row,
-            viewport.w,
-            FONT,
-            MUTED,
-            false,
-        );
-        row += 30.;
         self.dropdown_control(
             "display-mode",
             Rect::new(viewport.x, row, viewport.w, TARGET),
             busy,
         );
         row += 60.;
-        if self.model["displayMode"] != "ascii" {
-            self.text(
-                &format!(
-                    "{} {}%",
-                    self.t("form.zoom"),
-                    (n(&self.model["tileSize"]) / 32. * 100.).round()
-                ),
-                viewport.x,
-                row,
-                viewport.w,
-                FONT,
-                ACCENT,
-                false,
-            );
-            row += 30.;
-            let r = Rect::new(viewport.x, row, viewport.w, TARGET);
-            self.control(
-                "tile-zoom",
-                "",
-                r,
-                json!({"kind":"zoom"}),
-                ControlStyle {
-                    kind: Some("slider"),
-                    ..Default::default()
-                },
-            );
-            self.widgets
-                .rect(Rect::new(r.x + 14., r.y + 22., r.w - 28., 4.), "#527769");
-            let sizes = self.zoom_sizes();
-            let index = sizes
-                .iter()
-                .position(|&v| v == n(&self.model["tileSize"]))
-                .unwrap_or(0);
-            self.widgets.circle(
-                r.x + 14. + (r.w - 28.) * index as f64 / (sizes.len() - 1) as f64,
-                r.y + 24.,
-                10.,
-                ACCENT,
-            );
-            row += 60.;
-        }
         for (id, label) in [("settings-top", "action.top")] {
             self.mobile_button(
                 id,
@@ -614,7 +532,12 @@ impl BrowserUi {
             false,
         );
         row += 60.;
-        self.mobile_button("center-map", &self.t("action.center"), Rect::new(viewport.x, row, viewport.w, TARGET), false);
+        self.mobile_button(
+            "center-map",
+            &self.t("action.center"),
+            Rect::new(viewport.x, row, viewport.w, TARGET),
+            false,
+        );
         row += 60.;
         self.mobile_rest_control(Rect::new(viewport.x, row, viewport.w, TARGET));
         row += 60.;

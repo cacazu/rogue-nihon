@@ -84,7 +84,7 @@ try{
   await open();
   await check("HTML title stays above the Canvas start fields",async()=>{
     assert.equal(await page.locator("header.heading h1").textContent(),"元祖 ローグ · 5.4.4");
-    assert.equal((await scene()).renderer,"canvas2d");assert.ok((await scene()).text.includes("冒険を始める"));
+    assert.equal((await scene()).renderer,"canvas2d");assert.ok(!(await scene()).text.includes("冒険を始める"));
     assert.equal(await page.locator("#rogue-canvas").isVisible(),true);
     assert.equal(await page.locator("#semantic-host, #accessible-screen, button:not([data-control]), select, form, [aria-live]").count(),0);
     assert.equal(await page.locator("canvas").count(),1);
@@ -166,10 +166,7 @@ try{
     for(const k of ["h","i","ArrowDown"]){await page.keyboard.press(k);}
     assert.deepEqual((await state()).words,before.words);assert.equal((await state()).input,before.input);
     for(const mode of ["ascii","tiles","pixels"]){await click("select-display-mode");await click("select-display-mode-"+mode);assert.deepEqual((await state()).words,before.words);}
-    await click("tile-zoom");await page.keyboard.press("Home");
-    for(let n=0;n<3;n++)await page.keyboard.press("ArrowRight");
-    assert.equal(await page.evaluate(()=>__rogueBrowserTest.graphics.tileSize),128);
-    await page.keyboard.press("Home");assert.equal(await page.evaluate(()=>__rogueBrowserTest.graphics.tileSize),32);
+    assert.ok(!(await scene()).controls.some(c=>["tile-zoom","select-language"].includes(c.id)));
     await click("center-map");assert.equal((await state()).input,before.input);await shot("settings-desktop");
     await click("settings-close");await page.waitForFunction(()=>__rogueBrowserTest.canvas.scope==="game");
     await page.evaluate(()=>{for(let n=0;n<100;n++)__rogueBrowserTest.redraw();});

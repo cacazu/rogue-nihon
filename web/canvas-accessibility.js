@@ -18,7 +18,7 @@ globalThis.RogueCanvasAccessibility = {
     for(const [native,type] of [["pointerdown","down"],["pointermove","move"],["pointerup","up"]])layer.addEventListener(native,event=>forward(event,type));
     layer.addEventListener("wheel",event=>{
       const bounds=ui.canvas.getBoundingClientRect();
-      ui.dispatch({type:"wheel",x:event.clientX-bounds.left,y:event.clientY-bounds.top,dx:event.deltaX,dy:event.deltaY},event);
+      ui.dispatch({type:"wheel",x:(event.clientX-bounds.left)*ui.scene.width/bounds.width,y:(event.clientY-bounds.top)*ui.scene.height/bounds.height,dx:event.deltaX,dy:event.deltaY,deltaMode:event.deltaMode},event);
     },{passive:false});
     layer.addEventListener("contextmenu",event=>event.preventDefault());
     layer.addEventListener("touchstart",event=>event.preventDefault(),{passive:false});

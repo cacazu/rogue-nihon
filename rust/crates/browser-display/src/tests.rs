@@ -78,7 +78,7 @@ fn preference_corruption_and_mode_specific_zoom() {
         preference(r#"{"version":1,"mode":"pixels","zoom":128}"#)["zoom"],
         128
     );
-    assert_eq!(sizes("pixels"), [32, 64, 96, 128]);
+    assert_eq!(sizes("pixels"), [16, 32, 64, 96, 128]);
     assert!(!mode("secret"));
 }
 #[test]
