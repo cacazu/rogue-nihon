@@ -248,31 +248,94 @@ fn settings_blocks_game_input_before_the_next_repaint() {
 }
 
 #[test]
-fn mobile_keeps_persistent_hunger_warnings_and_only_two_initial_controls() {
+fn mobile_game_keeps_original_icon_hud_and_hunger_warnings() {
     let mut ui = BrowserUi::new(measure);
-    for (hunger, label, color) in [
-        (0, "空腹なし", ACCENT),
-        (1, "空腹", "#efd18e"),
-        (2, "衰弱", ERROR),
-        (3, "飢餓", ERROR),
-    ] {
+    for (hunger, color) in [(0, ACCENT), (1, "#efd18e"), (2, ERROR), (3, ERROR)] {
         let mut m = model();
         m["frame"]["ui"]["status"]["args"][9]["value"] = json!(format!("status.hunger.{hunger}"));
         let output = ui.render(m, view(390., 844.));
-        assert_eq!(
-            ui.widgets
-                .controls
+        let items = array(&output["diagnostics"]["hud"]["items"]);
+        assert_eq!(items.len(), 8);
+        assert!(
+            items
                 .iter()
-                .map(|c| c.id.as_str())
-                .collect::<Vec<_>>(),
-            ["header-fullscreen", "settings-toggle"]
+                .all(|item| item["rect"]["y"] == items[0]["rect"]["y"])
         );
-        assert!(array(&output["commands"]).iter().any(|c| c["op"] == "text"
-            && c["text"] == label
-            && c["color"] == color
-            && n(&c["size"]) >= 17.));
+        let icon = ui
+            .widgets
+            .icons
+            .iter()
+            .find(|icon| icon["name"] == "food")
+            .unwrap();
+        assert!(
+            array(&output["commands"])
+                .iter()
+                .any(|command| command["op"] == "path"
+                    && command["rect"] == icon["rect"]
+                    && command["color"] == color)
+        );
         assert!(!ui.regions.contains_key("log"));
     }
+}
+
+#[test]
+fn mobile_top_uses_controller_state_and_never_draws_a_game_map() {
+    let mut ui = BrowserUi::new(measure);
+    let mut m = model();
+    m["topOpen"] = json!(true);
+    m["running"] = json!(false);
+    m["saved"] = json!(false);
+    m["frame"] = Value::Null;
+    for (width, height) in [(390., 844.), (320., 568.), (844., 390.)] {
+        let mut surface = view(width, height);
+        surface["coarse"] = json!(true);
+        let output = ui.render(m.clone(), surface);
+        assert_eq!(output["diagnostics"]["scope"], "top");
+        assert!(output["diagnostics"]["mapRect"].is_null());
+        assert!(
+            array(&output["commands"])
+                .iter()
+                .any(|c| c["text"] == "ROGUE")
+        );
+        assert!(!ui.regions.contains_key("map"));
+        assert!(
+            !ui.widgets
+                .controls
+                .iter()
+                .any(|c| c.id.starts_with("touch-"))
+        );
+    }
+    let button = ui
+        .widgets
+        .controls
+        .iter()
+        .find(|c| c.id == "random-seed")
+        .unwrap();
+    let x = button.rect.x + button.rect.w / 2.;
+    let y = button.rect.y + button.rect.h / 2.;
+    ui.event(
+        json!({"type":"down","id":3,"x":x,"y":y,"pointerType":"touch","button":0,"primary":true}),
+    );
+    ui.event(json!({"type":"move","id":3,"x":x,"y":100.,"pointerType":"touch","buttons":1,"captured":true}));
+    let released =
+        ui.event(json!({"type":"up","id":3,"x":x,"y":100.,"pointerType":"touch","captured":true}));
+    assert!(ui.scrolls["top"] > 0.);
+    assert!(
+        array(&released["effects"])
+            .iter()
+            .all(|effect| effect["kind"] != "invoke" && effect["kind"] != "send")
+    );
+    m["saved"] = json!(true);
+    ui.render(m, view(390., 844.));
+    assert!(
+        ui.widgets
+            .controls
+            .iter()
+            .any(|c| c.id == "load" && !c.disabled)
+    );
+    assert!(
+        array(&click(&mut ui, "load")["effects"]).contains(&json!({"kind":"invoke","id":"load"}))
+    );
 }
 
 #[test]

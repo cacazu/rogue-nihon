@@ -48,7 +48,7 @@
       });
       for(const type of ["pointercancel","lostpointercapture"])this.canvas.addEventListener(type,e=>this.dispatch({type:"cancel",id:e.pointerId}));
       this.canvas.addEventListener("pointerleave",()=>this.dispatch({type:"leave"}));
-      this.canvas.addEventListener("wheel",e=>{const bounds=this.canvas.getBoundingClientRect();this.dispatch({type:"wheel",x:(e.clientX-bounds.left)*this.scene.width/bounds.width,y:(e.clientY-bounds.top)*this.scene.height/bounds.height,dx:e.deltaX,dy:e.deltaY},e);},{passive:false});
+      this.canvas.addEventListener("wheel",e=>{const bounds=this.canvas.getBoundingClientRect();this.dispatch({type:"wheel",x:(e.clientX-bounds.left)*this.scene.width/bounds.width,y:(e.clientY-bounds.top)*this.scene.height/bounds.height,dx:e.deltaX,dy:e.deltaY,deltaMode:e.deltaMode},e);},{passive:false});
       document.addEventListener("keydown",e=>this.dispatch({type:"key",key:e.key,shift:e.shiftKey,shiftKey:e.shiftKey,ctrlKey:e.ctrlKey,altKey:e.altKey,metaKey:e.metaKey,repeat:e.repeat,native:document.activeElement?.id,composing:e.isComposing,keyCode:e.keyCode},e),true);
       window.addEventListener("blur",()=>this.dispatch({type:"blur"}));
       window.addEventListener("pagehide",()=>this.dispatch({type:"pagehide"}));
@@ -75,6 +75,7 @@
     effect(effect) {
       switch(effect.kind) {
         case "timer":this.blink=setInterval(()=>this.invalidate(),effect.interval);break;
+        case "hold-timer":clearTimeout(this.holdTimer);this.holdTimer=setTimeout(()=>this.dispatch({type:"hold-tick",id:effect.id}),effect.delay);break;
         case "field":Object.assign(this.nativeInputs.get(effect.id),effect.properties);break;
         case "native-position":{const input=this.nativeInputs.get(effect.id),r=effect.rect;Object.assign(input.style,{left:r.x+"px",top:r.y+"px",width:r.w+"px",height:r.h+"px"});break;}
         case "native-focus":this.nativeInputs.get(effect.id).focus({preventScroll:true});break;

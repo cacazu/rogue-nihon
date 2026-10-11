@@ -61,7 +61,7 @@
         link.href=url;link.download=effect.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),effect.revokeAfter);break;
       }
       case "open":window.open(effect.url,"_blank","noopener");break;
-      case "document":document.documentElement.lang=effect.language;document.title=effect.title;break;
+      case "document":document.documentElement.lang=effect.language;document.title=effect.title;document.getElementById("app-heading").textContent=effect.heading;break;
       case "console":console[effect.level](effect.text);break;
       default:throw new Error("Unknown Rust browser effect: "+effect.kind);
     }

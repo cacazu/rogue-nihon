@@ -1,10 +1,15 @@
 :root { color-scheme: dark; font-family: system-ui, "Yu Gothic", sans-serif; background: #101518; color: #e8ebed; }
 * { box-sizing: border-box; }
 html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+body { display: flex; flex-direction: column; }
+.heading { flex: none; padding: 12px 24px; }
+.heading h1 { margin: 0; font-size: 28px; line-height: 1.4; font-weight: 650; letter-spacing: .04em; }
+@media (max-width: 699px), (pointer: coarse) { .heading { padding: 10px 16px; } .heading h1 { font-size: 20px; } }
 [hidden] { display: none !important; }
-#canvas-stage { position: fixed; inset: 0; width: 100%; height: 100dvh; background: #101518; overflow: hidden; }
+#canvas-stage { position: relative; flex: 1; min-height: 0; width: 100%; background: #101518; overflow: hidden; }
 #canvas-stage:fullscreen { width: 100%; height: 100dvh; }
 /* Canvas buttons draw their own feedback; native tap highlighting covers the whole game. */
+#canvas-controls button { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 #rogue-canvas { display: block; width: 100%; height: 100%; touch-action: none; outline: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 /* Native IME/clipboard/selection input. All field pixels and the caret are Canvas. */
 .canvas-native-input { position: absolute; left: -1000px; top: 0; z-index: 2; margin: 0; padding: 8px 12px; opacity: 0; color: transparent; caret-color: transparent; background: transparent; border: 0; outline: 0; pointer-events: none; font: 18px system-ui, "Yu Gothic", sans-serif; }

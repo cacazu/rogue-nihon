@@ -20,6 +20,9 @@ globalThis.RogueCanvasAccessibility = {
       const bounds=ui.canvas.getBoundingClientRect();
       ui.dispatch({type:"wheel",x:event.clientX-bounds.left,y:event.clientY-bounds.top,dx:event.deltaX,dy:event.deltaY},event);
     },{passive:false});
+    layer.addEventListener("contextmenu",event=>event.preventDefault());
+    layer.addEventListener("touchstart",event=>event.preventDefault(),{passive:false});
+    layer.addEventListener("pointercancel",event=>ui.dispatch({type:"cancel",id:event.pointerId}));
     const paint=ui.paint.bind(ui);
     ui.paint=()=>{
       paint();

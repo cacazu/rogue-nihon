@@ -385,6 +385,24 @@ impl Widgets {
         }
         self.commands.push(json!({"op":"restore"}));
     }
+    /// Pointer target over already painted content, without button decoration.
+    pub fn hit_target(&mut self, id: &str, label: &str, rect: Rect, action: Value) {
+        let clipped = self.clip.map_or(rect, |clip| rect.intersect(clip));
+        if clipped.w <= 0. || clipped.h <= 0. {
+            return;
+        }
+        self.controls.push(Control {
+            id: id.into(),
+            label: label.into(),
+            rect: clipped,
+            full_rect: rect,
+            disabled: false,
+            kind: "button".into(),
+            key: None,
+            field: None,
+            action,
+        });
+    }
     pub fn field(
         &mut self,
         id: &str,

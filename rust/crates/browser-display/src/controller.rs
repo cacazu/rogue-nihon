@@ -326,8 +326,9 @@ impl Controller {
     }
     fn document(&mut self) {
         let title = self.label("app.title", &json!({}));
+        let heading = self.label("app.heading", &json!({}));
         self.effects
-            .push(json!({"kind":"document","language":self.model["language"],"title":title}));
+            .push(json!({"kind":"document","language":self.model["language"],"title":title,"heading":heading}));
     }
     fn text_batch(&mut self, ending: u32) -> Option<Value> {
         let value = text(&self.inputs["prompt-text"]["value"]);
@@ -670,6 +671,7 @@ impl Controller {
                 .collect::<Vec<_>>()
         );
         self.model["input"] = self.input.clone();
+        self.model["inputRequests"] = self.state["inputRequestCount"].clone();
         let m = tiles::manifest(text(&self.model["displayMode"]));
         let locale = text(&self.model["language"]);
         self.model["tileDescriptions"] = json!(
@@ -807,9 +809,8 @@ impl Controller {
                                 }
                                 "zoom" => {
                                     let mode = text(&self.model["displayMode"]);
-                                    if mode != "ascii"
-                                        && let Some(size) = sizes(mode)
-                                            .get(effect["index"].as_f64().unwrap_or(0.) as usize)
+                                    if let Some(size) = sizes(mode)
+                                        .get(effect["index"].as_f64().unwrap_or(0.) as usize)
                                     {
                                         self.model["tileSize"] = json!(size);
                                         self.persist_view();
@@ -841,9 +842,9 @@ impl Controller {
                 commands = result["commands"].clone();
                 let diagnostics = &result["diagnostics"];
                 surface = json!({"width":diagnostics["width"],"height":diagnostics["height"],"ratio":ratio});
-                let active = diagnostics["pointer"]["activeId"].as_i64();
+                let active = diagnostics["pointer"]["capturedIds"].as_array();
                 for id in r["captured"].as_array().into_iter().flatten() {
-                    if id.as_i64() != active {
+                    if !active.is_some_and(|ids| ids.contains(id)) {
                         self.effects.push(json!({"kind":"release","id":id}));
                     }
                 }

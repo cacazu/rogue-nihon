@@ -57,10 +57,6 @@ impl BrowserUi {
                 self.mobile_rest_activate(effects);
                 true
             }
-            "mobile-log" => {
-                self.mobile_log = !self.mobile_log;
-                true
-            }
             id if id.starts_with("mobile-system-") => {
                 if b(&self.model["running"]) && !b(&self.model["savePending"]) {
                     effects.push(json!({"kind":"invoke","id":"settings-close"}));
@@ -78,33 +74,53 @@ impl BrowserUi {
 
     pub(super) fn draw_mobile(&mut self) {
         let game = Rect::new(0., 0., self.width, self.height);
-        let dock = self.mobile_controls
-            && b(&self.model["running"])
-            && !self.model["frame"]["ui"]["window"].is_object();
-        let dock_height = if dock { 184. } else { 0. };
-        let map = Rect::new(
-            0.,
-            64.,
-            self.width,
-            (self.height - 148. - dock_height).max(1.),
-        );
-        self.map_rect = Some(map);
-        self.regions
-            .insert("map".into(), Region { rect: map, max: 0. });
-        self.widgets.rect(map, MAP);
-        if self.model["frame"].is_object() {
-            self.draw_map(map);
-            self.mobile_status(map.y + map.h);
-            if !self.model["frame"]["ui"]["window"].is_object() && !b(&self.model["settingsOpen"]) {
-                self.mobile_message();
+        if b(&self.model["topOpen"]) {
+            self.draw_mobile_top();
+        } else {
+            let dock = self.mobile_controls
+                && b(&self.model["running"])
+                && !self.model["frame"]["ui"]["window"].is_object();
+            let dock_height = if dock { 184. } else { 0. };
+            let map = Rect::new(
+                0.,
+                64.,
+                self.width,
+                (self.height - 128. - dock_height).max(1.),
+            );
+            self.map_rect = Some(map);
+            self.regions
+                .insert("map".into(), Region { rect: map, max: 0. });
+            self.widgets.rect(map, MAP);
+            if self.model["frame"].is_object() {
+                self.draw_map(map);
+                self.draw_hud_area(Rect::new(0., map.y + map.h, self.width, 64.));
+                if !self.model["frame"]["ui"]["window"].is_object()
+                    && !b(&self.model["settingsOpen"])
+                {
+                    self.mobile_message();
+                }
             }
-        }
-        if self.model["frame"]["ui"]["window"].is_object() && !b(&self.model["settingsOpen"]) {
-            // Same window renderer, rows, actions and input as the desktop UI.
-            self.draw_dialog(game);
-        }
-        if dock && !b(&self.model["settingsOpen"]) {
-            self.mobile_dock(self.height - dock_height);
+            if self.model["frame"]["ui"]["window"].is_object() && !b(&self.model["settingsOpen"]) {
+                // Same window renderer, rows, actions and input as the desktop UI.
+                self.draw_dialog(game);
+            }
+            if dock && !b(&self.model["settingsOpen"]) {
+                self.mobile_dock(self.height - dock_height);
+            }
+            if self.model["frame"].is_object() {
+                self.draw_hud_details(map);
+            }
+            if !self.model["frame"].is_object() {
+                self.text(
+                    &self.t("notice.loading"),
+                    24.,
+                    (self.height / 2. - 24.).max(80.),
+                    self.width - 48.,
+                    FONT,
+                    MUTED,
+                    false,
+                );
+            }
         }
         self.button(
             "header-fullscreen",
@@ -142,65 +158,20 @@ impl BrowserUi {
         }
     }
 
-    fn mobile_status(&mut self, y: f64) {
-        let args = self.model["frame"]["ui"]["status"]["args"].clone();
-        let v = |i: usize| args[i]["value"].as_i64().unwrap_or(0);
-        let en = self.model["language"] == "en";
-        self.widgets.rect(Rect::new(0., y, self.width, 84.), PANEL);
-        let first = if en {
-            format!(
-                "Depth {}   HP {}/{}   XL {} / {}",
-                v(0),
-                v(2),
-                v(3),
-                v(7),
-                v(8)
-            )
-        } else {
-            format!(
-                "地下{}階   HP {}/{}   経験 {}/{}",
-                v(0),
-                v(2),
-                v(3),
-                v(7),
-                v(8)
-            )
-        };
-        let second = if en {
-            format!("Gold {}   Str {}/{}   Armor {}", v(1), v(4), v(5), v(6))
-        } else {
-            format!("金 {}   腕力 {}/{}   防御 {}", v(1), v(4), v(5), v(6))
-        };
-        self.text(&first, 12., y + 4., self.width - 24., FONT, TEXT, true);
-        self.text(&second, 12., y + 30., self.width - 24., FONT, MUTED, false);
-        let hunger = s(&args[9]["value"])
-            .strip_prefix("status.hunger.")
-            .filter(|h| matches!(*h, "0" | "1" | "2" | "3"))
-            .unwrap_or("0");
-        let color = match hunger {
-            "0" => ACCENT,
-            "1" => "#efd18e",
-            _ => ERROR,
-        };
-        self.text(
-            &self.t(&format!("hud.hunger.{hunger}")),
-            12.,
-            y + 56.,
-            self.width - 24.,
-            FONT,
-            color,
-            true,
-        );
-    }
-
     fn mobile_message(&mut self) {
-        // The current result belongs to the game screen; history stays in settings.
+        // The message area opens history without a game command.
         let message = array(&self.model["entries"])
             .iter()
             .rfind(|e| e["source"] == "game" && !s(&e["text"]).is_empty())
             .map(|e| s(&e["text"]).to_string())
             .unwrap_or_default();
         let width = self.width - 132.;
+        self.history_target(Rect::new(8., 4., width + 8., 56.));
+        let message = if message.is_empty() {
+            self.t("mobile.message_history")
+        } else {
+            message
+        };
         let lines = self.wrap(&message, width, FONT);
         for (i, line) in lines.iter().take(2).enumerate() {
             let text = if i == 1 && lines.len() > 2 {
@@ -247,21 +218,22 @@ impl BrowserUi {
                 ..Default::default()
             },
         );
-        if self.mobile_log {
-            self.draw_log(Rect::new(16., 76., self.width - 32., self.height - 148.));
-            self.mobile_button(
-                "mobile-log",
-                &self.t("action.cancel_short"),
-                Rect::new(24., self.height - 64., self.width - 48., TARGET),
-                false,
-            );
-            return;
-        }
         let viewport = Rect::new(24., 76., self.width - 48., self.height - 104.);
         let mut row = viewport.y - self.scrolls["settings"];
         self.widgets.begin_clip(viewport);
         let top = b(&self.model["topOpen"]);
         let busy = b(&self.model["starting"]) || b(&self.model["savePending"]);
+        self.mobile_button(
+            "fullscreen",
+            &self.t(if b(&self.view["fullscreen"]) {
+                "action.exit_fullscreen"
+            } else {
+                "action.fullscreen"
+            }),
+            Rect::new(viewport.x, row, viewport.w, TARGET),
+            false,
+        );
+        row += 60.;
         if !top {
             self.mobile_button(
                 "mobile-controls",
@@ -275,39 +247,7 @@ impl BrowserUi {
             );
             row += 60.;
         }
-        if top {
-            for id in ["name", "seed"] {
-                self.text(
-                    &self.t(&format!("form.{id}")),
-                    viewport.x,
-                    row,
-                    viewport.w,
-                    FONT,
-                    MUTED,
-                    false,
-                );
-                row += 30.;
-                self.field(
-                    id,
-                    Rect::new(viewport.x, row, viewport.w - 104., TARGET),
-                    busy,
-                );
-                self.mobile_button(
-                    &format!("random-{id}"),
-                    &self.t("action.random"),
-                    Rect::new(viewport.x + viewport.w - 96., row, 96., TARGET),
-                    busy,
-                );
-                row += 60.;
-            }
-            self.mobile_button(
-                "new-game",
-                &self.t("action.new"),
-                Rect::new(viewport.x, row, viewport.w, TARGET),
-                busy || !b(&self.model["ready"]),
-            );
-            row += 60.;
-        } else {
+        if !top {
             self.mobile_button(
                 "save",
                 &self.t("action.save"),
@@ -316,19 +256,12 @@ impl BrowserUi {
             );
             row += 60.;
         }
-        self.mobile_button(
-            if top { "load" } else { "settings-load" },
-            &self.t("action.load"),
-            Rect::new(viewport.x, row, viewport.w, TARGET),
-            busy || !b(&self.model["saved"]),
-        );
-        row += 60.;
-        if b(&self.model["saved"]) {
+        {
             self.mobile_button(
                 "download-save",
                 &self.t("action.download"),
                 Rect::new(viewport.x, row, viewport.w, TARGET),
-                busy,
+                busy || !b(&self.model["saved"]),
             );
             row += 60.;
         }
@@ -339,15 +272,6 @@ impl BrowserUi {
             busy,
         );
         row += 60.;
-        if !top {
-            self.mobile_button(
-                "mobile-log",
-                &self.t("mobile.log"),
-                Rect::new(viewport.x, row, viewport.w, TARGET),
-                false,
-            );
-            row += 60.;
-        }
         let notice = array(&self.model["entries"])
             .iter()
             .rfind(|e| e["source"] == "system")
@@ -366,25 +290,11 @@ impl BrowserUi {
             false,
         );
         row += 30.;
-        for (i, lang) in ["ja", "en"].iter().enumerate() {
-            self.control(
-                &format!("language-{lang}"),
-                &self.t(&format!("language.{lang}")),
-                Rect::new(
-                    viewport.x + i as f64 * (viewport.w + 8.) / 2.,
-                    row,
-                    (viewport.w - 8.) / 2.,
-                    TARGET,
-                ),
-                json!({"kind":"select","id":"language","value":lang}),
-                ControlStyle {
-                    size: FONT,
-                    primary: self.model["language"] == *lang,
-                    disabled: busy || !top,
-                    ..Default::default()
-                },
-            );
-        }
+        self.dropdown_control(
+            "language",
+            Rect::new(viewport.x, row, viewport.w, TARGET),
+            busy || !top,
+        );
         row += 60.;
         self.text(
             &self.t("form.display_mode"),
@@ -396,24 +306,11 @@ impl BrowserUi {
             false,
         );
         row += 30.;
-        for (i, mode) in ["ascii", "tiles", "pixels"].iter().enumerate() {
-            self.control(
-                &format!("view-{mode}"),
-                &self.t(&format!("view.{mode}")),
-                Rect::new(
-                    viewport.x + i as f64 * (viewport.w + 8.) / 3.,
-                    row,
-                    (viewport.w - 16.) / 3.,
-                    TARGET,
-                ),
-                json!({"kind":"select","id":"display-mode","value":mode}),
-                ControlStyle {
-                    size: FONT,
-                    primary: self.model["displayMode"] == *mode,
-                    ..Default::default()
-                },
-            );
-        }
+        self.dropdown_control(
+            "display-mode",
+            Rect::new(viewport.x, row, viewport.w, TARGET),
+            busy,
+        );
         row += 60.;
         if self.model["displayMode"] != "ascii" {
             self.text(
@@ -456,19 +353,7 @@ impl BrowserUi {
             );
             row += 60.;
         }
-        for (id, label) in [
-            ("center-map", "action.center"),
-            (
-                "fullscreen",
-                if b(&self.view["fullscreen"]) {
-                    "action.exit_fullscreen"
-                } else {
-                    "action.fullscreen"
-                },
-            ),
-            ("settings-top", "action.top"),
-            ("credits-repository", "credits.repository"),
-        ] {
+        for (id, label) in [("settings-top", "action.top")] {
             self.mobile_button(
                 id,
                 &self.t(label),
@@ -478,18 +363,15 @@ impl BrowserUi {
             row += 60.;
         }
         if !top {
-            for (key, label) in [
-                (111, "help.options"),
-                (81, "help.quit"),
-                (118, "help.version"),
-                (18, "help.redraw"),
-                (16, "help.recall"),
-                (33, "help.shell"),
-            ] {
+            for (key, label) in [(111, "help.options"), (81, "mobile.quit_score")] {
                 self.mobile_command(
                     &format!("mobile-system-{key}"),
                     key,
-                    &self.mobile_help(label),
+                    &if key == 81 {
+                        self.t(label)
+                    } else {
+                        self.mobile_help(label)
+                    },
                     Rect::new(viewport.x, row, viewport.w, TARGET),
                     busy || !b(&self.model["running"]),
                 );
@@ -512,7 +394,7 @@ impl BrowserUi {
             .scrollbar(viewport, total, self.scrolls["settings"]);
     }
 
-    fn mobile_help(&self, id: &str) -> String {
+    pub(super) fn mobile_help(&self, id: &str) -> String {
         let text =
             crate::display::message_language(id, &json!([]), "", s(&self.model["language"])).text;
         text.rsplit_once('：')
@@ -732,6 +614,8 @@ impl BrowserUi {
             false,
         );
         row += 60.;
+        self.mobile_button("center-map", &self.t("action.center"), Rect::new(viewport.x, row, viewport.w, TARGET), false);
+        row += 60.;
         self.mobile_rest_control(Rect::new(viewport.x, row, viewport.w, TARGET));
         row += 60.;
         for (key, label) in [
@@ -763,7 +647,6 @@ impl BrowserUi {
             (93, "help.armor"),
             (61, "help.rings"),
             (64, "help.stats"),
-            (63, "help.help"),
             (27, "help.cancel"),
         ] {
             let ui = &self.model["frame"]["ui"];

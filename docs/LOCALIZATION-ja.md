@@ -15,6 +15,8 @@ Cが元の表示経路で選んだ意味ID・引数・可視情報をRustへ渡�
 
 ファイル名と行番号は呼出箇所の照合に使う。意味IDは関数と内容に基づき、再生成時は既存IDを維持する。英語のprintf書式・関数・ソース位置をmetadataとして持つ。EN/JAのIDとplaceholderを一致させる。カタログ件数はJSONを正本とし、文書へ複製しない。`coverage.json` のdynamic分類は未訳件数ではない。
 
+ブラウザーのスマホ案内は `ui-web` の `mobile.instruction.*` と `mobile.dialog.*` を使う。PCのキー操作案内は原作の意味IDを使い続ける。`browser_ui/mobile_dialog.rs` は公開済みの入力kind・window kindからタップ用の案内とボタン名を選び、品物行・鑑定情報・実行するキーを変更しない。
+
 名称生成はCの静的初期化子を読む。原作との件数・文字列・並び順を照合し、各表の元英文をNULで連結したSHA-256を `source_tables` へ記録する。
 
 | 元データ | 原作の表・処理 |

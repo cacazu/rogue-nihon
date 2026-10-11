@@ -34,24 +34,11 @@ impl BrowserUi {
             },
         );
     }
-    pub(super) fn footer(&mut self) {
-        let y = self.height - 44.;
-        let repository_width = 110_f64.min(self.width * 0.3);
-        self.button(
-            "credits-repository",
-            &self.t("credits.repository"),
-            Rect::new(12., y, repository_width, 36.),
-            ControlStyle {
-                size: 16.,
-                ..Default::default()
-            },
-        );
-    }
     pub(super) fn draw_top(&mut self) {
         let mobile = self.width < 700.;
         let w = 960_f64.min(self.width - 32.);
         let x = (self.width - w) / 2.;
-        let viewport = Rect::new(0., 72., self.width, self.height - 124.);
+        let viewport = Rect::new(0., 12., self.width, self.height - 64.);
         let content_height = if mobile { 880. } else { 610. };
         let max = (content_height - viewport.h).max(0.);
         self.regions.insert(
@@ -64,7 +51,7 @@ impl BrowserUi {
         self.scrolls
             .insert("top".into(), clamp(self.scrolls["top"], 0., max));
         self.widgets.begin_clip(viewport);
-        let mut y = 88. - self.scrolls["top"];
+        let mut y = 28. - self.scrolls["top"];
         self.text(
             &self.t("top.title"),
             x,
@@ -75,25 +62,6 @@ impl BrowserUi {
             true,
         );
         y += if mobile { 106. } else { 66. };
-        for (i, lang) in ["ja", "en"].iter().enumerate() {
-            self.control(
-                &format!("language-{lang}"),
-                &self.t(&format!("language.{lang}")),
-                Rect::new(
-                    if mobile { x } else { x + w - 190. } + i as f64 * 96.,
-                    y - 61.,
-                    90.,
-                    32.,
-                ),
-                json!({"kind":"select","id":"language","value":lang}),
-                ControlStyle {
-                    primary: self.model["language"] == *lang,
-                    size: 16.,
-                    disabled: b(&self.model["starting"]),
-                    ..Default::default()
-                },
-            );
-        }
         let left_w = if mobile { w } else { (w * 0.57).floor() };
         let right_x = if mobile { x } else { x + left_w + 20. };
         let right_w = if mobile { w } else { w - left_w - 20. };
@@ -110,16 +78,6 @@ impl BrowserUi {
             true,
         );
         row += 40.;
-        self.text(
-            &self.t("top.new_help"),
-            x + 22.,
-            row,
-            left_w - 44.,
-            16.,
-            MUTED,
-            false,
-        );
-        row += 54.;
         for id in ["name", "seed"] {
             self.text(
                 &self.t(&format!("form.{id}")),
@@ -171,34 +129,12 @@ impl BrowserUi {
             TEXT,
             true,
         );
-        self.text(
-            &self.t("top.load_help"),
-            right_x + 22.,
-            ry + 68.,
-            right_w - 44.,
-            16.,
-            MUTED,
-            false,
-        );
-        self.text(
-            &self.t(if b(&self.model["saved"]) {
-                "top.has_save"
-            } else {
-                "top.no_save"
-            }),
-            right_x + 22.,
-            ry + 114.,
-            right_w - 44.,
-            16.,
-            ACCENT,
-            false,
-        );
         self.button(
             "load",
             &self.t("action.load"),
             Rect::new(
                 right_x + 22.,
-                ry + if mobile { 158. } else { 292. },
+                ry + if mobile { 98. } else { 224. },
                 right_w - 44.,
                 44.,
             ),
@@ -207,8 +143,22 @@ impl BrowserUi {
                 ..Default::default()
             },
         );
+        self.button(
+            "credits-repository",
+            &self.t("credits.repository"),
+            Rect::new(
+                right_x + 22.,
+                ry + if mobile { 154. } else { 280. },
+                right_w - 44.,
+                48.,
+            ),
+            ControlStyle {
+                size: 17.,
+                ..Default::default()
+            },
+        );
         let ny = if mobile { ry + 240. } else { y + 380. };
-        if self.model["topNotice"].is_object() {
+        if b(&self.model["topNotice"]["error"]) {
             let value = self.label(
                 s(&self.model["topNotice"]["id"]),
                 &self.model["topNotice"]["args"],
@@ -232,15 +182,14 @@ impl BrowserUi {
             );
         }
         self.widgets.end_clip();
+        self.game_buttons(Rect::new(0., 0., self.width, self.height));
+        if b(&self.model["settingsOpen"]) {
+            self.draw_settings(Rect::new(0., 0., self.width, self.height - 52.));
+        }
     }
     pub(super) fn draw_game(&mut self) {
         let mobile = self.width < 700. || b(&self.view["coarse"]);
-        let game = Rect::new(
-            0.,
-            if self.fullscreen { 0. } else { 72. },
-            self.width,
-            self.height - if self.fullscreen { 0. } else { 124. },
-        );
+        let game = Rect::new(0., 0., self.width, self.height);
         let map = Rect::new(
             0.,
             game.y,
@@ -269,6 +218,7 @@ impl BrowserUi {
             Rect::new(map.w, game.y, self.width - map.w, game.h)
         };
         self.draw_log(log);
+        self.history_target(log);
         if mobile
             && !self.model["frame"]["ui"]["window"].is_object()
             && !b(&self.model["settingsOpen"])
@@ -291,14 +241,14 @@ impl BrowserUi {
         }
         let f = self.model["frame"].clone();
         let ascii = self.model["displayMode"] == "ascii";
-        let size = if ascii {
-            12.
-        } else if self.mobile_overview && (self.width < 700. || b(&self.view["coarse"])) {
-            16.
+        let size = if self.mobile_overview && (self.width < 700. || b(&self.view["coarse"])) {
+            if ascii { 6. } else { 16. }
+        } else if ascii {
+            12. * n(&self.model["tileSize"]) / 32.
         } else {
             n(&self.model["tileSize"])
         };
-        let cell_h = if ascii { 19. } else { size };
+        let cell_h = if ascii { 19. * size / 12. } else { size };
         let key = format!(
             "{}:{}:{}:{}:{size}:{}:{}",
             self.model["generation"],
@@ -319,6 +269,7 @@ impl BrowserUi {
                 height: map.h,
             });
         }
+        self.apply_zoom_anchor();
         self.constrain_camera();
         let cam = self.camera.expect("map camera");
         self.widgets.begin_clip(map);
@@ -352,7 +303,7 @@ impl BrowserUi {
                         px,
                         py,
                         TextStyle {
-                            size: 16.,
+                            size: 16. * size / 12.,
                             color: if glyph == "@" {
                                 "#9ef0c3"
                             } else if "/!?=:)]*,".contains(glyph) {
@@ -529,7 +480,7 @@ impl BrowserUi {
         let game = Rect::new(game.x, game.y + 60., game.w, (game.h - 60.).max(1.));
         let ui = self.model["frame"]["ui"].clone();
         let d = &ui["window"];
-        let mobile = self.width < 700.;
+        let mobile = self.width < 700. || b(&self.view["coarse"]);
         let w = if b(&d["map_view"]) { 920_f64 } else { 600_f64 }.min(self.width - 28.);
         let x = (self.width - w) / 2.;
         let font = 18.;
@@ -538,6 +489,14 @@ impl BrowserUi {
         let mut rows = Vec::new();
         let mut total = 0.;
         for line in array(&ui["lines"]) {
+            if mobile
+                && matches!(
+                    s(&line["id"]),
+                    "options.hint.bool" | "options.hint.inventory"
+                )
+            {
+                continue;
+            }
             if matches!(
                 s(&line["id"]),
                 "ui.continue"
@@ -555,7 +514,20 @@ impl BrowserUi {
             {
                 continue;
             }
-            let text = s(&line["text"]).to_string();
+            if mobile && line["id"] == "ui.help.entry" && matches!(s(&line["args"][1]["value"]), "help.shell" | "help.redraw" | "help.version" | "help.recall") { continue; }
+            let text = if mobile && line["id"] == "ui.help.entry" {
+                self.mobile_help(s(&line["args"][1]["value"]))
+            } else if mobile && b(&line["selectable"]) && !s(&line["key"]).is_empty() {
+                let prefix = format!("{}) ", s(&line["key"]));
+                s(&line["text"]).strip_prefix(&prefix).unwrap_or(s(&line["text"])).to_string()
+            } else if mobile && s(&line["id"]).starts_with("help.") {
+                self.mobile_help(s(&line["id"]))
+            } else {
+                s(&line["text"]).to_string()
+            };
+            let text = if mobile && (b(&ui["inventory"]) || ui["input"]["kind"] == "item" || matches!(s(&d["kind"]), "inventory_actions" | "inventory_details")) && text.as_bytes().first().is_some_and(u8::is_ascii_lowercase) && text.get(1..3) == Some(") ") {
+                text[3..].to_string()
+            } else { text };
             let height = self
                 .wrap(
                     &text,
@@ -568,8 +540,11 @@ impl BrowserUi {
             rows.push((text, line.clone(), height, total, false));
             total += height;
         }
-        if ui["mode"] == "game" && !s(&d["message"]["text"]).is_empty() {
-            let text = s(&d["message"]["text"]).to_string();
+        if ui["mode"] == "game" && !s(&d["message"]["text"]).is_empty() && !(mobile && matches!(s(&ui["input"]["kind"]), "direction" | "hand" | "help" | "discovery")) {
+            let text = if mobile && ui["input"]["kind"] == "item" {
+                let hint = crate::display::message_language("pack.get_item.for_list", &json!([]), "", s(&self.model["language"])).text;
+                s(&d["message"]["text"]).replace(&hint, if self.model["language"] == "ja" { "？" } else { "?" })
+            } else { s(&d["message"]["text"]).to_string() };
             let height = self.wrap(&text, inner - 8., font).len() as f64 * line_h + 8.;
             rows.push((text, json!({}), height, total, false));
             total += height;
@@ -581,7 +556,7 @@ impl BrowserUi {
         }
         let field = if self.model["input"]["kind"] == "text" {
             Some("prompt-text")
-        } else if b(&d["key_entry"]) {
+        } else if b(&d["key_entry"]) && (!mobile || self.model["input"]["kind"] == "symbol") {
             Some("command-key")
         } else {
             None
@@ -589,20 +564,27 @@ impl BrowserUi {
         let ending = matches!(s(&ui["mode"]), "death" | "tombstone" | "score" | "victory");
         let cols = if mobile { 2 } else { 3 };
         let action_rows = array(&d["actions"]).len().div_ceil(cols) as f64;
-        let prompt = [
-            &d["prompt"],
-            &self.model["input"]["text"],
-            &ui["more"]["text"],
-        ]
-        .into_iter()
-        .find(|v| !s(v).is_empty())
-        .map(s)
-        .unwrap_or("")
-        .to_string();
+        let prompt = if mobile {
+            self.mobile_dialog_prompt(&ui, d)
+        } else {
+            [
+                &d["prompt"],
+                &self.model["input"]["text"],
+                &ui["more"]["text"],
+            ]
+            .into_iter()
+            .find(|v| !s(v).is_empty())
+            .map(s)
+            .unwrap_or("")
+            .to_string()
+        };
         let prompt_height = if prompt.is_empty() {
             0.
         } else {
-            self.wrap(&prompt, inner, 16.).len() as f64 * 27. + 8.
+            self.wrap(&prompt, inner, if mobile { 17. } else { 16. })
+                .len() as f64
+                * 27.
+                + 8.
         };
         let bottom = action_rows * 46.
             + if field.is_some() { 56. } else { 0. }
@@ -702,7 +684,11 @@ impl BrowserUi {
         for (i, a) in array(&d["actions"]).iter().enumerate() {
             self.control(
                 &format!("window-{}", a["key"]),
-                s(&a["text"]),
+                &if mobile {
+                    self.mobile_dialog_action(&ui, d, a)
+                } else {
+                    s(&a["text"]).to_string()
+                },
                 Rect::new(
                     x + 16. + (i % cols) as f64 * (bw + gap),
                     ay + (i / cols) as f64 * 46.,
@@ -712,6 +698,7 @@ impl BrowserUi {
                 json!({"kind":"send","key":a["key"]}),
                 ControlStyle {
                     disabled: !b(&self.model["running"]) || b(&self.model["returnAfterEnd"]),
+                    size: if mobile { 17. } else { 16. },
                     key: Some(a["key"].clone()),
                     ..Default::default()
                 },
@@ -731,7 +718,15 @@ impl BrowserUi {
             ay += 46.;
         }
         if !prompt.is_empty() {
-            self.text(&prompt, x + 16., ay + 4., inner, 16., "#cad7e2", false);
+            self.text(
+                &prompt,
+                x + 16.,
+                ay + 4.,
+                inner,
+                if mobile { 17. } else { 16. },
+                "#cad7e2",
+                false,
+            );
         }
         self.dialog_rect = Some(panel);
     }
@@ -797,16 +792,22 @@ impl BrowserUi {
         let viewport = Rect::new(x + 16., y + 58., w - 32., h - 70.);
         let mut row = viewport.y - self.scrolls["settings"];
         self.widgets.begin_clip(viewport);
+        self.button(
+            "fullscreen",
+            &self.t(if b(&self.view["fullscreen"]) {
+                "action.exit_fullscreen"
+            } else {
+                "action.fullscreen"
+            }),
+            Rect::new(viewport.x, row, viewport.w, 40.),
+            Default::default(),
+        );
+        row += 54.;
         let saved = b(&self.model["saved"]);
         self.button(
             "save",
             &self.t("action.save"),
-            Rect::new(
-                viewport.x,
-                row,
-                if saved { viewport.w * 0.35 } else { viewport.w },
-                42.,
-            ),
+            Rect::new(viewport.x, row, viewport.w * 0.35, 42.),
             ControlStyle {
                 disabled: !b(&self.model["running"])
                     || b(&self.model["savePending"])
@@ -814,7 +815,7 @@ impl BrowserUi {
                 ..Default::default()
             },
         );
-        if saved {
+        {
             self.button(
                 "download-save",
                 &self.t("action.download"),
@@ -826,11 +827,31 @@ impl BrowserUi {
                 ),
                 ControlStyle {
                     size: 16.,
+                    disabled: !saved || b(&self.model["starting"]) || b(&self.model["savePending"]),
                     ..Default::default()
                 },
             );
         }
         row += 70.;
+        let busy = b(&self.model["starting"])
+            || b(&self.model["savePending"])
+            || b(&self.model["returnAfterEnd"]);
+        self.text(
+            &self.t("form.language"),
+            viewport.x,
+            row,
+            viewport.w,
+            17.,
+            MUTED,
+            false,
+        );
+        row += 30.;
+        self.dropdown_control(
+            "language",
+            Rect::new(viewport.x, row, viewport.w, 48.),
+            busy || !b(&self.model["topOpen"]),
+        );
+        row += 60.;
         self.text(
             &self.t("form.display_mode"),
             viewport.x,
@@ -841,24 +862,11 @@ impl BrowserUi {
             false,
         );
         row += 26.;
-        for (i, mode) in ["ascii", "tiles", "pixels"].iter().enumerate() {
-            self.control(
-                &format!("view-{mode}"),
-                &self.t(&format!("view.{mode}")),
-                Rect::new(
-                    viewport.x + i as f64 * (viewport.w + 6.) / 3.,
-                    row,
-                    (viewport.w - 12.) / 3.,
-                    40.,
-                ),
-                json!({"kind":"select","id":"display-mode","value":mode}),
-                ControlStyle {
-                    primary: self.model["displayMode"] == *mode,
-                    size: 16.,
-                    ..Default::default()
-                },
-            );
-        }
+        self.dropdown_control(
+            "display-mode",
+            Rect::new(viewport.x, row, viewport.w, 48.),
+            busy,
+        );
         row += 62.;
         if self.model["displayMode"] != "ascii" {
             self.text(
@@ -909,17 +917,6 @@ impl BrowserUi {
         );
         row += 52.;
         self.button(
-            "fullscreen",
-            &self.t(if b(&self.view["fullscreen"]) {
-                "action.exit_fullscreen"
-            } else {
-                "action.fullscreen"
-            }),
-            Rect::new(viewport.x, row, viewport.w, 40.),
-            Default::default(),
-        );
-        row += 62.;
-        self.button(
             "settings-top",
             &self.t("action.top"),
             Rect::new(viewport.x, row, viewport.w, 42.),
@@ -929,13 +926,6 @@ impl BrowserUi {
             },
         );
         row += 54.;
-        for (id, extra) in [
-            ("settings.top_help", 20.),
-            ("instruction.movement", 14.),
-            ("instruction.prompts", 14.),
-        ] {
-            row += self.text(&self.t(id), viewport.x, row, viewport.w, 16., MUTED, false) + extra;
-        }
         self.widgets.end_clip();
         let total = row - viewport.y + self.scrolls["settings"];
         let max = (total - viewport.h).max(0.);

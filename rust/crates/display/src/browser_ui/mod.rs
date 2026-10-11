@@ -1,11 +1,16 @@
 //! Browser surface composition and interaction, independent of DOM/Canvas APIs.
+mod dropdown;
+mod gestures;
+mod history;
 pub mod hud;
 mod interaction;
 mod mobile;
 mod mobile_armor;
+mod mobile_dialog;
 mod mobile_map;
 mod mobile_rest;
 mod mobile_stairs;
+mod mobile_top;
 mod screens;
 #[cfg(test)]
 mod tests;
@@ -54,6 +59,7 @@ struct Drag {
     last_x: f64,
     last_y: f64,
     moved: bool,
+    activated: bool,
     hit: Option<Control>,
     region: String,
 }
@@ -76,11 +82,14 @@ pub struct BrowserUi {
     scrolls: BTreeMap<String, f64>,
     follow_log: bool,
     drag: Option<Drag>,
+    gestures: gestures::Gestures,
     description: String,
     active_row: Value,
     hud: hud::HudWidget,
     mobile_controls: bool,
-    mobile_log: bool,
+    history_open: bool,
+    dropdown: String,
+    mobile_generation: u64,
     mobile_operations: bool,
     mobile_movement: u32,
     mobile_overview: bool,
@@ -93,6 +102,9 @@ impl BrowserUi {
         self.model = model;
     }
     fn draw_hud(&mut self, map: Rect) {
+        self.draw_hud_area(Rect::new(map.x, map.y, map.w - 104., map.h));
+    }
+    fn draw_hud_area(&mut self, map: Rect) {
         let catalog =
             self.catalogs[usize::from(self.model["language"] == "en")]["messages"].clone();
         let label = |id: &str| {
@@ -104,7 +116,7 @@ impl BrowserUi {
         self.hud.draw(
             &mut self.widgets,
             hud::HudData {
-                map: Rect::new(map.x, map.y, map.w - 104., map.h),
+                map,
                 name: s(&self.model["frame"]["ui"]["name"]),
                 status: &self.model["frame"]["ui"]["status"],
                 offset: self.scrolls["hud"],
@@ -157,11 +169,14 @@ impl BrowserUi {
                 .collect(),
             follow_log: true,
             drag: None,
+            gestures: gestures::Gestures::default(),
             description: String::new(),
             active_row: Value::Null,
             hud: hud::HudWidget::default(),
-            mobile_controls: false,
-            mobile_log: false,
+            mobile_controls: true,
+            history_open: false,
+            dropdown: String::new(),
+            mobile_generation: 0,
             mobile_operations: false,
             mobile_movement: 0,
             mobile_overview: false,
@@ -238,10 +253,23 @@ impl BrowserUi {
         self.width = n(&self.view["width"]).max(240.);
         self.height = n(&self.view["height"]).max(240.);
         let mobile = self.width < 700. || b(&self.view["coarse"]);
+        let generation = n(&self.model["generation"]) as u64;
+        if b(&self.model["running"]) && generation != self.mobile_generation {
+            self.mobile_controls = true;
+            self.mobile_generation = generation;
+        }
+        if b(&self.model["topOpen"]) || b(&self.model["settingsOpen"]) {
+            self.history_open = false;
+        }
+        if !b(&self.model["settingsOpen"]) {
+            self.dropdown.clear();
+        }
         if !mobile || b(&self.model["topOpen"]) || !b(&self.model["running"]) {
             self.mobile_operations = false;
         }
-        let scope = if b(&self.model["topOpen"]) {
+        let scope = if self.history_open {
+            "history".into()
+        } else if b(&self.model["topOpen"]) {
             "top".into()
         } else if b(&self.model["settingsOpen"]) {
             "settings".into()
@@ -258,6 +286,7 @@ impl BrowserUi {
             "game".into()
         };
         if scope != self.scope {
+            self.gestures = gestures::Gestures::default();
             self.hud.selected.clear();
             self.drag = None;
             self.widgets.pressed.clear();
@@ -276,27 +305,6 @@ impl BrowserUi {
         self.hud.layout = Value::Null;
         self.widgets
             .rect(Rect::new(0., 0., self.width, self.height), BG);
-        if !self.fullscreen && !mobile {
-            let title = self.t("app.heading");
-            let title_width = self.width - 32.;
-            let mut title_size = if self.width < 700. { 24. } else { 30. };
-            while title_size > 18.
-                && (self.measure)(&title, title_size, true, false).width > title_width
-            {
-                title_size -= 1.;
-            }
-            self.widgets.single_line(
-                &title,
-                Rect::new(16., 12., title_width, 48.),
-                LineStyle {
-                    text: TextStyle::new(title_size, TEXT, true),
-                    center: false,
-                    ellipsis: true,
-                },
-                self.measure,
-            );
-            self.footer();
-        }
         if mobile {
             self.draw_mobile();
         } else if b(&self.model["topOpen"]) {
@@ -304,12 +312,16 @@ impl BrowserUi {
         } else {
             self.draw_game();
         }
+        if self.history_open {
+            self.draw_history();
+        }
+        self.draw_dropdown();
         self.paint_count += 1;
         json!({"commands":self.widgets.commands,"diagnostics":self.diagnostics()})
     }
     pub fn diagnostics(&self) -> Value {
         json!({"renderer":"canvas2d","uiOwner":"rust","paintCount":self.paint_count,"fullscreen":self.fullscreen,
-            "pointer":{"activeId":self.drag.as_ref().map(|d|d.id),"pressedId":self.widgets.pressed,"hoverId":self.widgets.hover,"focusId":self.widgets.focus},
+            "pointer":{"activeId":self.drag.as_ref().map(|d|d.id),"capturedIds":self.captured_ids(),"pressedId":self.widgets.pressed,"hoverId":self.widgets.hover,"focusId":self.widgets.focus},
             "width":self.width,"height":self.height,"scope":self.scope,"controls":self.widgets.controls,
             "text":self.widgets.text_runs.iter().map(|v|s(&v["text"])).collect::<Vec<_>>(),"icons":self.widgets.icons,"hud":self.hud.layout,
             "camera":self.camera,"mapRect":self.map_rect,"dialogRect":self.dialog_rect,"scrolls":self.scrolls,"regions":self.regions})

@@ -34,7 +34,7 @@ fn raw_key(e: &Value) -> Option<u32> {
     )
 }
 impl BrowserUi {
-    fn hit(&self, x: f64, y: f64) -> Option<Control> {
+    pub(super) fn hit(&self, x: f64, y: f64) -> Option<Control> {
         self.widgets
             .controls
             .iter()
@@ -71,6 +71,7 @@ impl BrowserUi {
         }
     }
     fn cancel_pointer(&mut self, clear_hover: bool, effects: &mut Vec<Value>) {
+        self.stop_hold();
         if let Some(drag) = self.drag.take() {
             effects.push(json!({"kind":"release","id":drag.id}));
         }
@@ -79,7 +80,7 @@ impl BrowserUi {
             self.widgets.hover.clear();
         }
     }
-    fn activate(&mut self, control: &Control, value: &Value, effects: &mut Vec<Value>) {
+    pub(super) fn activate(&mut self, control: &Control, value: &Value, effects: &mut Vec<Value>) {
         if control.disabled {
             return;
         }
@@ -87,6 +88,24 @@ impl BrowserUi {
             return;
         }
         match s(&control.action["kind"]) {
+            "dropdown" => {
+                self.dropdown = s(&control.action["id"]).into();
+                let selected = s(&self.model[if self.dropdown == "language" {
+                    "language"
+                } else {
+                    "displayMode"
+                }]);
+                self.widgets.focus = format!("select-{}-{selected}", self.dropdown);
+            }
+            "dropdown-close" => self.dropdown.clear(),
+            "dropdown-choice" => {
+                self.dropdown.clear();
+                effects.push(json!({"kind":"select","id":control.action["id"],"value":control.action["value"]}));
+            }
+            "history" => {
+                self.history_open = b(&control.action["open"]);
+                self.follow_log = true;
+            }
             "send" => {
                 if b(&self.model["running"])
                     && !b(&self.model["topOpen"])
@@ -123,6 +142,8 @@ impl BrowserUi {
                         _ => index as f64 - 1.,
                     }
                 };
+                self.mobile_overview = false;
+                self.mobile_full_map = false;
                 effects.push(json!({"kind":"zoom","index":clamp(next,0.,(sizes.len()-1) as f64)}));
             }
             "focus" => {
@@ -140,7 +161,11 @@ impl BrowserUi {
         let y = n(&event["y"]);
         let id = event["id"].as_i64().unwrap_or(0);
         let mouse = event["pointerType"] == "mouse";
+        if self.touch_gesture(&event, &mut effects) {
+            return json!({"consumed":true,"effects":effects,"diagnostics":self.diagnostics()});
+        }
         match s(&event["type"]) {
+            "hold-tick" => self.repeat_hold(&event, &mut effects),
             "raw-key" => return json!({"raw":raw_key(&event),"diagnostics":self.diagnostics()}),
             "center" => self.center_key.clear(),
             "cancel" => {
@@ -186,11 +211,20 @@ impl BrowserUi {
                             last_x: x,
                             last_y: y,
                             moved: false,
+                            activated: false,
                             hit,
                             region: self.region_at(x, y),
                         });
                         effects.push(json!({"kind":"capture","id":id}));
                         effects.push(json!({"kind":"canvas-focus"}));
+                        if let Some(control) = self.drag.as_ref().and_then(|d| d.hit.clone()) {
+                            self.start_hold(&control, id, &mut effects);
+                            if self.holding(id)
+                                && let Some(drag) = &mut self.drag
+                            {
+                                drag.activated = true;
+                            }
+                        }
                     }
                 }
             }
@@ -247,10 +281,13 @@ impl BrowserUi {
                                 );
                             }
                             let mobile_panel = (self.width < 700. || b(&self.view["coarse"]))
-                                && matches!(drag.region.as_str(), "settings" | "mobile-operations")
+                                && matches!(
+                                    drag.region.as_str(),
+                                    "settings" | "mobile-operations" | "top"
+                                )
                                 && !drag.hit.as_ref().is_some_and(|c| c.kind == "slider");
                             if drag.moved
-                                && (drag.hit.is_none() || drag.region == "hud" || mobile_panel)
+                                && (drag.hit.is_none() || drag.region == "hud" || drag.region == "log" || mobile_panel)
                             {
                                 if drag.region == "hud" {
                                     self.scroll_by("hud", -dx);
@@ -284,6 +321,7 @@ impl BrowserUi {
                     self.cancel_pointer(!mouse, &mut effects);
                     if b(&event["captured"])
                         && drag.scope == self.scope
+                        && !drag.activated
                         && !drag.moved
                         && (x - drag.x).hypot(y - drag.y) <= 6.
                     {
@@ -396,6 +434,19 @@ impl BrowserUi {
         }
         let key = s(&e["key"]);
         let native = s(&e["native"]);
+        if !self.dropdown.is_empty() {
+            self.dropdown_key(key, effects);
+            return true;
+        }
+        if self.history_open {
+            match key {
+                "Escape" => self.history_open = false,
+                "ArrowDown" | "PageDown" => self.scroll_by("log", 180.),
+                "ArrowUp" | "PageUp" => self.scroll_by("log", -180.),
+                _ => {}
+            }
+            return true;
+        }
         if key == "Tab" {
             let modal =
                 self.model["frame"]["ui"]["window"].is_object() && !b(&self.model["settingsOpen"]);
