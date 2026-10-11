@@ -19,6 +19,7 @@ node tests/browser-smoke/canvas.mjs
 | script（tests/browser-smoke/） | 確認対象 |
 |---|---|
 | `canvas.mjs` | PC・スマホ・日英の開始、単一Canvas、持ち物・ヘルプ・設定、IME編集、保存復元、終了、全画面、フッターのリンク |
+| `mobile-ui.mjs` | スマホ初期2ボタン、設定内の開始/保存/直接ロード、48px以上の新規ターゲット、操作一覧の全コマンド・ボタン上スワイプ・背景入力遮断、広域・全画面のC/RNG不変、320px縦/横表示、PC幅への復帰 |
 | `hud-widgets.mjs` | HUDの配置・正確な値の詳細、狭い画面の横スクロール、フォーカス、DPR |
 | `save-export.mjs` | ダウンロードした実ファイル、IndexedDBとの一致、取消、復元と次ターン |
 | `startup.mjs` | Node/start.ps1、既存origin、ポート競合、HTTPS、保存後の再起動 |

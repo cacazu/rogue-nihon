@@ -434,6 +434,11 @@ pub unsafe extern "C" fn rg_host_present(cells: *const u8, rows: u32, columns: u
         "food":snapshot[RG_SNAPSHOT_FOOD as usize],"strength":snapshot[RG_SNAPSHOT_STRENGTH as usize],
         "armor":snapshot[RG_SNAPSHOT_ARMOR as usize],"experience":snapshot[RG_SNAPSHOT_EXPERIENCE as usize],
         "turn":snapshot[RG_SNAPSHOT_TURN as usize]}});
+    engine::with_session_mut(|session| {
+        session.display.player = rogue_display::player_state::PlayerState::from_snapshot(
+            snapshot[RG_SNAPSHOT_FLAGS as usize],
+        );
+    });
     let value = engine::present(value);
     emit(&value);
 }

@@ -43,11 +43,19 @@ impl BrowserUi {
             .cloned()
     }
     fn region_at(&self, x: f64, y: f64) -> String {
-        ["settings", "dialog", "top", "log", "hud", "map"]
-            .into_iter()
-            .find(|id| self.regions.get(*id).is_some_and(|r| r.rect.contains(x, y)))
-            .unwrap_or("")
-            .into()
+        [
+            "settings",
+            "mobile-operations",
+            "dialog",
+            "top",
+            "log",
+            "hud",
+            "map",
+        ]
+        .into_iter()
+        .find(|id| self.regions.get(*id).is_some_and(|r| r.rect.contains(x, y)))
+        .unwrap_or("")
+        .into()
     }
     fn scroll_by(&mut self, id: &str, delta: f64) {
         if let Some(region) = self.regions.get(id) {
@@ -73,6 +81,9 @@ impl BrowserUi {
     }
     fn activate(&mut self, control: &Control, value: &Value, effects: &mut Vec<Value>) {
         if control.disabled {
+            return;
+        }
+        if self.mobile_activate(control, effects) {
             return;
         }
         match s(&control.action["kind"]) {
@@ -235,7 +246,12 @@ impl BrowserUi {
                                     &mut effects,
                                 );
                             }
-                            if drag.moved && (drag.hit.is_none() || drag.region == "hud") {
+                            let mobile_panel = (self.width < 700. || b(&self.view["coarse"]))
+                                && matches!(drag.region.as_str(), "settings" | "mobile-operations")
+                                && !drag.hit.as_ref().is_some_and(|c| c.kind == "slider");
+                            if drag.moved
+                                && (drag.hit.is_none() || drag.region == "hud" || mobile_panel)
+                            {
                                 if drag.region == "hud" {
                                     self.scroll_by("hud", -dx);
                                 } else if drag.region == "map" {
@@ -342,6 +358,7 @@ impl BrowserUi {
             || b(&self.model["returnAfterEnd"])
             || b(&self.model["topOpen"])
             || b(&self.model["settingsOpen"])
+            || self.mobile_operations
         {
             return;
         }
@@ -487,6 +504,33 @@ impl BrowserUi {
                         .cloned()
                     {
                         self.activate(&c, &json!(key), effects);
+                    }
+                }
+                _ => {}
+            }
+            return true;
+        }
+        if self.mobile_operations {
+            match key {
+                "Escape" => self.mobile_operations = false,
+                "PageDown" | "PageUp" | "ArrowDown" | "ArrowUp" => self.scroll_by(
+                    "mobile-operations",
+                    match key {
+                        "PageDown" => 180.,
+                        "PageUp" => -180.,
+                        "ArrowDown" => 36.,
+                        _ => -36.,
+                    },
+                ),
+                "Enter" | " " => {
+                    if let Some(c) = self
+                        .widgets
+                        .controls
+                        .iter()
+                        .find(|c| c.id == self.widgets.focus && !c.disabled)
+                        .cloned()
+                    {
+                        self.activate(&c, &Value::Null, effects);
                     }
                 }
                 _ => {}

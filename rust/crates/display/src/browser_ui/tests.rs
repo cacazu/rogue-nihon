@@ -28,10 +28,6 @@ fn click(ui: &mut BrowserUi, id: &str) -> Value {
 fn responsive_hud_has_one_row_and_centered_icons() {
     let mut ui = BrowserUi::new(measure);
     for (width, height, fullscreen) in [
-        (320., 844., false),
-        (320., 844., true),
-        (390., 844., false),
-        (390., 844., true),
         (700., 900., false),
         (700., 900., true),
         (1240., 900., false),
@@ -114,19 +110,19 @@ fn responsive_hud_has_one_row_and_centered_icons() {
 #[test]
 fn hud_click_and_escape_are_local_and_never_send_game_input() {
     let mut ui = BrowserUi::new(measure);
-    ui.render(model(), view(390., 844.));
+    ui.render(model(), view(700., 844.));
     let clicked = click(&mut ui, "hud-hp");
     assert!(
         array(&clicked["effects"])
             .iter()
             .all(|e| e["kind"] != "send")
     );
-    let output = ui.render(model(), view(390., 844.));
+    let output = ui.render(model(), view(700., 844.));
     assert_eq!(output["diagnostics"]["hud"]["tooltip"]["id"], "hp");
     let escape = ui.event(json!({"type":"key","key":"Escape"}));
     assert_eq!(escape["consumed"], true);
     assert!(array(&escape["effects"]).is_empty());
-    ui.render(model(), view(390., 844.));
+    ui.render(model(), view(700., 844.));
     assert!(ui.hud.layout["tooltip"].is_null());
 }
 #[test]
@@ -208,7 +204,7 @@ fn hud_is_reusable_without_a_browser_surface() {
 #[test]
 fn hud_swipe_and_keyboard_reveal_items_without_game_commands() {
     let mut ui = BrowserUi::new(measure);
-    ui.render(model(), view(320., 844.));
+    ui.render(model(), view(700., 844.));
     let row: Rect = serde_json::from_value(ui.hud.layout["row"].clone()).unwrap();
     let x = row.x + row.w - 30.;
     let y = row.y + row.h / 2.;
@@ -222,11 +218,11 @@ fn hud_swipe_and_keyboard_reveal_items_without_game_commands() {
             .all(|effect| effect["kind"] != "send")
     );
     ui.event(json!({"type":"up","id":8,"x":x-120.,"y":y,"pointerType":"touch","captured":true}));
-    ui.render(model(), view(320., 844.));
+    ui.render(model(), view(700., 844.));
     assert!(n(&ui.hud.layout["offset"]) > 0.);
     ui.widgets.focus = "hud-experience".into();
     ui.event(json!({"type":"key","key":"Tab"}));
-    ui.render(model(), view(320., 844.));
+    ui.render(model(), view(700., 844.));
     let control = ui
         .widgets
         .controls
@@ -249,4 +245,73 @@ fn settings_blocks_game_input_before_the_next_repaint() {
     let event = ui.event(json!({"type":"key","key":"h"}));
     assert_eq!(event["consumed"], true);
     assert!(array(&event["effects"]).is_empty());
+}
+
+#[test]
+fn mobile_keeps_persistent_hunger_warnings_and_only_two_initial_controls() {
+    let mut ui = BrowserUi::new(measure);
+    for (hunger, label, color) in [
+        (0, "空腹なし", ACCENT),
+        (1, "空腹", "#efd18e"),
+        (2, "衰弱", ERROR),
+        (3, "飢餓", ERROR),
+    ] {
+        let mut m = model();
+        m["frame"]["ui"]["status"]["args"][9]["value"] = json!(format!("status.hunger.{hunger}"));
+        let output = ui.render(m, view(390., 844.));
+        assert_eq!(
+            ui.widgets
+                .controls
+                .iter()
+                .map(|c| c.id.as_str())
+                .collect::<Vec<_>>(),
+            ["header-fullscreen", "settings-toggle"]
+        );
+        assert!(array(&output["commands"]).iter().any(|c| c["op"] == "text"
+            && c["text"] == label
+            && c["color"] == color
+            && n(&c["size"]) >= 17.));
+        assert!(!ui.regions.contains_key("log"));
+    }
+}
+
+#[test]
+fn mobile_has_one_large_stair_button_and_forwards_the_selected_original_key() {
+    let mut ui = BrowserUi::new(measure);
+    ui.mobile_controls = true;
+    for (amulet, id, key) in [
+        (false, "touch-action-action.descend", 62),
+        (true, "touch-ascend", 60),
+        (false, "touch-action-action.descend", 62),
+    ] {
+        let mut m = model();
+        m["frame"]["ui"]["mode"] = json!("game");
+        m["frame"]["ui"]["input"] = json!({"kind":"command"});
+        m["frame"]["ui"]["player_state"] = json!({"amulet":amulet,"levitating":false});
+        m["frame"]["ui"]["map_controls"] =
+            crate::game_window::map_controls(&m["frame"]["ui"], true);
+        ui.render(m, view(390., 844.));
+        let controls: Vec<_> = ui
+            .widgets
+            .controls
+            .iter()
+            .filter(|control| {
+                matches!(
+                    control.id.as_str(),
+                    "touch-ascend" | "touch-action-action.descend"
+                )
+            })
+            .collect();
+        assert_eq!(controls.len(), 1);
+        assert_eq!(controls[0].id, id);
+        assert_eq!(controls[0].rect.w, 186.);
+        assert_eq!(controls[0].rect.h, 52.);
+        let event = click(&mut ui, id);
+        let sends: Vec<_> = array(&event["effects"])
+            .iter()
+            .filter(|effect| effect["kind"] == "send")
+            .cloned()
+            .collect();
+        assert_eq!(sends, vec![json!({"kind":"send","key":key})]);
+    }
 }

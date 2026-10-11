@@ -2,6 +2,28 @@
   "version": 1,
   "locale": "ja",
   "messages": {
+    "mobile.show_controls": "操作ボタンを表示",
+    "mobile.hide_controls": "操作ボタンを隠す",
+    "mobile.log": "ログを見る",
+    "mobile.wait": "待つ",
+    "mobile.step": "移動：1歩",
+    "mobile.run": "移動：走る",
+    "mobile.run_adjacent": "移動：隣接するものまで走る",
+    "mobile.count": "反復回数の数字",
+    "mobile.wide": "広域",
+    "mobile.near": "周辺",
+    "mobile.full_map": "全体図",
+    "mobile.map_player": "自分",
+    "mobile.map_stairs": "階段",
+    "mobile.map_enemy": "敵",
+    "mobile.map_item": "品物",
+    "mobile.search": "探す",
+    "mobile.throw": "投げる",
+    "mobile.weapon": "武器",
+    "mobile.ascend": "上る",
+    "mobile.rest": "休息（50ターン）",
+    "mobile.armor_take_off": "防具を脱ぐ",
+    "mobile.armor_wear": "防具を着る",
     "app.title": "元祖 ROGUE · 5.4.4",
     "app.version": "元祖 ROGUE · 5.4.4",
     "app.heading": "元祖 ROGUE · 5.4.4",
@@ -123,6 +145,7 @@
     "top.has_save": "保存されたゲームから再開できます。",
     "random.name": "冒険者{number}",
     "settings.top_help": "戻る前に保存すると、ロードで続きから遊べます。",
-    "notice.top": "トップ画面に戻りました。"
+    "notice.top": "トップ画面に戻りました。",
+    "action.import": "セーブファイルから再開"
   }
 }

@@ -368,9 +368,16 @@ impl Controller {
     }
     fn invoke(&mut self, id: &str) {
         match id {
+            "import-save" if !flag(&self.model["starting"]) && !flag(&self.model["savePending"]) => {
+                self.model["starting"]=json!(true);
+                self.effects.push(json!({"kind":"save-import","generation":self.model["generation"]}));
+            },
             "credits-repository"=>self.effects.push(json!({"kind":"open","url":"https://github.com/cacazu/jrogue/tree/main/rogue-nihon"})),
             "new-game" if flag(&self.model["topOpen"]) && !flag(&self.model["starting"]) && !self.composing && flag(&self.model["ready"]) =>self.start(false),
             "load" if flag(&self.model["topOpen"]) && !flag(&self.model["starting"]) => {
+                self.model["starting"]=json!(true);self.effects.push(json!({"kind":"save-read","operation":"load","generation":self.model["generation"]}));
+            },
+            "settings-load" if !flag(&self.model["starting"]) && !flag(&self.model["savePending"]) && flag(&self.model["saved"]) => {
                 self.model["starting"]=json!(true);self.effects.push(json!({"kind":"save-read","operation":"load","generation":self.model["generation"]}));
             },
             "save" if flag(&self.model["running"]) && !flag(&self.model["savePending"]) && !flag(&self.model["returnAfterEnd"]) => {
@@ -542,6 +549,15 @@ impl Controller {
                     "end" => self.ending_ack = number(&r["request"]) as i64,
                     "send" => self.focus("canvas"),
                     _ => {}
+                }
+            }
+            "import" => {
+                self.model["starting"] = json!(false);
+                if ok {
+                    self.start(true);
+                } else if !flag(&r["cancelled"]) {
+                    self.log(r["error"].clone());
+                    self.notice("error.load", json!({}), true);
                 }
             }
             "init" | "load" => {
@@ -800,7 +816,14 @@ impl Controller {
                                     }
                                 }
                                 "submit" => self.submit(text(&effect["id"])),
-                                "send" => self.queue(json!([effect["key"]]), "send"),
+                                "send" => self.queue(
+                                    if effect["keys"].is_array() {
+                                        effect["keys"].clone()
+                                    } else {
+                                        json!([effect["key"]])
+                                    },
+                                    "send",
+                                ),
                                 _ => self.effects.push(effect.clone()),
                             }
                         }

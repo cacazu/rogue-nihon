@@ -284,11 +284,17 @@ impl BrowserUi {
             self.draw_settings(game);
         }
     }
-    fn draw_map(&mut self, map: Rect) {
+    pub(super) fn draw_map(&mut self, map: Rect) {
+        if self.mobile_full_map && (self.width < 700. || b(&self.view["coarse"])) {
+            self.draw_mobile_full_map(map);
+            return;
+        }
         let f = self.model["frame"].clone();
         let ascii = self.model["displayMode"] == "ascii";
         let size = if ascii {
             12.
+        } else if self.mobile_overview && (self.width < 700. || b(&self.view["coarse"])) {
+            16.
         } else {
             n(&self.model["tileSize"])
         };
@@ -387,7 +393,7 @@ impl BrowserUi {
         (x >= 0. && x < n(&f["width"]) && y >= 1. && y < n(&f["height"]) - 1.)
             .then(|| json!({"x":x,"y":y}))
     }
-    fn draw_log(&mut self, r: Rect) {
+    pub(super) fn draw_log(&mut self, r: Rect) {
         self.widgets.box_rect(r, "#111b20", Some(LINE), 0.);
         let title = if self.description.is_empty() {
             self.t("log.title")
@@ -516,7 +522,7 @@ impl BrowserUi {
             );
         }
     }
-    fn draw_dialog(&mut self, game: Rect) {
+    pub(super) fn draw_dialog(&mut self, game: Rect) {
         self.widgets.controls.clear();
         self.widgets.rect(game, "#0006");
         // Keep the in-game buttons visible and clear of modal contents.

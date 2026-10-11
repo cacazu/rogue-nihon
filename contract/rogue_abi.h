@@ -44,6 +44,11 @@
 #define RG_SNAPSHOT_FLAGS 18
 #define RG_SNAPSHOT_PENDING 19
 
+/* Existing RG_SNAPSHOT_FLAGS bits: original player.t_flags in the low 16
+ * bits (ISLEVIT = octal 0000010), original amulet at bit 18. Read-only. */
+#define RG_FLAG_LEVITATING 0x00000008
+#define RG_FLAG_AMULET 0x00040000
+
 #ifdef __cplusplus
 extern "C" {
 #endif

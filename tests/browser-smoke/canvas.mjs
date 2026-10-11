@@ -29,7 +29,8 @@ async function open({fixture="",width=1240,height=900,lang="ja",scale=1}={}){
   page=await context.newPage();await installBrowserTestAdapter(page);page.on("pageerror",e=>evidence.errors.push(e.message));
   await page.goto(base+"?trace=1&view=pixels&lang="+lang);
   await page.waitForFunction(()=>window.__rogueBrowserTest?.canvas?.paintCount>0);
-  assert.deepEqual((await scene()).controls.filter(c=>c.id.startsWith("credits-")).map(c=>c.id),["credits-repository"]);
+  if(width>=700)assert.deepEqual((await scene()).controls.filter(c=>c.id.startsWith("credits-")).map(c=>c.id),["credits-repository"]);
+  else assert.deepEqual((await scene()).controls.map(c=>c.id),["header-fullscreen","settings-toggle"]);
 }
 async function scene(){return page.evaluate(()=>__rogueBrowserTest.canvas);}
 async function click(id){
@@ -42,7 +43,12 @@ async function field(id,text){
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
 }
 async function settled(){await page.waitForFunction(()=>__rogueBrowserTest.running&&__rogueBrowserTest.trace&&__rogueBrowserTest.inputRequestCount>0&&__rogueBrowserTest.queuePending===0);}
-async function start(name="Canvas勇者",seed="17"){await field("name",name);await field("seed",seed);await click("new-game");await settled();}
+async function start(name="Canvas勇者",seed="17"){
+  const mobile=await page.evaluate(()=>innerWidth<700||matchMedia('(pointer:coarse)').matches);
+  if(mobile)await click("settings-toggle");
+  await field("name",name);await field("seed",seed);await click("new-game");await settled();
+  if(mobile){await click("settings-toggle");await click("mobile-controls");}
+}
 async function state(){return page.evaluate(()=>({words:__rogueBrowserTest.trace?.words,input:__rogueBrowserTest.inputRequestCount,frame:__rogueBrowserTest.frame,queue:__rogueBrowserTest.queuePending,exit:__rogueBrowserTest.diagnostics.exitCode,log:__rogueBrowserTest.canvas.text}));}
 async function key(value){const before=(await state()).input;await page.keyboard.press(value);await page.waitForFunction(n=>__rogueBrowserTest.queuePending===0&&(__rogueBrowserTest.inputRequestCount>n||__rogueBrowserTest.diagnostics.exitCode!==null),before);await page.evaluate(()=>new Promise(r=>requestAnimationFrame(r)));}
 async function shot(name){await page.screenshot({path:path.join(output,name+".png")});evidence.screenshots.push(name+".png");}
@@ -310,13 +316,14 @@ try{
     await shot("game-mobile");await key("?");await click("window-42");await shot("help-mobile");await page.keyboard.press("PageDown");assert.ok((await scene()).scrolls.dialog>0);await click("window-32");
   });
   await check("Canvas combat log scroll preserves manual reading and never becomes a Space wait",async()=>{
-    await open({fixture:"combat",width:390,height:844});await start();
+    await open({fixture:"combat",width:390,height:400});await start();
     for(let n=1;n<=3;n++){await key("l");assert.equal((await state()).words[13],n);assert.equal((await state()).frame.ui.input.kind,"command");}
+    await click("settings-toggle");await click("mobile-log");
     const before=await state(),s=await scene();assert.ok(s.regions.log.max>0);
     await page.mouse.move(s.regions.log.rect.x+40,s.regions.log.rect.y+30);await page.mouse.wheel(0,-150);
     await page.waitForFunction(()=>__rogueBrowserTest.canvas.scrolls.log<__rogueBrowserTest.canvas.regions.log.max);
     const offset=(await scene()).scrolls.log;await page.evaluate(()=>{for(let n=0;n<100;n++)__rogueBrowserTest.redraw();});
-    assert.equal((await scene()).scrolls.log,offset);assert.deepEqual((await state()).words,before.words);assert.equal((await state()).input,before.input);await shot("combat-log-mobile");
+    assert.equal((await scene()).scrolls.log,offset);assert.deepEqual((await state()).words,before.words);assert.equal((await state()).input,before.input);await shot("combat-log-mobile-settings");
   });
 
   await check("Real touch drag pans the Canvas map without clicking a C command, and DPR 2 preserves hit testing",async()=>{

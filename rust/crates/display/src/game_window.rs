@@ -11,7 +11,7 @@ pub fn map_controls(ui: &Value, on_stairs: bool) -> Value {
     let throwing = ui["movement_direction"] == true;
     let command = ui["input"]["kind"] == "command";
     if !ui["window"].is_null() || ui["mode"] != "game" || (!command && !throwing) {
-        return json!({"directions":[],"actions":[]});
+        return json!({"directions":[],"actions":[],"stairs":{"ascend":false,"descend":false}});
     }
     let mut directions = Vec::new();
     for (index, (key, label)) in [
@@ -38,11 +38,70 @@ pub fn map_controls(ui: &Value, on_stairs: bool) -> Value {
     } else {
         vec![(105, "action.inventory"), (63, "action.help")]
     };
-    if command && on_stairs {
+    let descend = command && on_stairs && ui["player_state"]["levitating"] != true;
+    let ascend = descend && ui["player_state"]["amulet"] == true;
+    if ascend {
+        actions.push((60, "mobile.ascend"));
+    } else if descend {
         actions.push((62, "action.descend"));
     }
-    json!({"directions":directions,"actions":actions.into_iter().map(|(key,id)|
+    json!({"directions":directions,"stairs":{"ascend":ascend,"descend":descend},"actions":actions.into_iter().map(|(key,id)|
         json!({"key":key,"id":id})).collect::<Vec<_>>()})
+}
+
+#[cfg(test)]
+mod stair_tests {
+    use super::*;
+    use crate::player_state::PlayerState;
+    use rogue_contract::{RG_FLAG_AMULET, RG_FLAG_LEVITATING};
+
+    #[test]
+    fn stair_choices_follow_original_flags_and_observed_footing() {
+        for (flags, on_stairs, primary, ascend, descend) in [
+            (0, true, Some(62), false, true),
+            (RG_FLAG_AMULET, true, Some(60), true, true),
+            (0, false, None, false, false),
+            (RG_FLAG_AMULET, false, None, false, false),
+            (RG_FLAG_LEVITATING, true, None, false, false),
+            (
+                RG_FLAG_AMULET | RG_FLAG_LEVITATING,
+                true,
+                None,
+                false,
+                false,
+            ),
+        ] {
+            let mut ui = json!({"mode":"game","input":{"kind":"command"},
+                "player_state":PlayerState::from_snapshot(flags)});
+            let controls = map_controls(&ui, on_stairs);
+            let stair_keys: Vec<_> = controls["actions"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter_map(|action| action["key"].as_u64().filter(|key| matches!(key, 60 | 62)))
+                .collect();
+            assert_eq!(stair_keys, primary.into_iter().collect::<Vec<_>>());
+            assert_eq!(
+                controls["stairs"],
+                json!({"ascend":ascend,"descend":descend})
+            );
+            ui["input"]["kind"] = json!("item");
+            assert!(
+                map_controls(&ui, on_stairs)["actions"]
+                    .as_array()
+                    .unwrap()
+                    .is_empty()
+            );
+            ui["input"]["kind"] = json!("command");
+            ui["window"] = json!({"title":"inventory"});
+            assert!(
+                map_controls(&ui, on_stairs)["actions"]
+                    .as_array()
+                    .unwrap()
+                    .is_empty()
+            );
+        }
+    }
 }
 
 pub fn render(ui: &Value, language: &str) -> Value {

@@ -1,6 +1,11 @@
 //! Browser surface composition and interaction, independent of DOM/Canvas APIs.
 pub mod hud;
 mod interaction;
+mod mobile;
+mod mobile_armor;
+mod mobile_map;
+mod mobile_rest;
+mod mobile_stairs;
 mod screens;
 #[cfg(test)]
 mod tests;
@@ -74,6 +79,12 @@ pub struct BrowserUi {
     description: String,
     active_row: Value,
     hud: hud::HudWidget,
+    mobile_controls: bool,
+    mobile_log: bool,
+    mobile_operations: bool,
+    mobile_movement: u32,
+    mobile_overview: bool,
+    mobile_full_map: bool,
 }
 impl BrowserUi {
     /// Synchronize host lifecycle observations before an input event, even when
@@ -149,6 +160,12 @@ impl BrowserUi {
             description: String::new(),
             active_row: Value::Null,
             hud: hud::HudWidget::default(),
+            mobile_controls: false,
+            mobile_log: false,
+            mobile_operations: false,
+            mobile_movement: 0,
+            mobile_overview: false,
+            mobile_full_map: false,
         }
     }
     fn t(&self, id: &str) -> String {
@@ -220,10 +237,16 @@ impl BrowserUi {
         self.view = view;
         self.width = n(&self.view["width"]).max(240.);
         self.height = n(&self.view["height"]).max(240.);
+        let mobile = self.width < 700. || b(&self.view["coarse"]);
+        if !mobile || b(&self.model["topOpen"]) || !b(&self.model["running"]) {
+            self.mobile_operations = false;
+        }
         let scope = if b(&self.model["topOpen"]) {
             "top".into()
         } else if b(&self.model["settingsOpen"]) {
             "settings".into()
+        } else if self.mobile_operations {
+            "mobile-operations".into()
         } else if self.model["frame"]["ui"]["window"].is_object() {
             format!(
                 "dialog:{}",
@@ -253,7 +276,7 @@ impl BrowserUi {
         self.hud.layout = Value::Null;
         self.widgets
             .rect(Rect::new(0., 0., self.width, self.height), BG);
-        if !self.fullscreen {
+        if !self.fullscreen && !mobile {
             let title = self.t("app.heading");
             let title_width = self.width - 32.;
             let mut title_size = if self.width < 700. { 24. } else { 30. };
@@ -274,7 +297,9 @@ impl BrowserUi {
             );
             self.footer();
         }
-        if b(&self.model["topOpen"]) {
+        if mobile {
+            self.draw_mobile();
+        } else if b(&self.model["topOpen"]) {
             self.draw_top();
         } else {
             self.draw_game();

@@ -1,8 +1,8 @@
 {
-  "built_at_utc": "2026-10-10T12:34:36.156502Z",
+  "built_at_utc": "2026-10-11T03:59:15.2034564Z",
   "logic_source_directory": "C:\\Users\\kit\\gameme\\jnethack\\jrouge\\rogue-nihon\\logic",
   "c_source_files": 38,
-  "rust_library": "C:\\Users\\kit\\gameme\\jnethack\\jrouge\\rogue-nihon\\.local\\tasks\\powershell-7d02da1fbc0e4ed79b7a1ef4ab5ffb95\\cargo-target\\wasm32-unknown-emscripten\\release\\librogue_layers.a",
+  "rust_library": "C:\\Users\\kit\\gameme\\jnethack\\jrouge\\rogue-nihon\\.local\\tasks\\powershell-1cc085a0783c44ca88d7b779264aabab\\cargo-target\\wasm32-unknown-emscripten\\release\\librogue_layers.a",
   "rust_engine": "Bevy 0.19.1",
   "sdk_root": "C:\\Users\\kit\\emsdk",
   "rust_version": "rustc 1.98.1 (48a229cea 2026-09-01)",
@@ -30,18 +30,13 @@
     },
     {
       "file": "game.wasm",
-      "bytes": 2450205,
-      "sha256": "c4b9cf9bdc6bfcd7e5da3d0f9c66d4a428e27b778839eee486fab656dca90397"
+      "bytes": 2456344,
+      "sha256": "06f4ac52d21fee420886cb751e1cd7e5018639610778c1e89d8ff1179cb65c88"
     },
     {
       "file": "browser-ui.wasm",
-      "bytes": 706710,
-      "sha256": "58bbfce16878af3c6742ba0f8de19317c09973db162933a5dae554837e780546"
+      "bytes": 1226423,
+      "sha256": "a1bc17ff95353ffdae3d8a01716244b7f13584234fadadaca1b586ed1a210e33"
     }
-  ],
-  "browser_ui": {
-    "built_at_utc": "2026-10-10T17:57:08.8263261Z",
-    "crate": "rogue-browser-display",
-    "target": "wasm32-unknown-unknown"
-  }
+  ]
 }

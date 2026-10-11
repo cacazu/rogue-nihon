@@ -41,6 +41,10 @@
       }
       case "queue":return result(effect,"queue",queue?.pushMany(effect.events)??false,{after:effect.after,request:effect.request});
       case "save-read":readSave().then(bytes=>{savedBytes=bytes;result(effect,effect.operation,true,{length:bytes?.byteLength||0});},error=>result(effect,effect.operation,false,{error:error.stack||String(error)}));break;
+      case "save-import":RogueSaveImport.choose().then(bytes=>{
+        if(bytes)savedBytes=bytes;
+        result(effect,"import",Boolean(bytes),{cancelled:!bytes});
+      },error=>result(effect,"import",false,{error:String(error)}));break;
       case "save-write":{
         const bytes=new Uint8Array(effect.bytes);
         writeSave(bytes).then(()=>{savedBytes=bytes;result(effect,"save-write",true,{length:bytes.byteLength});},error=>result(effect,"save-write",false,{error:error.stack||String(error)}));break;
@@ -63,6 +67,8 @@
     }
   }
   canvasUi=await RogueCanvasUi.create(board,{execute,tileSets});
+  RogueCanvasAccessibility.attach(canvasUi);
+  RoguePlayRecording.attach(canvasUi);
   let preference=null;try{preference=localStorage.getItem("rogue-map-display-v1");}catch{}
   canvasUi.dispatchRequest({type:"boot",preference,environment:{parameters:Object.fromEntries(new URLSearchParams(location.search)),isolated:crossOriginIsolated&&typeof SharedArrayBuffer!=="undefined"}});
 })().catch(error=>console.error("Browser host startup failed",error));

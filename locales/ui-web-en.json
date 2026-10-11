@@ -2,6 +2,28 @@
   "version": 1,
   "locale": "en",
   "messages": {
+    "mobile.show_controls": "Show controls",
+    "mobile.hide_controls": "Hide controls",
+    "mobile.log": "View log",
+    "mobile.wait": "Wait",
+    "mobile.step": "Move: one step",
+    "mobile.run": "Move: run",
+    "mobile.run_adjacent": "Move: run until something is adjacent",
+    "mobile.count": "Repeat count digit",
+    "mobile.wide": "Wider map",
+    "mobile.near": "Nearby map",
+    "mobile.full_map": "Whole map",
+    "mobile.map_player": "You",
+    "mobile.map_stairs": "Stairs",
+    "mobile.map_enemy": "Enemy",
+    "mobile.map_item": "Item",
+    "mobile.search": "Search",
+    "mobile.throw": "Throw",
+    "mobile.weapon": "Weapon",
+    "mobile.ascend": "Ascend",
+    "mobile.rest": "Rest (50 turns)",
+    "mobile.armor_take_off": "Take off armor",
+    "mobile.armor_wear": "Wear armor",
     "app.title": "ORIGINAL ROGUE · 5.4.4",
     "app.version": "ORIGINAL ROGUE · 5.4.4",
     "app.heading": "ORIGINAL ROGUE · 5.4.4",
@@ -123,6 +145,7 @@
     "top.has_save": "A saved game is ready to resume.",
     "random.name": "Adventurer{number}",
     "settings.top_help": "Save before returning to resume your adventure with Load.",
-    "notice.top": "Returned to the title screen."
+    "notice.top": "Returned to the title screen.",
+    "action.import": "Resume from a save file"
   }
 }

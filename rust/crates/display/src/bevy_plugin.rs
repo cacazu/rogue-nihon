@@ -12,6 +12,7 @@ pub struct DisplayState {
     pub name: String,
     pub presentation: Presentation,
     pub inventory: InventoryView,
+    pub player: crate::player_state::PlayerState,
 }
 
 #[derive(Resource, Default)]
@@ -60,6 +61,7 @@ fn render_presentation(
     }
     port.requested = false;
     port.ui = state.presentation.render(&state.language, &state.name);
+    port.ui["player_state"] = json!(state.player);
     port.ui["can_drop"] = json!(map.can_drop());
     inventory::decorate(&state.inventory, &mut port.ui, &state.language);
     port.ui["map_controls"] = game_window::map_controls(&port.ui, map.on_stairs());

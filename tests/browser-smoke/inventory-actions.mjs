@@ -36,15 +36,18 @@ async function open(options={}){
  await context.route('**/web/worker.js',r=>r.fulfill({body:worker.replace('    module.FS.writeFile("/locale.txt",','    module.FS.writeFile("/fixture.id", '+JSON.stringify(fixture)+');\n    module.FS.writeFile("/locale.txt",'),contentType:'text/javascript',headers}));
  await context.route('**/build/game.js',r=>r.fulfill({path:options.module||path.join(root,'build/game-fixtures.js'),contentType:'text/javascript',headers}));
  page=await context.newPage();await installBrowserTestAdapter(page);page.setDefaultTimeout(10000);page.on('pageerror',error=>evidence.errors.push(error.message));
- await page.goto(base+'?trace=1&view=pixels&lang='+locale);await page.waitForFunction(()=>window.__rogueBrowserTest?.canvas.paintCount>0);
+ await page.goto(base+'?trace=1&view=pixels&lang='+locale);await page.waitForFunction(()=>window.__rogueBrowserTest?.canvas?.paintCount>0);
+ if(width<700)await click('settings-toggle');
  await field('name','ItemAudit');await field('seed','17');await click('new-game');
  await page.waitForFunction(()=>__rogueBrowserTest.running&&__rogueBrowserTest.trace&&__rogueBrowserTest.inputRequestCount>0&&__rogueBrowserTest.queuePending===0);await draw();
 }
 async function click(id){
  for(let n=0;n<20;n++){
   const s=await scene(),c=s.controls.find(c=>c.id===id&&!c.disabled);
+  if(id==='load'&&!c&&s.scope==='top'){await click('settings-toggle');continue;}
   if(c){if((await page.evaluate(()=>matchMedia('(pointer:coarse)').matches)))await page.touchscreen.tap(c.rect.x+c.rect.w/2,c.rect.y+c.rect.h/2);else await page.mouse.click(c.rect.x+c.rect.w/2,c.rect.y+c.rect.h/2,{delay:40});await draw();return;}
   if(id.startsWith('item-')&&s.regions.dialog){await page.mouse.move(s.regions.dialog.rect.x+30,s.regions.dialog.rect.y+30);await page.mouse.wheel(0,100);await draw();}
+  else if(s.scope==='settings'&&s.regions.settings){await page.mouse.move(s.regions.settings.rect.x+30,s.regions.settings.rect.y+100);await page.mouse.wheel(0,240);await draw();}
   else await page.waitForFunction(id=>__rogueBrowserTest.canvas.controls.some(c=>c.id===id&&!c.disabled),id);
  }
  throw Error('Missing control '+id+' '+JSON.stringify(await scene()));
