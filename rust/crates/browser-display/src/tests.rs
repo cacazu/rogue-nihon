@@ -62,12 +62,12 @@ fn utf8_budgets_seed_bounds_and_controls() {
     assert_eq!(seed("1e2"), Some(100));
 }
 #[test]
-fn preference_corruption_and_mode_specific_zoom() {
+fn preference_corruption_and_shared_continuous_zoom() {
     for raw in [
         "invalid",
         "{}",
         "null",
-        r#"{"version":1,"mode":"pixels","zoom":24}"#,
+        r#"{"version":1,"mode":"pixels","zoom":0}"#,
     ] {
         assert_eq!(
             preference(raw),
@@ -78,7 +78,10 @@ fn preference_corruption_and_mode_specific_zoom() {
         preference(r#"{"version":1,"mode":"pixels","zoom":128}"#)["zoom"],
         128
     );
-    assert_eq!(sizes("pixels"), [16, 32, 64, 96, 128]);
+    assert_eq!(
+        preference(r#"{"version":1,"mode":"pixels","zoom":24.35}"#)["zoom"],
+        24.35
+    );
     assert!(!mode("secret"));
 }
 #[test]
@@ -206,8 +209,11 @@ fn randomization_collision_and_restore_selection() {
     let r = c.request(json!({"type":"api","operation":"load","ok":true,"generation":0,"length":0}));
     assert_eq!(r["state"]["starting"], false);
     event(&mut c, json!({"type":"invoke","id":"load"}));
-    let r =
-        c.request(json!({"type":"api","operation":"load","ok":true,"generation":0,"length":500}));
+    let bytes = rogue_platform::Envelope::new(17, "Saved".into(), &[1], vec![], 0)
+        .unwrap()
+        .bytes()
+        .unwrap();
+    let r = c.request(json!({"type":"api","operation":"load","ok":true,"generation":0,"length":bytes.len(),"bytes":bytes}));
     let e = r["effects"]
         .as_array()
         .unwrap()

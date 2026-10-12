@@ -6,9 +6,17 @@ pub(super) struct Gestures {
     touches: BTreeMap<i64, (f64, f64)>,
     pinch: Option<(f64, f64)>,
     pinching: bool,
-    wheel: f64,
+    motion: Option<ZoomMotion>,
     anchor: Option<(f64, f64, f64, f64)>,
     hold: Option<(i64, u64)>,
+    repeat_setting_hold: Option<i64>,
+}
+
+struct ZoomMotion {
+    current: f64,
+    target: f64,
+    last: f64,
+    anchor: Option<(f64, f64, f64, f64)>,
 }
 
 impl BrowserUi {
@@ -22,13 +30,10 @@ impl BrowserUi {
         ids
     }
 
-    fn zoom_at(&mut self, index: usize, x: f64, y: f64, effects: &mut Vec<Value>) {
-        if index
-            == self
-                .zoom_sizes()
-                .iter()
-                .position(|&size| size == n(&self.model["tileSize"]))
-                .unwrap_or(2)
+    fn zoom_at(&mut self, size: f64, x: f64, y: f64, effects: &mut Vec<Value>) {
+        let size = clamp(size, MIN_MAP_SIZE, MAX_MAP_SIZE);
+        self.gestures.motion = None;
+        if (size - n(&self.model["tileSize"])).abs() < 0.0001
             && !self.mobile_overview
             && !self.mobile_full_map
         {
@@ -44,7 +49,7 @@ impl BrowserUi {
         }
         self.mobile_overview = false;
         self.mobile_full_map = false;
-        effects.push(json!({"kind":"zoom","index":index}));
+        effects.push(json!({"kind":"zoom","size":size}));
     }
 
     pub(super) fn apply_zoom_anchor(&mut self) {
@@ -66,34 +71,64 @@ impl BrowserUi {
         if delta == 0. {
             return;
         }
-        if self.gestures.wheel.signum() != delta.signum() {
-            self.gestures.wheel = 0.;
-        }
-        self.gestures.wheel += delta;
-        if self.gestures.wheel.abs() < 80. {
-            return;
-        }
-        self.gestures.wheel = 0.;
-        let sizes = self.zoom_sizes();
         let actual = self
             .camera
-            .map(|c| {
-                if self.model["displayMode"] == "ascii" {
-                    c.size * 32. / 12.
-                } else {
-                    c.size
-                }
-            })
+            .map(|c| c.size)
             .unwrap_or(n(&self.model["tileSize"]));
-        let next = if delta < 0. {
-            sizes.iter().position(|&size| size > actual + 0.001)
-        } else {
-            sizes.iter().rposition(|&size| size < actual - 0.001)
-        };
-        let Some(next) = next else {
+        let previous = self
+            .gestures
+            .motion
+            .as_ref()
+            .map_or(actual, |motion| motion.target);
+        let target = clamp(
+            previous * (-delta * 0.002).exp(),
+            MIN_MAP_SIZE,
+            MAX_MAP_SIZE,
+        );
+        let anchor = self.camera.zip(self.map_rect).map(|(camera, map)| {
+            (
+                (camera.left + n(&event["x"]) - map.x) / camera.size,
+                (camera.top + n(&event["y"]) - map.y) / camera.cell_h,
+                n(&event["x"]) - map.x,
+                n(&event["y"]) - map.y,
+            )
+        });
+        self.gestures.motion = Some(ZoomMotion {
+            current: actual,
+            target,
+            last: 0.,
+            anchor,
+        });
+        self.mobile_overview = false;
+        self.mobile_full_map = false;
+        effects.push(json!({"kind":"zoom","size":target}));
+    }
+
+    pub(super) fn animate_zoom(&mut self) {
+        let Some(motion) = &mut self.gestures.motion else {
             return;
         };
-        self.zoom_at(next, n(&event["x"]), n(&event["y"]), effects);
+        let now = n(&self.view["now"]);
+        let elapsed = if motion.last == 0. {
+            0.
+        } else {
+            (now - motion.last).max(0.)
+        };
+        motion.last = now;
+        motion.current += (motion.target - motion.current) * (1. - (-elapsed / 55.).exp());
+        let complete = (motion.target - motion.current).abs() < 0.002;
+        if complete {
+            motion.current = motion.target;
+        }
+        self.model["tileSize"] = json!(motion.current);
+        self.gestures.anchor = motion.anchor;
+        if complete {
+            self.gestures.motion = None;
+        }
+    }
+
+    pub(super) fn zoom_animating(&self) -> bool {
+        self.gestures.motion.is_some()
     }
 
     pub(super) fn touch_gesture(&mut self, event: &Value, effects: &mut Vec<Value>) -> bool {
@@ -121,6 +156,7 @@ impl BrowserUi {
                     self.widgets.pressed.clear();
                     self.gestures.hold = None;
                     self.gestures.pinching = true;
+                    self.gestures.motion = None;
                     let points: Vec<_> = self.gestures.touches.values().copied().take(2).collect();
                     let distance = (points[0].0 - points[1].0)
                         .hypot(points[0].1 - points[1].1)
@@ -128,13 +164,7 @@ impl BrowserUi {
                     self.gestures.pinch = Some((
                         distance,
                         self.camera
-                            .map(|c| {
-                                if self.model["displayMode"] == "ascii" {
-                                    c.size * 32. / 12.
-                                } else {
-                                    c.size
-                                }
-                            })
+                            .map(|c| c.size)
                             .unwrap_or(n(&self.model["tileSize"])),
                     ));
                     effects.push(json!({"kind":"capture","id":id}));
@@ -151,20 +181,8 @@ impl BrowserUi {
                         let target = size
                             * (points[0].0 - points[1].0).hypot(points[0].1 - points[1].1)
                             / distance;
-                        let index = self
-                            .zoom_sizes()
-                            .iter()
-                            .enumerate()
-                            .min_by(|a, b| {
-                                (a.1 / target)
-                                    .ln()
-                                    .abs()
-                                    .total_cmp(&(b.1 / target).ln().abs())
-                            })
-                            .map(|(i, _)| i)
-                            .unwrap_or(0);
                         self.zoom_at(
-                            index,
+                            target,
                             (points[0].0 + points[1].0) / 2.,
                             (points[0].1 + points[1].1) / 2.,
                             effects,
@@ -190,11 +208,16 @@ impl BrowserUi {
     }
 
     pub(super) fn start_hold(&mut self, control: &Control, id: i64, effects: &mut Vec<Value>) {
-        if false
+        if control.id == "touch-again" && !control.disabled
+            && self.model["input"]["kind"] == "command" {
+            self.gestures.repeat_setting_hold = Some(id);
+            effects.push(json!({"kind":"hold-timer","id":id,"delay":500}));
+            return;
+        }
+        if (self.width < 700. || b(&self.view["coarse"]))
             && control.id.starts_with("touch-")
             && control.id.len() == 7
             && !control.disabled
-            && self.mobile_movement == 0
             && self.model["input"]["kind"] == "command"
             && !b(&self.model["frame"]["ui"]["movement_direction"])
         {
@@ -209,26 +232,45 @@ impl BrowserUi {
     }
     pub(super) fn stop_hold(&mut self) {
         self.gestures.hold = None;
+        self.gestures.repeat_setting_hold = None;
     }
 
     pub(super) fn repeat_hold(&mut self, event: &Value, effects: &mut Vec<Value>) {
+        if let Some(id) = self.gestures.repeat_setting_hold {
+            if event["id"].as_i64() != Some(id) { return; }
+            self.gestures.repeat_setting_hold = None;
+            if self.drag.as_ref().is_some_and(|d| d.id == id && !d.moved
+                && d.scope == self.scope && d.hit.as_ref().is_some_and(|c| c.rect.contains(d.last_x,d.last_y)))
+                && self.model["input"]["kind"] == "command" && b(&self.model["running"])
+                && !b(&self.model["settingsOpen"]) && !self.mobile_operations
+                && !self.model["frame"]["ui"]["window"].is_object() {
+                if let Some(drag) = &mut self.drag { drag.activated = true; }
+                self.open_repeat_count(effects);
+            }
+            return;
+        }
         let Some((id, last)) = self.gestures.hold else {
             return;
         };
         if event["id"].as_i64() != Some(id) {
             return;
         }
-        let Some(drag) = self
-            .drag
-            .clone()
-            .filter(|d| d.id == id && !d.moved && d.scope == self.scope)
-        else {
+        let Some(drag) = self.drag.clone().filter(|d| {
+            d.id == id
+                && !d.moved
+                && d.scope == self.scope
+                && d.hit
+                    .as_ref()
+                    .is_some_and(|c| c.rect.contains(d.last_x, d.last_y))
+        }) else {
             self.stop_hold();
             return;
         };
         if b(&self.model["settingsOpen"])
             || self.history_open
+            || self.status_open
             || self.mobile_operations
+            || b(&self.model["topOpen"])
             || !b(&self.model["running"])
             || self.model["input"]["kind"] != "command"
             || self.model["frame"]["ui"]["window"].is_object()

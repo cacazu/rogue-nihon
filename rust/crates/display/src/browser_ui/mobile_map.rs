@@ -7,7 +7,7 @@ impl BrowserUi {
         let frame = self.model["frame"].clone();
         let width = n(&frame["width"]).max(1.);
         let height = (n(&frame["height"]) - 2.).max(1.);
-        let size = ((map.w - 16.).max(1.) / width).min((map.h - 144.).max(1.) / height);
+        let size = ((map.w - 16.).max(1.) / width).min((map.h - 80.).max(1.) / height);
         let camera = Camera {
             size,
             cell_h: size,
@@ -18,15 +18,6 @@ impl BrowserUi {
         };
         self.camera = Some(camera);
         self.widgets.begin_clip(map);
-        self.text(
-            &self.t("mobile.full_map"),
-            map.x + 16.,
-            map.y + map.h / 2. - height * size / 2. - 40.,
-            map.w - 32.,
-            17.,
-            TEXT,
-            true,
-        );
         for (index, glyph) in s(&frame["map_cells"]).bytes().enumerate() {
             let x = index % width as usize;
             let y = index / width as usize;
@@ -63,27 +54,26 @@ impl BrowserUi {
             0.,
         );
         let legend_y = map.y + map.h / 2. + height * size / 2. + 20.;
-        for (index, (id, color)) in [
+        let mut legend_x = map.x + 12.;
+        for (id, color) in [
             ("mobile.map_player", "#9ef0c3"),
             ("mobile.map_stairs", "#dca9ff"),
             ("mobile.map_enemy", "#ff8b87"),
             ("mobile.map_item", "#ebcf91"),
         ]
         .iter()
-        .enumerate()
         {
-            let x = map.x + 16. + (index % 2) as f64 * (map.w - 32.) / 2.;
-            let y = legend_y + (index / 2) as f64 * 32.;
-            self.widgets.rect(Rect::new(x, y + 4., 12., 12.), color);
-            self.text(
-                &self.t(id),
-                x + 20.,
-                y,
-                (map.w - 32.) / 2. - 24.,
-                17.,
-                TEXT,
-                false,
+            let label = self.t(id);
+            let width = (self.measure)(&label, 17., false, false).width;
+            self.widgets
+                .rect(Rect::new(legend_x, legend_y + 8., 10., 10.), color);
+            self.widgets.raw_text(
+                &label,
+                legend_x + 15.,
+                legend_y + 4.,
+                TextStyle::new(17., TEXT, false),
             );
+            legend_x += width + 26.;
         }
         self.widgets.end_clip();
     }

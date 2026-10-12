@@ -425,7 +425,7 @@ fn render_item(value: &Value, language: &str) -> Option<String> {
                         ("name", name),
                         (
                             "details",
-                            details.join(if japanese(language) { "・" } else { ", " }),
+                            details.join(" "),
                         ),
                     ],
                 )?;

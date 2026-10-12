@@ -4,18 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>元祖 ROGUE</title>
+  <title>元祖Rogue 5.4.4</title>
   <link rel="stylesheet" href="/web/style.css">
 </head>
 <body>
-  <header class="heading"><h1 id="app-heading">元祖 ローグ · 5.4.4</h1></header>
+  <header class="heading"><h1 id="app-heading">元祖Rogue 5.4.4</h1></header>
   <div id="canvas-stage">
-    <canvas id="rogue-canvas" tabindex="0"></canvas>
-    <!-- Native text editing/IME receivers. All visible fields are drawn on Canvas. -->
-    <input id="name" class="canvas-native-input" autocomplete="off" tabindex="-1">
-    <input id="seed" class="canvas-native-input" type="number" inputmode="numeric" tabindex="-1">
-    <input id="prompt-text" class="canvas-native-input" type="text" autocomplete="off" tabindex="-1">
-    <input id="command-key" class="canvas-native-input" type="text" autocomplete="off" tabindex="-1">
+    <div id="canvas-surface">
+      <canvas id="rogue-canvas" tabindex="0"></canvas>
+      <!-- Native text editing/IME receivers. All visible fields are drawn on Canvas. -->
+      <input id="name" class="canvas-native-input" autocomplete="off" tabindex="-1">
+      <input id="seed" class="canvas-native-input" type="number" inputmode="numeric" tabindex="-1">
+      <input id="prompt-text" class="canvas-native-input" type="text" autocomplete="off" tabindex="-1">
+      <input id="command-key" class="canvas-native-input" type="text" autocomplete="off" tabindex="-1">
+      <input id="repeat-count" class="canvas-native-input" type="number" inputmode="numeric" min="1" max="255" step="1" tabindex="-1">
+    </div>
   </div>
   <script src="/web/event-queue.js"></script>
   <script src="/web/tiles.js"></script>

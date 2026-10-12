@@ -12,7 +12,7 @@
     }
     constructor(canvas,host) {
       this.canvas=canvas;this.ctx=canvas.getContext("2d",{alpha:false});this.host=host;
-      this.nativeInputs=new Map(["name","seed","prompt-text","command-key"].map(id=>[id,document.getElementById(id)]));
+      this.nativeInputs=new Map(["name","seed","prompt-text","command-key","repeat-count"].map(id=>[id,document.getElementById(id)]));
       this.pending=false;this.scene={paintCount:0,controls:[],pointer:{}};this.captured=new Set();this.metrics=new Map();
       this.state={};this.drawCount=0;
     }
@@ -34,7 +34,25 @@
         if(response.error)throw new Error(response.error);if(response.diagnostics)this.scene=response.diagnostics;if(response.state)this.state=response.state;return response;
       } finally {this.wasm.ui_free(pointer,bytes.length);}
     }
+    syncOrientation() {
+      this.rotated=matchMedia("(pointer: coarse)").matches&&screen.width>screen.height;
+      this.reverseRotation=this.rotated&&screen.orientation?.angle===270;
+      document.documentElement.classList.toggle("portrait-rotated",this.rotated);
+      document.documentElement.classList.toggle("portrait-reversed",this.reverseRotation);
+    }
+    point(clientX,clientY) {
+      const bounds=this.canvas.getBoundingClientRect();
+      if(this.reverseRotation)return {x:(bounds.bottom-clientY)*this.scene.width/bounds.height,y:(clientX-bounds.left)*this.scene.height/bounds.width};
+      return this.rotated
+        ? {x:(clientY-bounds.top)*this.scene.width/bounds.height,y:(bounds.right-clientX)*this.scene.height/bounds.width}
+        : {x:(clientX-bounds.left)*this.scene.width/bounds.width,y:(clientY-bounds.top)*this.scene.height/bounds.height};
+    }
+    wheel(event) {
+      const sign=this.reverseRotation?-1:1;
+      return {type:"wheel",...this.point(event.clientX,event.clientY),dx:this.rotated?sign*event.deltaY:event.deltaX,dy:this.rotated?-sign*event.deltaX:event.deltaY,deltaMode:event.deltaMode};
+    }
     connect() {
+      this.syncOrientation();
       for(const input of this.nativeInputs.values()){
         input.addEventListener("input",()=>this.dispatch({type:"native-input",id:input.id}));
         for(const event of ["keyup","focus","blur","compositionupdate"])input.addEventListener(event,()=>this.invalidate());
@@ -43,18 +61,18 @@
       this.canvas.addEventListener("touchstart",e=>this.dispatch({type:"touchstart"},e),{passive:false});
       this.canvas.addEventListener("contextmenu",e=>this.dispatch({type:"contextmenu"},e));
       for(const [native,type] of [["pointerdown","down"],["pointermove","move"],["pointerup","up"]])this.canvas.addEventListener(native,e=>{
-        const bounds=this.canvas.getBoundingClientRect();
-        this.dispatch({type,id:e.pointerId,x:(e.clientX-bounds.left)*this.scene.width/bounds.width,y:(e.clientY-bounds.top)*this.scene.height/bounds.height,pointerType:e.pointerType,button:e.button,buttons:e.buttons,primary:e.isPrimary,captures:[...this.captured].filter(id=>this.canvas.hasPointerCapture(id)),hasCapture:this.canvas.hasPointerCapture(e.pointerId)},e);
+        this.dispatch({type,id:e.pointerId,...this.point(e.clientX,e.clientY),pointerType:e.pointerType,button:e.button,buttons:e.buttons,primary:e.isPrimary,captures:[...this.captured].filter(id=>this.canvas.hasPointerCapture(id)),hasCapture:this.canvas.hasPointerCapture(e.pointerId)},e);
       });
       for(const type of ["pointercancel","lostpointercapture"])this.canvas.addEventListener(type,e=>this.dispatch({type:"cancel",id:e.pointerId}));
       this.canvas.addEventListener("pointerleave",()=>this.dispatch({type:"leave"}));
-      this.canvas.addEventListener("wheel",e=>{const bounds=this.canvas.getBoundingClientRect();this.dispatch({type:"wheel",x:(e.clientX-bounds.left)*this.scene.width/bounds.width,y:(e.clientY-bounds.top)*this.scene.height/bounds.height,dx:e.deltaX,dy:e.deltaY,deltaMode:e.deltaMode},e);},{passive:false});
+      this.canvas.addEventListener("wheel",e=>this.dispatch(this.wheel(e),e),{passive:false});
       document.addEventListener("keydown",e=>this.dispatch({type:"key",key:e.key,shift:e.shiftKey,shiftKey:e.shiftKey,ctrlKey:e.ctrlKey,altKey:e.altKey,metaKey:e.metaKey,repeat:e.repeat,native:document.activeElement?.id,composing:e.isComposing,keyCode:e.keyCode},e),true);
       window.addEventListener("blur",()=>this.dispatch({type:"blur"}));
       window.addEventListener("pagehide",()=>this.dispatch({type:"pagehide"}));
-      window.addEventListener("resize",()=>this.dispatch({type:"surface-change",reason:"resize"}));
+      window.addEventListener("resize",()=>{this.syncOrientation();this.dispatch({type:"surface-change",reason:"resize"});});
+      screen.orientation?.addEventListener("change",()=>{this.syncOrientation();this.dispatch({type:"surface-change",reason:"resize"});});
       document.addEventListener("visibilitychange",()=>this.dispatch({type:"visibilitychange",hidden:document.hidden}));
-      document.addEventListener("fullscreenchange",()=>this.dispatch({type:"surface-change",reason:"fullscreen"}));
+      document.addEventListener("fullscreenchange",()=>{this.syncOrientation();this.dispatch({type:"surface-change",reason:"fullscreen"});});
       document.addEventListener("selectionchange",()=>this.invalidate());
       new ResizeObserver(()=>this.invalidate()).observe(this.canvas.parentElement);
     }
@@ -75,6 +93,7 @@
     effect(effect) {
       switch(effect.kind) {
         case "timer":this.blink=setInterval(()=>this.invalidate(),effect.interval);break;
+        case "animation-frame":this.invalidate();break;
         case "hold-timer":clearTimeout(this.holdTimer);this.holdTimer=setTimeout(()=>this.dispatch({type:"hold-tick",id:effect.id}),effect.delay);break;
         case "field":Object.assign(this.nativeInputs.get(effect.id),effect.properties);break;
         case "native-position":{const input=this.nativeInputs.get(effect.id),r=effect.rect;Object.assign(input.style,{left:r.x+"px",top:r.y+"px",width:r.w+"px",height:r.h+"px"});break;}
@@ -104,11 +123,30 @@
         case "rect":c.fillStyle=command.color;c.fillRect(r.x,r.y,r.w,r.h);break;
         case "box":c.beginPath();c.roundRect(r.x,r.y,Math.max(0,r.w),Math.max(0,r.h),command.radius);c.fillStyle=command.fill;c.fill();if(command.stroke){c.strokeStyle=command.stroke;c.lineWidth=1;c.stroke();}break;
         case "circle":c.fillStyle=command.color;c.beginPath();c.arc(command.x,command.y,command.radius,0,Math.PI*2);c.fill();break;
-        case "text":this.font(command.size,(command.bold?1:0)|(command.mono?2:0));c.fillStyle=command.color;c.fillText(command.text,command.x,command.y);break;
+        case "text":{
+          this.font(command.size,(command.bold?1:0)|(command.mono?2:0));c.fillStyle=command.color;
+          if(command.outline){
+            // Sharp alpha shadows outline color emoji as well as ordinary text.
+            c.save();c.shadowColor=command.outline.color;c.shadowBlur=0;
+            const scale=c.getTransform(),width=command.outline.width,diagonal=Math.SQRT1_2;
+            for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1],[-diagonal,-diagonal],[diagonal,-diagonal],[-diagonal,diagonal],[diagonal,diagonal]]){
+              c.shadowOffsetX=dx*width*scale.a;c.shadowOffsetY=dy*width*scale.d;
+              c.fillText(command.text,command.x,command.y);
+            }
+            c.restore();
+          }
+          c.fillText(command.text,command.x,command.y);break;
+        }
         case "save":c.save();c.globalAlpha=command.alpha;break;
         case "restore":c.restore();break;
         case "clip":c.save();c.beginPath();c.rect(r.x,r.y,r.w,r.h);c.clip();break;
-        case "path":{c.save();c.translate(r.x,r.y);c.scale(r.w/24,r.h/24);c.strokeStyle=c.fillStyle=command.color;c.lineWidth=1.8;c.lineJoin=c.lineCap="round";const path=new Path2D(command.path);if(command.fill)c.fill(path);else c.stroke(path);c.restore();break;}
+        case "path":{
+          c.save();c.translate(r.x,r.y);c.scale(r.w/24,r.h/24);c.lineJoin=c.lineCap="round";
+          const path=new Path2D(command.path);
+          if(command.outline){c.strokeStyle=command.outline.color;c.lineWidth=(command.fill?0:1.8)+2*command.outline.width*24/r.w;c.stroke(path);}
+          c.strokeStyle=c.fillStyle=command.color;c.lineWidth=1.8;
+          if(command.fill)c.fill(path);else c.stroke(path);c.restore();break;
+        }
         case "image":c.imageSmoothingEnabled=false;this.host.tileSets.get(command.set).drawImage(c,command,r.x,r.y,r.w,r.h);this.drawCount++;break;
         default:throw new Error("Unknown Rust draw command: "+command.op);
       }

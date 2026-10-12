@@ -257,6 +257,10 @@ impl Widgets {
             "experience"=>"M12 2 15 8.5 22 9.5 17 14.5 18 22 12 18.5 6 22 7 14.5 2 9.5 9 8.5Z".into(),
             "food"=>"M3 2V7C3 10 9 10 9 7V2M6 2V22M20 22V2C15 4 14 10 14 13H20".into(),
             "close"=>"M6 6 18 18M18 6 6 18".into(),
+            "equipped"=>"M21 12A9 9 0 1 1 3 12A9 9 0 1 1 21 12ZM7 12L10.5 15.5L17 8.5".into(),
+            "person"=>"M16 7A4 4 0 1 0 8 7A4 4 0 1 0 16 7M4 21V18C4 11 20 11 20 18V21".into(),
+            "controls-show"=>"M3 4H21V20H3ZM6 8H8M11 8H13M16 8H18M6 12H8M11 12H13M16 12H18M8 16H16".into(),
+            "controls-hide"=>"M3 4H21V20H3ZM6 8H8M11 8H13M16 8H18M6 12H8M11 12H13M16 12H18M8 16H16M2 2L22 22".into(),
             "settings"=>{
                 let mut path=String::new();
                 for i in 0..32 { let angle=i as f64*std::f64::consts::PI/16.-std::f64::consts::FRAC_PI_2;let radius=if i%4<2{10.}else{7.8};path+=&format!("{}{} {}",if i==0{"M"}else{"L"},12.+angle.cos()*radius,12.+angle.sin()*radius); }

@@ -1,30 +1,7 @@
-//! Touch instructions replace keyboard hints; original rows and actions stay intact.
+//! Touch button labels replace keyboard hints; original rows and actions stay intact.
 use super::*;
 
 impl BrowserUi {
-    pub(super) fn mobile_dialog_prompt(&self, ui: &Value, window: &Value) -> String {
-        if s(&ui["mode"]) == "options"
-            || matches!(s(&ui["input"]["kind"]), "option_bool" | "option_inventory")
-        {
-            return String::new();
-        }
-        let id = if b(&ui["inventory"]) {
-            return String::new();
-        } else {
-            match s(&ui["input"]["kind"]) {
-                "item" => return String::new(),
-                "direction" => "mobile.dialog.direction",
-                "text" | "symbol" => "mobile.dialog.text",
-                "hand" => "mobile.dialog.hand",
-                "help" | "discovery" => "mobile.dialog.all",
-                "confirm" | "option_bool" | "option_inventory" => "mobile.dialog.choice",
-                "space" | "space_cancel" | "enter" => "mobile.dialog.continue",
-                _ => return s(&window["prompt"]).to_string(),
-            }
-        };
-        self.t(id)
-    }
-
     pub(super) fn mobile_dialog_action(
         &self,
         ui: &Value,

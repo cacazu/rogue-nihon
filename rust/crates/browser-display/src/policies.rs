@@ -19,22 +19,19 @@ pub fn seed(value: &str) -> Option<u32> {
     let n: f64 = value.trim().parse().ok()?;
     (n.is_finite() && n >= 0. && n <= u32::MAX as f64 && n.fract() == 0.).then_some(n as u32)
 }
-pub fn sizes(mode: &str) -> &'static [u64] {
-    if mode == "pixels" {
-        &[16, 32, 64, 96, 128]
-    } else {
-        &[16, 24, 32, 48, 64]
-    }
+pub fn valid_zoom(value: &Value) -> bool {
+    value.as_f64().is_some_and(|size| {
+        size.is_finite()
+            && (rogue_display::browser_ui::MIN_MAP_SIZE..=rogue_display::browser_ui::MAX_MAP_SIZE)
+                .contains(&size)
+    })
 }
 pub fn mode(value: &str) -> bool {
     matches!(value, "ascii" | "tiles" | "pixels")
 }
 pub fn preference(raw: &str) -> Value {
     let v = serde_json::from_str::<Value>(raw).unwrap_or(Value::Null);
-    if v["version"] == 1
-        && mode(text(&v["mode"]))
-        && sizes(text(&v["mode"])).contains(&number(&v["zoom"]))
-    {
+    if v["version"] == 1 && mode(text(&v["mode"])) && valid_zoom(&v["zoom"]) {
         json!({"version":1,"mode":v["mode"],"zoom":v["zoom"]})
     } else {
         json!({"version":1,"mode":"tiles","zoom":32})

@@ -154,10 +154,10 @@ try {
   await check("Repeat after throwing follows the original C direction and target rules", async () => {
     await open(); await startThrow(true); await key("ArrowUp"); await idle(); await key("a"); await idle(); await reference("i tkea", "repeat throw");
   });
-  await check("Staff and other direction commands retain their existing input windows", async () => {
+  await check("All original direction commands use the same direction selection", async () => {
     for (const command of ["z", "f", "F", "m", "^"]) {
-      await open(); await key(command); assert.equal((await state()).frame.ui.movement_direction, false); assert.ok((await state()).frame.ui.window);
-      await sent(() => click("window-27")); await idle(); await reference(command + "\x1b", "other command " + command);
+      await open(); await key(command); assert.equal((await state()).frame.ui.movement_direction, true); assert.equal((await state()).frame.ui.window, null);
+      await key("Escape"); await idle(); await reference(command + "\x1b", "other command " + command);
     }
   });
   assert.deepEqual(evidence.errors, []);

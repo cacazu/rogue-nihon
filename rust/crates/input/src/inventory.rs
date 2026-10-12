@@ -133,6 +133,15 @@ impl Inventory {
             self.selected = None;
             return Some(Input::Key(32)); // Acknowledge i, then dispatch at C's next command read.
         }
+        if key == 68 {
+            self.pending = Some(Pending {
+                command: 68,
+                item: 0,
+                hand: None,
+                started: false,
+            });
+            return Some(Input::Key(32)); // Close i before the original discovery command.
+        }
         if let Some(row) = ui["lines"].as_array()?.iter().find(|row| {
             row["selectable"] == true
                 && row["key"]
@@ -173,7 +182,11 @@ impl Inventory {
         if kind == "direction" && matches!(pending.command, 116 | 122) {
             return None;
         }
-        let key = if kind == "item" && pending.command != 82 {
+        let key = if kind == "discovery" && pending.command == 68 {
+            // Keep discovered()->print_disc()->set_order(), including its RNG,
+            // and journal the same '*' as a manual all-items selection.
+            Some(42)
+        } else if kind == "item" && pending.command != 82 {
             presentation
                 .lines
                 .iter()

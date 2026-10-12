@@ -4,14 +4,17 @@ mod gestures;
 mod history;
 pub mod hud;
 mod interaction;
+mod inventory_tabs;
+mod inventory_item;
 mod mobile;
-mod mobile_armor;
 mod mobile_dialog;
 mod mobile_map;
-mod mobile_rest;
-mod mobile_stairs;
 mod mobile_top;
+mod repeat_count;
+mod resume;
 mod screens;
+mod settings;
+mod status;
 #[cfg(test)]
 mod tests;
 pub mod tiles;
@@ -19,6 +22,9 @@ use crate::widgets::*;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
+
+pub const MIN_MAP_SIZE: f64 = 8.;
+pub const MAX_MAP_SIZE: f64 = 128.;
 
 pub(crate) fn s(v: &Value) -> &str {
     v.as_str().unwrap_or("")
@@ -88,12 +94,18 @@ pub struct BrowserUi {
     hud: hud::HudWidget,
     mobile_controls: bool,
     history_open: bool,
+    status_open: bool,
     dropdown: String,
     mobile_generation: u64,
     mobile_operations: bool,
     mobile_movement: u32,
     mobile_overview: bool,
     mobile_full_map: bool,
+    mobile_repeat_count: u32,
+    mobile_repeat_configured: bool,
+    mobile_repeat_open: bool,
+    mobile_repeat_error: bool,
+    inventory_tabs: inventory_tabs::InventoryTabs,
 }
 impl BrowserUi {
     /// Synchronize host lifecycle observations before an input event, even when
@@ -175,12 +187,18 @@ impl BrowserUi {
             hud: hud::HudWidget::default(),
             mobile_controls: true,
             history_open: false,
+            status_open: false,
             dropdown: String::new(),
             mobile_generation: 0,
             mobile_operations: false,
             mobile_movement: 0,
             mobile_overview: false,
             mobile_full_map: false,
+            mobile_repeat_count: 1,
+            mobile_repeat_configured: false,
+            mobile_repeat_open: false,
+            mobile_repeat_error: false,
+            inventory_tabs: inventory_tabs::InventoryTabs::default(),
         }
     }
     fn t(&self, id: &str) -> String {
@@ -255,19 +273,32 @@ impl BrowserUi {
         let mobile = self.width < 700. || b(&self.view["coarse"]);
         let generation = n(&self.model["generation"]) as u64;
         if b(&self.model["running"]) && generation != self.mobile_generation {
-            self.mobile_controls = true;
+            self.mobile_controls = mobile;
             self.mobile_generation = generation;
+            self.mobile_repeat_count = 1;
+            self.mobile_repeat_configured = false;
+            self.mobile_repeat_open = false;
         }
         if b(&self.model["topOpen"]) || b(&self.model["settingsOpen"]) {
             self.history_open = false;
+            self.status_open = false;
         }
         if !b(&self.model["settingsOpen"]) && !b(&self.model["topOpen"]) {
             self.dropdown.clear();
         }
         if !mobile || b(&self.model["topOpen"]) || !b(&self.model["running"]) {
             self.mobile_operations = false;
+            self.mobile_repeat_open = false;
         }
-        let scope = if self.history_open {
+        if b(&self.model["settingsOpen"]) || self.model["frame"]["ui"]["window"].is_object()
+            || b(&self.model["frame"]["ui"]["movement_direction"]) {
+            self.mobile_repeat_open = false;
+        }
+        let scope = if self.mobile_repeat_open {
+            "repeat-count".into()
+        } else if self.status_open {
+            "status".into()
+        } else if self.history_open {
             "history".into()
         } else if b(&self.model["topOpen"]) {
             "top".into()
@@ -296,6 +327,7 @@ impl BrowserUi {
             if self.scope.starts_with("dialog") {
                 self.scrolls.insert("dialog".into(), 0.);
                 self.active_row = Value::Null;
+                if self.inventory_list_visible() { self.inventory_tabs.reveal = true; }
             }
         }
         self.fullscreen = b(&self.view["fullscreen"]) && !b(&self.model["topOpen"]);
@@ -305,6 +337,7 @@ impl BrowserUi {
         self.hud.layout = Value::Null;
         self.widgets
             .rect(Rect::new(0., 0., self.width, self.height), BG);
+        self.animate_zoom();
         if mobile {
             self.draw_mobile();
         } else if b(&self.model["topOpen"]) {
@@ -315,15 +348,22 @@ impl BrowserUi {
         if self.history_open {
             self.draw_history();
         }
+        if self.status_open {
+            self.draw_status();
+        }
+        if self.mobile_repeat_open {
+            self.draw_repeat_count();
+        }
         self.draw_dropdown();
         self.paint_count += 1;
-        json!({"commands":self.widgets.commands,"diagnostics":self.diagnostics()})
+        json!({"commands":self.widgets.commands,"diagnostics":self.diagnostics(),"animate":self.zoom_animating()})
     }
     pub fn diagnostics(&self) -> Value {
         json!({"renderer":"canvas2d","uiOwner":"rust","paintCount":self.paint_count,"fullscreen":self.fullscreen,
             "pointer":{"activeId":self.drag.as_ref().map(|d|d.id),"capturedIds":self.captured_ids(),"pressedId":self.widgets.pressed,"hoverId":self.widgets.hover,"focusId":self.widgets.focus},
-            "width":self.width,"height":self.height,"scope":self.scope,"controls":self.widgets.controls,
+            "width":self.width,"height":self.height,"scope":self.scope,"statusOpen":self.status_open,"controls":self.widgets.controls,
             "text":self.widgets.text_runs.iter().map(|v|s(&v["text"])).collect::<Vec<_>>(),"icons":self.widgets.icons,"hud":self.hud.layout,
-            "camera":self.camera,"mapRect":self.map_rect,"dialogRect":self.dialog_rect,"scrolls":self.scrolls,"regions":self.regions})
+            "camera":self.camera,"mapRect":self.map_rect,"dialogRect":self.dialog_rect,"scrolls":self.scrolls,"regions":self.regions,
+            "inventory":self.inventory_preference()})
     }
 }

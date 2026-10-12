@@ -248,18 +248,15 @@ fn settings_blocks_game_input_before_the_next_repaint() {
 }
 
 #[test]
-fn mobile_game_keeps_original_icon_hud_and_hunger_warnings() {
+fn mobile_game_shows_two_status_rows_and_hunger_warnings() {
     let mut ui = BrowserUi::new(measure);
     for (hunger, color) in [(0, ACCENT), (1, "#efd18e"), (2, ERROR), (3, ERROR)] {
         let mut m = model();
         m["frame"]["ui"]["status"]["args"][9]["value"] = json!(format!("status.hunger.{hunger}"));
         let output = ui.render(m, view(390., 844.));
-        let items = array(&output["diagnostics"]["hud"]["items"]);
-        assert_eq!(items.len(), 8);
-        assert!(
-            items
-                .iter()
-                .all(|item| item["rect"]["y"] == items[0]["rect"]["y"])
+        assert_eq!(
+            output["diagnostics"]["hud"]["metrics"],
+            json!(["depth", "hp", "strength", "hunger", "level", "experience", "armor", "gold"])
         );
         let icon = ui
             .widgets
@@ -339,13 +336,13 @@ fn mobile_top_uses_controller_state_and_never_draws_a_game_map() {
 }
 
 #[test]
-fn mobile_has_one_large_stair_button_and_forwards_the_selected_original_key() {
+fn mobile_keeps_the_fixed_dock_and_uses_contextual_stair_commands() {
     let mut ui = BrowserUi::new(measure);
     ui.mobile_controls = true;
     for (amulet, id, key) in [
-        (false, "touch-action-action.descend", 62),
-        (true, "touch-ascend", 60),
-        (false, "touch-action-action.descend", 62),
+        (false, "touch-search", 62),
+        (true, "touch-search", 60),
+        (false, "touch-search", 62),
     ] {
         let mut m = model();
         m["frame"]["ui"]["mode"] = json!("game");
@@ -353,22 +350,15 @@ fn mobile_has_one_large_stair_button_and_forwards_the_selected_original_key() {
         m["frame"]["ui"]["player_state"] = json!({"amulet":amulet,"levitating":false});
         m["frame"]["ui"]["map_controls"] =
             crate::game_window::map_controls(&m["frame"]["ui"], true);
-        ui.render(m, view(390., 844.));
-        let controls: Vec<_> = ui
-            .widgets
-            .controls
-            .iter()
-            .filter(|control| {
-                matches!(
-                    control.id.as_str(),
-                    "touch-ascend" | "touch-action-action.descend"
-                )
-            })
-            .collect();
-        assert_eq!(controls.len(), 1);
-        assert_eq!(controls[0].id, id);
-        assert_eq!(controls[0].rect.w, 186.);
-        assert_eq!(controls[0].rect.h, 52.);
+        ui.mobile_operations = false;
+        ui.render(m.clone(), view(390., 844.));
+        for dock_id in ["mobile-movement", "touch-action-action.inventory", "touch-search", "mobile-full-map", "mobile-operations", "touch-again"] {
+            assert!(ui.widgets.controls.iter().any(|control| control.id == dock_id));
+        }
+        assert!(!ui.widgets.controls.iter().any(|control| matches!(control.id.as_str(), "touch-ascend" | "touch-action-action.descend")));
+        let control = ui.widgets.controls.iter().find(|control| control.id == id).unwrap();
+        assert_eq!(control.rect.h, 52.);
+        assert!(!control.disabled);
         let event = click(&mut ui, id);
         let sends: Vec<_> = array(&event["effects"])
             .iter()

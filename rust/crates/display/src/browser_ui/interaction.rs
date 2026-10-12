@@ -44,8 +44,10 @@ impl BrowserUi {
     }
     fn region_at(&self, x: f64, y: f64) -> String {
         [
+            "status",
             "settings",
             "mobile-operations",
+            "inventory-tabs",
             "dialog",
             "top",
             "log",
@@ -58,13 +60,15 @@ impl BrowserUi {
         .into()
     }
     fn scroll_by(&mut self, id: &str, delta: f64) {
-        if let Some(region) = self.regions.get(id) {
+        if let Some(region) = self.regions.get(id).copied() {
             let scroll = clamp(
                 self.scrolls.get(id).copied().unwrap_or(0.) + delta,
                 0.,
                 region.max,
             );
             self.scrolls.insert(id.into(), scroll);
+            if id == "dialog" && self.inventory_list_visible() { self.remember_inventory_scroll(scroll); }
+            if id == "inventory-tabs" { self.inventory_tabs.horizontal = scroll; }
             if id == "log" {
                 self.follow_log = scroll >= region.max - 4.;
             }
@@ -80,7 +84,7 @@ impl BrowserUi {
             self.widgets.hover.clear();
         }
     }
-    pub(super) fn activate(&mut self, control: &Control, value: &Value, effects: &mut Vec<Value>) {
+    pub(super) fn activate(&mut self, control: &Control, _value: &Value, effects: &mut Vec<Value>) {
         if control.disabled {
             return;
         }
@@ -88,6 +92,11 @@ impl BrowserUi {
             return;
         }
         match s(&control.action["kind"]) {
+            "inventory-tab" => {
+                self.inventory_tabs.tab = s(&control.action["tab"]).into();
+                self.inventory_tabs.reveal = true;
+                self.widgets.focus = control.id.clone();
+            }
             "dropdown" => {
                 self.dropdown = s(&control.action["id"]).into();
                 let selected = s(&self.model[if self.dropdown == "language" {
@@ -106,7 +115,17 @@ impl BrowserUi {
                 self.history_open = b(&control.action["open"]);
                 self.follow_log = true;
             }
+            "status" => {
+                if b(&control.action["open"]) {
+                    self.open_status();
+                } else {
+                    self.status_open = false;
+                }
+            }
             "send" => {
+                if control.action["key"] == 64 && self.model["input"]["kind"] == "command" {
+                    self.open_status();
+                }
                 if b(&self.model["running"])
                     && !b(&self.model["topOpen"])
                     && !b(&self.model["settingsOpen"])
@@ -122,29 +141,6 @@ impl BrowserUi {
                 } else {
                     id.into()
                 };
-            }
-            "zoom" => {
-                if value.is_null() {
-                    return;
-                }
-                let sizes = self.zoom_sizes();
-                let index = sizes
-                    .iter()
-                    .position(|&v| v == n(&self.model["tileSize"]))
-                    .unwrap_or(0);
-                let next = if value.is_number() {
-                    (n(value) * (sizes.len() - 1) as f64).round()
-                } else {
-                    match s(value) {
-                        "Home" => 0.,
-                        "End" => (sizes.len() - 1) as f64,
-                        "ArrowRight" => index as f64 + 1.,
-                        _ => index as f64 - 1.,
-                    }
-                };
-                self.mobile_overview = false;
-                self.mobile_full_map = false;
-                effects.push(json!({"kind":"zoom","index":clamp(next,0.,(sizes.len()-1) as f64)}));
             }
             "focus" => {
                 self.widgets.focus = control.id.clone();
@@ -195,7 +191,9 @@ impl BrowserUi {
                     } else {
                         String::new()
                     };
-                    if let Some(c) = hit.as_ref().filter(|c| c.kind == "field") {
+                    let touch_scroll = event["pointerType"] == "touch"
+                        && self.regions.get(&self.region_at(x, y)).is_some_and(|r| r.max > 0.);
+                    if let Some(c) = hit.as_ref().filter(|c| c.kind == "field" && !touch_scroll) {
                         self.activate(c, &Value::Null, &mut effects);
                     } else {
                         self.widgets.pressed = hit
@@ -280,20 +278,19 @@ impl BrowserUi {
                                     &mut effects,
                                 );
                             }
-                            let mobile_panel = (self.width < 700. || b(&self.view["coarse"]))
-                                && matches!(
-                                    drag.region.as_str(),
-                                    "settings" | "mobile-operations" | "top"
-                                )
+                            let touch_scroll = event["pointerType"] == "touch"
+                                && self.regions.get(&drag.region).is_some_and(|r| r.max > 0.)
+                                && drag.region != "map"
                                 && !drag.hit.as_ref().is_some_and(|c| c.kind == "slider");
                             if drag.moved
                                 && (drag.hit.is_none()
                                     || drag.region == "hud"
+                                    || drag.region == "inventory-tabs"
                                     || drag.region == "log"
-                                    || mobile_panel)
+                                    || touch_scroll)
                             {
-                                if drag.region == "hud" {
-                                    self.scroll_by("hud", -dx);
+                                if drag.region == "hud" || drag.region == "inventory-tabs" {
+                                    self.scroll_by(&drag.region, -dx);
                                 } else if drag.region == "map" {
                                     if let Some(c) = &mut self.camera {
                                         c.left -= dx;
@@ -365,9 +362,9 @@ impl BrowserUi {
                 let region = self.region_at(x, y);
                 if !region.is_empty() {
                     consumed = true;
-                    if region == "hud" {
+                    if region == "hud" || region == "inventory-tabs" {
                         self.scroll_by(
-                            "hud",
+                            &region,
                             if n(&event["dx"]) != 0. {
                                 n(&event["dx"])
                             } else {
@@ -433,8 +430,39 @@ impl BrowserUi {
         }
         let key = s(&e["key"]);
         let native = s(&e["native"]);
+        if self.mobile_repeat_open {
+            match key {
+                "Escape" => {
+                    self.mobile_repeat_open = false;
+                    effects.push(json!({"kind":"canvas-focus"}));
+                    return true;
+                }
+                "Enter" => {
+                    if self.widgets.focus == "repeat-count-close" {
+                        self.mobile_repeat_open = false;
+                        effects.push(json!({"kind":"canvas-focus"}));
+                    } else {
+                        effects.push(json!({"kind":"submit","id":"repeat-count"}));
+                    }
+                    return true;
+                }
+                "Tab" => {}
+                _ => return native != "repeat-count",
+            }
+        }
         if !self.dropdown.is_empty() {
             self.dropdown_key(key, effects);
+            return true;
+        }
+        if self.status_open {
+            match key {
+                "Escape" => self.status_open = false,
+                "ArrowDown" | "PageDown" => self.scroll_by("status", 150.),
+                "ArrowUp" | "PageUp" => self.scroll_by("status", -150.),
+                "Enter" | " " if self.widgets.focus == "status-close" => self.status_open = false,
+                "Tab" => self.widgets.focus = "status-close".into(),
+                _ => {}
+            }
             return true;
         }
         if self.history_open {
@@ -444,6 +472,16 @@ impl BrowserUi {
                 "ArrowUp" | "PageUp" => self.scroll_by("log", -180.),
                 _ => {}
             }
+            return true;
+        }
+        if self.inventory_list_visible() && self.widgets.focus.starts_with("inventory-tab-")
+            && matches!(key,"ArrowLeft" | "ArrowRight") {
+            let tabs = self.inventory_available_tabs(&self.model["frame"]["ui"]);
+            let index = tabs.iter().position(|tab| *tab == self.inventory_tabs.tab).unwrap_or(0);
+            let next = (index as i64 + if key == "ArrowRight" { 1 } else { -1 }).rem_euclid(tabs.len() as i64) as usize;
+            self.inventory_tabs.tab = tabs[next].into();
+            self.inventory_tabs.reveal = true;
+            self.widgets.focus = format!("inventory-tab-{}",tabs[next]);
             return true;
         }
         if key == "Tab" {
@@ -463,6 +501,8 @@ impl BrowserUi {
                                 "prompt-text",
                                 "command-key",
                                 "result-top",
+                                "inventory-tab-",
+                                "inventory-history",
                             ]
                             .iter()
                             .any(|prefix| c.id.starts_with(prefix)))
@@ -628,6 +668,9 @@ impl BrowserUi {
             if b(&self.model["running"])
                 && let Some(raw) = raw_key(e)
             {
+                if key == "@" && self.model["input"]["kind"] == "command" {
+                    self.open_status();
+                }
                 effects.push(json!({"kind":"send","key":raw}));
                 return true;
             }

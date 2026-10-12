@@ -6,14 +6,14 @@ pub struct HudWidget {
     detail: Option<Metric>,
 }
 #[derive(Clone)]
-struct Metric {
-    id: String,
-    icon: &'static str,
+pub(super) struct Metric {
+    pub(super) id: String,
+    pub(super) icon: &'static str,
     separator: &'static str,
-    label: String,
-    values: Vec<String>,
-    detail: String,
-    color: &'static str,
+    pub(super) label: String,
+    pub(super) values: Vec<String>,
+    pub(super) detail: String,
+    pub(super) color: &'static str,
     warning: bool,
 }
 struct Item {
@@ -30,7 +30,7 @@ struct Layout {
     icon_size: f64,
     width: f64,
 }
-fn compact_number(value: &str, precision: u32) -> String {
+pub(super) fn compact_number(value: &str, precision: u32) -> String {
     if let Ok(number) = value.parse::<f64>() {
         for (unit, suffix) in [(1e9, "b"), (1e6, "m"), (1e3, "k")] {
             if number.abs() >= unit {
@@ -49,7 +49,7 @@ pub struct HudData<'a> {
     pub label: &'a dyn Fn(&str) -> String,
 }
 impl HudWidget {
-    fn metrics(status: &Value, label: &dyn Fn(&str) -> String) -> Vec<Metric> {
+    pub(super) fn metrics(status: &Value, label: &dyn Fn(&str) -> String) -> Vec<Metric> {
         let args = &status["args"];
         let value = |index: usize| {
             let v = &args[index]["value"];
@@ -217,6 +217,7 @@ impl HudWidget {
         let name_rect = Rect::new(row.x - offset, row.y, name_width, row.h);
         widgets.box_rect(panel, "#101b20ef", Some(LINE), 9.);
         widgets.begin_clip(row);
+        let content_start = widgets.commands.len();
         let name_value = widgets.single_line(
             name,
             name_rect,
@@ -300,6 +301,11 @@ impl HudWidget {
             }
             items.push(json!({"id":metric.id,"label":metric.label,"text":item.text,"values":metric.values,"separator":metric.separator,"separatorRect":separator,"rect":r,"iconRect":icon,"valueRect":value,"size":layout.size}));
             x += w;
+        }
+        for command in &mut widgets.commands[content_start..] {
+            if matches!(s(&command["op"]), "text" | "path") {
+                command["outline"] = json!({"color":"#000","width":2.});
+            }
         }
         widgets.end_clip();
         if max_scroll > 0. {

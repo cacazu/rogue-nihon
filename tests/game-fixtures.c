@@ -203,6 +203,17 @@ void rg_test_apply_fixture(void)
                     if (object->o_packch == 'i') cur_ring[RIGHT] = object;
                 }
                 cur_ring[LEFT]->o_flags |= ISCURSED;
+            } else if (!strcmp(name, "inventory-context")) {
+                chat(12,10) = TRAP;
+                flat(12,10) = F_REAL | F_SEEN | T_ARROW;
+                mvaddch(12,10,TRAP);
+                /* Adjacent hidden traps must not affect the public button. */
+                flat(10,9) = T_BEAR;
+            } else if (!strcmp(name, "inventory-amulet")) {
+                amulet = TRUE;
+                level = max_level = 2;
+                hero = stairs;
+                oldpos = hero;
             } else if (strcmp(name, "inventory-all")) abort();
         }
     } else if (!strncmp(name, "graphics-beam-", 14)) {

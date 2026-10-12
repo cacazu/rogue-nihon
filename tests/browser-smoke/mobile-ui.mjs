@@ -54,7 +54,7 @@ try{
     await page.goto(base+"?trace=1&view=pixels&lang="+lang);await page.waitForFunction(()=>__rogueBrowserTest.canvas?.paintCount>0);
     await check(lang+" phone top shows title, start and load without a game map",async()=>{
       const s=await scene();assert.equal(s.scope,"top");assert.equal(s.mapRect,null);assert.ok(s.text.includes("ROGUE"));
-      assert.deepEqual(s.controls.map(c=>c.id),["name","random-name","seed","random-seed","select-language","new-game","load","credits-repository","settings-toggle"]);
+      assert.deepEqual(s.controls.map(c=>c.id),["name","random-name","seed","random-seed","new-game","load","import-save","credits-repository","select-language","header-fullscreen"]);
       assert.ok(s.controls.find(c=>c.id==="load").disabled);
       for(const c of s.controls)assert.ok(c.rect.w>=48&&c.rect.h>=48,c.id);
       assert.equal(s.regions.log,undefined);await shot(lang+"-initial");
@@ -63,16 +63,14 @@ try{
       for(const viewport of [{width:320,height:568},{width:844,height:390},{width:568,height:320}]){
         await page.setViewportSize(viewport);await paint();const s=await scene();
         assert.equal(s.regions.top.max,0);assert.equal(s.scrolls.top,0);
-        for(const id of ["name","random-name","seed","random-seed","select-language","new-game","load","credits-repository","settings-toggle"]){
+        for(const id of ["name","random-name","seed","random-seed","select-language","new-game","load","import-save","credits-repository","header-fullscreen"]){
           const c=s.controls.find(c=>c.id===id);assert.ok(c&&c.rect.w>=48&&c.rect.h>=48,id);assert.ok(c.rect.y>=0&&c.rect.y+c.rect.h<=s.height,id);
         }
         assert.equal(await page.evaluate(()=>__rogueBrowserTest.generation),0);await shot(lang+"-top-"+viewport.width+"x"+viewport.height);
       }
       await page.setViewportSize({width:390,height:844});await paint();
     });
-    await tap("settings-toggle");
-    for(const id of ["name","seed","random-name","random-seed","new-game","load","settings-load"])assert.ok(!(await scene()).controls.some(c=>c.id===id),id);
-    await tap("settings-close");
+    assert.ok(!(await scene()).controls.some(c=>c.id==="settings-toggle"));
     await tap("random-name");await tap("random-seed");assert.equal(await page.evaluate(()=>__rogueBrowserTest.generation),0);
     await tap("seed");await page.keyboard.press("Control+a");await page.keyboard.insertText("-1");
     await tap("new-game");await paint();assert.equal(await page.evaluate(()=>__rogueBrowserTest.generation),0);
@@ -83,22 +81,22 @@ try{
       assert.deepEqual((await state()).player,{x:23,y:10});
       assert.ok((await scene()).controls.some(c=>c.id==="touch-j"));
       const s=await scene();for(const c of s.controls.filter(c=>!c.id.startsWith("hud-"))){assert.ok(c.rect.w>=48&&c.rect.h>=48,c.id);assert.ok(c.rect.y+c.rect.h<=s.height,c.id);}
-      assert.equal(s.regions.log,undefined);assert.ok(s.hud.items.some(i=>i.id==="hunger"));await shot(lang+"-dock");
+      assert.equal(s.regions.log,undefined);assert.deepEqual(s.hud.metrics,["depth","hp","strength","hunger","level","experience","armor","gold"]);await shot(lang+"-dock");
     });
     await check(lang+" map overview and fullscreen do not consume C/RNG input",async()=>{
       const before=await state();assert.equal((await scene()).camera.size,32);
-      await tap("mobile-map");assert.equal((await scene()).camera.size,16);await tap("mobile-map");assert.equal((await scene()).camera.size,32);
+      await tap("mobile-full-map");assert.ok((await scene()).camera.size<32);await tap("mobile-full-map");assert.equal((await scene()).camera.size,32);
       await tap("settings-toggle");assert.equal(await page.evaluate(()=>!!document.fullscreenElement),false);
       await tap("fullscreen");await page.waitForFunction(()=>!!document.fullscreenElement);await tap("fullscreen");await page.waitForFunction(()=>!document.fullscreenElement);await tap("settings-close");
       assert.deepEqual(await state(),before);
     });
-    await check(lang+" zoom controls, center location and touch cancellation preserve C/RNG",async()=>{
+    await check(lang+" whole map, zoom and touch cancellation preserve C/RNG",async()=>{
       const before=await state();
-      await tap("mobile-map");assert.equal((await scene()).camera.size,16);await tap("settings-toggle");assert.ok(!(await scene()).controls.some(c=>c.id==="center-map"));
+      await tap("mobile-full-map");assert.ok((await scene()).camera.size<32);await tap("settings-toggle");assert.ok(!(await scene()).controls.some(c=>c.id==="center-map"));
       assert.ok(!(await scene()).controls.some(c=>["select-language","tile-zoom"].includes(c.id)));
       assert.ok(!(await scene()).text.some(t=>t.includes("迷宮に入りました")||t.includes("地図の表示")||t.includes("倍率")));
-      await tap("settings-close");await tap("mobile-map");assert.equal((await scene()).camera.size,32);
-      await tap("mobile-operations");await reveal("center-map","mobile-operations");await tap("center-map");await tap("mobile-operations-close");
+      await tap("settings-close");await tap("mobile-full-map");assert.equal((await scene()).camera.size,32);
+      await tap("mobile-operations");assert.ok(!(await scene()).controls.some(c=>c.id==="center-map"));await tap("mobile-operations-close");
       assert.deepEqual(await state(),before);
       const r=(await scene()).mapRect,b=await page.locator("#rogue-canvas").boundingBox();
       const x=b.x+r.x+r.w/2,y=b.y+r.y+r.h/2;
@@ -108,21 +106,17 @@ try{
         await cdp.send("Input.dispatchTouchEvent",{type:"touchEnd",touchPoints:[]});await paint();
       }
       assert.deepEqual(await state(),before);
-      await tap("mobile-map");assert.equal((await scene()).camera.size,16);await tap("mobile-map");
+      const nearSize=(await scene()).camera.size;await tap("mobile-full-map");assert.ok((await scene()).camera.size<nearSize);await tap("mobile-full-map");assert.equal((await scene()).camera.size,nearSize);
       await cdp.send("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[{x,y,id:1}]});
       await cdp.send("Input.dispatchTouchEvent",{type:"touchCancel",touchPoints:[]});await paint();assert.deepEqual(await state(),before);
-      const c=(await scene()).controls.find(c=>c.id==="touch-j");
-      await cdp.send("Input.dispatchTouchEvent",{type:"touchStart",touchPoints:[{x:b.x+c.rect.x+c.rect.w/2,y:b.y+c.rect.y+c.rect.h/2,id:1}]});
-      await page.waitForTimeout(800);assert.deepEqual(await state(),before);
-      await cdp.send("Input.dispatchTouchEvent",{type:"touchCancel",touchPoints:[]});await paint();assert.deepEqual(await state(),before);
       const suppressed=await page.locator('#canvas-controls button').first().evaluate(el=>({context:!el.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true})),selection:getComputedStyle(el).userSelect}));
-      assert.equal(suppressed.context,true);assert.equal(suppressed.selection,"none");await shot(lang+"-zoom-longpress");
+      assert.equal(suppressed.context,true);assert.equal(suppressed.selection,"none");await shot(lang+"-zoom-touch");
     });
     await check(lang+" operations swipe on a button, block background input, and expose every command",async()=>{
       const before=await state();await tap("mobile-operations");await page.keyboard.press(".");await page.keyboard.press("h");await page.touchscreen.tap(4,320);assert.deepEqual(await state(),before);
-      const c=(await scene()).controls.find(c=>c.id==="mobile-op-101");
+      const c=(await scene()).controls.find(c=>c.id==="mobile-op-62");
       await swipe(c.rect.x+c.rect.w/2,c.rect.y+c.rect.h/2,200);
-      assert.ok((await scene()).scrolls["mobile-operations"]>200);assert.deepEqual(await state(),before);
+      assert.equal((await scene()).scrolls["mobile-operations"],Math.min(200,(await scene()).regions["mobile-operations"].max));assert.deepEqual(await state(),before);
       const ids=new Set((await scene()).controls.map(c=>c.id));
       for(let i=0;i<10;i++){
         const s=await scene(),r=s.regions["mobile-operations"].rect;
@@ -133,7 +127,9 @@ try{
       // Includes commands above the initial swipe as well as the full tail.
       await page.keyboard.press("PageUp");await tap("mobile-operations-close");await tap("mobile-operations");
       for(const c of (await scene()).controls)if(c.rect.h>=47.9)ids.add(c.id);
-      for(const key of [105,115,116,113,114,101,122,119,87,84,80,82,100,44,109,102,70,46,97,62,99,73,68,47,94,41,93,61,64,27,48,49,50,51,52,53,54,55,56,57])assert.ok(ids.has("mobile-op-"+key),"command "+key);
+      for(const key of [109,44,94,62,102,70])assert.ok(ids.has("mobile-op-"+key),"command "+key);
+      assert.ok(!ids.has("mobile-movement"));
+      for(const key of [105,116,113,114,101,122,119,87,84,80,82,100,99,73,41,93,61,115,46,64,68,47,97,48,49,50,51,52,53,54,55,56,57,27])assert.ok(!ids.has("mobile-op-"+key),"inventory action excluded "+key);
       assert.ok(!ids.has("mobile-op-60"),"ascending is hidden before the Amulet");
       await shot(lang+"-operations");await tap("mobile-operations-close");assert.deepEqual(await state(),before);
     });
@@ -147,7 +143,7 @@ try{
       await send("touch-action-action.cancel");
     });
     await check(lang+" item selection keeps item data and keys while hiding PC commands and cancel explanation",async()=>{
-      await tap("mobile-operations");await reveal("mobile-op-119","mobile-operations");await send("mobile-op-119");
+      const before=await state();await page.keyboard.press("w");await page.waitForFunction(n=>__rogueBrowserTest.inputRequestCount>n&&__rogueBrowserTest.frame.ui.input.kind==='item'&&__rogueBrowserTest.queuePending===0,before.input);await paint();
       const ui=await page.evaluate(()=>__rogueBrowserTest.frame.ui),s=await scene();
       assert.equal(ui.input.kind,"item");
       for(const line of ui.lines.filter(l=>l.selectable)){

@@ -23,7 +23,9 @@ pub struct Controller {
     window_open: bool,
     restore_pending: bool,
     ending_ack: i64,
+    window_close_ack: String,
     assets_ready: usize,
+    inventory_preference_cache: String,
 }
 impl Controller {
     pub fn new(measure: MeasureText) -> Self {
@@ -43,7 +45,9 @@ impl Controller {
             window_open: false,
             restore_pending: false,
             ending_ack: -1,
+            window_close_ack: String::new(),
             assets_ready: 0,
+            inventory_preference_cache: String::new(),
         }
     }
     fn notice(&mut self, id: &str, args: Value, error: bool) {
@@ -57,6 +61,19 @@ impl Controller {
     }
     fn label(&mut self, id: &str, args: &Value) -> String {
         self.catalog.label(text(&self.model["language"]), id, args)
+    }
+    fn validate_save(&mut self, bytes: &Value) -> bool {
+        if let Err(error) = crate::save_loading::validate(bytes) {
+            self.model["starting"] = json!(false);
+            self.log(json!(error));
+            self.notice("error.save_invalid", json!({}), true);
+            return false;
+        }
+        true
+    }
+    fn restore_failed(&mut self) {
+        self.return_top();
+        self.notice("error.load", json!({}), true);
     }
     fn field(&mut self, id: &str, properties: Value) {
         if let Some(value) = properties.get("value") {
@@ -76,6 +93,7 @@ impl Controller {
             json!({"disabled":disabled || !self.text_mode}),
         );
         self.field("command-key",json!({"disabled":disabled || !flag(&self.model["frame"]["ui"]["window"]["key_entry"])}));
+        self.field("repeat-count",json!({"disabled":disabled || !self.ui.repeat_count_open()}));
         self.effects.extend(pending);
     }
     fn focus(&mut self, id: &str) {
@@ -98,7 +116,7 @@ impl Controller {
             return;
         }
         self.effects.push(json!({"kind":"worker-stop"}));
-        for key in ["starting", "returnAfterEnd", "running", "settingsOpen"] {
+        for key in ["starting", "returnAfterEnd", "running", "settingsOpen", "windowClosing"] {
             self.model[key] = json!(false);
         }
         self.model["topOpen"] = json!(true);
@@ -123,6 +141,23 @@ impl Controller {
             text(&self.model["frame"]["ui"]["mode"]),
             "death" | "tombstone" | "score" | "victory"
         )
+    }
+    fn close_window(&mut self, first: bool) {
+        if !flag(&self.model["running"]) {
+            self.model["windowClosing"] = json!(false);
+            if first { self.return_top(); }
+            return;
+        }
+        let kind = text(&self.input["kind"]);
+        if !first && !matches!(kind, "space" | "space_cancel" | "enter" | "inventory") {
+            self.model["windowClosing"] = json!(false);
+            return;
+        }
+        let request = format!("{}:{}", self.state["inputRequestCount"], self.model["frame"]["ui"]["window"]["kind"]);
+        if !first && self.window_close_ack == request { return; }
+        self.model["windowClosing"] = json!(true);
+        self.window_close_ack = request;
+        self.queue(json!([if kind == "confirm" { 110 } else { 27 }]), "send");
     }
     fn finish_ending(&mut self) {
         if !flag(&self.model["returnAfterEnd"])
@@ -277,6 +312,7 @@ impl Controller {
             "running",
             "savePending",
             "returnAfterEnd",
+            "windowClosing",
         ] {
             self.model[key] = json!(false);
         }
@@ -305,8 +341,6 @@ impl Controller {
     }
     fn persist_view(&mut self) {
         self.effects.push(json!({"kind":"storage-write","key":"rogue-map-display-v1","value":json!({"version":1,"mode":self.model["displayMode"],"zoom":self.model["tileSize"]}).to_string()}));
-        self.ui.set_context(self.model.clone());
-        self.ui.event(json!({"type":"center"}));
     }
     fn select(&mut self, id: &str, value: &str) {
         match id {
@@ -316,9 +350,6 @@ impl Controller {
             }
             "display-mode" if mode(value) => {
                 self.model["displayMode"] = json!(value);
-                if !sizes(value).contains(&number(&self.model["tileSize"])) {
-                    self.model["tileSize"] = json!(32);
-                }
                 self.persist_view();
             }
             _ => {}
@@ -350,6 +381,11 @@ impl Controller {
             return;
         }
         match id {
+            "repeat-count" => {
+                if self.ui.confirm_repeat_count(text(&self.inputs[id]["value"])) {
+                    self.focus("canvas");
+                }
+            }
             "name" | "seed" => self.invoke("new-game"),
             "command-key" if flag(&self.model["frame"]["ui"]["window"]["key_entry"]) => {
                 let result = self
@@ -369,7 +405,7 @@ impl Controller {
     }
     fn invoke(&mut self, id: &str) {
         match id {
-            "import-save" if !flag(&self.model["starting"]) && !flag(&self.model["savePending"]) => {
+            "import-save" if !flag(&self.model["starting"]) && !flag(&self.model["savePending"]) && !flag(&self.model["returnAfterEnd"]) => {
                 self.model["starting"]=json!(true);
                 self.effects.push(json!({"kind":"save-import","generation":self.model["generation"]}));
             },
@@ -389,8 +425,9 @@ impl Controller {
             "download-save" if flag(&self.model["saved"])=>self.effects.push(json!({"kind":"download","filename":"rogue-save.json","mime":"application/json","revokeAfter":1000})),
             "center-map"=>{self.ui.event(json!({"type":"center"}));},
             "fullscreen"|"header-fullscreen"=>self.effects.push(json!({"kind":"fullscreen","enter":!flag(&self.environment["fullscreen"])})),
-            "settings-toggle" if !flag(&self.model["returnAfterEnd"])=>self.settings(!flag(&self.model["settingsOpen"])),
+            "settings-toggle" if !flag(&self.model["topOpen"]) && !flag(&self.model["returnAfterEnd"])=>self.settings(!flag(&self.model["settingsOpen"])),
             "settings-close"=>self.settings(false),"settings-top"=>self.return_top(),
+            "window-close" if !flag(&self.model["windowClosing"]) => self.close_window(true),
             "result-top"=>{
                 if !flag(&self.model["running"]) {self.return_top();}
                 else if self.ending() && !flag(&self.model["returnAfterEnd"]) {self.model["returnAfterEnd"]=json!(true);self.finish_ending();}
@@ -459,6 +496,9 @@ impl Controller {
                 self.model["frame"]["ui"] = data["ui"].clone();
                 self.input = data["ui"]["input"].clone();
                 self.presentation();
+                if flag(&self.model["windowClosing"]) && flag(&self.model["frame"]["ui"]["inventory"]) {
+                    self.close_window(false);
+                }
             }
             "trace" => {
                 self.state["trace"] = data.clone();
@@ -476,6 +516,7 @@ impl Controller {
                     self.restore_pending = false;
                     self.notice("notice.restored", json!({}), false);
                 }
+                if flag(&self.model["windowClosing"]) { self.close_window(false); }
                 self.finish_ending();
             }
             "input-flush" => {
@@ -500,7 +541,11 @@ impl Controller {
                 self.state["exitCode"] = data["code"].clone();
                 self.model["running"] = json!(false);
                 if data["code"].as_i64().unwrap_or(-1) < 0 {
-                    self.notice("error.runtime", json!({}), true);
+                    if self.restore_pending {
+                        self.restore_failed();
+                    } else {
+                        self.notice("error.runtime", json!({}), true);
+                    }
                 } else if flag(&self.model["returnAfterEnd"]) {
                     self.return_top();
                 }
@@ -509,7 +554,11 @@ impl Controller {
                 self.state["runtimeError"] = data["text"].clone();
                 self.model["running"] = json!(false);
                 self.model["starting"] = json!(false);
-                self.notice("error.runtime", json!({}), true);
+                if self.restore_pending {
+                    self.restore_failed();
+                } else {
+                    self.notice("error.runtime", json!({}), true);
+                }
                 self.effects
                     .push(json!({"kind":"console","level":"error","text":data["text"]}));
             }
@@ -530,6 +579,7 @@ impl Controller {
         match operation {
             "queue" => {
                 if !ok {
+                    self.model["windowClosing"] = json!(false);
                     self.notice("error.queue_full", json!({}), true);
                     return false;
                 }
@@ -555,7 +605,10 @@ impl Controller {
             "import" => {
                 self.model["starting"] = json!(false);
                 if ok {
-                    self.start(true);
+                    if self.validate_save(&r["bytes"]) {
+                        self.effects.push(json!({"kind":"save-import-accept"}));
+                        self.start(true);
+                    }
                 } else if !flag(&r["cancelled"]) {
                     self.log(r["error"].clone());
                     self.notice("error.load", json!({}), true);
@@ -563,6 +616,11 @@ impl Controller {
             }
             "init" | "load" => {
                 if ok {
+                    if number(&r["length"]) > 0 && !self.validate_save(&r["bytes"]) {
+                        self.state["savedLength"] = json!(0);
+                        self.model["saved"] = json!(false);
+                        return false;
+                    }
                     self.state["savedLength"] = r["length"].clone();
                     self.model["saved"] = json!(number(&r["length"]) > 0);
                     if operation == "load" {
@@ -718,6 +776,8 @@ impl Controller {
         match text(&r["type"]) {
             "boot" => {
                 self.environment = r["environment"].clone();
+                self.ui.load_inventory_preference(text(&r["inventoryPreference"]));
+                self.inventory_preference_cache = self.ui.inventory_preference().to_string();
                 let p = preference(text(&r["preference"]));
                 self.model["language"] = json!(if self.environment["parameters"]["lang"] == "en" {
                     "en"
@@ -727,11 +787,7 @@ impl Controller {
                 let view = text(&self.environment["parameters"]["view"]);
                 let mode = if mode(view) { view } else { text(&p["mode"]) };
                 self.model["displayMode"] = json!(mode);
-                self.model["tileSize"] = json!(if sizes(mode).contains(&number(&p["zoom"])) {
-                    number(&p["zoom"])
-                } else {
-                    32
-                });
+                self.model["tileSize"] = p["zoom"].clone();
                 self.document();
                 self.field("name", json!({"value":"Player"}));
                 self.field("seed", json!({"value":"12345"}));
@@ -785,7 +841,7 @@ impl Controller {
                         }
                         if !matches!(
                             text(&e["native"]),
-                            "name" | "seed" | "prompt-text" | "command-key"
+                            "name" | "seed" | "prompt-text" | "command-key" | "repeat-count"
                         ) {
                             e["native"] = json!("");
                         }
@@ -808,11 +864,8 @@ impl Controller {
                                     self.select(text(&effect["id"]), text(&effect["value"]))
                                 }
                                 "zoom" => {
-                                    let mode = text(&self.model["displayMode"]);
-                                    if let Some(size) = sizes(mode)
-                                        .get(effect["index"].as_f64().unwrap_or(0.) as usize)
-                                    {
-                                        self.model["tileSize"] = json!(size);
+                                    if valid_zoom(&effect["size"]) {
+                                        self.model["tileSize"] = effect["size"].clone();
                                         self.persist_view();
                                     }
                                 }
@@ -840,6 +893,9 @@ impl Controller {
                 view["blink"] = json!((number(&view["now"]) / 500).is_multiple_of(2));
                 let result = self.ui.render(self.model.clone(), view);
                 commands = result["commands"].clone();
+                if flag(&result["animate"]) {
+                    self.effects.push(json!({"kind":"animation-frame"}));
+                }
                 let diagnostics = &result["diagnostics"];
                 surface = json!({"width":diagnostics["width"],"height":diagnostics["height"],"ratio":ratio});
                 let active = diagnostics["pointer"]["capturedIds"].as_array();
@@ -848,7 +904,7 @@ impl Controller {
                         self.effects.push(json!({"kind":"release","id":id}));
                     }
                 }
-                for id in ["name", "seed", "prompt-text", "command-key"] {
+                for id in ["name", "seed", "prompt-text", "command-key", "repeat-count"] {
                     let control = diagnostics["controls"]
                         .as_array()
                         .into_iter()
@@ -889,6 +945,11 @@ impl Controller {
             self.controls();
         }
         let state = self.snapshot();
+        let inventory_preference = self.ui.inventory_preference().to_string();
+        if inventory_preference != self.inventory_preference_cache {
+            self.inventory_preference_cache.clone_from(&inventory_preference);
+            self.effects.push(json!({"kind":"storage-write","key":"rogue-inventory-view-v1","value":inventory_preference}));
+        }
         self.ui.set_context(self.model.clone());
         json!({"commands":commands,"surface":surface,"effects":self.effects,"consumed":consumed,"stopPropagation":consumed && r["event"]["type"]=="key","accepted":accepted,"raw":raw,"state":state,"diagnostics":self.ui.diagnostics()})
     }

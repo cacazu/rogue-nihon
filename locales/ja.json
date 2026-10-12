@@ -2507,7 +2507,8 @@
       "function": "rust_armor"
     },
     "pack.add_pack.string_character": {
-      "template": "{0}（{1}）を手に入れた。",
+      "template": "{0}（{1}）",
+      "notation_only": true,
       "source_template": "%s (%c)",
       "argument_types": [
         "string",
@@ -2708,7 +2709,7 @@
       "function": "inventory"
     },
     "pack.money.gold_pieces": {
-      "template": "{0}枚の金貨を手に入れた。",
+      "template": "{0}枚の金貨",
       "source_template": "%d gold pieces",
       "argument_types": [
         "signed"

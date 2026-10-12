@@ -20,6 +20,12 @@ node tests/browser-smoke/canvas.mjs
 |---|---|
 | `canvas.mjs` | PC・スマホ・日英の開始、単一Canvas、持ち物・ヘルプ・設定、IME編集、保存復元、終了、全画面、フッターのリンク |
 | `mobile-ui.mjs` | スマホのトップ・開始/保存/トップからのロード、開始直後からの操作パッド、48px以上の新規ターゲット、操作一覧の全コマンド・ボタン上スワイプ・背景入力遮断、広域・全画面のC/RNG不変、320px縦/横表示、PC幅への復帰 |
+| `equipment-style.mjs` | 装備中の名前前アイコン、半角括弧・半角空白の数値書式、未鑑定情報の非表示、武器・防具・左右の指輪の装備変更、320pxスマホ・PC・日英・配布Wasm |
+| `inventory-tabs.mjs` | 所持品だけの種類・装備中タブ、横スクロール、タイトル高の履歴ボタン、タブごとの位置復元・再読み込みと保存復元、使用後の空タブ除去、PCのキー操作 |
+| `discovery-direct.mjs` | アイテム履歴の直接全件表示、変更前の手動D*と20-word/入力位置/表示順を比較、一覧中の保存復元・複数ページ・次ターン。ROGUE_DISCOVERY_BASELINEに変更前のfixture moduleを指定 |
+| `repeat-direction-pad.mjs` | 繰返しの長押し・回数入力・原作20回反復、全6方向操作のパッド表示と取消、持ち物からの投射と杖、PCの方向入力、キーボードで狭まった入力画面 |
+| `mobile-context-history.mjs` | リストの除外と状況別ボタン、実アイテム拾得・罠の方向選択・階段昇降、PC/スマホの持ち物からアイテム履歴への遷移、配布Wasmの接続 |
+| `mobile-layout.mjs` | 共通設定行・連続ズーム・スマホのステータスと履歴・全体図の凡例・設定内の保存とファイル再開 |
 | `hud-widgets.mjs` | HUDの配置・正確な値の詳細、狭い画面の横スクロール、フォーカス、DPR |
 | `save-export.mjs` | ダウンロードした実ファイル、IndexedDBとの一致、取消、復元と次ターン |
 | `startup.mjs` | Node/start.ps1、既存origin、ポート競合、HTTPS、保存後の再起動 |
@@ -31,7 +37,7 @@ node tests/browser-smoke/canvas.mjs
 | `top-screen.mjs / ending-screens.mjs / combat-log.mjs / playthrough-fixes.mjs` | トップ復帰、終了経路、通常ログ、ゲーム不具合の再現 |
 | `session-rng.mjs` | 表示操作のC/RNG不変、指定した旧buildとの比較 |
 
-品物・魔法・終了等の決定的な状態はテスト専用C fixtureで作ります。通常Wasmへfixtureや操作用exportを追加しません。`test-adapter.mjs` はPlaywright側から注入します。HUDの極端な数値は試験内のWorker presentation差し替えで表示を確認し、ゲームルールの検証と区別します。
+アイテム・魔法・終了等の決定的な状態はテスト専用C fixtureで作ります。通常Wasmへfixtureや操作用exportを追加しません。`test-adapter.mjs` はPlaywright側から注入します。HUDの極端な数値は試験内のWorker presentation差し替えで表示を確認し、ゲームルールの検証と区別します。
 
 `inventory-actions.mjs` のタッチ表示は `ROGUE_INVENTORY_MOBILE=1` で選択できます。旧build比較を使うscriptは独立した比較archiveを要求します。`canvas.mjs` はarchiveがなくても現行の操作を確認できますが、歴史的Wasm比較は行いません。
 

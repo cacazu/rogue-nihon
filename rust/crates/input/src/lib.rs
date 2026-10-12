@@ -57,8 +57,8 @@ pub fn decode_in_window(raw: u32, kind: &str, window_open: bool) -> Input {
     }
 }
 
-/// Movement modifiers choose the same single direction while aiming a throw.
-/// C still owns the direction, cancellation, confusion and missile rules.
+/// Movement modifiers choose one direction for every original get_dir() prompt.
+/// C still owns direction validation, cancellation, confusion and action rules.
 pub fn decode_movement_direction(raw: u32) -> Input {
     match decode(raw) {
         Input::Key(key) => {

@@ -16,7 +16,7 @@ impl BrowserUi {
         }
     }
 
-    pub(super) fn dropdown_control(&mut self, id: &str, rect: Rect, disabled: bool) {
+    fn dropdown_label(&self, id: &str) -> String {
         let value = s(&self.model[if id == "language" {
             "language"
         } else {
@@ -28,9 +28,24 @@ impl BrowserUi {
             .find(|(key, _)| *key == value)
             .map(|(_, label)| label)
             .unwrap_or_default();
+        format!("{label}  ▾")
+    }
+
+    pub(super) fn top_language_control(&mut self, fullscreen: Rect) {
+        let label = self.dropdown_label("language");
+        let width = ((self.measure)(&label, 17., false, false).width + 20.).max(48.);
+        self.dropdown_control(
+            "language",
+            Rect::new(fullscreen.x - 8. - width, fullscreen.y, width, 48.),
+            b(&self.model["starting"]) || b(&self.model["savePending"]),
+        );
+    }
+
+    pub(super) fn dropdown_control(&mut self, id: &str, rect: Rect, disabled: bool) {
+        let label = self.dropdown_label(id);
         self.control(
             &format!("select-{id}"),
-            &format!("{label}  ▾"),
+            &label,
             rect,
             json!({"kind":"dropdown","id":id}),
             ControlStyle {

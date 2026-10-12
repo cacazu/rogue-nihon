@@ -1,8 +1,13 @@
 /* Browser API connections. Session and input policy live in browser-ui.wasm. */
 "use strict";
 (async () => {
-  let canvasUi, worker=null, queue=null, savedBytes=null, databasePromise=null;
+  let canvasUi, worker=null, queue=null, savedBytes=null, importBytes=null, databasePromise=null;
   const tileSets=new Map(), board=document.getElementById("rogue-canvas");
+  function lockPortrait() {
+    if(matchMedia("(pointer: coarse)").matches){
+      try{screen.orientation?.lock?.("portrait").catch(()=>{});}catch{}
+    }
+  }
   function database() {
     if(!databasePromise)databasePromise=new Promise((resolve,reject)=>{
       const request=indexedDB.open("original-rogue-web",1);
@@ -40,11 +45,12 @@
         worker.postMessage({type:"start",queue:queue.buffer,capacity:queue.capacity,seed:effect.seed,name:effect.name,restore,locale:effect.locale,files:effect.files},restore?[restore.buffer]:[]);break;
       }
       case "queue":return result(effect,"queue",queue?.pushMany(effect.events)??false,{after:effect.after,request:effect.request});
-      case "save-read":readSave().then(bytes=>{savedBytes=bytes;result(effect,effect.operation,true,{length:bytes?.byteLength||0});},error=>result(effect,effect.operation,false,{error:error.stack||String(error)}));break;
+      case "save-read":readSave().then(bytes=>{savedBytes=bytes;result(effect,effect.operation,true,{length:bytes?.byteLength||0,bytes});},error=>result(effect,effect.operation,false,{error:error.stack||String(error)}));break;
       case "save-import":RogueSaveImport.choose().then(bytes=>{
-        if(bytes)savedBytes=bytes;
-        result(effect,"import",Boolean(bytes),{cancelled:!bytes});
+        importBytes=bytes;
+        result(effect,"import",Boolean(bytes),{cancelled:!bytes,bytes});
       },error=>result(effect,"import",false,{error:String(error)}));break;
+      case "save-import-accept":savedBytes=importBytes;importBytes=null;break;
       case "save-write":{
         const bytes=new Uint8Array(effect.bytes);
         writeSave(bytes).then(()=>{savedBytes=bytes;result(effect,"save-write",true,{length:bytes.byteLength});},error=>result(effect,"save-write",false,{error:error.stack||String(error)}));break;
@@ -54,7 +60,7 @@
       case "random":return result(effect,"random",true,{id:effect.id,value:crypto.getRandomValues(new Uint32Array(1))[0]});
       case "fullscreen":{
         const promise=effect.enter?document.getElementById("canvas-stage").requestFullscreen():document.exitFullscreen();
-        promise.then(()=>result(effect,"fullscreen",true),error=>result(effect,"fullscreen",false,{error:String(error)}));break;
+        promise.then(()=>{if(effect.enter)lockPortrait();result(effect,"fullscreen",true);},error=>result(effect,"fullscreen",false,{error:String(error)}));break;
       }
       case "download":{
         const url=URL.createObjectURL(new Blob([savedBytes],{type:effect.mime})),link=document.createElement("a");
@@ -67,8 +73,9 @@
     }
   }
   canvasUi=await RogueCanvasUi.create(board,{execute,tileSets});
+  lockPortrait();
   RogueCanvasAccessibility.attach(canvasUi);
   RoguePlayRecording.attach(canvasUi);
-  let preference=null;try{preference=localStorage.getItem("rogue-map-display-v1");}catch{}
-  canvasUi.dispatchRequest({type:"boot",preference,environment:{parameters:Object.fromEntries(new URLSearchParams(location.search)),isolated:crossOriginIsolated&&typeof SharedArrayBuffer!=="undefined"}});
+  let preference=null,inventoryPreference=null;try{preference=localStorage.getItem("rogue-map-display-v1");inventoryPreference=localStorage.getItem("rogue-inventory-view-v1");}catch{}
+  canvasUi.dispatchRequest({type:"boot",preference,inventoryPreference,environment:{parameters:Object.fromEntries(new URLSearchParams(location.search)),isolated:crossOriginIsolated&&typeof SharedArrayBuffer!=="undefined"}});
 })().catch(error=>console.error("Browser host startup failed",error));

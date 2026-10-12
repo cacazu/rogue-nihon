@@ -14,7 +14,7 @@ globalThis.RogueSaveImport = {
           if (!file) return finish(null);
           if (file.size > 16 * 1024 * 1024) throw new Error("Save file is too large");
           const bytes = new Uint8Array(await file.arrayBuffer());
-          // The game validates the opaque save and its checksum when restoring.
+          // Rust validates these bytes before starting the restore Worker.
           input.remove(); resolve(bytes);
         } catch (error) { input.remove(); reject(error); }
       }, {once:true});

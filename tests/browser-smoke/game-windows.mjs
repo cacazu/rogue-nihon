@@ -136,7 +136,7 @@ try {
     }
     for (const command of ['z','m','f','F','^']) {
       await key(command); assert.equal((await snapshot()).ui.input.kind,'direction',command);
-      await action(27); await closed();
+      assert.equal((await snapshot()).ui.window,null); await key('Escape'); await closed();
     }
   });
   await record('Escape in a focused text editor cancels without committing its draft',async()=>{

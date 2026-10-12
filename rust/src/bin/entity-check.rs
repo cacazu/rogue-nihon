@@ -96,15 +96,15 @@ fn main() {
     };
     verify(
         json!({"type":"item","category":"weapon","which":0,"count":1,"identified":true,"hplus":1,"dplus":1,"equipped":"weapon"}),
-        "メイス（命中+1・威力+1）（武器として装備中）",
+        "メイス (命中+1 威力+1) (武器として装備中)",
     );
     verify(
         json!({"type":"item","category":"weapon","which":3,"count":35,"identified":true,"hplus":0,"dplus":0}),
-        "矢（命中+0・威力+0） ×35",
+        "矢 (命中+0 威力+0) ×35",
     );
     verify(
         json!({"type":"item","category":"armor","which":1,"count":1,"identified":true,"ac":6,"enchantment":1,"equipped":"armor"}),
-        "+1 リングメイル［防御力4］（着用中）",
+        "リングメイル (強化+1 防御力4) (着用中)",
     );
     verify(
         json!({"type":"item","category":"weapon","which":0,"count":1,"identified":false,"hplus":99,"dplus":99}),
@@ -116,7 +116,7 @@ fn main() {
     );
     verify(
         json!({"type":"item","category":"potion","which":5,"count":1,"known":true,"appearance":{"kind":"color","id":17}}),
-        "治癒の薬（赤色）",
+        "治癒の薬 (赤色)",
     );
     verify(
         json!({"type":"item","category":"potion","which":5,"count":2,"known":false,"appearance":{"kind":"color","id":17}}),
@@ -128,11 +128,11 @@ fn main() {
     );
     verify(
         json!({"type":"item","category":"ring","which":null,"known":false,"identified":true,"bonus":1,"called":"守り?{count}","appearance":{"kind":"stone","id":18},"equipped":"left_ring"}),
-        "指輪（命名：守り?{count}）［+1］（ルビー）（左手に装備中）",
+        "指輪 (命名：守り?{count}) (補正+1) (ルビー) (左手に装備中)",
     );
     verify(
         json!({"type":"item","category":"stick","which":3,"known":true,"identified":true,"charges":3,"subtype":"wand","appearance":{"kind":"metal","id":8}}),
-        "炎のワンド（鉄・残り3回）",
+        "炎のワンド (鉄 残り3回)",
     );
     verify(
         json!({"type":"item","category":"stick","which":3,"known":false,"identified":false,"charges":99,"subtype":"staff","appearance":{"kind":"wood","id":2}}),
@@ -295,7 +295,7 @@ fn main() {
         "ui.inventory.entry",
         json!([{"kind":"char","value":97},{"kind":"entity","value":{"type":"item","category":"weapon","which":0,"identified":false,"label":"勇者100% {name}"}}]),
         "a) Mace",
-        "a) メイス（命名：勇者100% {name}）",
+        "a) メイス (命名：勇者100% {name})",
     );
     verify_display(
         "message.entity",

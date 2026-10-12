@@ -129,9 +129,9 @@ try {
     for (const [command, direction, item, f] of [["t", "k", "e", "inventory-all"], ["z", "k", "j", "inventory-all"], ["m", "l", "", "plain"], ["f", "l", "", "combat"], ["F", "l", "", "combat"], ["^", "l", "", "plain"]]) {
       await check((phone ? "Touch" : "PC") + " " + command + ": cancel direction, choose direction, complete subsequent item/combat", async () => {
         await open(f, phone); await key(command);
-        if (command === "t" && phone) await tap("touch-action-action.cancel"); else if (command === "t") await key("Escape"); else await action(27);
+        if (phone) await tap("touch-action-action.cancel"); else await key("Escape");
         await idle(); await key(command);
-        if (command === "t" && phone) await tap("touch-" + direction); else if (command === "t") await key("ArrowUp"); else await action(direction.charCodeAt(0));
+        if (phone) await tap("touch-" + direction); else await key(direction);
         if (item) { assert.equal((await state()).frame.ui.input.kind, "item"); await tap("item-" + item); }
         await idle(); await reference(command + "\x1b" + command + direction + item, "direction command " + command);
       });

@@ -14,11 +14,8 @@ pub struct Presentation {
 
 impl Presentation {
     pub fn movement_direction(&self) -> bool {
+        // Every original get_dir() caller accepts the same eight directions.
         self.input["kind"] == "direction"
-            && self
-                .lines
-                .iter()
-                .any(|line| line["scope"] == "throw_direction")
     }
 
     pub fn update(
@@ -208,7 +205,7 @@ impl Presentation {
         });
         let mut input = self.input.clone();
         let movement_direction = self.movement_direction();
-        if movement_direction {
+        if movement_direction && self.lines.iter().any(|line| line["scope"] == "throw_direction") {
             input["id"] = json!("input.throw_direction");
         }
         if let Some(id) = input["id"].as_str() {

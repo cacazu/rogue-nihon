@@ -44,7 +44,6 @@ try{
     await context?.close();context=await browser.newContext({viewport:touch?{width:390,height:844}:{width:1240,height:900},hasTouch:touch,isMobile:touch,deviceScaleFactor:touch?2:1,acceptDownloads:true});
     page=await context.newPage();await installBrowserTestAdapter(page);page.on("pageerror",error=>evidence.errors.push(error.message));
     await page.goto(base+"?trace=1&view=pixels&lang="+lang);await page.waitForFunction(()=>window.__rogueBrowserTest?.canvas?.paintCount>0);
-    if(touch)await click("settings-toggle",true);
     for(const [id,value] of [["name","書き出し勇者"],["seed","17"]]){await click(id,touch);await page.keyboard.press("Control+a");await page.keyboard.insertText(value);}
     await click("new-game",touch);await page.waitForFunction(()=>__rogueBrowserTest.running&&__rogueBrowserTest.trace&&__rogueBrowserTest.queuePending===0);await paint();
     await page.keyboard.press("i");await page.waitForFunction(()=>__rogueBrowserTest.frame.ui.window);await paint();
@@ -72,8 +71,8 @@ try{
           transaction.oncomplete=()=>{db.close();resolve();};transaction.onerror=()=>{db.close();reject(transaction.error);};};
       }),Array.from(exported));
       const generation=await page.evaluate(()=>__rogueBrowserTest.generation);
-      await click(touch?"settings-load":"settings-top",touch);
-      if(!touch){await page.waitForFunction(()=>__rogueBrowserTest.topOpen);await click("load");}
+      await click("settings-top",touch);
+      await page.waitForFunction(()=>__rogueBrowserTest.topOpen);await click("load",touch);
       await page.waitForFunction(n=>__rogueBrowserTest.generation>n&&__rogueBrowserTest.running&&__rogueBrowserTest.trace&&__rogueBrowserTest.queuePending===0,generation);await paint();
       assert.equal(await page.evaluate(()=>__rogueBrowserTest.frame.ui.mode),"menu");assert.deepEqual((await state()).words.slice(1,16),before.words.slice(1,16));
       await click("window-32",touch);await page.waitForFunction(()=>!__rogueBrowserTest.frame.ui.window);

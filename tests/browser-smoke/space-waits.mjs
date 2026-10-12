@@ -48,7 +48,7 @@ try{
  await record('Finished game-options window closes from its button without Space',async()=>{await send('o');await action(27);await label(32,'閉じる');await action(32);await closed();});
  await record('Overlay and clear inventory styles both close without Space',async()=>{for(const key of [111,99]){await inventoryStyle(key);await send('i');await label(32,'閉じる');await action(32);await closed();}});
  await record('Slow inventory has Next item and Close; Esc cancels the C list rather than advancing',async()=>{
-  await inventoryStyle(115);const before=await snapshot();await send('i');assert.equal((await snapshot()).ui.input.kind,'space_cancel');await label(32,'次の品物');await label(27,'閉じる');await shot('slow-inventory');
+  await inventoryStyle(115);const before=await snapshot();await send('i');assert.equal((await snapshot()).ui.input.kind,'space_cancel');await label(32,'次のアイテム');await label(27,'閉じる');await shot('slow-inventory');
   await send('Enter');assert.equal((await snapshot()).ui.input.kind,'space_cancel');await action(27);await closed();assert.equal((await snapshot()).words[13],before.words[13]);
   await send('i');let count=0;while((await snapshot()).ui.input.kind==='space_cancel'){await action(32);if(++count>26)throw Error('slow inventory did not end');}await closed();assert.ok(count>0);assert.equal((await snapshot()).words[13],before.words[13]);
  });

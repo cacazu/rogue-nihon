@@ -155,7 +155,7 @@ try{
     assert.equal((await state()).words[13],turn+1);
   });
   await check("Direction, symbol, discovery and quit confirmation accept Canvas actions",async()=>{
-    await key("z");assert.equal((await state()).frame.ui.input.kind,"direction");await click("window-27");
+    await key("z");assert.equal((await state()).frame.ui.input.kind,"direction");await key("Escape");
     await key("/");assert.ok((await scene()).controls.some(c=>c.id==="command-key"));await field("command-key","@");await click("submit-text");
     await page.waitForFunction(()=>!__rogueBrowserTest.frame.ui.window);
     await key("D");await click("window-27");await page.waitForFunction(()=>!__rogueBrowserTest.frame.ui.window);

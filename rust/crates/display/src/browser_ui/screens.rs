@@ -14,17 +14,19 @@ impl BrowserUi {
         );
     }
     fn game_buttons(&mut self, map: Rect) {
-        self.settings_button(Rect::new(map.x + map.w - 104., map.y + 10., 44., 44.));
+        if !b(&self.model["topOpen"]) {
+            self.settings_button(Rect::new(map.x + map.w - 104., map.y + 10., 44., 44.));
+        }
         self.button(
             "header-fullscreen",
-            &self.t(if self.fullscreen {
+            &self.t(if b(&self.view["fullscreen"]) {
                 "action.exit_fullscreen"
             } else {
                 "action.fullscreen"
             }),
             Rect::new(map.x + map.w - 52., map.y + 10., 44., 44.),
             ControlStyle {
-                icon: Some(if self.fullscreen {
+                icon: Some(if b(&self.view["fullscreen"]) {
                     "collapse"
                 } else {
                     "expand"
@@ -52,11 +54,6 @@ impl BrowserUi {
             .insert("top".into(), clamp(self.scrolls["top"], 0., max));
         self.widgets.begin_clip(viewport);
         let mut y = 28. - self.scrolls["top"];
-        self.dropdown_control(
-            "language",
-            Rect::new(x, y, 220., 48.),
-            b(&self.model["starting"]),
-        );
         y += 66.;
         let left_w = if mobile { w } else { (w * 0.57).floor() };
         let right_x = if mobile { x } else { x + left_w + 20. };
@@ -125,19 +122,14 @@ impl BrowserUi {
             TEXT,
             true,
         );
-        self.button(
-            "load",
-            &self.t("action.load"),
+        self.resume_buttons(
             Rect::new(
                 right_x + 22.,
                 ry + if mobile { 98. } else { 224. },
                 right_w - 44.,
-                44.,
+                48.,
             ),
-            ControlStyle {
-                disabled: !b(&self.model["saved"]) || b(&self.model["starting"]),
-                ..Default::default()
-            },
+            b(&self.model["starting"]),
         );
         self.button(
             "credits-repository",
@@ -178,6 +170,7 @@ impl BrowserUi {
             );
         }
         self.widgets.end_clip();
+        self.top_language_control(Rect::new(self.width - 52., 10., 44., 44.));
         self.game_buttons(Rect::new(0., 0., self.width, self.height));
         if b(&self.model["settingsOpen"]) {
             self.draw_settings(Rect::new(0., 0., self.width, self.height - 52.));
@@ -213,9 +206,12 @@ impl BrowserUi {
         } else {
             Rect::new(map.w, game.y, self.width - map.w, game.h)
         };
-        self.draw_log(log);
-        self.history_target(log);
-        if mobile
+        if !b(&self.model["settingsOpen"]) {
+            self.draw_log(log);
+            self.history_target(log);
+        }
+        if self.mobile_controls
+            && b(&self.model["running"])
             && !self.model["frame"]["ui"]["window"].is_object()
             && !b(&self.model["settingsOpen"])
         {
@@ -238,21 +234,14 @@ impl BrowserUi {
         let f = self.model["frame"].clone();
         let ascii = self.model["displayMode"] == "ascii";
         let size = if self.mobile_overview && (self.width < 700. || b(&self.view["coarse"])) {
-            if ascii { 6. } else { 16. }
-        } else if ascii {
-            12. * n(&self.model["tileSize"]) / 32.
+            16.
         } else {
             n(&self.model["tileSize"])
         };
-        let cell_h = if ascii { 19. * size / 12. } else { size };
+        let cell_h = size;
         let key = format!(
-            "{}:{}:{}:{}:{size}:{}:{}",
-            self.model["generation"],
-            f["player"]["x"],
-            f["player"]["y"],
-            self.model["displayMode"],
-            map.w,
-            map.h
+            "{}:{}:{}:{size}:{}:{}",
+            self.model["generation"], f["player"]["x"], f["player"]["y"], map.w, map.h
         );
         if self.center_key != key {
             self.center_key = key;
@@ -296,10 +285,10 @@ impl BrowserUi {
                     }
                     self.widgets.raw_text(
                         glyph,
-                        px,
-                        py,
+                        px + (size - (self.measure)(glyph, size * 0.75, false, true).width) / 2.,
+                        py + size * 0.125,
                         TextStyle {
-                            size: 16. * size / 12.,
+                            size: size * 0.75,
                             color: if glyph == "@" {
                                 "#9ef0c3"
                             } else if "/!?=:)]*,".contains(glyph) {
@@ -476,6 +465,8 @@ impl BrowserUi {
         let game = Rect::new(game.x, game.y + 60., game.w, (game.h - 60.).max(1.));
         let ui = self.model["frame"]["ui"].clone();
         let d = &ui["window"];
+        let inventory_list = self.inventory_list_visible();
+        if inventory_list { self.sync_inventory_tabs(&ui); }
         let mobile = self.width < 700. || b(&self.view["coarse"]);
         let w = if b(&d["map_view"]) { 920_f64 } else { 600_f64 }.min(self.width - 28.);
         let x = (self.width - w) / 2.;
@@ -484,7 +475,9 @@ impl BrowserUi {
         let inner = w - 32.;
         let mut rows = Vec::new();
         let mut total = 0.;
-        for line in array(&ui["lines"]) {
+        for source_line in array(&ui["lines"]) {
+            let line = self.inventory_item_row(source_line);
+            if inventory_list && !self.inventory_row_visible(&line) { continue; }
             if mobile
                 && matches!(
                     s(&line["id"]),
@@ -546,7 +539,8 @@ impl BrowserUi {
             let height = self
                 .wrap(
                     &text,
-                    inner - if b(&line["selectable"]) { 20. } else { 8. },
+                    inner - if b(&line["selectable"]) { 28. } else { 12. }
+                        - if b(&line["equipped_icon"]) { 26. } else { 0. },
                     font,
                 )
                 .len() as f64
@@ -600,9 +594,28 @@ impl BrowserUi {
         };
         let ending = matches!(s(&ui["mode"]), "death" | "tombstone" | "score" | "victory");
         let cols = if mobile { 2 } else { 3 };
-        let action_rows = array(&d["actions"]).len().div_ceil(cols) as f64;
+        let close_id = if ending {
+            "result-top"
+        } else if array(&d["actions"]).iter().any(|a| a["key"] == 27)
+            && !matches!(s(&d["kind"]), "inventory_actions" | "inventory_details")
+        {
+            "window-27"
+        } else if array(&d["actions"]).iter().any(|a| a["key"] == 32)
+            && (ui["input"]["id"] == "input.close" || b(&ui["inventory"]))
+        {
+            "window-32"
+        } else {
+            "window-close"
+        };
+        let actions: Vec<_> = array(&d["actions"]).iter().filter(|a| {
+            let key = n(&a["key"]) as u32;
+            let back = matches!(s(&d["kind"]), "inventory_actions" | "inventory_details");
+            !(key == 27 && !back
+                || key == 32 && (ui["input"]["id"] == "input.close" || b(&ui["inventory"])))
+        }).collect();
+        let action_rows = actions.len().div_ceil(cols) as f64;
         let prompt = if mobile {
-            self.mobile_dialog_prompt(&ui, d)
+            String::new()
         } else {
             [
                 &d["prompt"],
@@ -625,17 +638,49 @@ impl BrowserUi {
         };
         let bottom = action_rows * 46.
             + if field.is_some() { 56. } else { 0. }
-            + if ending { 46. } else { 0. }
             + prompt_height
             + 12.;
-        let h = (game.h - 28.).min(180_f64.max(total + bottom + 68.));
+        let header = if inventory_list { 120. } else { 64. };
+        let h = (game.h - 28.).min(180_f64.max(total + bottom + header + 20.));
         let y = game.y + 24_f64.min(8_f64.max((game.h - h) / 3.));
         let panel = Rect::new(x, y, w, h);
         self.widgets.box_rect(panel, PANEL, Some("#81978e"), 9.);
-        self.text(s(&d["title"]), x + 16., y + 15., inner, 20., TEXT, true);
-        let viewport = Rect::new(x + 16., y + 48., inner, (h - 58. - bottom).max(16.));
+        let history = inventory_list;
+        let title_width = if history {
+            (self.measure)(s(&d["title"]), 20., true, false).width
+        } else { inner - 56. };
+        let title_height = 20.;
+        self.text(s(&d["title"]), x + 16., y + 15., title_width, title_height, TEXT, true);
+        if history {
+            let label = self.t("inventory.history");
+            let available = (inner - 56. - title_width - 8.).max(48.);
+            let width = ((self.measure)(&label, 17., false, false).width + 16.).min(available);
+            self.control(
+                "inventory-history", &label,
+                Rect::new(x + 16. + title_width + 8., y + 15., width, title_height),
+                json!({"kind":"send","key":68}),
+                ControlStyle { custom: true, key: Some(json!(68)), ..Default::default() },
+            );
+            self.widgets.single_line(&label,Rect::new(x+16.+title_width+8.,y+15.,width,title_height),
+                LineStyle { text:TextStyle::new(17.,TEXT,false),center:true,ellipsis:false },self.measure);
+        }
+        self.control(
+            close_id,
+            &self.t("mobile.dialog.close"),
+            Rect::new(x + w - 56., y + 8., 48., 48.),
+            json!({"kind":"invoke","id":if ending { "result-top" } else { "window-close" }}),
+            ControlStyle {
+                icon: Some("close"),
+                icon_size: 24.,
+                key: Some(json!(27)),
+                disabled: b(&self.model["returnAfterEnd"]) || b(&self.model["windowClosing"]),
+                ..Default::default()
+            },
+        );
+        if inventory_list { self.draw_inventory_tabs(&ui,Rect::new(x+16.,y+64.,inner,48.)); }
+        let viewport = Rect::new(x + 16., y + header, inner, (h - header - 10. - bottom).max(16.));
         let max = (total - viewport.h).max(0.);
-        let mut scroll = clamp(self.scrolls["dialog"], 0., max);
+        let mut scroll = clamp(if inventory_list { self.inventory_scroll() } else { self.scrolls["dialog"] }, 0., max);
         if !d["active_row"].is_null() && d["active_row"] != self.active_row {
             if let Some(row) = rows
                 .iter()
@@ -646,6 +691,7 @@ impl BrowserUi {
             self.active_row = d["active_row"].clone();
         }
         self.scrolls.insert("dialog".into(), scroll);
+        if inventory_list { self.remember_inventory_scroll(scroll); }
         self.regions.insert(
             "dialog".into(),
             Region {
@@ -665,20 +711,27 @@ impl BrowserUi {
             }
             let key = s(&line["key"]);
             if b(&line["selectable"]) && key.chars().count() == 1 {
+                let rect = Rect::new(viewport.x, ry, viewport.w - 8., height - 3.);
                 self.control(
                     &format!("item-{key}"),
-                    &text,
-                    Rect::new(viewport.x, ry, viewport.w - 8., height - 3.),
+                    &if b(&line["equipped_icon"]) { format!("{} {text}",self.t("inventory.tab.equipped")) } else { text.clone() },
+                    rect,
                     json!({"kind":"send","key":key.chars().next().unwrap() as u32}),
                     ControlStyle {
                         left: true,
                         size: font,
+                        custom: b(&line["equipped_icon"]),
                         key: Some(json!(key)),
-                        disabled: !b(&self.model["running"]),
+                        disabled: !b(&self.model["running"]) || b(&self.model["windowClosing"]),
                         ..Default::default()
                     },
                 );
+                if b(&line["equipped_icon"]) { self.draw_equipped_item(&text,rect,true,font); }
             } else {
+                if b(&line["equipped_icon"]) {
+                    self.draw_equipped_item(&text,Rect::new(viewport.x,ry,viewport.w,height),false,font);
+                    continue;
+                }
                 if line["scope"] == "options" && line["row"] == d["active_row"] {
                     self.widgets.box_rect(
                         Rect::new(viewport.x, ry, viewport.w - 8., height),
@@ -718,7 +771,7 @@ impl BrowserUi {
         }
         let gap = 6.;
         let bw = (inner - (cols - 1) as f64 * gap) / cols as f64;
-        for (i, a) in array(&d["actions"]).iter().enumerate() {
+        for (i, a) in actions.iter().enumerate() {
             self.control(
                 &format!("window-{}", a["key"]),
                 &if mobile {
@@ -734,7 +787,7 @@ impl BrowserUi {
                 ),
                 json!({"kind":"send","key":a["key"]}),
                 ControlStyle {
-                    disabled: !b(&self.model["running"]) || b(&self.model["returnAfterEnd"]),
+                    disabled: !b(&self.model["running"]) || b(&self.model["returnAfterEnd"]) || b(&self.model["windowClosing"]),
                     size: if mobile { 17. } else { 16. },
                     key: Some(a["key"].clone()),
                     ..Default::default()
@@ -742,18 +795,6 @@ impl BrowserUi {
             );
         }
         ay += action_rows * 46.;
-        if ending {
-            self.button(
-                "result-top",
-                &self.t("action.top"),
-                Rect::new(x + 16., ay, inner, 40.),
-                ControlStyle {
-                    disabled: b(&self.model["returnAfterEnd"]),
-                    ..Default::default()
-                },
-            );
-            ay += 46.;
-        }
         if !prompt.is_empty() {
             self.text(
                 &prompt,
@@ -796,127 +837,6 @@ impl BrowserUi {
                     }
                 }
             }
-        }
-    }
-    fn draw_settings(&mut self, game: Rect) {
-        self.widgets.controls.clear();
-        self.widgets.rect(game, "#0007");
-        let w = 390_f64.min(self.width - 24.);
-        let x = 12.;
-        let y = game.y + 10.;
-        let h = game.h - 20.;
-        self.widgets
-            .box_rect(Rect::new(x, y, w, h), PANEL, Some(LINE), 9.);
-        self.text(
-            &self.t("settings.title"),
-            x + 16.,
-            y + 16.,
-            w - 80.,
-            22.,
-            TEXT,
-            true,
-        );
-        self.button(
-            "settings-close",
-            &self.t("action.close_settings"),
-            Rect::new(x + w - 52., y + 8., 36., 36.),
-            ControlStyle {
-                icon: Some("close"),
-                icon_size: 22.,
-                ..Default::default()
-            },
-        );
-        let viewport = Rect::new(x + 16., y + 58., w - 32., h - 70.);
-        let mut row = viewport.y - self.scrolls["settings"];
-        self.widgets.begin_clip(viewport);
-        self.button(
-            "fullscreen",
-            &self.t(if b(&self.view["fullscreen"]) {
-                "action.exit_fullscreen"
-            } else {
-                "action.fullscreen"
-            }),
-            Rect::new(viewport.x, row, viewport.w, 40.),
-            Default::default(),
-        );
-        row += 54.;
-        let saved = b(&self.model["saved"]);
-        self.button(
-            "save",
-            &self.t("action.save"),
-            Rect::new(viewport.x, row, viewport.w * 0.35, 42.),
-            ControlStyle {
-                disabled: !b(&self.model["running"])
-                    || b(&self.model["savePending"])
-                    || b(&self.model["returnAfterEnd"]),
-                ..Default::default()
-            },
-        );
-        {
-            self.button(
-                "download-save",
-                &self.t("action.download"),
-                Rect::new(
-                    viewport.x + viewport.w * 0.35 + 8.,
-                    row,
-                    viewport.w * 0.65 - 8.,
-                    42.,
-                ),
-                ControlStyle {
-                    size: 16.,
-                    disabled: !saved || b(&self.model["starting"]) || b(&self.model["savePending"]),
-                    ..Default::default()
-                },
-            );
-        }
-        row += 70.;
-        let busy = b(&self.model["starting"])
-            || b(&self.model["savePending"])
-            || b(&self.model["returnAfterEnd"]);
-        self.dropdown_control(
-            "display-mode",
-            Rect::new(viewport.x, row, viewport.w, 48.),
-            busy,
-        );
-        row += 62.;
-        self.button(
-            "center-map",
-            &self.t("action.center"),
-            Rect::new(viewport.x, row, viewport.w, 40.),
-            Default::default(),
-        );
-        row += 52.;
-        self.button(
-            "settings-top",
-            &self.t("action.top"),
-            Rect::new(viewport.x, row, viewport.w, 42.),
-            ControlStyle {
-                disabled: b(&self.model["savePending"]) || b(&self.model["returnAfterEnd"]),
-                ..Default::default()
-            },
-        );
-        row += 54.;
-        self.widgets.end_clip();
-        let total = row - viewport.y + self.scrolls["settings"];
-        let max = (total - viewport.h).max(0.);
-        self.regions.insert(
-            "settings".into(),
-            Region {
-                rect: viewport,
-                max,
-            },
-        );
-        if self.scrolls["settings"] > max {
-            self.scrolls.insert("settings".into(), max);
-        }
-        self.widgets
-            .scrollbar(viewport, total, self.scrolls["settings"]);
-    }
-    pub(super) fn zoom_sizes(&self) -> &'static [f64] {
-        if self.model["displayMode"] == "pixels" {
-            &[16., 32., 64., 96., 128.]
-        } else {
-            &[16., 24., 32., 48., 64.]
         }
     }
 }

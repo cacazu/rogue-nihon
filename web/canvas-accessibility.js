@@ -12,13 +12,11 @@ globalThis.RogueCanvasAccessibility = {
     stage.append(description);
     const nodes = new Map();
     const forward = (event,type) => {
-      const bounds=ui.canvas.getBoundingClientRect();
-      ui.dispatch({type,id:event.pointerId,x:(event.clientX-bounds.left)*ui.scene.width/bounds.width,y:(event.clientY-bounds.top)*ui.scene.height/bounds.height,pointerType:event.pointerType,button:event.button,buttons:event.buttons,primary:event.isPrimary,captures:[...ui.captured].filter(id=>ui.canvas.hasPointerCapture(id)),hasCapture:ui.canvas.hasPointerCapture(event.pointerId)},event);
+      ui.dispatch({type,id:event.pointerId,...ui.point(event.clientX,event.clientY),pointerType:event.pointerType,button:event.button,buttons:event.buttons,primary:event.isPrimary,captures:[...ui.captured].filter(id=>ui.canvas.hasPointerCapture(id)),hasCapture:ui.canvas.hasPointerCapture(event.pointerId)},event);
     };
     for(const [native,type] of [["pointerdown","down"],["pointermove","move"],["pointerup","up"]])layer.addEventListener(native,event=>forward(event,type));
     layer.addEventListener("wheel",event=>{
-      const bounds=ui.canvas.getBoundingClientRect();
-      ui.dispatch({type:"wheel",x:(event.clientX-bounds.left)*ui.scene.width/bounds.width,y:(event.clientY-bounds.top)*ui.scene.height/bounds.height,dx:event.deltaX,dy:event.deltaY,deltaMode:event.deltaMode},event);
+      ui.dispatch(ui.wheel(event),event);
     },{passive:false});
     layer.addEventListener("contextmenu",event=>event.preventDefault());
     layer.addEventListener("touchstart",event=>event.preventDefault(),{passive:false});

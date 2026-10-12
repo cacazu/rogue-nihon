@@ -15,7 +15,9 @@ Cが元の表示経路で選んだ意味ID・引数・可視情報をRustへ渡�
 
 ファイル名と行番号は呼出箇所の照合に使う。意味IDは関数と内容に基づき、再生成時は既存IDを維持する。英語のprintf書式・関数・ソース位置をmetadataとして持つ。EN/JAのIDとplaceholderを一致させる。カタログ件数はJSONを正本とし、文書へ複製しない。`coverage.json` のdynamic分類は未訳件数ではない。
 
-ブラウザーのスマホ案内は `ui-web` の `mobile.instruction.*` と `mobile.dialog.*` を使う。PCのキー操作案内は原作の意味IDを使い続ける。`browser_ui/mobile_dialog.rs` は公開済みの入力kind・window kindからタップ用の案内とボタン名を選び、品物行・鑑定情報・実行するキーを変更しない。
+アイテムの日本語表記は「アイテム」に統一する。装備品の可視数値は名前の後の半角括弧にまとめ、項目の区切りは半角空白にする。武器は「命中+1 威力+1」、防具は「強化+1 防御力4」、指輪は「補正+1」、杖は外見と「残り5回」を同じ形式で表す。辞書の生成元はgenerate_entities.pyのFORMSで、未知の数値や鑑定条件を変更しない。持ち物・選択・詳細のアイテム行では、公開descriptorのequippedから名前の前にチェック付き丸形アイコンを描き、名前末尾の装備状態の文言を置き換える。元のdescriptorは入力と装備枠・左右の手の判定に維持する。
+
+ブラウザーのスマホ案内は `ui-web` の `mobile.instruction.*` と `mobile.dialog.*` を使う。PCのキー操作案内は原作の意味IDを使い続ける。`browser_ui/mobile_dialog.rs` は公開済みの入力kind・window kindからタップ用の案内とボタン名を選び、アイテム行・鑑定情報・実行するキーを変更しない。
 
 名称生成はCの静的初期化子を読む。原作との件数・文字列・並び順を照合し、各表の元英文をNULで連結したSHA-256を `source_tables` へ記録する。
 
@@ -44,7 +46,7 @@ prbuf、set_mname、prname等の再利用bufferは登録時に英語値とJSON�
 | `fight.c:set_mname / prname` | 可視・不可視・幻覚の表示名、主語/目的語 |
 | `fight.c:hit / miss` | 元の乱数が選んだcombat_verb番号 |
 | `rip.c:killname / rg_ending_line` | 死因、墓碑・勝利・精算・得点の型付き引数 |
-| `pack.c:get_item / misc.c:get_dir / wizard.c:type_name` | 選択目的、方向、品物categoryのterm |
+| `pack.c:get_item / misc.c:get_dir / wizard.c:type_name` | 選択目的、方向、アイテムcategoryのterm |
 | `potions.c` の感覚語・ジュース | termまたは意味ID付き生成message |
 | `sticks.c` のbolt/flame/ice | 正式なtable pointerからprojectile term |
 | `whoami / fruit` | player_name marker、自由果物名と既定値の区別 |
@@ -105,7 +107,7 @@ player_nameはCのASCII aliasでなくRust SessionのUnicode実名を表示時�
 
 ブラウザーのネイティブ入力欄にある未送信の草稿はEscで取り消し、Cへ確定しない。すでにCが受け取ったbyteに対するget_strの処理とは区別する。保存時だけは草稿をCへ反映して入力待ちを保存する。
 
-ヘルプ・設定・品物選択・一覧・終了はCの意味通知からRustのゲームウインドウへ変換し、Canvasへ描く。日本語の文字幅・折り返し・スクロールでCの行数判定・ターン・RNGを更新しない。終了後はinput.kind=endedのpresentationだけを更新し、新しいC入力待ちやフレームを作らない。
+ヘルプ・設定・アイテム選択・一覧・終了はCの意味通知からRustのゲームウインドウへ変換し、Canvasへ描く。日本語の文字幅・折り返し・スクロールでCの行数判定・ターン・RNGを更新しない。終了後はinput.kind=endedのpresentationだけを更新し、新しいC入力待ちやフレームを作らない。
 
 ## 欠落・不正データ
 

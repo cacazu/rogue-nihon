@@ -71,6 +71,7 @@ impl ObservedMap {
                 "map_unknown_glyphs",
                 "map_underlays",
                 "map_player_underlay",
+                "map_player_surface",
             ] {
                 frame[key] = cached[key].clone();
             }
@@ -110,6 +111,17 @@ impl ObservedMap {
                 })
                 .cloned()
                 .unwrap_or(Value::Null);
+            // floor_at() is already an observed surface beneath the displayed
+            // player. Keep item glyphs too, without treating them as terrain.
+            frame["map_player_surface"] = frame["player"]["x"].as_u64()
+                .zip(frame["player"]["y"].as_u64())
+                .and_then(|(x, y)| {
+                    let index = (y * u64::from(columns) + x) as usize;
+                    (cells.get(index) == Some(&b'@'))
+                        .then(|| self.terrain.get(index).copied()).flatten()
+                        .and_then(map_tiles::glyph)
+                        .map(|tile| json!({"x":x,"y":y,"tile":tile}))
+                }).unwrap_or(Value::Null);
             frame["map_underlays"] = json!(underlays);
             frame["map_tiles"] = json!(tiles);
             frame["map_tile_ids"] = json!(&map_tiles::IDS[..]);

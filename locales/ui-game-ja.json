@@ -90,10 +90,10 @@
       "template": "＋方向キー：倒すか瀕死になるまで戦う"
     },
     "help.throw": {
-      "template": "＋方向キー：品物を投げる"
+      "template": "＋方向キー：アイテムを投げる"
     },
     "help.move_without_pickup": {
-      "template": "＋方向キー：品物を拾わずに移動"
+      "template": "＋方向キー：アイテムを拾わずに移動"
     },
     "help.zap": {
       "template": "＋方向キー：杖を使う"
@@ -114,7 +114,7 @@
       "template": "：1ターン休む"
     },
     "help.pickup": {
-      "template": "：足元の品物を拾う"
+      "template": "：足元のアイテムを拾う"
     },
     "help.inventory": {
       "template": "：所持品を一覧表示"
@@ -147,10 +147,10 @@
       "template": "：指輪を外す"
     },
     "help.drop": {
-      "template": "：品物を置く"
+      "template": "：アイテムを置く"
     },
     "help.call": {
-      "template": "：品物に名前を付ける"
+      "template": "：アイテムに名前を付ける"
     },
     "help.again": {
       "template": "：直前のコマンドを繰り返す"
@@ -168,7 +168,7 @@
       "template": "：現在の能力値を表示"
     },
     "help.discoveries": {
-      "template": "：発見した品物を一覧表示"
+      "template": "：発見したアイテムを一覧表示"
     },
     "help.options": {
       "template": "：設定を確認・変更"
@@ -240,7 +240,7 @@
       "template": "O：重ねる／S：1行ずつ／C：切り替え"
     },
     "input.choose_item": {
-      "template": "品物を選択。キー入力でも選べます。Esc：取消"
+      "template": "アイテムを選択。キー入力でも選べます。Esc：取消"
     },
     "input.choose_direction": {
       "template": "方向キーを入力。Esc：取消"
@@ -423,13 +423,13 @@
       "template": "調べる記号を入力。Esc：取消"
     },
     "input.discovery": {
-      "template": "品物の種類を入力。*：全発見／Esc：取消"
+      "template": "アイテムの種類を入力。*：全発見／Esc：取消"
     },
     "input.confirm": {
       "template": "ゲームを終了しますか？ Y：はい／N：いいえ"
     },
     "input.inventory_one": {
-      "template": "調べる品物を選択。キー入力でも選べます。Esc：取消"
+      "template": "調べるアイテムを選択。キー入力でも選べます。Esc：取消"
     },
     "window.menu": {
       "template": "持ち物・一覧"
@@ -447,7 +447,7 @@
       "template": "ゲーム結果"
     },
     "window.item": {
-      "template": "品物を選択"
+      "template": "アイテムを選択"
     },
     "window.direction": {
       "template": "方向を指定"
@@ -456,7 +456,7 @@
       "template": "文字を入力"
     },
     "window.discovery": {
-      "template": "発見した品物"
+      "template": "発見したアイテム"
     },
     "window.confirm": {
       "template": "確認"
@@ -474,7 +474,7 @@
       "template": "次のページ"
     },
     "window.next_item": {
-      "template": "次の品物"
+      "template": "次のアイテム"
     },
     "window.next_message": {
       "template": "次のメッセージ"
@@ -504,7 +504,7 @@
       "template": "Space / Enter：次のページ"
     },
     "input.next_item": {
-      "template": "Space / Enter：次の品物／Esc：閉じる"
+      "template": "Space / Enter：次のアイテム／Esc：閉じる"
     },
     "input.next_message": {
       "template": "Space / Enter：次のメッセージ"
