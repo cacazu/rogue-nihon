@@ -1,6 +1,5 @@
 import {createPlaywrightCdp} from './browser-smoke/playwright-cdp.mjs';
 import {browserExecutable} from '../tools/toolchain.mjs';
-import { browserTestAdapterSource } from "./browser-smoke/test-adapter.mjs";
 import { artifactDirectory } from "../tools/temporary-artifacts.mjs";
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
@@ -22,7 +21,7 @@ async function shot(name){const r=await cdp.call('Page.captureScreenshot',{forma
 try{
  cdp=await createPlaywrightCdp({profile});evidence.launch=cdp.launch;
  await cdp.call('Runtime.enable');await cdp.call('Page.enable');
-  await cdp.call("Page.addScriptToEvaluateOnNewDocument", {source: browserTestAdapterSource()});
+  await cdp.installBrowserAdapter();
  await cdp.call('Emulation.setDeviceMetricsOverride',{width:1280,height:960,deviceScaleFactor:1,mobile:false});
  await cdp.call('Page.navigate',{url:base+'?trace=1'});
  await until(()=>cdp.evaluate('Boolean(window.__rogueBrowserTest?.graphics?.images===46)'),'46 images decoded');

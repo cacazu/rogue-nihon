@@ -1,3 +1,4 @@
+import {fixtureWorker} from "./fixture-worker.mjs";
 import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
@@ -20,7 +21,7 @@ let context,page;
 try{
  for(const mobile of [false,true])for(const language of ['ja','en'])for(const fixture of ['ending-victory','ending-death','ending-no-tomb']){
   await context?.close();context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1400,height:1050},isMobile:mobile,hasTouch:mobile});
-  await context.route('**/web/worker.js',r=>r.fulfill({body:worker.replace('    module.FS.writeFile("/locale.txt",','    module.FS.writeFile("/fixture.id", '+JSON.stringify(fixture)+');\n    module.FS.writeFile("/locale.txt",'),contentType:'text/javascript',headers}));
+  await context.route('**/web/worker.js',r=>r.fulfill({body:fixtureWorker(worker,fixture),contentType:'text/javascript',headers}));
   await context.route('**/build/game.js',r=>r.fulfill({path:path.join(root,'build/game-fixtures.js'),contentType:'text/javascript',headers}));
   page=await context.newPage();await installBrowserTestAdapter(page);page.setDefaultTimeout(12000);page.on('pageerror',e=>evidence.errors.push(e.message));
   const state=()=>page.evaluate(()=>({ui:__rogueBrowserTest.frame?.ui,running:__rogueBrowserTest.running,input:__rogueBrowserTest.inputRequestCount,diagnostics:__rogueBrowserTest.diagnostics}));

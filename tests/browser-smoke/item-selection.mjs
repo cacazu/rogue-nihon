@@ -1,3 +1,4 @@
+import {fixtureWorker} from "./fixture-worker.mjs";
 import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
@@ -9,7 +10,7 @@ const evidence={started_at:new Date().toISOString(),checks:[],errors:[],operatio
 async function snap(){return page.evaluate(()=>({ui:__rogueBrowserTest.frame.ui,game:__rogueBrowserTest.trace.words.slice(1,16),input:__rogueBrowserTest.inputRequestCount}));}
 async function start(locale='ja',mobile=false,fixture=''){
  await context?.close();context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1240,height:900}});
- if(fixture){const headers={'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'};const source=worker.replace('    module.FS.writeFile("/locale.txt",','    module.FS.writeFile("/fixture.id", '+JSON.stringify(fixture)+');\n    module.FS.writeFile("/locale.txt",');await context.route('**/web/worker.js',r=>r.fulfill({body:source,contentType:'text/javascript',headers}));await context.route('**/build/game.js',r=>r.fulfill({path:path.join(root,'build/game-fixtures.js'),contentType:'text/javascript',headers}));}
+ if(fixture){const headers={'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'};const source=fixtureWorker(worker,fixture);await context.route('**/web/worker.js',r=>r.fulfill({body:source,contentType:'text/javascript',headers}));await context.route('**/build/game.js',r=>r.fulfill({path:path.join(root,'build/game-fixtures.js'),contentType:'text/javascript',headers}));}
  page=await context.newPage();await installBrowserTestAdapter(page);page.on('pageerror',e=>evidence.errors.push(e.message));await page.goto('http://127.0.0.1:'+server.address().port+'/?trace=1&lang='+locale+'&view=pixels');await page.locator('#seed').fill('17');await page.locator('#new-game').click();await page.waitForFunction(()=>window.__rogueBrowserTest?.trace&&__rogueBrowserTest.inputRequestCount>0&&__rogueBrowserTest.queuePending===0);await page.locator('#board').focus();
 }
 async function key(value){const n=(await snap()).input;await page.keyboard.press(value);await page.waitForFunction(n=>__rogueBrowserTest.inputRequestCount>n&&__rogueBrowserTest.queuePending===0,n);}

@@ -10,6 +10,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from compiler_workspace import CompilerWorkspace
+from bind_browser import bind_browser
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES = 'vers extern armor chase command daemon daemons fight init io list mach_dep main mdport misc monsters move new_level options pack passages potions rings rip rooms save scrolls state sticks things weapons wizard xcrypt core knowledge message save_adapter semantic'.split()
@@ -82,9 +83,10 @@ def build(options):
                 args += ['--features', 'test-hooks']
             run(args, env=env)
             run(['cargo', 'build', '--offline', '--locked', '--manifest-path', ROOT / 'rust/Cargo.toml', '--release', '-p', 'rogue-browser-display', '--target', 'wasm32-unknown-unknown'], env=env)
-            shutil.copyfile(target / 'wasm32-unknown-unknown/release/rogue_browser_display.wasm', build_dir / 'browser-ui.wasm')
+            bind_browser(target / 'wasm32-unknown-unknown/release/rogue_browser_display.wasm', build_dir)
         elif not (build_dir / 'browser-ui.wasm').is_file():
             shutil.copyfile(ROOT / 'build/browser-ui.wasm', build_dir / 'browser-ui.wasm')
+            shutil.copyfile(ROOT / 'build/browser-ui.js', build_dir / 'browser-ui.js')
         inputs = [logic / (source + '.c') for source in SOURCES]
         args = [*inputs, library, *c_flags(logic)]
         if options.test_fixtures:
@@ -96,7 +98,7 @@ def build(options):
             exports += ['_rg_test_repaint', '_rg_test_save_roundtrip']
         args += ['-sEXPORTED_FUNCTIONS=' + json.dumps(exports, separators=(',', ':')), '--no-entry', '--js-library', ROOT / 'web/library.js', '-sMODULARIZE=1', '-sEXPORT_NAME=createRogueModule', '-sENVIRONMENT=web,worker,node', '-sALLOW_MEMORY_GROWTH=1', '-sSTACK_SIZE=4194304', '-sASSERTIONS=1', '-sEXPORTED_RUNTIME_METHODS=["ccall","FS","UTF8ToString"]', '-o', build_dir / (options.output_name + '.js')]
         run([*emcc, *args], env=env)
-        outputs = [options.output_name + '.js', options.output_name + '.wasm', 'browser-ui.wasm']
+        outputs = [options.output_name + '.js', options.output_name + '.wasm', 'browser-ui.wasm', 'browser-ui.js']
         records = [{'file': name, 'bytes': (build_dir / name).stat().st_size, 'sha256': hashlib.sha256((build_dir / name).read_bytes()).hexdigest()} for name in outputs]
         manifest_name = 'build-manifest.json' if options.output_name == 'game' else 'build-manifest-' + options.output_name + '.json'
         manifest = {'built_at_utc': datetime.now(timezone.utc).isoformat(), 'logic_source_directory': str(logic), 'c_source_files': len(SOURCES), 'rust_library': str(library), 'rust_engine': 'Bevy 0.19.1', 'sdk_root': options.sdk_root or env.get('EMSDK'), 'rust_version': subprocess.check_output(['rustc', '--version'], text=True).strip(), 'test_hooks': bool(hooks), 'test_fixtures': bool(options.test_fixtures), 'c_flags': ['-DROGUE_LAYERED', '-std=gnu11', '-fwrapv', '-fno-strict-aliasing', '-O1'], 'wasm_flags': ['MODULARIZE', 'ALLOW_MEMORY_GROWTH', 'STACK_SIZE=4194304', 'ASSERTIONS=1', 'Worker+SAB input; no Asyncify'], 'outputs': records}

@@ -12,7 +12,7 @@
 | プラットフォーム | `rust/crates/platform/` | checkpoint、消費済み入力journal、再生位置、保存envelopeと検証 |
 | ゲーム側の接続 | `rust/src/lib.rs`、`session.rs`、`engine.rs` | C/JS FFI、Bevy Appの組立て、各層への状態投影と実行順 |
 | ブラウザー側の判断 | `rust/crates/browser-display/src/controller.rs`、`policies.rs`、`display/src/browser_ui/`、`widgets.rs` | 開始・終了・保存の状態、Worker世代、IME制限、入力検証、表示設定、履歴、配置・フォーカス・カメラ・タイル計画 |
-| ブラウザーAPI接続 | `web/` | Rustの命令をCanvas2D、ネイティブ文字入力、Worker/SAB、IndexedDB等へ接続 |
+| ブラウザー資源 | `rust/crates/browser-display/src/browser/` | イベントlistener、Canvas2D、ネイティブ文字入力、画像と回転cache、Worker/SAB、IndexedDB、保存候補bytes、ファイル・Blobの所有とAPI実行 |
 
 入力は表示が公開する不変の `InputView` を参照する。基本の入力待ち・所持品行と、持ち物の詳細・操作候補を付けた描画用UIは区別する。入力Pluginは翻訳を再実行せず、表示状態や地図Componentを直接変更しない。文字編集の消費byte・未送信byte・表示可能な文字列は入力の `State` が所有し、接続部が表示へ一方向に投影する。開始時に表示する既存値は、空のC編集bufferを埋める入力にはしない。
 
@@ -50,7 +50,7 @@ CゲームスタックはWorker内で同期実行し、入力キューが空な�
 
 状況別操作は通常「探す」で、公開された足元と現在の入力状態から、階段上では「下りる」（護符取得後は「上る」）、足元のアイテムには「拾う」、足元または隣接する観測済みの罠には「罠調査」へ切り替える。罠調査は原作の方向選択を移動パッド上で開く。階段の可否と浮遊中の拾得不可は読み取り専用のplayer_stateを使い、品名やログから推測しない。リストでは状況別ボタンと同じ操作を非表示にし、階段を離れた場合や浮遊中の階段操作は無効にする。六つのボタンの配置は保つ。
 
-一覧・設定はボタン上からのタッチスワイプでスクロールでき、移動した押下は実行しない。倍率は地図上のピンチ・ホイールで変え、表示方式に共通の連続した8〜128 CSS px/セルを使う。Rustの `gestures.rs` がピンチの比率とホイールの連続アニメーションを計算し、JSはrequestAnimationFrameを実行する。原作に拡大縮小処理を追加しない。操作中心の地図位置を維持する。スマホの移動・待機パッドは押下時に既存キーを一度送り、350msの長押し後は100msごとに、前の入力が処理され新しいcommand待ちになった場合だけ同じキーを送る。解放・取消・指の移動・ウィンドウ表示で反復を止める。方向待ちは解放時の一回だけを使う。投げるt・杖z・自動戦闘f/F・拾わずに移動m・罠調査^の全6操作で方向ウィンドウを出さず、同じ移動パッドを強調表示する。原作get_dirは8方向とEscだけを受け付け、自分方向を受け付けないため中央キーは出さない。修飾キーは方向待ちで単一の通常方向へ正規化し、走行を開始しない。操作一覧・履歴・ステータスウィンドウ中は背景のゲーム入力を遮断する。PC幅へ切り替わる場合は操作一覧を閉じる。表示・一覧・倍率・全画面・resizeでC状態、RNG、入力回数を変えないことをPlaywrightで検証する。原作の@では端末画面のメッセージhashは変わるが、ターン・ルール状態は維持する。
+一覧・設定はボタン上からのタッチスワイプでスクロールでき、移動した押下は実行しない。倍率は地図上のピンチ・ホイールで変え、表示方式に共通の連続した8〜128 CSS px/セルを使う。Rustの `gestures.rs` がピンチの比率とホイールの連続アニメーションを計算し、Rustのブラウザー層がrequestAnimationFrameを登録する。原作に拡大縮小処理を追加しない。操作中心の地図位置を維持する。スマホの移動・待機パッドは押下時に既存キーを一度送り、350msの長押し後は100msごとに、前の入力が処理され新しいcommand待ちになった場合だけ同じキーを送る。解放・取消・指の移動・ウィンドウ表示で反復を止める。方向待ちは解放時の一回だけを使う。投げるt・杖z・自動戦闘f/F・拾わずに移動m・罠調査^の全6操作で方向ウィンドウを出さず、同じ移動パッドを強調表示する。原作get_dirは8方向とEscだけを受け付け、自分方向を受け付けないため中央キーは出さない。修飾キーは方向待ちで単一の通常方向へ正規化し、走行を開始しない。操作一覧・履歴・ステータスウィンドウ中は背景のゲーム入力を遮断する。PC幅へ切り替わる場合は操作一覧を閉じる。表示・一覧・倍率・全画面・resizeでC状態、RNG、入力回数を変えないことをPlaywrightで検証する。原作の@では端末画面のメッセージhashは変わるが、ターン・ルール状態は維持する。
 
 配置の導入理由はシード123の390×844・DPR2の実プレイから得た。1歩目の地図タップで指用の独立方向部品が必要になり、26ターン目に部屋の両端が32px表示で同時に見えず広域切替を追加した。46ターン目の行き止まり探索で「探す」をパッドへ追加し、186ターン目の投射失敗で履歴を開かず結果を見る表示を追加した。階段操作は原作フラグと足元の観測に従い、前段落の表示規則で出す。攻略とUI導入の詳細な実行記録・画像・到着セーブはローカルのプレイ記録に保持し、仕様の正本はこの文書と地図表示の契約とする。
 
@@ -64,16 +64,21 @@ CゲームスタックはWorker内で同期実行し、入力キューが空な�
 | `get_str / strucpy` | `rg_host_text_mode / rg_host_read_key / rg_host_player_name` と文字入力 |
 | `rg_core_save_bytes / rg_core_load_bytes` | `rg_host_checkpoint / rg_host_restore_data` と保存・復元 |
 
-## JSに置く処理
+## ブラウザー資源と残るJS
 
-| ファイル | 接続の責務 |
+ブラウザーAPIは `wasm-bindgen / web-sys / js-sys` の生成bindingを通してRustから呼ぶ。`browser/mod.rs` はDOM・listener・文字計測・座標変換・再描画の登録を、`paint.rs` はCanvas命令と公開UIの意味的なDOM mirrorを担当する。listenerは弱参照でBrowserへ接続し、callbackの寿命をRustで保持する。`effects.rs::WorkerSlot` はWorker・共有キュー・callbackを所有し、Dropでキューをcloseしてcallbackを外しWorkerを終了する。`queue.rs` はSAB/Atomicsの容量検査・全公開または全拒否・待機・flushを実装し、生の整数を解釈しない。
+
+`saves.rs` はIndexedDB transaction完了・ファイル選択・Blob書出しを扱い、候補bytesと採用済みbytesはBrowserの別領域に保持する。ファイル選択と全画面のAPIはユーザーイベントの同期区間で開始し、完了はRust futureで待つ。`images.rs` は画像decode・Canvas raster・回転cacheの寿命を管理し、32px格子の回転計算は表示層の `browser_ui/pixels.rs` に置く。`worker.rs` はEmscriptenの初期化・仮想FS・同期C起動・親への転送を担当する。
+
+| JS | 残る接続の責務 |
 |---|---|
-| `app.js` | Worker、IndexedDB、localStorage、crypto、全画面、Blob書き出し、リンク等のAPI実行。保存bytesは不透明なbufferとして扱う |
-| `canvas-ui.js` | Wasm/JSON接続、イベント・画面寸法・入力値の観測、Canvas描画と文字計測、pointer capture・timer・requestAnimationFrame。フォーカスとイベント取消はRustに従う |
-| `tiles.js` | Rust指定画像のデコードと描画、ドット絵の回転ラスタライズ。可視性や地形・役者の判定はRust側 |
-| `event-queue.js` | SAB/Atomicsのリング転送・待機・切断・容量検査。一括入力は全公開または全拒否とし、生の整数を解釈しない |
-| `worker.js / library.js` | Emscripten、仮想FS、借用メモリーのコピー、入力・フレーム・保存の転送 |
-| `abi.js` | 生成済み定数。現在の通常HTML/Workerでは読み込まない |
+| `web/app.js` | 生成bindingとWasmを読み、Rustのブラウザー起動を呼ぶ |
+| `web/worker.js` | classic Worker内で同じbindingとWasmを読みRustを起動する。Rust起動前の取得・初期化失敗だけ親へ通知する |
+| `web/library.js` | Emscripten ABIの借用メモリーを文字列・所有byte列へ変換してRust callbackへ渡す |
+| `web/abi.js` | ヘッダーから生成した定数。通常HTML/Workerでは読み込まない |
+| `build/browser-ui.js`、`build/game.js` | wasm-bindgenのブラウザーAPI bindingとEmscriptenの生成runtime。アプリケーション判断の正本にはしない |
+
+サーバーへのプレイ記録送信は行わない。復元に必要な消費済み入力journalは、Rustの保存コンテナ内に保持する。
 
 Worker世代が変わった後の古いcallbackはRust側で無視する。保存成功はIndexedDB transactionの完了後に通知する。文字編集中の保存は草稿をCへ送って保存し、Enterで確定しない。キュー送信に失敗した場合は編集状態を失わない。トップへ戻る操作はWorkerと入力キューを終了し、保存済みデータを保持する。保存中は戻る操作を無効にする。
 
@@ -126,7 +131,7 @@ GOLDのcount=0、食料や杖のwield、方向指定の絶対target、壁移動�
 
 `browser-display/src/save_loading.rs` は同じ `Envelope::parse` でファイル・IndexedDBの保存をゲーム開始前に検証する。拡張子だけでは受け付けず、形式・版・ABI・source・構造・上限・checksumを検査する。無効なファイルと選択取消では現在のセッションを終了せず、保存済みbytesも差し替えない。ファイルのbytesは検証成功の命令後にだけ復元元へ移す。ゲーム内のcheckpoint復元でも失敗した場合はトップへ戻してエラーを表示し、再開・新規開始を可能にする。
 
-保存APIの保留状態は `browser-display/src/save_operations.rs` が所有し、要求ID・Worker世代・操作種別の一致で応答を受理する。JavaScriptは要求ごとの候補bytesを保持するだけで、read/import/write callback内で復元元を差し替えない。Rustの `save-accept` 命令で採用し、`save-discard` 命令で破棄する。新規開始とトップ復帰では保留要求を退役させ、遅延・重複応答が次のセッションの保存元を変更しないようにする。保存書込みはIndexedDB transaction完了後の受理で採用する。トップの「前回の続き」はIndexedDBの保存有無、書出しは受理済みbytesの有無を使い、ファイルimportだけで保存枠が存在すると扱わない。
+保存APIの保留状態は `browser-display/src/save_operations.rs` が所有し、要求ID・Worker世代・操作種別の一致で応答を受理する。Rustのブラウザー層は要求ごとの候補bytesを保持し、read/import/write callback内で復元元を差し替えない。Controllerの `save-accept` で採用し、`save-discard` で破棄する。新規開始とトップ復帰では保留要求を退役させ、遅延・重複応答が次のセッションの保存元を変更しないようにする。保存書込みはIndexedDB transaction完了後の受理で採用する。トップの「前回の続き」はIndexedDBの保存有無、書出しは受理済みbytesの有無を使い、ファイルimportだけで保存枠が存在すると扱わない。
 
 画像の準備状態も応答件数ではなく、`tiles` と `pixels` の各セットの成功状態から決める。同じセットの重複応答は準備完了を早めず、成功・失敗の応答とも対象セットを渡す。
 
@@ -136,6 +141,6 @@ GOLDのcount=0、食料や杖のwield、方向指定の絶対target、壁移動�
 
 `start.ps1` は作品フォルダー外の開発用 [../tools/server.mjs](../../tools/server.mjs) へ配信対象を渡す。共有入力に必要なCOOP/COEPヘッダーとWasmのContent-Typeは本番の静的配信側でも設定する。同じ配信元の既存サーバーは再利用し、別プロセスの終了や自動ポート変更は行わない。originが変わるとIndexedDB保存枠も変わるためである。
 
-通常Wasmに `RG_TEST_FIXTURES` や `RG_TEST_HOOKS`、Rustの `test-hooks` を含めない。試験用buildには `game` 以外の出力名を要求する。テストアダプターは検証側から注入し、本番JSから読み込まない。
+通常Wasmに `RG_TEST_FIXTURES` や `RG_TEST_HOOKS`、Rustの `test-hooks / browser-test` を含めない。試験用buildには `game` 以外の出力名を要求する。ブラウザーの観測・操作exportは `browser-test` featureの専用 `browser-test.js / browser-test.wasm` に限定する。テストアダプターは検証側でbindingを置き換えて注入し、本番JSから読み込まない。
 
-通常ビルドは自分の専用コンパイラー領域だけを終了時に閉じる。他の中断した実行の回収は検証ツール・明示的な開発操作に限定する。配布に必要な `game.js / game.wasm / browser-ui.wasm / build-manifest.json` は保持する。ビルド・検証の実行方法は [README](../README.md) と [tests/README](../tests/README.md) に置く。
+通常ビルドは自分の専用コンパイラー領域だけを終了時に閉じる。他の中断した実行の回収は検証ツール・明示的な開発操作に限定する。配布に必要な `game.js / game.wasm / browser-ui.js / browser-ui.wasm / build-manifest.json` は保持する。ビルド・検証の実行方法は [README](../README.md) と [tests/README](../tests/README.md) に置く。

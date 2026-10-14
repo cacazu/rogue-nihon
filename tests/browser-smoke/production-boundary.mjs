@@ -32,7 +32,7 @@ async function copyRuntime(destination) {
       if (/\.(?:png|json)$/.test(file)) await cp(path.join(root, assetPath, file), path.join(destination, assetPath, file));
     }
   }
-  for (const file of ["game.js", "game.wasm", "browser-ui.wasm", "build-manifest.json"])
+  for (const file of ["game.js", "game.wasm", "browser-ui.wasm", "browser-ui.js", "build-manifest.json"])
     await cp(path.join(root, "build", file), path.join(destination, "build", file));
 }
 
@@ -113,7 +113,7 @@ try {
       await page.goto(base);
       await page.waitForFunction(() => document.getElementById("rogue-canvas").width > 300);
       assert.equal(await page.evaluate(() => "__rogueBrowserTest" in window), false);
-      assert.equal(await page.evaluate(() => "active" in RogueCanvasUi), false);
+      assert.equal(await page.evaluate(() => "RogueCanvasUi" in window), false);
       assert.equal((await context.request.get(base + "web/server.mjs")).status(), 404);
       assert.equal((await context.request.get(base + "tools/server.mjs")).status(), 403);
       await page.screenshot({path: path.join(output, label + "-top.png")});

@@ -1,3 +1,4 @@
+import {fixtureWorker as withFixture} from "./fixture-worker.mjs";
 import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
@@ -14,7 +15,7 @@ const old=Object.fromEntries(['web/index.html','web/app.js','web/style.css','loc
 const previousWasm=await readFile(path.join(output,'pre-conversation/game.wasm'));
 const previousJavaScript=await readFile(path.join(output,'pre-conversation/game.js'));
 const worker=await readFile(path.join(root,'web/worker.js'),'utf8');
-const fixtureWorker=worker.replace('    module.FS.writeFile("/locale.txt",','    module.FS.writeFile("/fixture.id", "hallucination");\n    module.FS.writeFile("/locale.txt",');
+const fixtureWorker=withFixture(worker,"hallucination");
 const server=createPreviewServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port+'/';
 const evidence={started_at:new Date().toISOString(),checks:[],errors:[],snapshots:[],screenshots:[]};let browser,context,page;
 const headers={'Cross-Origin-Opener-Policy':'same-origin','Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'};

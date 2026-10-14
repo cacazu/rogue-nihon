@@ -1,12 +1,12 @@
-// Test-side FFI adapter. No testing logic is imported by the browser application.
+// Test-side caller of the generated Rust ABI; each consumer gets independent policy state.
 import {readFile} from "node:fs/promises";
+export async function browserUiBindings() {
+  const code=await readFile(new URL("../build/browser-test.js",import.meta.url),"utf8");
+  const module=await import("data:text/javascript;base64,"+Buffer.from(code).toString("base64")+"#"+Math.random());
+  await module.default({module_or_path:await readFile(new URL("../build/browser-test.wasm",import.meta.url))});
+  return module;
+}
 export async function browserUiRuntime() {
-  let wasm;const bytes=await readFile(new URL("../build/browser-ui.wasm",import.meta.url));
-  const {instance}=await WebAssembly.instantiate(bytes,{canvas:{measure_text:(p,n,size,flags,metric)=>metric===0?new TextDecoder().decode(new Uint8Array(wasm.memory.buffer,p,n)).length*size*.6:metric===1?0:size}});wasm=instance.exports;
-  return request=>{
-    const bytes=new TextEncoder().encode(JSON.stringify(request)),p=wasm.ui_alloc(bytes.length);
-    try {new Uint8Array(wasm.memory.buffer,p,bytes.length).set(bytes);wasm.ui_request(p,bytes.length);
-      const r=JSON.parse(new TextDecoder().decode(new Uint8Array(wasm.memory.buffer,wasm.ui_output_pointer(),wasm.ui_output_length())));if(r.error)throw new Error(r.error);return r;
-    }finally{wasm.ui_free(p,bytes.length);}
-  };
+  const module=await browserUiBindings();
+  return request=>{const result=JSON.parse(module.policy_request(JSON.stringify(request)));if(result.error)throw Error(result.error);return result;};
 }

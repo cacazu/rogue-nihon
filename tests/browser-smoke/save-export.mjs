@@ -80,7 +80,7 @@ try{
     });
   }
   assert.deepEqual(evidence.errors,[]);
-  evidence.files=await Promise.all(["web/app.js","web/canvas-ui.js","web/worker.js","build/browser-ui.wasm","rust/crates/browser-display/src/controller.rs","rust/crates/browser-display/src/policies.rs","tests/browser-smoke/browser-runtime.mjs","tests/browser-smoke/save-export.mjs"].map(async file=>({file,sha256:createHash("sha256").update(await readFile(path.join(root,file))).digest("hex")})));
+  evidence.files=await Promise.all(["web/app.js","rust/crates/browser-display/src/browser/mod.rs","web/worker.js","build/browser-ui.wasm","rust/crates/browser-display/src/controller.rs","rust/crates/browser-display/src/policies.rs","tests/browser-smoke/browser-runtime.mjs","tests/browser-smoke/save-export.mjs"].map(async file=>({file,sha256:createHash("sha256").update(await readFile(path.join(root,file))).digest("hex")})));
   evidence.result="pass";
 }catch(error){evidence.result="fail";evidence.failure=error.stack;throw error;}
 finally{evidence.finished_at=new Date().toISOString();await writeFile(path.join(output,"evidence.json"),JSON.stringify(evidence,null,2)+"\n");await context?.close();await browser?.close();await runtime?.dispose();await new Promise(r=>server.close(r));}

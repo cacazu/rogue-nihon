@@ -4,7 +4,7 @@
 
 ## 準備と実行
 
-Playwrightの標準Chromiumで実行します。fixtureを使うシナリオには [専用build](../README.md#fixture原作比較の準備) が必要です。
+Playwrightの標準Chromiumで実行します。先に `python tools/build-browser-tests.py --keep-artifacts` で検証専用ブラウザーABIを作ります。配布用の起動確認にはこの置換を使わず、観測・操作用adapterを使うシナリオだけPlaywrightのrouteで専用bindingへ接続します。fixtureを使うシナリオには [専用build](../README.md#fixture原作比較の準備) が必要です。
 
 ```sh
 node tests/run.mjs --keep-artifacts tests/browser-smoke/canvas.mjs
@@ -34,6 +34,7 @@ node tests/run.mjs --playwright /path/to/playwright --browser /path/to/browser -
 | `mobile-layout.mjs` | 共通設定行・連続ズーム・スマホのステータスと履歴・全体図の凡例・設定内の保存とファイル再開 |
 | `hud-widgets.mjs` | HUDの配置・正確な値の詳細、狭い画面の横スクロール、フォーカス、DPR |
 | `save-export.mjs` | ダウンロードした実ファイル、IndexedDBとの一致、取消、復元と次ターン |
+| `rust-browser-host.mjs` | 配布用bindingだけでの起動・原作操作・記録送信なし、RustのIME・crypto・Canvas・全画面・ズーム・画像回転・タッチ長押し・保存再開、Worker起動失敗通知と再開始。`--recovery-only` は失敗復帰・配布導線だけを再確認 |
 | `input-ownership.mjs` | 通常build・seed 17の持ち物閲覧と装備、投擲方向の取消、UTF-8草稿保存と新Worker復元後の編集、空Enter・先頭 `-`・明示改名、入力journalとC/RNG状態、最新観測と足元操作候補 |
 | `ownership-boundaries.mjs` | 通常buildの保存・実書出し・新Worker復元と次ターン、実IndexedDB read完了の遅延とファイルimportの競合、無効・取消importで以前の保存bytesを保持、画像セットの重複応答 |
 | `startup.mjs` | Node起動、既存origin、ポート競合、HTTPS、保存後の再起動 |

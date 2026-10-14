@@ -8,11 +8,32 @@ publish.workspace = true
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[features]
+browser-test = []
+
 [dependencies]
 rogue-display.workspace = true
 rogue-contract.workspace = true
 rogue-platform.workspace = true
 serde_json.workspace = true
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "=0.2.128"
+wasm-bindgen-futures = "=0.4.78"
+js-sys = "=0.3.105"
+web-sys = { version = "=0.3.105", features = [
+  "Window", "Document", "HtmlElement", "HtmlCanvasElement", "HtmlInputElement",
+  "HtmlButtonElement", "HtmlAnchorElement", "HtmlImageElement", "Element", "Node",
+  "EventTarget", "Event", "KeyboardEvent", "PointerEvent", "WheelEvent", "MessageEvent",
+  "ErrorEvent", "AddEventListenerOptions", "CssStyleDeclaration", "DomTokenList", "DomRect",
+  "CanvasRenderingContext2d", "TextMetrics", "Path2d", "DomMatrix", "ImageData",
+  "Screen", "ScreenOrientation", "OrientationLockType", "MediaQueryList", "Location",
+  "Url", "UrlSearchParams", "Storage", "Crypto", "FocusOptions", "ResizeObserver",
+  "Blob", "BlobPropertyBag", "File", "FileList", "DomException",
+  "IdbFactory", "IdbDatabase", "IdbOpenDbRequest", "IdbRequest", "IdbObjectStore",
+  "IdbTransaction", "IdbTransactionMode", "Worker", "DedicatedWorkerGlobalScope",
+  "WorkerGlobalScope", "console"
+] }
 
 [lints.clippy]
 undocumented_unsafe_blocks = "deny"

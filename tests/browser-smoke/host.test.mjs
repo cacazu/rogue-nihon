@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
+import EventQueue from "../queue-runtime.mjs";
 import { Worker } from "node:worker_threads";
 import { createPreviewServer } from "../../../tools/server.mjs";
-const require = createRequire(import.meta.url), EventQueue = require("../../web/event-queue.js");
+
 
 test("bounded transport rejects saturation and preserves command order across uint32 wrap", () => {
   const queue = new EventQueue(null, 4);
@@ -42,7 +42,7 @@ test("original typeahead flush discards only already queued raw events", () => {
 });
 test("blocking Worker wakes when the main thread publishes an input", async () => {
   const queue = new EventQueue(null, 4);
-  const worker = new Worker(`const { parentPort, workerData } = require('node:worker_threads');const Queue=require(workerData.module);const queue=new Queue(workerData.buffer,4);parentPort.postMessage('waiting');parentPort.postMessage(queue.take());`, { eval: true, workerData: { module: require.resolve("../../web/event-queue.js"), buffer: queue.buffer } });
+  const worker = new Worker(`const { parentPort, workerData } = require('node:worker_threads');(async()=>{const Queue=(await import(workerData.module)).default;const queue=new Queue(workerData.buffer,4);parentPort.postMessage('waiting');parentPort.postMessage(queue.take());})();`, { eval: true, workerData: { module: new URL("../queue-runtime.mjs",import.meta.url).href, buffer: queue.buffer } });
   try {
     await new Promise((resolve, reject) => { worker.once("message", resolve); worker.once("error", reject); });
     const response = new Promise((resolve, reject) => { worker.once("message", resolve); worker.once("error", reject); });

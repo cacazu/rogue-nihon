@@ -822,6 +822,21 @@ Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://crates.io/crates/wasm-bindgen/0.2.128
 Notice: LICENSE-MIT -> 378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397
 
+Component: wasm-bindgen-cli-support/0.2.128
+Declared license: MIT OR Apache-2.0
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://github.com/wasm-bindgen/wasm-bindgen/blob/0.2.128/crates/cli-support/src/js/mod.rs
+Source: https://github.com/wasm-bindgen/wasm-bindgen/blob/0.2.128/LICENSE-MIT
+Notice: LICENSE-MIT -> 378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397
+
+Component: wasm-bindgen-futures-0.4.78
+Declared license: MIT OR Apache-2.0
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/wasm-bindgen-futures/0.4.78
+Notice: LICENSE-MIT -> 378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397
+
 Component: wasm-bindgen-macro-0.2.128
 Declared license: MIT OR Apache-2.0
 Selected license: MIT
@@ -841,6 +856,13 @@ Declared license: MIT OR Apache-2.0
 Selected license: MIT
 Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://crates.io/crates/wasm-bindgen-shared/0.2.128
+Notice: LICENSE-MIT -> 378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397
+
+Component: web-sys-0.3.105
+Declared license: MIT OR Apache-2.0
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/web-sys/0.3.105
 Notice: LICENSE-MIT -> 378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397
 
 Component: web-task-1.1.3

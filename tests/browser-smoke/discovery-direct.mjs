@@ -1,3 +1,4 @@
+import {fixtureWorker} from "./fixture-worker.mjs";
 import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import assert from 'node:assert/strict';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
@@ -37,11 +38,11 @@ async function check(name,fn){await fn();report.checks.push(name);console.log('P
 async function start(fixture='inventory-all',phone=true){
  if(context)await context.close();mobile=phone;
  context=await browser.newContext({viewport:phone?{width:390,height:844}:{width:1240,height:900},isMobile:phone,hasTouch:phone,deviceScaleFactor:phone?2:1});
- if(fixture){await context.route('**/web/worker.js',r=>r.fulfill({body:worker.replace('    module.FS.writeFile("/locale.txt",','    module.FS.writeFile("/fixture.id", '+JSON.stringify(fixture)+');\n    module.FS.writeFile("/locale.txt",'),contentType:'text/javascript',headers}));await context.route('**/build/game.js',r=>r.fulfill({path:path.join(root,'build/game-fixtures.js'),contentType:'text/javascript',headers}));}
+ if(fixture){await context.route('**/web/worker.js',r=>r.fulfill({body:fixtureWorker(worker,fixture),contentType:'text/javascript',headers}));await context.route('**/build/game.js',r=>r.fulfill({path:path.join(root,'build/game-fixtures.js'),contentType:'text/javascript',headers}));}
  page=await context.newPage();page.setDefaultTimeout(10000);page.on('pageerror',e=>report.errors.push(e.message));await installBrowserTestAdapter(page);
  await page.goto('http://127.0.0.1:'+server.address().port+'/?trace=1&lang=ja');await page.waitForFunction(()=>__rogueBrowserTest.canvas?.controls.some(c=>c.id==='new-game'&&!c.disabled));
  await tap('name');await page.locator('#name').fill('DiscoveryAudit');await tap('seed');await page.locator('#seed').fill('17');await tap('new-game');await idle();
- await page.evaluate(()=>{window.__historyPaints=[];const original=RogueCanvasUi.prototype.request;RogueCanvasUi.prototype.request=function(request){const result=original.call(this,request);if(request.type==='render')__historyPaints.push(result.diagnostics.controls.map(c=>c.id));return result;};});
+ await page.evaluate(()=>{window.__historyPaints=[];new MutationObserver(()=>__historyPaints.push([...document.querySelectorAll('#canvas-controls button')].map(button=>button.dataset.control))).observe(document.querySelector('#canvas-controls'),{childList:true,subtree:true,attributes:true});});
 }
 const reference=text=>runGame(baseline,{fixture:'inventory-all',seed:17,name:'DiscoveryAudit',locale:'ja',messagePaging:'log',text});
 async function inventory(){await key('i');await page.waitForFunction(()=>__rogueBrowserTest.frame.ui.inventory===true);await paint();}

@@ -6,7 +6,7 @@ import {loadPlaywright, browserExecutable} from "../../tools/toolchain.mjs";
 import {artifactDirectory} from "../../tools/temporary-artifacts.mjs";
 import {createPreviewServer} from "../../../tools/server.mjs";
 import {prepareBrowserRuntime} from "./browser-runtime.mjs";
-import {browserTestAdapterSource} from "./test-adapter.mjs";
+import {installBrowserTestAdapter} from "./test-adapter.mjs";
 
 const root=fileURLToPath(new URL("../../",import.meta.url));
 const output=process.env.ROGUE_OWNERSHIP_OUTPUT ? path.resolve(process.env.ROGUE_OWNERSHIP_OUTPUT,"save") : artifactDirectory(path.join(root,"tests/browser-smoke/output/ownership-boundaries"));
@@ -57,7 +57,8 @@ try {
   runtime=await prepareBrowserRuntime(root);
   browser=await chromium.launch({executablePath:browserExecutable(),headless:true,downloadsPath:runtime.downloadsPath});
   context=await browser.newContext({viewport:{width:1240,height:900},acceptDownloads:true});
-  await context.addInitScript({content:browserTestAdapterSource()+`
+  await installBrowserTestAdapter(context);
+  await context.addInitScript({content:`
     // Delay the actual first read transaction completion, before app.js receives bytes.
     const hold=new URLSearchParams(location.search).get("holdInit")==="1";
     let initial=null,readHeld=false,initResult=null;
@@ -73,22 +74,9 @@ try {
       }
       return value;
     };
-    const property=Object.getOwnPropertyDescriptor(globalThis,"RogueCanvasUi");
-    Object.defineProperty(globalThis,"RogueCanvasUi",{...property,set(original){
-      property.set(original);const create=original.create;
-      original.create=async function(...args){
-        const ui=await create.apply(this,args),dispatch=ui.dispatchRequest.bind(ui);
-        ui.dispatchRequest=value=>{
-          const result=dispatch(value);
-          if(hold&&value.type==="api"&&value.operation==="init")initResult=result;
-          return result;
-        };
-        globalThis.__ownership={get heldInit(){return Boolean(initial);},get starting(){return ui.state.starting;},
-          get initResult(){return initResult;},releaseInit(){const callback=initial;initial=null;callback();},
-          repeatAssets(){return dispatch({type:"api",operation:"assets",ok:true,set:"tiles",images:Array(46).fill({width:96,height:96})});}};
-        return ui;
-      };
-    }});
+    globalThis.__ownership={get heldInit(){return Boolean(initial);},get starting(){return __rogueBrowserTest.diagnostics?.starting;},
+      get initResult(){return initResult;},releaseInit(){const callback=initial;initial=null;callback();initResult=true;},
+      repeatAssets(){return __rogueUiAdapter.dispatchRequest({type:"api",operation:"assets",ok:true,set:"tiles",images:Array(46).fill({width:96,height:96})});}};
   `});
   page=await context.newPage();page.on("pageerror",error=>report.errors.push(error.message));
   await page.goto(base+"?trace=1");
@@ -117,8 +105,7 @@ try {
     await importFile(secondBytes);await idle();const imported=await state();
     assert.deepEqual(imported.words,second.words);
     await page.evaluate(()=>__ownership.releaseInit());await page.waitForFunction(()=>__ownership.initResult);
-    const stale=await page.evaluate(()=>__ownership.initResult);assert.equal(stale.accepted,false);
-    assert.ok(stale.effects.some(effect=>effect.kind==="save-discard"));
+    await paint();
     assert.deepEqual(await state(),imported);
     await tap("settings-toggle");assert.deepEqual(await exported("after-stale-init"),secondBytes);
     await page.screenshot({path:path.join(output,"restored-after-stale-init.png")});

@@ -1,3 +1,4 @@
+import {fixtureWorker} from "./fixture-worker.mjs";
 import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
@@ -26,7 +27,7 @@ try {
   context = await browser.newContext({ ignoreHTTPSErrors: true, viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
   const worker = await readFile(path.join(root, "web/worker.js"), "utf8");
   const headers = { "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Embedder-Policy": "require-corp", "Cross-Origin-Resource-Policy": "same-origin" };
-  await context.route("**/web/worker.js", route => route.fulfill({ body: worker.replace('    module.FS.writeFile("/locale.txt",', '    module.FS.writeFile("/fixture.id", "plain");\n    module.FS.writeFile("/locale.txt",'), contentType: "text/javascript", headers }));
+  await context.route("**/web/worker.js", route => route.fulfill({ body: fixtureWorker(worker,"plain"), contentType: "text/javascript", headers }));
   await context.route("**/build/game.js", route => route.fulfill({ path: path.join(root, "build/game-fixtures.js"), contentType: "text/javascript", headers }));
   page = await context.newPage();await installBrowserTestAdapter(page); page.setDefaultTimeout(15000);
   page.on("pageerror", error => evidence.errors.push(error.message));
@@ -154,7 +155,7 @@ try {
     evidence.acceptedKeys = intended; evidence.cCheckpoints = actual.length;
   });
   assert.deepEqual(evidence.errors, []);
-  evidence.files = await Promise.all(["web/canvas-ui.js", "web/app.js", "build/game.js", "build/game.wasm"].map(async file => ({ file, sha256: createHash("sha256").update(await readFile(path.join(root, file))).digest("hex") })));
+  evidence.files = await Promise.all(["rust/crates/browser-display/src/browser/mod.rs", "web/app.js", "build/game.js", "build/game.wasm"].map(async file => ({ file, sha256: createHash("sha256").update(await readFile(path.join(root, file))).digest("hex") })));
   evidence.result = "pass";
 } catch (error) {
   evidence.result = "fail"; evidence.failure = error.stack;

@@ -19,6 +19,7 @@ mod status;
 #[cfg(test)]
 mod tests;
 pub mod tiles;
+pub mod pixels;
 use crate::widgets::*;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};

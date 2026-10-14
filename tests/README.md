@@ -18,15 +18,18 @@ C出力箇所・文言IDから実際の翻訳処理を通し、未登録ID、引
 
 `wording-cases.generated.*` は `tools/generate-wording-tests.py` が現行ソースから生成し、fixture buildで自動更新します。負例には未登録ID・引数不足・未知のdescriptorと、通常buildにないMASTERデバッグ文を含みます。負例の検出を通常の翻訳成功件数へ混ぜません。
 
-## 通常ビルドで行う検査
+## 通常ゲームと専用ブラウザー検証ABIで行う検査
 
 ```sh
+python tools/build-browser-tests.py --keep-artifacts
 node --test tests/browser-boundary.test.mjs tests/production-boundary.test.mjs tests/event-queue.test.mjs tests/browser-smoke/host.test.mjs tests/browser-smoke/localization.test.mjs
 node tools/run-clean.mjs cargo test --offline --locked --manifest-path rust/Cargo.toml --workspace --exclude rogue-layers --lib
 python tools/check-rust-layers.py
 python tools/check-rust-layers.py --binary entity-check
 python tools/check-rust-layers.py --binary engine-check
 ```
+
+ブラウザーの観測・操作は専用 `browser-test` featureの生成物を使います。`test-adapter.mjs` はPlaywrightのrouteでbindingを置き換え、配布用のJS/Wasmを変更しません。`queue-runtime.mjs` はRustのSAB実装を呼ぶ検証側の名前対応だけです。
 
 C/JSをリンクする `rogue-layers` は独立lib testから除外します。純粋な層のテスト・単体binの成功だけではCゲームやブラウザーを実行したことにはなりません。
 

@@ -1,3 +1,4 @@
+import {fixtureWorker} from "./fixture-worker.mjs";
 import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
@@ -59,7 +60,7 @@ async function start(lang,touch=false,scale=1,fixture=""){
   if(fixture){
     const worker=await readFile(path.join(root,"web/worker.js"),"utf8");
     const headers={"Cross-Origin-Opener-Policy":"same-origin","Cross-Origin-Embedder-Policy":"require-corp","Cross-Origin-Resource-Policy":"same-origin"};
-    await context.route("**/web/worker.js",r=>r.fulfill({body:worker.replace('    module.FS.writeFile("/locale.txt",','    module.FS.writeFile("/fixture.id", '+JSON.stringify(fixture)+');\n    module.FS.writeFile("/locale.txt",'),contentType:"text/javascript",headers}));
+    await context.route("**/web/worker.js",r=>r.fulfill({body:fixtureWorker(worker,fixture),contentType:"text/javascript",headers}));
     await context.route("**/build/game.js",r=>r.fulfill({path:path.join(root,"build/game-fixtures.js"),contentType:"text/javascript",headers}));
   }
   page=await context.newPage();await installBrowserTestAdapter(page);page.on("pageerror",error=>evidence.errors.push(error.message));
@@ -266,7 +267,7 @@ try{
     });
   }
   assert.deepEqual(evidence.errors,[]);
-  evidence.files=await Promise.all(["web/app.js","web/canvas-ui.js","build/browser-ui.wasm","rust/crates/browser-display/src/controller.rs","rust/crates/browser-display/src/policies.rs","rust/crates/display/src/browser_ui/tiles.rs","rust/crates/display/src/widgets.rs","rust/crates/display/src/browser_ui/mod.rs","rust/crates/display/src/browser_ui/hud.rs","rust/crates/display/src/browser_ui/screens.rs","rust/crates/display/src/browser_ui/interaction.rs","web/index.html","locales/ui-web-ja.json","locales/ui-web-en.json"].map(async file=>({file,sha256:createHash("sha256").update(await readFile(path.join(root,file))).digest("hex")})));
+  evidence.files=await Promise.all(["web/app.js","rust/crates/browser-display/src/browser/mod.rs","build/browser-ui.wasm","rust/crates/browser-display/src/controller.rs","rust/crates/browser-display/src/policies.rs","rust/crates/display/src/browser_ui/tiles.rs","rust/crates/display/src/widgets.rs","rust/crates/display/src/browser_ui/mod.rs","rust/crates/display/src/browser_ui/hud.rs","rust/crates/display/src/browser_ui/screens.rs","rust/crates/display/src/browser_ui/interaction.rs","web/index.html","locales/ui-web-ja.json","locales/ui-web-en.json"].map(async file=>({file,sha256:createHash("sha256").update(await readFile(path.join(root,file))).digest("hex")})));
   evidence.result="pass";
 }catch(error){evidence.result="fail";evidence.failure=error.stack;if(page){evidence.scene=await scene().catch(()=>null);await shot("failure").catch(()=>{});}throw error;}
 finally{evidence.finished_at=new Date().toISOString();await writeFile(path.join(output,"evidence.json"),JSON.stringify(evidence,null,2)+"\n");await context?.close();await browser?.close();await runtime?.dispose();await new Promise(r=>server.close(r));}

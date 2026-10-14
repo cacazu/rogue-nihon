@@ -1,3 +1,4 @@
+import {fixtureWorker} from "./fixture-worker.mjs";
 import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
@@ -33,7 +34,7 @@ async function draw(){await page.evaluate(()=>new Promise(r=>requestAnimationFra
 async function open(options={}){
  await context?.close();fixture=options.fixture||'inventory-all';locale=options.lang||'ja';const width=options.width||(mobile?390:1240),height=options.height||(mobile?844:900);
  context=await browser.newContext({viewport:{width,height},isMobile:width<700,hasTouch:width<700,deviceScaleFactor:options.scale||1});
- await context.route('**/web/worker.js',r=>r.fulfill({body:worker.replace('    module.FS.writeFile("/locale.txt",','    module.FS.writeFile("/fixture.id", '+JSON.stringify(fixture)+');\n    module.FS.writeFile("/locale.txt",'),contentType:'text/javascript',headers}));
+ await context.route('**/web/worker.js',r=>r.fulfill({body:fixtureWorker(worker,fixture),contentType:'text/javascript',headers}));
  await context.route('**/build/game.js',r=>r.fulfill({path:options.module||path.join(root,'build/game-fixtures.js'),contentType:'text/javascript',headers}));
  page=await context.newPage();await installBrowserTestAdapter(page);page.setDefaultTimeout(10000);page.on('pageerror',error=>evidence.errors.push(error.message));
  await page.goto(base+'?trace=1&view=pixels&lang='+locale);await page.waitForFunction(()=>window.__rogueBrowserTest?.canvas?.paintCount>0);

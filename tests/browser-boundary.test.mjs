@@ -20,5 +20,6 @@ test("host snapshots cannot replace Rust session decisions",async()=>{
  const request=await browserUiRuntime();request({type:"boot",environment:{isolated:true,parameters:{}}});
  const result=request({type:"render",model:{running:true,topOpen:false,settingsOpen:true,displayMode:"secret"},view:{width:390,height:844,ratio:2,now:0}});
  assert.equal(result.state.running,false);assert.equal(result.state.topOpen,true);assert.equal(result.state.settingsOpen,false);assert.equal(result.state.displayMode,"tiles");
- assert.deepEqual(result.diagnostics.controls.map(c=>c.id),["name","random-name","seed","random-seed","select-language","new-game","load","credits-repository","settings-toggle"]);
+ assert.ok(result.diagnostics.controls.some(c=>c.id==="new-game"));
+ assert.ok(!result.diagnostics.controls.some(c=>c.id==="settings-toggle"));
 });

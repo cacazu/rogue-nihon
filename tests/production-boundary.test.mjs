@@ -15,7 +15,7 @@ test("shipped browser modules exclude the local server, tests and artifact manag
     const source = await text("web/" + file);
     assert.doesNotMatch(source, /__rogueBrowserTest|RogueCanvasUi\.active|recoverTemporaryArtifacts|artifact-registry|temporary.artifacts|ROGUE_KEEP_ARTIFACTS|node:/, file);
     for (const [, dependency] of source.matchAll(/(?:from\s*|import\s*\(|importScripts\s*\(|require\s*\()\s*["']([^"']+)/g)) {
-      assert.ok(dependency.startsWith("/web/") || dependency === "/build/game.js", file + " -> " + dependency);
+      assert.ok(dependency.startsWith("/web/") || dependency === "/build/game.js" || dependency === "/build/browser-ui.js", file + " -> " + dependency);
     }
   }
   assert.doesNotMatch(await text("web/index.html"), /tests\/|tools\/|fixture|artifact/i);
@@ -42,8 +42,10 @@ test("published Wasm and loader exclude regression exports and fixture code", as
   }
   assert.doesNotMatch(await text("build/game.js"), /rg_test_|game-fixtures|temporary.artifacts/);
   const ui = await WebAssembly.compile(await readFile(path.join(root, "build/browser-ui.wasm")));
-  assert.deepEqual(WebAssembly.Module.imports(ui).map(({module, name}) => ({module, name})),
-    [{module: "canvas", name: "measure_text"}]);
+  assert.ok(WebAssembly.Module.imports(ui).every(({name})=>/^__wbg_|^__wbindgen_/.test(name)));
+  for(const name of ["policy_request","browser_request","browser_snapshot","ui_request","rotate_pixels"])
+    assert.ok(WebAssembly.Module.exports(ui).every(entry=>entry.name!==name),name);
+  assert.doesNotMatch(await text("build/browser-ui.js"), /export (?:function|class) (?:policy_request|browser_request|browser_snapshot|EventQueue|TilePainter)/);
   const manifest = JSON.parse(await text("build/build-manifest.json"));
   assert.equal(manifest.test_hooks, false);
   assert.equal(manifest.test_fixtures, false);

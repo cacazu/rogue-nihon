@@ -1,3 +1,4 @@
+import {fixtureWorker} from "./fixture-worker.mjs";
 import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
@@ -47,7 +48,7 @@ async function field(id, value) { await click(id); await page.keyboard.press("Co
 async function open({ mobile = false, before = false, lang = "ja" } = {}) {
   await context?.close();
   context = await browser.newContext({ viewport: mobile ? { width: 390, height: 844 } : { width: 1240, height: 900 }, hasTouch: mobile, isMobile: mobile, deviceScaleFactor: mobile ? 2 : 1 });
-  await context.route("**/web/worker.js", r => r.fulfill({ body: worker.replace('    module.FS.writeFile("/locale.txt",', '    module.FS.writeFile("/fixture.id", "inventory-all");\n    module.FS.writeFile("/locale.txt",'), contentType: "text/javascript", headers }));
+  await context.route("**/web/worker.js", r => r.fulfill({ body: fixtureWorker(worker,"inventory-all"), contentType: "text/javascript", headers }));
   await context.route("**/build/game.js", r => r.fulfill({ path: before ? baseline : path.join(root, "build/game-fixtures.js"), contentType: "text/javascript", headers }));
   if (before) await context.route("**/build/game-fixtures.wasm", r => r.fulfill({ path: baseline.replace(/\.js$/, ".wasm"), contentType: "application/wasm", headers }));
   page = await context.newPage();await installBrowserTestAdapter(page); page.setDefaultTimeout(10000);
@@ -161,7 +162,7 @@ try {
     }
   });
   assert.deepEqual(evidence.errors, []);
-  evidence.files = await Promise.all(["rust/crates/display/src/game_window.rs", "rust/crates/display/src/presentation.rs", "rust/crates/input/src/lib.rs", "rust/src/engine.rs", "logic/command.c", "web/canvas-ui.js", "build/game.js", "build/game.wasm", "build/game-fixtures.js", "build/game-fixtures.wasm"].map(async file => ({ file, sha256: createHash("sha256").update(await readFile(path.join(root, file))).digest("hex") })));
+  evidence.files = await Promise.all(["rust/crates/display/src/game_window.rs", "rust/crates/display/src/presentation.rs", "rust/crates/input/src/lib.rs", "rust/src/engine.rs", "logic/command.c", "rust/crates/browser-display/src/browser/mod.rs", "build/game.js", "build/game.wasm", "build/game-fixtures.js", "build/game-fixtures.wasm"].map(async file => ({ file, sha256: createHash("sha256").update(await readFile(path.join(root, file))).digest("hex") })));
   evidence.result = "pass";
 } catch (error) {
   evidence.result = "fail"; evidence.failure = error.stack;

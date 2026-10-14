@@ -112,6 +112,16 @@ def main():
         add(f"{name}-{version}", "cargo", declared, chosen, targets,
             [(p.name, p.read_bytes()) for p in files], [f"https://crates.io/crates/{name}/{version}"])
 
+    # cli-support emits JavaScript runtime templates into browser-ui.js. The compiler
+    # and its graph are not shipped; retain the license of these emitted templates.
+    bindgen = next(p for p in metadata['packages'] if p['name'] == 'wasm-bindgen')
+    version = bindgen['version']
+    chosen, files = license_files(Path(bindgen['manifest_path']).parent, bindgen['license'])
+    add(f'wasm-bindgen-cli-support/{version}', 'generated-javascript', bindgen['license'], chosen,
+        ['wasm32-unknown-unknown'], [(p.name, p.read_bytes()) for p in files],
+        [f'https://github.com/wasm-bindgen/wasm-bindgen/blob/{version}/crates/cli-support/src/js/mod.rs',
+         f'https://github.com/wasm-bindgen/wasm-bindgen/blob/{version}/LICENSE-MIT'])
+
     # rust-src has the exact std Cargo.lock and vendored sources for this installed toolchain.
     sysroot = Path(run("rustc", "--print", "sysroot").strip())
     rust_version = run("rustc", "--version").split()[1]

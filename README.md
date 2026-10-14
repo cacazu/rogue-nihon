@@ -35,14 +35,17 @@ LANのスマホでは `.\start.ps1 -Lan` を実行し、同じLANから表示さ
 
 ## ビルドと検証
 
-ゲーム用Rustのtargetは `wasm32-unknown-emscripten`、UI用は `wasm32-unknown-unknown`。依存はCargo.lockで固定し、Rust・Emscripten・Nodeを使用します。SDKの場所は環境に合わせて指定します。
+ゲーム用Rustのtargetは `wasm32-unknown-emscripten`、UI用は `wasm32-unknown-unknown`。依存はCargo.lockで固定し、Rust・Emscripten・NodeとCargo.lockに一致するwasm-bindgen-cliを使用します。SDKの場所は環境に合わせて指定します。
 
 ```powershell
 cargo fetch --locked --manifest-path rust/Cargo.toml
+cargo install wasm-bindgen-cli --version 0.2.128 --locked
 .\build.ps1 -SdkRoot C:\Users\kit\emsdk
 # UI・画像manifestだけの変更
 .\build-ui.ps1
 ```
+
+`wasm-bindgen` がPATHにない場合は `ROGUE_WASM_BINDGEN` で実行ファイルを指定します。JSとWasmのbindingは `tools/bind_browser.py` が対で生成します。
 
 ローカル起動は作品外の開発用 [../tools/server.mjs](../tools/server.mjs) を使用します。本番の静的配信条件は [web/README](web/README.md)、試験コマンドと必要な比較buildは [tests/README](tests/README.md)、Playwrightの実行は [ブラウザー検証README](tests/browser-smoke/README-ja.md) を参照してください。
 

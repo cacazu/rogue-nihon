@@ -45,7 +45,7 @@ try {
     evidence.security = await page.evaluate(() => ({ secure: isSecureContext, isolated: crossOriginIsolated, sab: typeof SharedArrayBuffer }));
     assert.deepEqual(evidence.security, { secure: true, isolated: true, sab: "function" });
     evidence.files = [];
-    for (const file of ["build/game.js", "build/game.wasm", "web/canvas-ui.js"]) {
+    for (const file of ["build/game.js", "build/game.wasm", "rust/crates/browser-display/src/browser/mod.rs"]) {
       const local = await readFile(new URL("../../" + file, import.meta.url));
       const served = await context.request.get(new URL(file, target).href);
       assert.equal(served.status(), 200);

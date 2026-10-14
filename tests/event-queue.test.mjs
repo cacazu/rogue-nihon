@@ -1,12 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
+import EventQueue from './queue-runtime.mjs';
 import { Worker } from 'node:worker_threads';
 import { fileURLToPath } from 'node:url';
 
-const modulePath = fileURLToPath(new URL('../web/event-queue.js', import.meta.url));
-const require = createRequire(import.meta.url);
-const EventQueue = require(modulePath);
+const modulePath = new URL('./queue-runtime.mjs', import.meta.url).href;
 
 test('a full queue preserves all unread input and reports backpressure', () => {
   const queue = new EventQueue(null, 2);
@@ -46,11 +44,11 @@ test('an empty queue waits until another thread supplies actual input', { timeou
   const queue = new EventQueue(null, 2);
   const worker = new Worker(`
     const { parentPort, workerData } = require('node:worker_threads');
-    const Queue = require(workerData.modulePath);
+    (async()=>{const Queue = (await import(workerData.modulePath)).default;
     const queue = new Queue(workerData.buffer, workerData.capacity);
     parentPort.postMessage('ready');
     try { parentPort.postMessage({ event: queue.take() }); }
-    catch (error) { parentPort.postMessage({ error: error.message }); }
+    catch (error) { parentPort.postMessage({ error: error.message }); }})();
   `, { eval: true, workerData: { modulePath, buffer: queue.buffer, capacity: 2 } });
   const messages = [];
   worker.on('message', (message) => messages.push(message));

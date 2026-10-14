@@ -50,6 +50,7 @@ if (-not $SkipRust -or $includeTestHooks) {
     & (Join-Path $project 'build-ui.ps1') -OutputDirectory $buildPath
 } elseif ($buildPath -ne (Join-Path $project 'build') -and (Test-Path -LiteralPath (Join-Path $project 'build\browser-ui.wasm'))) {
     Copy-Item -LiteralPath (Join-Path $project 'build\browser-ui.wasm') -Destination (Join-Path $buildPath 'browser-ui.wasm') -Force
+    Copy-Item -LiteralPath (Join-Path $project 'build\browser-ui.js') -Destination (Join-Path $buildPath 'browser-ui.js') -Force
 }
 if (-not (Test-Path -LiteralPath (Join-Path $buildPath 'browser-ui.wasm'))) { throw 'Rust browser UI Wasm missing' }
 if (-not (Test-Path -LiteralPath $rustLibrary)) { throw 'Rust library missing' }
@@ -92,7 +93,7 @@ try {
     $env:EMSDK_PYTHON=$previousSdkPython
     $env:PATH=$previousSdkPath
 }
-$files = @((Join-Path $buildPath ($OutputName+'.js')),(Join-Path $buildPath ($OutputName+'.wasm')),(Join-Path $buildPath 'browser-ui.wasm'))
+$files = @((Join-Path $buildPath ($OutputName+'.js')),(Join-Path $buildPath ($OutputName+'.wasm')),(Join-Path $buildPath 'browser-ui.wasm'),(Join-Path $buildPath 'browser-ui.js'))
 $records = foreach ($file in $files) { [ordered]@{file=[System.IO.Path]::GetFileName($file);bytes=(Get-Item -LiteralPath $file).Length;sha256=(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()} }
 $manifestName = if ($OutputName -eq 'game') { 'build-manifest.json' } else { 'build-manifest-'+$OutputName+'.json' }
 $manifestRecord = [ordered]@{built_at_utc=(Get-Date).ToUniversalTime().ToString('o');logic_source_directory=$logicPath;c_source_files=$sources.Count;rust_library=$rustLibrary;rust_engine='Bevy 0.19.1';sdk_root=$SdkRoot;rust_version=((& rustc --version) -join '');test_hooks=[bool]$includeTestHooks;test_fixtures=[bool]$TestFixtures;c_flags=@('-DROGUE_LAYERED','-std=gnu11','-fwrapv','-fno-strict-aliasing','-O1');wasm_flags=@('MODULARIZE','ALLOW_MEMORY_GROWTH','STACK_SIZE=4194304','ASSERTIONS=1','Worker+SAB input; no Asyncify');outputs=$records}
@@ -100,7 +101,7 @@ $manifestJson = ($manifestRecord | ConvertTo-Json -Depth 8).Replace("`r`n", "`n"
 [System.IO.File]::WriteAllText((Join-Path $buildPath $manifestName), $manifestJson, [System.Text.UTF8Encoding]::new($false))
 if ($OutputName -eq 'game' -or $artifactScope.Keep) {
     # Publish the runnable files only after compilation and hashing have succeeded.
-    foreach ($outputFile in @(($OutputName + '.js'),($OutputName + '.wasm'),'browser-ui.wasm',$manifestName)) {
+    foreach ($outputFile in @(($OutputName + '.js'),($OutputName + '.wasm'),'browser-ui.wasm','browser-ui.js',$manifestName)) {
         Copy-Item -LiteralPath (Join-Path $buildPath $outputFile) -Destination (Join-Path $project ('build\' + $outputFile)) -Force
     }
 }

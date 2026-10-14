@@ -28,7 +28,7 @@ if (list) {
   const walk = directory => {for (const e of readdirSync(directory, {withFileTypes: true})) {
     const file = path.join(directory, e.name);
     if (e.isDirectory() && !/output|results|baseline|diffs|__pycache__/.test(e.name)) walk(file);
-    else if (e.isFile() && !['browser-runtime.mjs','ja-scenarios.mjs','playwright-cdp.mjs','test-adapter.mjs'].includes(e.name) && /(?:\.test\.(?:mjs|py)|browser-smoke[/\\][^/\\]+\.mjs)$/.test(file)) files.push(path.relative(root, file).split(path.sep).join('/'));
+    else if (e.isFile() && !['browser-runtime.mjs','ja-scenarios.mjs','playwright-cdp.mjs','test-adapter.mjs','fixture-worker.mjs'].includes(e.name) && /(?:\.test\.(?:mjs|py)|browser-smoke[/\\][^/\\]+\.mjs)$/.test(file)) files.push(path.relative(root, file).split(path.sep).join('/'));
   }};
   walk(path.join(root, 'tests')); console.log(JSON.stringify(files.sort(), null, 2));
 } else {

@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {inflateSync} from 'node:zlib';
-import {createRequire} from 'node:module';
-const require=createRequire(import.meta.url),Tiles=require('../web/tiles.js');
+import {browserUiBindings} from './browser-ui-runtime.mjs';
+const bindings=await browserUiBindings();
 import {browserUiRuntime} from './browser-ui-runtime.mjs';
 const manifest=JSON.parse(await readFile(new URL('../web/assets/pixels-v2/manifest.json',import.meta.url),'utf8'));
 const original=JSON.parse(await readFile(new URL('../web/assets/tiles/manifest.json',import.meta.url),'utf8'));
@@ -36,7 +36,7 @@ test('Rust validates persisted view modes and native scales before the browser u
   const request=await browserUiRuntime();const r=request({type:'boot',preference:JSON.stringify({version:1,mode,zoom:64}),environment:{parameters:{}}});
   assert.equal(r.state.displayMode,mode);assert.equal(r.state.tileSize,64);
  }
- for(const invalid of ['invalid','{}','null','{"version":1,"mode":"pixels","zoom":24}']){
+ for(const invalid of ['invalid','{}','null','{"version":1,"mode":"pixels","zoom":129}']){
   const request=await browserUiRuntime();const r=request({type:'boot',preference:invalid,environment:{parameters:{}}});assert.equal(r.state.displayMode,'tiles');assert.equal(r.state.tileSize,32);
  }
  const request=await browserUiRuntime();request({type:'boot',environment:{parameters:{view:'pixels'}}});
@@ -45,8 +45,7 @@ test('Rust validates persisted view modes and native scales before the browser u
 test('pixel-grid beam rotation preserves the palette and binary alpha before nearest-neighbor enlargement',()=>{
  const source=decoded.get('effect.bolt_horizontal.png').pixels;
  for(const angle of [90,-45,45]){
-  let output;const factory=()=>({getContext:()=>({drawImage(){},getImageData:()=>({data:source}),createImageData:()=>({data:new Uint8ClampedArray(4096)}),putImageData:data=>{output=data.data;}})});
-  Tiles.pixelRotation({},angle,factory);const originalColors=new Set();for(let i=0;i<source.length;i+=4)originalColors.add(source.subarray(i,i+4).toString('hex'));
+  const output=bindings.rotate_pixels(source,angle);const originalColors=new Set();for(let i=0;i<source.length;i+=4)originalColors.add(source.subarray(i,i+4).toString('hex'));
   for(let i=0;i<output.length;i+=4){assert.ok(output[i+3]===0||output[i+3]===255);if(output[i+3])assert.ok(originalColors.has(Buffer.from(output.subarray(i,i+4)).toString('hex')));}
   assert.ok(output.some((value,i)=>i%4===3&&value===255));
  }

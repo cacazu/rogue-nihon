@@ -6,7 +6,7 @@ The original Rogue copyright notices and three BSD-style license blocks remain v
 
 The inventory covers the `normal,build` dependencies of `rogue-layers` for `wasm32-unknown-emscripten` and `rogue-browser-display` for `wasm32-unknown-unknown`. Build dependencies are retained to cover code generation; this does not assert that all of them are linked at runtime. Unused Cargo.lock packages and dependencies for other targets are excluded. Where an MIT alternative is available it is selected; additional copyrights, Unicode licenses, third-party notices and mandatory combined terms remain.
 
-Rust standard-library notices come from the matching `rust-src` dependency graph for those targets, including the installed libraries' backtrace/unwind support. Compiler-builtins notices retain their MIT and Apache/LLVM terms. Rust compiler and test-tool notices are excluded. Emscripten-generated JavaScript, musl and compiler-rt notices remain for the game runtime.
+Rust standard-library notices come from the matching `rust-src` dependency graph for those targets, including the installed libraries' backtrace/unwind support. Compiler-builtins notices retain their MIT and Apache/LLVM terms. Rust compiler and test-tool notices are excluded. Emscripten-generated JavaScript, musl and compiler-rt notices remain for the game runtime. The wasm-bindgen CLI support templates emitted into the browser bindings have their own component attribution.
 
 The HUD's stairs icon is adapted from [Lucide Lab's stairs.svg](https://github.com/lucide-icons/lucide-lab/blob/main/icons/stairs.svg) as a Rust vector path. Its ISC license and copyright notice are included in the consolidated notices. No third-party web font or external JavaScript package is used by the browser UI.
 

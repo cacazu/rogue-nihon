@@ -1,12 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {createRequire} from 'node:module';
-const require=createRequire(import.meta.url), Tiles=require('../web/tiles.js');
+
 import {browserUiRuntime} from './browser-ui-runtime.mjs';
-import {installTileTestAdapter} from './tile-test-adapter.mjs';
+
 const request=await browserUiRuntime();
-installTileTestAdapter(Tiles,request);
+// Observe only the Rust planner's emitted images/rectangles; browser painting is tested in Playwright.
+class Tiles {
+ constructor(manifest,images){this.manifest=manifest;this.images=images;}
+ validate(frame){request({type:'tile-plan',mode:this.manifest.browser_mode,frame,camera:{size:0}});}
+ draw(context,frame,camera){
+  const result=request({type:'tile-plan',mode:this.manifest.browser_mode,frame,camera});context.imageSmoothingEnabled=false;
+  for(const command of result.commands){const r=command.rect;context.drawImage(this.images.get(command.image),r.x*camera.ratio,r.y*camera.ratio,r.w*camera.ratio,r.h*camera.ratio);}
+ }
+}
 const manifest=JSON.parse(await readFile(new URL('../web/assets/tiles/manifest.json',import.meta.url),'utf8'));
 const images=new Map(manifest.entries.map(e=>[e.image,{name:e.image}]));
 const tiles=new Tiles(request({type:'asset-plan'}).manifest,images);

@@ -1,5 +1,4 @@
 import {browserExecutable} from '../../tools/toolchain.mjs';
-import { browserTestAdapterSource } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -48,7 +47,7 @@ try {
   cdp = await createPlaywrightCdp({executable: chrome, profile});
   evidence.launch = cdp.launch;
   await cdp.call("Runtime.enable"); await cdp.call("Page.enable");
-  await cdp.call("Page.addScriptToEvaluateOnNewDocument", {source: browserTestAdapterSource()});
+  await cdp.installBrowserAdapter();
   readBrowserDiagnostics = () => cdp.evaluate("window.__rogueBrowserTest ? __rogueBrowserTest.diagnostics : null");
   await cdp.call("Emulation.setDeviceMetricsOverride", { width: 1240, height: 900, deviceScaleFactor: 1, mobile: false });
   await cdp.call("Page.navigate", { url: base + "?trace=1" + (process.env.ROGUE_VIEW ? "&view=" + encodeURIComponent(process.env.ROGUE_VIEW) : "") });

@@ -1,5 +1,6 @@
 import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import path from "node:path";
+import {installBrowserTestAdapter} from "./test-adapter.mjs";
 
 // Shared Playwright driver for the original CDP regression scenarios.
 export async function createPlaywrightCdp({ executable, profile }) {
@@ -29,6 +30,7 @@ export async function createPlaywrightCdp({ executable, profile }) {
     events,
     launch: { driver: "playwright-cdpsession", playwright: modulePath, browser_version: context.browser().version(), executable, profile, headless: true, args },
     call,
+    installBrowserAdapter:()=>installBrowserTestAdapter(context),
     async evaluate(expression, userGesture = false) {
       const result = await call("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true, userGesture });
       if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));

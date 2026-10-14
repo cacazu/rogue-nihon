@@ -1,4 +1,4 @@
-//! Owns browser session state. JS reports observations and executes API effects.
+//! Owns browser session policy. The Rust browser host reports observations and executes effects.
 use crate::policies::*;
 use crate::save_operations::{PendingSave, SaveOperation, SaveOperations};
 use rogue_contract::RG_KEY_SAVE;
@@ -597,12 +597,14 @@ impl Controller {
                 }
             }
             "error" => {
+                let starting = flag(&self.model["starting"]);
                 self.state["runtimeError"] = data["text"].clone();
                 self.model["running"] = json!(false);
                 self.model["starting"] = json!(false);
                 if self.restore_pending {
                     self.restore_failed();
                 } else {
+                    if starting { self.return_top(); }
                     self.notice("error.runtime", json!({}), true);
                 }
                 self.effects

@@ -1,3 +1,4 @@
+import {fixtureWorker} from "./fixture-worker.mjs";
 import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
@@ -37,7 +38,7 @@ async function open({ baseline = false, fixture = '', mobile = false, locale = '
     });
   }
   if (fixture) {
-    const source = worker.replace('    module.FS.writeFile("/locale.txt",', '    module.FS.writeFile("/fixture.id", ' + JSON.stringify(fixture) + ');\n    module.FS.writeFile("/locale.txt",');
+    const source = fixtureWorker(worker,fixture);
     await context.route('**/web/worker.js', route => route.fulfill({ body: source, contentType: 'text/javascript', headers }));
     await context.route('**/build/game.js', route => route.fulfill({ path: path.join(root, 'build/game-fixtures.js'), contentType: 'text/javascript', headers }));
   }
