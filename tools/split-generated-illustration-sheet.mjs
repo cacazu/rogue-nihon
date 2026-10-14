@@ -1,7 +1,7 @@
 // Package each complete generated pose, even when a long weapon crosses an
 // nominal grid boundary. Connected artwork belongs to its character; separate
 // droplets/wisps belong to the closest pose. No body parts are rearranged.
-export async function splitGeneratedIllustrationSheet(sharp, png, size=96){
+export async function splitGeneratedIllustrationSheet(sharp, png, size=96, rows=4){
   const {data,info}=await sharp(png).ensureAlpha().raw().toBuffer({resolveWithObject:true});
   const {width,height}=info,n=width*height,labels=new Int32Array(n).fill(-1),queue=new Int32Array(n),components=[];
   for(let start=0;start<n;start++){
@@ -23,9 +23,9 @@ export async function splitGeneratedIllustrationSheet(sharp, png, size=96){
     component.x=component.sumX/component.area;component.y=component.sumY/component.area;
     components.push(component);
   }
-  const primary=Array(12).fill(-1);
+  const count=rows*3,primary=Array(count).fill(-1);
   for(const [id,c]of components.entries()){
-    const cell=Math.min(3,Math.floor(c.y/(height/4)))*3+Math.min(2,Math.floor(c.x/(width/3)));
+    const cell=Math.min(rows-1,Math.floor(c.y/(height/rows)))*3+Math.min(2,Math.floor(c.x/(width/3)));
     if(primary[cell]===-1||c.area>components[primary[cell]].area)primary[cell]=id;
   }
   if(primary.some(id=>id===-1))throw Error('Generated sheet is missing a pose');
@@ -48,16 +48,16 @@ export async function splitGeneratedIllustrationSheet(sharp, png, size=96){
     primary.forEach((p,cell)=>{const a=components[p],d=(a.x-c.x)**2+(a.y-c.y)**2;if(d<distance){distance=d;nearest=cell;}});
     return nearest;
   });
-  const bounds=Array.from({length:12},()=>({minX:width,minY:height,maxX:0,maxY:0}));
+  const bounds=Array.from({length:count},()=>({minX:width,minY:height,maxX:0,maxY:0}));
   components.forEach((c,id)=>{
     const b=bounds[owner[id]];b.minX=Math.min(b.minX,c.minX);b.minY=Math.min(b.minY,c.minY);
     b.maxX=Math.max(b.maxX,c.maxX);b.maxY=Math.max(b.maxY,c.maxY);
   });
   const maxWidth=Math.max(...bounds.map(b=>b.maxX-b.minX+1)),maxHeight=Math.max(...bounds.map(b=>b.maxY-b.minY+1));
-  if(maxWidth>width/3*1.5||maxHeight>height/4*1.5)throw Error('Pose extraction joined adjacent characters');
+  if(maxWidth>width/3*1.5||maxHeight>height/rows*1.5)throw Error('Pose extraction joined adjacent characters');
   const scale=Math.min((size-12)/maxWidth,(size-12)/maxHeight);
   const frames=[];
-  for(let cell=0;cell<12;cell++){
+  for(let cell=0;cell<count;cell++){
     const b=bounds[cell],w=b.maxX-b.minX+1,h=b.maxY-b.minY+1,cropped=Buffer.alloc(w*h*4);
     for(let y=b.minY;y<=b.maxY;y++)for(let x=b.minX;x<=b.maxX;x++){
       const p=y*width+x;if(labels[p]!==-1&&owner[labels[p]]===cell)data.copy(cropped,((y-b.minY)*w+x-b.minX)*4,p*4,p*4+4);

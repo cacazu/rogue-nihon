@@ -1175,7 +1175,12 @@
             "monster.ice_monster/attack.3.png"
           ],
           "frame_ms": 120,
-          "loop": false
+          "loop": false,
+          "generated_source": {
+            "prompt": "prompts/monster.ice_monster.attack.json",
+            "image": "sources/monster.ice_monster.attack.generated.png",
+            "sha256": "d472e47604d0113b79e8274a14a407610f659ae265e547b86cafeeaafcbf0a2d"
+          }
         },
         "hurt": {
           "frames": [
