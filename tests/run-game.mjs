@@ -37,6 +37,11 @@ export async function runGame(modulePath, config = {}) {
   const wasmBytes = await readFile(resolve(modulePath).replace(/\.(?:c?js)$/, '.wasm'));
   result.module = { javascript_sha256: digest(jsBytes), wasm_sha256: digest(wasmBytes) };
   let position = 0;
+  let module;
+  // New Rust-declared imports pass borrowed addresses. Historical comparison
+  // builds pass already copied values; support both only in this test harness.
+  const bytes=(value,length)=>typeof value==='number'?module.HEAPU8.slice(value,value+length):value;
+  const text=(value,length)=>typeof value==='number'?new TextDecoder().decode(bytes(value,length)):value;
   globalThis.RogueHost = {
     readEvent() {
       // Test-only legacy comparison: acknowledge the currently observed C More,
@@ -46,8 +51,8 @@ export async function runGame(modulePath, config = {}) {
       result.reads.push({ position, event: value, trace: result.traces.length - 1 });
       return value | 0;
     },
-    present(raw) {
-      const value = JSON.parse(raw);
+    present(raw,length) {
+      const value = JSON.parse(text(raw,length));
       if (value.type === 'trace') {
         if (value.words?.length !== 20) throw new Error('Trace must contain all 20 ABI words');
         result.traces.push({ words: value.words, input_index: value.input_index });
@@ -63,8 +68,8 @@ export async function runGame(modulePath, config = {}) {
       }
       if (result.traces.length > 100000 || result.frames.length > 100000) throw new Error('Game output limit exceeded');
     },
-    store(bytes) {
-      result.stores.push(Buffer.from(bytes).toString('utf8'));
+    store(raw,length) {
+      result.stores.push(Buffer.from(bytes(raw,length)).toString('utf8'));
       // Observe the already emitted host events. No C call, repaint, input read
       // or rule update occurs while recording this save-position evidence.
       result.store_contexts.push(structuredClone({
@@ -77,13 +82,13 @@ export async function runGame(modulePath, config = {}) {
         read: result.reads.at(-1) ?? null,
       }));
     },
-    outcome(code, text) { result.outcomes.push({ code, text }); },
+    outcome(code, raw,length) { result.outcomes.push({ code, text:text(raw,length) }); },
     // Original flush discards already queued typeahead. These events are future
     // scripted user actions and remain available after the game asks for them.
     flushInput() { result.flushes.push({ position, trace: result.traces.length - 1 }); },
   };
   const factory = require(resolve(modulePath));
-  const module = await factory({ printErr: (line) => result.stderr.push(String(line)), print: () => {} });
+  module = await factory({ printErr: (line) => result.stderr.push(String(line)), print: () => {} });
   if (config.repaint > 0 && typeof module._rg_test_repaint !== 'function') {
     throw new Error('Repaint regression checks require an explicit test-hooks (-TestHooks or -TestFixtures) build');
   }

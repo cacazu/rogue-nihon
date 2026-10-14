@@ -11,6 +11,7 @@ const text = file => readFile(path.join(root, file), "utf8");
 test("shipped browser modules exclude the local server, tests and artifact management", async () => {
   const files = (await readdir(path.join(root, "web"))).filter(file => /\.m?js$/.test(file));
   assert.ok(!files.includes("server.mjs"));
+  assert.ok(!files.includes("library.js"));
   for (const file of files) {
     const source = await text("web/" + file);
     assert.doesNotMatch(source, /__rogueBrowserTest|RogueCanvasUi\.active|recoverTemporaryArtifacts|artifact-registry|temporary.artifacts|ROGUE_KEEP_ARTIFACTS|node:/, file);
@@ -41,6 +42,7 @@ test("published Wasm and loader exclude regression exports and fixture code", as
     assert.equal(bytes.includes(Buffer.from(token)), false, token);
   }
   assert.doesNotMatch(await text("build/game.js"), /rg_test_|game-fixtures|temporary.artifacts/);
+  assert.ok(WebAssembly.Module.imports(module).every(entry=>!entry.name.startsWith("js_rg_")));
   const ui = await WebAssembly.compile(await readFile(path.join(root, "build/browser-ui.wasm")));
   assert.ok(WebAssembly.Module.imports(ui).every(({name})=>/^__wbg_|^__wbindgen_/.test(name)));
   for(const name of ["policy_request","browser_request","browser_snapshot","ui_request","rotate_pixels"])

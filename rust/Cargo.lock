@@ -1276,6 +1276,7 @@ dependencies = [
  "rogue-input",
  "rogue-platform",
  "serde_json",
+ "wasm-bindgen",
 ]
 
 [[package]]

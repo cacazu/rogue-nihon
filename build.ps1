@@ -74,7 +74,9 @@ if ($includeTestHooks) {
     $exports += @('_rg_test_repaint','_rg_test_save_roundtrip')
 }
 $compilerArguments.Add('-sEXPORTED_FUNCTIONS=' + ($exports | ConvertTo-Json -Compress))
-foreach ($argument in @('-DROGUE_LAYERED','-I'+$logicPath,'-I'+(Join-Path $project 'contract'),'-std=gnu11','-fwrapv','-fno-strict-aliasing','-Wno-deprecated-non-prototype','-O1','--no-entry','--js-library',(Join-Path $project 'web\library.js'),'-sMODULARIZE=1','-sEXPORT_NAME=createRogueModule','-sENVIRONMENT=web,worker,node','-sALLOW_MEMORY_GROWTH=1','-sSTACK_SIZE=4194304','-sASSERTIONS=1','-sEXPORTED_RUNTIME_METHODS=["ccall","FS","UTF8ToString"]','-o',(Join-Path $buildPath ($OutputName + '.js')))) { $compilerArguments.Add($argument) }
+foreach ($argument in @('-DROGUE_LAYERED','-I'+$logicPath,'-I'+(Join-Path $project 'contract'),'-std=gnu11','-fwrapv','-fno-strict-aliasing','-Wno-deprecated-non-prototype','-O1','--no-entry','-sWASM_BINDGEN=1','-sMODULARIZE=1','-sEXPORT_NAME=createRogueModule','-sENVIRONMENT=web,worker,node','-sALLOW_MEMORY_GROWTH=1','-sSTACK_SIZE=4194304','-sASSERTIONS=1','-sEXPORTED_RUNTIME_METHODS=["ccall","FS","UTF8ToString","HEAPU8"]','-o',(Join-Path $buildPath ($OutputName + '.js')))) { $compilerArguments.Add($argument) }
+$wasmBindgenExecutable = & $pythonPath (Join-Path $project 'tools\bind_browser.py') --print-executable
+if ($LASTEXITCODE -ne 0) { throw 'Matching wasm-bindgen CLI missing' }
 $previousConfig = $env:EM_CONFIG
 $previousCache = $env:EM_CACHE
 $previousSdkPython = $env:EMSDK_PYTHON
@@ -84,9 +86,12 @@ try {
     $env:EM_CACHE=$cachePath
     # The SDK launcher used for fresh system libraries must find this SDK's Python.
     $env:EMSDK_PYTHON=$pythonPath
-    $env:PATH=(Split-Path -Parent $pythonPath)+';'+$previousSdkPath
+    $env:PATH=(Split-Path -Parent $wasmBindgenExecutable)+';'+(Split-Path -Parent $pythonPath)+';'+$previousSdkPath
     & $pythonPath $emccPath @compilerArguments
     if ($LASTEXITCODE -ne 0) { throw ('C/Wasm link failed: ' + $LASTEXITCODE) }
+    $gameJsPath = Join-Path $buildPath ($OutputName + '.js')
+    $gameJsCode = [regex]::Replace([IO.File]::ReadAllText($gameJsPath).Replace("`r`n","`n"),'(?m)^[ \t]+$','')
+    [IO.File]::WriteAllText($gameJsPath,$gameJsCode,[Text.UTF8Encoding]::new($false))
 } finally {
     $env:EM_CONFIG=$previousConfig
     $env:EM_CACHE=$previousCache
@@ -96,7 +101,7 @@ try {
 $files = @((Join-Path $buildPath ($OutputName+'.js')),(Join-Path $buildPath ($OutputName+'.wasm')),(Join-Path $buildPath 'browser-ui.wasm'),(Join-Path $buildPath 'browser-ui.js'))
 $records = foreach ($file in $files) { [ordered]@{file=[System.IO.Path]::GetFileName($file);bytes=(Get-Item -LiteralPath $file).Length;sha256=(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()} }
 $manifestName = if ($OutputName -eq 'game') { 'build-manifest.json' } else { 'build-manifest-'+$OutputName+'.json' }
-$manifestRecord = [ordered]@{built_at_utc=(Get-Date).ToUniversalTime().ToString('o');logic_source_directory=$logicPath;c_source_files=$sources.Count;rust_library=$rustLibrary;rust_engine='Bevy 0.19.1';sdk_root=$SdkRoot;rust_version=((& rustc --version) -join '');test_hooks=[bool]$includeTestHooks;test_fixtures=[bool]$TestFixtures;c_flags=@('-DROGUE_LAYERED','-std=gnu11','-fwrapv','-fno-strict-aliasing','-O1');wasm_flags=@('MODULARIZE','ALLOW_MEMORY_GROWTH','STACK_SIZE=4194304','ASSERTIONS=1','Worker+SAB input; no Asyncify');outputs=$records}
+$manifestRecord = [ordered]@{built_at_utc=(Get-Date).ToUniversalTime().ToString('o');logic_source_directory=$logicPath;c_source_files=$sources.Count;rust_library=$rustLibrary;rust_engine='Bevy 0.19.1';sdk_root=$SdkRoot;rust_version=((& rustc --version) -join '');test_hooks=[bool]$includeTestHooks;test_fixtures=[bool]$TestFixtures;c_flags=@('-DROGUE_LAYERED','-std=gnu11','-fwrapv','-fno-strict-aliasing','-O1');wasm_flags=@('WASM_BINDGEN','MODULARIZE','ALLOW_MEMORY_GROWTH','STACK_SIZE=4194304','ASSERTIONS=1','Worker+SAB input; no Asyncify');outputs=$records}
 $manifestJson = ($manifestRecord | ConvertTo-Json -Depth 8).Replace("`r`n", "`n") + "`n"
 [System.IO.File]::WriteAllText((Join-Path $buildPath $manifestName), $manifestJson, [System.Text.UTF8Encoding]::new($false))
 if ($OutputName -eq 'game' -or $artifactScope.Keep) {

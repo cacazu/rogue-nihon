@@ -7,13 +7,14 @@ thread_local! {
     static QUEUE: RefCell<Option<Rc<queue::Queue>>> = const { RefCell::new(None) };
     static CALLBACKS: RefCell<Option<Callbacks>> = const { RefCell::new(None) };
     static MESSAGE: RefCell<Option<MessageCallback>> = const { RefCell::new(None) };
+    static GAME: RefCell<Option<JsValue>> = const { RefCell::new(None) };
 }
 struct Callbacks {
     read: Closure<dyn FnMut() -> Result<i32, JsValue>>,
     flush: Closure<dyn FnMut() -> Result<(), JsValue>>,
-    present: Closure<dyn FnMut(String) -> Result<(), JsValue>>,
-    store: Closure<dyn FnMut(Uint8Array) -> Result<(), JsValue>>,
-    outcome: Closure<dyn FnMut(i32, String) -> Result<(), JsValue>>,
+    present: Closure<dyn FnMut(u32, u32) -> Result<(), JsValue>>,
+    store: Closure<dyn FnMut(u32, u32) -> Result<(), JsValue>>,
+    outcome: Closure<dyn FnMut(i32, u32, u32) -> Result<(), JsValue>>,
     locate: Closure<dyn FnMut(String) -> String>,
     print: Closure<dyn FnMut(String)>,
     abort: Closure<dyn FnMut(JsValue)>,
@@ -28,6 +29,19 @@ fn queue() -> Result<Rc<queue::Queue>, JsValue> {
     QUEUE
         .with(|slot| slot.borrow().clone())
         .ok_or_else(|| JsValue::from_str("Worker queue unavailable"))
+}
+fn borrowed_bytes(pointer: u32, length: u32) -> Result<Vec<u8>, JsValue> {
+    let module = GAME
+        .with(|slot| slot.borrow().clone())
+        .ok_or_else(|| JsValue::from_str("Game memory unavailable"))?;
+    // Fetch the current view on every call: Emscripten replaces it after memory growth.
+    let heap: Uint8Array = Reflect::get(&module, &JsValue::from_str("HEAPU8"))?.dyn_into()?;
+    let end = pointer
+        .checked_add(length)
+        .filter(|end| *end <= heap.length())
+        .ok_or_else(|| JsValue::from_str("Game buffer outside memory"))?;
+    // Copy synchronously, while the game-side Rust slice is still borrowed.
+    Ok(heap.subarray(pointer, end).to_vec())
 }
 #[wasm_bindgen]
 pub fn worker_boot() -> Result<(), JsValue> {
@@ -67,15 +81,22 @@ async fn run(start: JsValue) -> Result<(), JsValue> {
             }
             Ok(())
         }),
-        present: Closure::new(|json: String| scope().post_message(&JSON::parse(&json)?)),
-        store: Closure::new(|bytes: Uint8Array| {
+        present: Closure::new(|pointer, length| {
+            let payload: Value = serde_json::from_slice(&borrowed_bytes(pointer, length)?)
+                .map_err(|e| JsValue::from_str(&e.to_string()))?;
+            post(payload)
+        }),
+        store: Closure::new(|pointer, length| {
+            let bytes = Uint8Array::from(borrowed_bytes(pointer, length)?.as_slice());
             let message = js(&json!({"type":"save"}))?;
             Reflect::set(&message, &JsValue::from_str("bytes"), &bytes)?;
             let transfer = Array::new();
             transfer.push(&bytes.buffer());
             scope().post_message_with_transfer(&message, &transfer)
         }),
-        outcome: Closure::new(|code, text: String| {
+        outcome: Closure::new(|code, pointer, length| {
+            let text = String::from_utf8(borrowed_bytes(pointer, length)?)
+                .map_err(|e| JsValue::from_str(&e.to_string()))?;
             post(json!({"type":"outcome","code":code,"text":text}))
         }),
         locate: Closure::new(|name: String| format!("/build/{name}")),
@@ -113,6 +134,7 @@ async fn run(start: JsValue) -> Result<(), JsValue> {
         Reflect::get(&js_sys::global(), &JsValue::from_str("createRogueModule"))?.dyn_into()?;
     let promise: Promise = constructor.call1(&JsValue::NULL, &options)?.dyn_into()?;
     let module = JsFuture::from(promise).await?;
+    GAME.with(|slot| *slot.borrow_mut() = Some(module.clone()));
     let fs = Reflect::get(&module, &JsValue::from_str("FS"))?;
     let write = |path: &str, bytes: &JsValue| -> Result<(), JsValue> {
         let args = Array::new();

@@ -1,6 +1,7 @@
 //! Original Rogue C logic connected to Bevy display, input and platform plugins.
 //! Each game has one single-threaded Wasm instance. Browser repaint never calls C.
 mod engine;
+mod host;
 mod session;
 
 use abi::*;
@@ -19,11 +20,6 @@ unsafe extern "C" {
     #[cfg(feature = "test-hooks")]
     fn rg_core_load_bytes(bytes: *const u8, length: u32) -> i32;
     fn rg_core_save_free(bytes: *mut u8);
-    fn js_rg_read_event() -> i32;
-    fn js_rg_flush_input();
-    fn js_rg_present(json: *const u8, length: u32);
-    fn js_rg_store(json: *const u8, length: u32);
-    fn js_rg_outcome(code: i32, text: *const u8, length: u32);
 }
 
 /// Owns a C serializer allocation. All exits use its matching C deallocator.
@@ -66,13 +62,9 @@ impl Drop for CoreSaveBuffer {
 
 fn emit(value: &Value) {
     if let Ok(bytes) = serde_json::to_vec(value)
-        && let Ok(length) = u32::try_from(bytes.len())
+        && u32::try_from(bytes.len()).is_ok()
     {
-        // SAFETY: The synchronous JS import borrows this live byte slice only
-        // during the call, and copies it to the browser's message transport.
-        unsafe {
-            js_rg_present(bytes.as_ptr(), length);
-        }
+        host::present(&bytes);
     }
 }
 
@@ -382,9 +374,8 @@ pub extern "C" fn rg_host_read_key() -> i32 {
         let key = if let Some(key) = pending.or(replay).or(automatic) {
             key
         } else {
-            // SAFETY: Synchronous host import waits on the Worker's SAB queue;
-            // it does not re-enter Wasm or execute a game update.
-            let raw = unsafe { js_rg_read_event() } as u32;
+            // The host waits on the Worker's SAB queue and does not update the game.
+            let raw = host::read_event() as u32;
             match engine::decode(raw) {
                 input::Input::Key(key) => key,
                 input::Input::Save => {
@@ -414,11 +405,7 @@ pub extern "C" fn rg_host_read_key() -> i32 {
 /// original session remain intact and are not pending keyboard events.
 #[unsafe(no_mangle)]
 pub extern "C" fn rg_host_flush_input() {
-    // SAFETY: Host import only advances its raw SAB read counter. It does not
-    // re-enter Wasm or mutate the recorded semantic input journal.
-    unsafe {
-        js_rg_flush_input();
-    }
+    host::flush_input();
 }
 
 /// Presents a copy of C's knowledge/view buffer without invoking look or RNG.
@@ -625,20 +612,15 @@ pub unsafe extern "C" fn rg_host_outcome(code: i32, message: *const c_char) {
         // input read, turn, or RNG event after the game has exited.
         emit(&json!({"type":"presentation","ui":ui}));
     }
-    // SAFETY: The synchronous host callback copies the borrowed text bytes.
-    unsafe {
-        js_rg_outcome(code, translated.as_ptr(), translated.len() as u32);
-    }
+    host::outcome(code, translated.as_bytes());
 }
 
 fn persist() {
     match engine::save_bytes() {
         Ok(bytes) => {
-            // SAFETY: JS copies the envelope and acknowledges IndexedDB success
-            // asynchronously; handing bytes to JS alone does not claim durability.
-            unsafe {
-                js_rg_store(bytes.as_ptr(), bytes.len() as u32);
-            }
+            // The Rust host copies the envelope synchronously; durability is
+            // acknowledged only after its asynchronous IndexedDB transaction.
+            host::store(&bytes);
         }
         Err(error) => notice(&format!("save unavailable: {error}")),
     }

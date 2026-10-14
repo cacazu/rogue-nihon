@@ -10,7 +10,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from compiler_workspace import CompilerWorkspace
-from bind_browser import bind_browser
+from bind_browser import bind_browser, binding_environment
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES = 'vers extern armor chase command daemon daemons fight init io list mach_dep main mdport misc monsters move new_level options pack passages potions rings rip rooms save scrolls state sticks things weapons wizard xcrypt core knowledge message save_adapter semantic'.split()
@@ -67,6 +67,7 @@ def build(options):
         raise ValueError('game is reserved for the playable build; choose a fixture/comparison output name')
     with CompilerWorkspace(ROOT, options.keep_artifacts) as scope:
         emcc, env = sdk_environment(options.sdk_root)
+        env = binding_environment(env)
         logic = Path(options.logic_directory).resolve() if options.logic_directory else ROOT / 'logic'
         build_dir = scope.directory / 'build'
         build_dir.mkdir(exist_ok=True)
@@ -96,13 +97,16 @@ def build(options):
         if hooks:
             args += ['-DRG_TEST_HOOKS']
             exports += ['_rg_test_repaint', '_rg_test_save_roundtrip']
-        args += ['-sEXPORTED_FUNCTIONS=' + json.dumps(exports, separators=(',', ':')), '--no-entry', '--js-library', ROOT / 'web/library.js', '-sMODULARIZE=1', '-sEXPORT_NAME=createRogueModule', '-sENVIRONMENT=web,worker,node', '-sALLOW_MEMORY_GROWTH=1', '-sSTACK_SIZE=4194304', '-sASSERTIONS=1', '-sEXPORTED_RUNTIME_METHODS=["ccall","FS","UTF8ToString"]', '-o', build_dir / (options.output_name + '.js')]
+        args += ['-sEXPORTED_FUNCTIONS=' + json.dumps(exports, separators=(',', ':')), '--no-entry', '-sWASM_BINDGEN=1', '-sMODULARIZE=1', '-sEXPORT_NAME=createRogueModule', '-sENVIRONMENT=web,worker,node', '-sALLOW_MEMORY_GROWTH=1', '-sSTACK_SIZE=4194304', '-sASSERTIONS=1', '-sEXPORTED_RUNTIME_METHODS=["ccall","FS","UTF8ToString","HEAPU8"]', '-o', build_dir / (options.output_name + '.js')]
         run([*emcc, *args], env=env)
+        generated_js = build_dir / (options.output_name + '.js')
+        generated_code = re.sub(r'(?m)^[ \t]+$', '', generated_js.read_text(encoding='utf-8'))
+        generated_js.write_text(generated_code, encoding='utf-8', newline='\n')
         outputs = [options.output_name + '.js', options.output_name + '.wasm', 'browser-ui.wasm', 'browser-ui.js']
         records = [{'file': name, 'bytes': (build_dir / name).stat().st_size, 'sha256': hashlib.sha256((build_dir / name).read_bytes()).hexdigest()} for name in outputs]
         manifest_name = 'build-manifest.json' if options.output_name == 'game' else 'build-manifest-' + options.output_name + '.json'
-        manifest = {'built_at_utc': datetime.now(timezone.utc).isoformat(), 'logic_source_directory': str(logic), 'c_source_files': len(SOURCES), 'rust_library': str(library), 'rust_engine': 'Bevy 0.19.1', 'sdk_root': options.sdk_root or env.get('EMSDK'), 'rust_version': subprocess.check_output(['rustc', '--version'], text=True).strip(), 'test_hooks': bool(hooks), 'test_fixtures': bool(options.test_fixtures), 'c_flags': ['-DROGUE_LAYERED', '-std=gnu11', '-fwrapv', '-fno-strict-aliasing', '-O1'], 'wasm_flags': ['MODULARIZE', 'ALLOW_MEMORY_GROWTH', 'STACK_SIZE=4194304', 'ASSERTIONS=1', 'Worker+SAB input; no Asyncify'], 'outputs': records}
-        (build_dir / manifest_name).write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+        manifest = {'built_at_utc': datetime.now(timezone.utc).isoformat(), 'logic_source_directory': str(logic), 'c_source_files': len(SOURCES), 'rust_library': str(library), 'rust_engine': 'Bevy 0.19.1', 'sdk_root': options.sdk_root or env.get('EMSDK'), 'rust_version': subprocess.check_output(['rustc', '--version'], text=True).strip(), 'test_hooks': bool(hooks), 'test_fixtures': bool(options.test_fixtures), 'c_flags': ['-DROGUE_LAYERED', '-std=gnu11', '-fwrapv', '-fno-strict-aliasing', '-O1'], 'wasm_flags': ['WASM_BINDGEN', 'MODULARIZE', 'ALLOW_MEMORY_GROWTH', 'STACK_SIZE=4194304', 'ASSERTIONS=1', 'Worker+SAB input; no Asyncify'], 'outputs': records}
+        (build_dir / manifest_name).write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8', newline='\n')
         if options.output_name == 'game' or scope.keep:
             (ROOT / 'build').mkdir(exist_ok=True)
             for name in [*outputs, manifest_name]:

@@ -70,11 +70,12 @@ CゲームスタックはWorker内で同期実行し、入力キューが空な�
 
 `saves.rs` はIndexedDB transaction完了・ファイル選択・Blob書出しを扱い、候補bytesと採用済みbytesはBrowserの別領域に保持する。ファイル選択と全画面のAPIはユーザーイベントの同期区間で開始し、完了はRust futureで待つ。`images.rs` は画像decode・Canvas raster・回転cacheの寿命を管理し、32px格子の回転計算は表示層の `browser_ui/pixels.rs` に置く。`worker.rs` はEmscriptenの初期化・仮想FS・同期C起動・親への転送を担当する。
 
+ゲーム側のホスト接続は `rust/src/host.rs` の `wasm-bindgen` 宣言から生成する。Emscriptenは `WASM_BINDGEN` を有効にして生成bindingを `game.js` に組み込み、手書きのJSライブラリーを使わない。ゲーム側のAPIは借用sliceを同期区間だけ渡し、Worker側Rustは毎回現在の `HEAPU8` を取得してアドレス・長さを検査し、Rust所有のbyte列へコピーする。メモリー成長前のviewを保持せず、元のsliceの解放前にコピーを終える。JSON・UTF-8の復号と保存byte列の転送もWorker側Rustが担当する。
+
 | JS | 残る接続の責務 |
 |---|---|
 | `web/app.js` | 生成bindingとWasmを読み、Rustのブラウザー起動を呼ぶ |
 | `web/worker.js` | classic Worker内で同じbindingとWasmを読みRustを起動する。Rust起動前の取得・初期化失敗だけ親へ通知する |
-| `web/library.js` | Emscripten ABIの借用メモリーを文字列・所有byte列へ変換してRust callbackへ渡す |
 | `web/abi.js` | ヘッダーから生成した定数。通常HTML/Workerでは読み込まない |
 | `build/browser-ui.js`、`build/game.js` | wasm-bindgenのブラウザーAPI bindingとEmscriptenの生成runtime。アプリケーション判断の正本にはしない |
 

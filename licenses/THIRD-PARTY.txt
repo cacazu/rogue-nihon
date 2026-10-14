@@ -825,7 +825,7 @@ Notice: LICENSE-MIT -> 378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305
 Component: wasm-bindgen-cli-support/0.2.128
 Declared license: MIT OR Apache-2.0
 Selected license: MIT
-Targets: wasm32-unknown-unknown
+Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://github.com/wasm-bindgen/wasm-bindgen/blob/0.2.128/crates/cli-support/src/js/mod.rs
 Source: https://github.com/wasm-bindgen/wasm-bindgen/blob/0.2.128/LICENSE-MIT
 Notice: LICENSE-MIT -> 378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397

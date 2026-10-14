@@ -9,9 +9,7 @@ import tomllib
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def bind_browser(source, output, name='browser-ui'):
-    if name not in ('browser-ui', 'browser-test'):
-        raise ValueError('Unsupported browser artifact name')
+def bindgen_executable():
     lock = tomllib.loads((ROOT / 'rust/Cargo.lock').read_text(encoding='utf-8'))
     version = next(package['version'] for package in lock['package'] if package['name'] == 'wasm-bindgen')
     executable = os.environ.get('ROGUE_WASM_BINDGEN') or shutil.which('wasm-bindgen')
@@ -23,6 +21,20 @@ def bind_browser(source, output, name='browser-ui'):
     actual = subprocess.check_output([executable, '--version'], text=True).strip()
     if actual != f'wasm-bindgen {version}':
         raise RuntimeError(f'Expected wasm-bindgen {version}, got {actual}')
+    return executable, version
+
+
+def binding_environment(environment):
+    executable, _ = bindgen_executable()
+    result = environment.copy()
+    result['PATH'] = str(Path(executable).parent) + os.pathsep + result.get('PATH', '')
+    return result
+
+
+def bind_browser(source, output, name='browser-ui'):
+    if name not in ('browser-ui', 'browser-test'):
+        raise ValueError('Unsupported browser artifact name')
+    executable, version = bindgen_executable()
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     subprocess.run([executable, str(source), '--target', 'web', '--no-typescript', '--out-dir', str(output), '--out-name', name], check=True)
@@ -35,8 +47,14 @@ def bind_browser(source, output, name='browser-ui'):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('source', type=Path)
-    parser.add_argument('output', type=Path)
+    parser.add_argument('source', type=Path, nargs='?')
+    parser.add_argument('output', type=Path, nargs='?')
+    parser.add_argument('--print-executable', action='store_true')
     parser.add_argument('--name', choices=('browser-ui', 'browser-test'), default='browser-ui')
     arguments = parser.parse_args()
-    bind_browser(arguments.source, arguments.output, arguments.name)
+    if arguments.print_executable:
+        print(bindgen_executable()[0])
+    elif arguments.source is None or arguments.output is None:
+        parser.error('source and output are required')
+    else:
+        bind_browser(arguments.source, arguments.output, arguments.name)
