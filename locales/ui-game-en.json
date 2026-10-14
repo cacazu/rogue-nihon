@@ -640,6 +640,9 @@
     },
     "inventory.bonus": {
       "template": "Bonus"
+    },
+    "identify.ring_or_stick": {
+      "template": "ring, wand or staff"
     }
   }
 }

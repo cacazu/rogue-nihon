@@ -14,11 +14,15 @@
 | ブラウザー側の判断 | `rust/crates/browser-display/src/controller.rs`、`policies.rs`、`display/src/browser_ui/`、`widgets.rs` | 開始・終了・保存の状態、Worker世代、IME制限、入力検証、表示設定、履歴、配置・フォーカス・カメラ・タイル計画 |
 | ブラウザーAPI接続 | `web/` | Rustの命令をCanvas2D、ネイティブ文字入力、Worker/SAB、IndexedDB等へ接続 |
 
-入力は表示の公開descriptorを参照する。表示から入力への依存はなく、プラットフォームは表示・入力に依存しない。3層のクレートではunsafeを禁止し、FFIは接続用クレートに限定する。
+入力は表示が公開する不変の `InputView` を参照する。基本の入力待ち・所持品行と、持ち物の詳細・操作候補を付けた描画用UIは区別する。入力Pluginは翻訳を再実行せず、表示状態や地図Componentを直接変更しない。文字編集の消費byte・未送信byte・表示可能な文字列は入力の `State` が所有し、接続部が表示へ一方向に投影する。開始時に表示する既存値は、空のC編集bufferを埋める入力にはしない。
+
+プラットフォームの `Session` は内部状態を非公開にし、新規開始・復元・checkpoint更新・キー消費をAPIで扱う。checkpointとjournal/replay cursorを個別に組み立てず、所有者がまとめて更新する。接続部の借用ビューは各層を明示し、別層の状態へ暗黙にアクセスするDerefは持たない。名前と持ち物の表示用コピーは接続部が投影する値で、表示から正本を書き換えない。
+
+表示から入力への依存はなく、プラットフォームは表示・入力に依存しない。3層のクレートではunsafeを禁止し、FFIは接続用クレートに限定する。表示は新しい観測フレームの足元から配置可否と階段操作を公開し、入力用snapshot・画面・保持フレームで同じ観測を使う。格子は80×24・ASCII 1,920 bytes・範囲内のプレイヤー座標を境界で検査し、不正な観測は既存フレームを置き換えない。
 
 ## 実行とABI
 
-契約の正本は [contract/rogue_abi.h](../contract/rogue_abi.h)。固定幅整数と借用byte列を渡し、CのWINDOW・THING・FILE・生の関数ポインターは公開しない。ABI定数は同じヘッダーからRustの `rogue-contract` と `web/abi.js` へ生成する。Cが確保した保存bufferは `rg_core_save_free` で解放する。
+契約の正本は [contract/rogue_abi.h](../contract/rogue_abi.h)。固定幅整数と借用byte列を渡し、CのWINDOW・THING・FILE・生の関数ポインターは公開しない。ABI定数は同じヘッダーからRustの `rogue-contract` と `web/abi.js` へ生成する。Cが確保した保存bufferは接続部の `CoreSaveBuffer` が所有し、失敗経路を含めDropで `rg_core_save_free` を一度だけ呼ぶ。復元に貸すbufferは別の不変allocationで、後のcheckpoint差し替えでも寿命を保つ。
 
 CゲームスタックはWorker内で同期実行し、入力キューが空ならAtomics.waitで待つ。空キューをEscや仮の入力として扱わない。Asyncifyは使わず、新規ゲームと復元には新しいWorker/Wasm instanceを作る。
 
@@ -121,6 +125,10 @@ GOLDのcount=0、食料や杖のwield、方向指定の絶対target、壁移動�
 `rogue-platform::Envelope` はformat・版・ABI・原作source hash・seed・名前・checkpoint_hex・inputs・input_index・checksumを持つ。JSON全体は16 MiB、checkpointは4 MiB、journalは65,536入力まで。版2のpresentationは512 KiBまでで、`lines / input / history / last_message` の構造も検証する。
 
 `browser-display/src/save_loading.rs` は同じ `Envelope::parse` でファイル・IndexedDBの保存をゲーム開始前に検証する。拡張子だけでは受け付けず、形式・版・ABI・source・構造・上限・checksumを検査する。無効なファイルと選択取消では現在のセッションを終了せず、保存済みbytesも差し替えない。ファイルのbytesは検証成功の命令後にだけ復元元へ移す。ゲーム内のcheckpoint復元でも失敗した場合はトップへ戻してエラーを表示し、再開・新規開始を可能にする。
+
+保存APIの保留状態は `browser-display/src/save_operations.rs` が所有し、要求ID・Worker世代・操作種別の一致で応答を受理する。JavaScriptは要求ごとの候補bytesを保持するだけで、read/import/write callback内で復元元を差し替えない。Rustの `save-accept` 命令で採用し、`save-discard` 命令で破棄する。新規開始とトップ復帰では保留要求を退役させ、遅延・重複応答が次のセッションの保存元を変更しないようにする。保存書込みはIndexedDB transaction完了後の受理で採用する。トップの「前回の続き」はIndexedDBの保存有無、書出しは受理済みbytesの有無を使い、ファイルimportだけで保存枠が存在すると扱わない。
+
+画像の準備状態も応答件数ではなく、`tiles` と `pixels` の各セットの成功状態から決める。同じセットの重複応答は準備完了を早めず、成功・失敗の応答とも対象セットを渡す。
 
 版1はASCII入力履歴、版2はUTF-8 byteと意味ID付きpresentationを保存する。旧版1はルール状態を復元できるが、当時の意味付き履歴がないため過去メッセージの日本語を完全には復元できない。checksumは破損検出であり署名ではない。表示モード・倍率と持ち物の選択タブ・スクロール位置は別のlocalStorage設定で、ゲーム保存へ含めない。
 

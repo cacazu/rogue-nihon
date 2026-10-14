@@ -2,6 +2,7 @@
   "version": 1,
   "locale": "en",
   "messages": {
+    "naming.effect": "Message when used",
     "mobile.show_controls": "Show controls",
     "mobile.hide_controls": "Hide controls",
     "mobile.log": "View log",
@@ -52,6 +53,10 @@
     "mobile.trap": "Inspect trap",
     "inventory.tab.all": "All",
     "inventory.tab.equipped": "Equipped",
+    "inventory.slot.right_hand": "Right hand",
+    "inventory.slot.hand": "Hand",
+    "inventory.slot.left_hand": "Left hand",
+    "inventory.slot.body": "Body",
     "inventory.tab.stick": "Staves",
     "inventory.tab.food": "Food",
     "inventory.tab.potion": "Potions",
@@ -199,6 +204,13 @@
     "status.title": "Status",
     "status.depth": "Floor",
     "status.hp": "HP",
-    "status.hunger": "Hunger"
+    "status.hunger": "Hunger",
+    "log.parameter.hplus": "Hit",
+    "log.parameter.dplus": "Damage",
+    "log.parameter.enchantment": "Enchantment",
+    "log.parameter.protection": "Protection",
+    "log.parameter.strength": "Strength",
+    "log.parameter.bonus": "Bonus",
+    "log.parameter.charges": "Charges"
   }
 }

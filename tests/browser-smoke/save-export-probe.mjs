@@ -1,5 +1,5 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
-import {createRequire} from "node:module";
 import {mkdir,readFile,writeFile} from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
@@ -11,13 +11,13 @@ await mkdir(output,{recursive:true});
 if(process.env.ROGUE_PROBE_LOCAL_TEMP==="1") {
   const scratch=path.join(output,"scratch");await mkdir(scratch,{recursive:true});process.env.TEMP=scratch;process.env.TMP=scratch;
 }
-const {chromium}=createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE||path.join(os.homedir(),".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"));
+const {chromium} = loadPlaywright();
 const server=http.createServer((request,response)=>{
   if(request.url==="/file.json"){response.writeHead(200,{"Content-Type":"application/json","Content-Disposition":'attachment; filename="probe.json"'});response.end('{"probe":true}');}
   else{response.writeHead(200,{"Content-Type":"text/html"});response.end('<button id="download">Download probe</button>');}
 });
 await new Promise(r=>server.listen(0,"127.0.0.1",r));
-const executable=process.env.ROGUE_CHROME||"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+const executable=browserExecutable();
 const evidence={started_at:new Date().toISOString(),executable,results:[]};
 let browser;
 try{

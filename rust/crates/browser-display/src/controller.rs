@@ -1,11 +1,13 @@
 //! Owns browser session state. JS reports observations and executes API effects.
 use crate::policies::*;
+use crate::save_operations::{PendingSave, SaveOperation, SaveOperations};
 use rogue_contract::RG_KEY_SAVE;
 use rogue_display::{
     browser_ui::{BrowserUi, tiles},
     widgets::{MeasureText, Rect},
 };
 use serde_json::{Value, json};
+use std::collections::BTreeSet;
 
 pub struct Controller {
     ui: BrowserUi,
@@ -24,14 +26,15 @@ pub struct Controller {
     restore_pending: bool,
     ending_ack: i64,
     window_close_ack: String,
-    assets_ready: usize,
+    assets_ready: BTreeSet<String>,
+    saves: SaveOperations,
     inventory_preference_cache: String,
 }
 impl Controller {
     pub fn new(measure: MeasureText) -> Self {
         Self {
             ui: BrowserUi::new(measure),
-            model: json!({"language":"ja","topOpen":true,"settingsOpen":false,"starting":false,"running":false,"ready":false,"saved":false,"savePending":false,"returnAfterEnd":false,"generation":0,"displayMode":"tiles","tileSize":32,"frame":null,"topNotice":null}),
+            model: json!({"language":"ja","topOpen":true,"settingsOpen":false,"starting":false,"running":false,"ready":false,"saved":false,"downloadAvailable":false,"savePending":false,"returnAfterEnd":false,"itemHistoryOpen":false,"returnToInventory":false,"generation":0,"displayMode":"tiles","tileSize":32,"frame":null,"topNotice":null}),
             state: json!({"exitCode":null,"outcome":null,"runtimeError":null,"frameCount":0,"inputRequestCount":0,"trace":null,"traces":[],"messages":[],"logs":[],"translationFallbacks":[],"savedLength":0}),
             inputs: json!({}),
             environment: Value::Null,
@@ -46,7 +49,8 @@ impl Controller {
             restore_pending: false,
             ending_ack: -1,
             window_close_ack: String::new(),
-            assets_ready: 0,
+            assets_ready: BTreeSet::new(),
+            saves: SaveOperations::default(),
             inventory_preference_cache: String::new(),
         }
     }
@@ -62,14 +66,38 @@ impl Controller {
     fn label(&mut self, id: &str, args: &Value) -> String {
         self.catalog.label(text(&self.model["language"]), id, args)
     }
-    fn validate_save(&mut self, bytes: &Value) -> bool {
-        if let Err(error) = crate::save_loading::validate(bytes) {
-            self.model["starting"] = json!(false);
-            self.log(json!(error));
-            self.notice("error.save_invalid", json!({}), true);
-            return false;
+    fn validate_save(&mut self, bytes: &Value) -> Option<usize> {
+        match crate::save_loading::validate(bytes) {
+            Ok(length) => Some(length),
+            Err(error) => {
+                self.model["starting"] = json!(false);
+                self.log(json!(error));
+                self.notice("error.save_invalid", json!({}), true);
+                None
+            }
         }
-        true
+    }
+    fn save_operation(&mut self, operation: SaveOperation) -> PendingSave {
+        self.saves.begin(operation, number(&self.model["generation"]))
+    }
+    fn read_save(&mut self, operation: SaveOperation) {
+        let pending = self.save_operation(operation);
+        self.effects.push(json!({"kind":"save-read","operation":operation.name(),"request":pending.request,"generation":pending.generation}));
+    }
+    fn save_candidate(&mut self, request: &Value, accepted: bool) {
+        if request.is_u64() {
+            self.effects.push(json!({"kind":if accepted {"save-accept"} else {"save-discard"},"request":request}));
+        }
+    }
+    fn saved(&mut self, request: &Value, length: usize) {
+        self.save_candidate(request, true);
+        self.state["savedLength"] = json!(length);
+        self.model["downloadAvailable"] = json!(length > 0);
+    }
+    fn retire_saves(&mut self) {
+        for request in self.saves.retire() {
+            self.save_candidate(&json!(request), false);
+        }
     }
     fn restore_failed(&mut self) {
         self.return_top();
@@ -115,8 +143,9 @@ impl Controller {
         if flag(&self.model["savePending"]) {
             return;
         }
+        self.retire_saves();
         self.effects.push(json!({"kind":"worker-stop"}));
-        for key in ["starting", "returnAfterEnd", "running", "settingsOpen", "windowClosing"] {
+        for key in ["starting", "returnAfterEnd", "running", "settingsOpen", "windowClosing", "itemHistoryOpen", "returnToInventory"] {
             self.model[key] = json!(false);
         }
         self.model["topOpen"] = json!(true);
@@ -266,6 +295,7 @@ impl Controller {
             self.field("prompt-text", json!({"value":value}));
         }
         self.text_mode = next;
+        if input["kind"] == "discovery" { self.model["itemHistoryOpen"] = json!(true); }
         self.input = input;
         if !flag(&self.model["settingsOpen"]) {
             if next && !was {
@@ -304,6 +334,7 @@ impl Controller {
         } else {
             "Player".into()
         };
+        self.retire_saves();
         self.effects.push(json!({"kind":"worker-stop"}));
         self.model["generation"] = json!(number(&self.model["generation"]) + 1);
         for key in [
@@ -313,6 +344,8 @@ impl Controller {
             "savePending",
             "returnAfterEnd",
             "windowClosing",
+            "itemHistoryOpen",
+            "returnToInventory",
         ] {
             self.model[key] = json!(false);
         }
@@ -407,27 +440,32 @@ impl Controller {
         match id {
             "import-save" if !flag(&self.model["starting"]) && !flag(&self.model["savePending"]) && !flag(&self.model["returnAfterEnd"]) => {
                 self.model["starting"]=json!(true);
-                self.effects.push(json!({"kind":"save-import","generation":self.model["generation"]}));
+                let pending = self.save_operation(SaveOperation::Import);
+                self.effects.push(json!({"kind":"save-import","request":pending.request,"generation":pending.generation}));
             },
             "credits-repository"=>self.effects.push(json!({"kind":"open","url":"https://github.com/cacazu/jrogue/tree/main/rogue-nihon"})),
             "new-game" if flag(&self.model["topOpen"]) && !flag(&self.model["starting"]) && !self.composing && flag(&self.model["ready"]) =>self.start(false),
             "load" if flag(&self.model["topOpen"]) && !flag(&self.model["starting"]) => {
-                self.model["starting"]=json!(true);self.effects.push(json!({"kind":"save-read","operation":"load","generation":self.model["generation"]}));
+                self.model["starting"]=json!(true);self.read_save(SaveOperation::Load);
             },
             "settings-load" if !flag(&self.model["starting"]) && !flag(&self.model["savePending"]) && flag(&self.model["saved"]) => {
-                self.model["starting"]=json!(true);self.effects.push(json!({"kind":"save-read","operation":"load","generation":self.model["generation"]}));
+                self.model["starting"]=json!(true);self.read_save(SaveOperation::Load);
             },
             "save" if flag(&self.model["running"]) && !flag(&self.model["savePending"]) && !flag(&self.model["returnAfterEnd"]) => {
                 if self.composing {self.notice("error.text_composing",json!({}),true);return;}
                 let events=if self.text_mode && self.draft_dirty {self.text_batch(RG_KEY_SAVE)} else {Some(json!([RG_KEY_SAVE]))};
                 if let Some(events)=events {self.queue(events,"save");}
             },
-            "download-save" if flag(&self.model["saved"])=>self.effects.push(json!({"kind":"download","filename":"rogue-save.json","mime":"application/json","revokeAfter":1000})),
+            "download-save" if flag(&self.model["downloadAvailable"])=>self.effects.push(json!({"kind":"download","filename":"rogue-save.json","mime":"application/json","revokeAfter":1000})),
             "center-map"=>{self.ui.event(json!({"type":"center"}));},
             "fullscreen"|"header-fullscreen"=>self.effects.push(json!({"kind":"fullscreen","enter":!flag(&self.environment["fullscreen"])})),
             "settings-toggle" if !flag(&self.model["topOpen"]) && !flag(&self.model["returnAfterEnd"])=>self.settings(!flag(&self.model["settingsOpen"])),
             "settings-close"=>self.settings(false),"settings-top"=>self.return_top(),
             "window-close" if !flag(&self.model["windowClosing"]) => self.close_window(true),
+            "inventory-return" if flag(&self.model["itemHistoryOpen"]) && !flag(&self.model["windowClosing"]) => {
+                self.model["returnToInventory"] = json!(true);
+                self.close_window(true);
+            },
             "result-top"=>{
                 if !flag(&self.model["running"]) {self.return_top();}
                 else if self.ending() && !flag(&self.model["returnAfterEnd"]) {self.model["returnAfterEnd"]=json!(true);self.finish_ending();}
@@ -517,6 +555,13 @@ impl Controller {
                     self.notice("notice.restored", json!({}), false);
                 }
                 if flag(&self.model["windowClosing"]) { self.close_window(false); }
+                if self.input["kind"] == "command" {
+                    self.model["itemHistoryOpen"] = json!(false);
+                    if flag(&self.model["returnToInventory"]) {
+                        self.model["returnToInventory"] = json!(false);
+                        self.queue(json!([105]), "send");
+                    }
+                }
                 self.finish_ending();
             }
             "input-flush" => {
@@ -530,9 +575,10 @@ impl Controller {
                     self.notice("notice.input_flush", json!({"count":data["count"]}), false);
                 }
             }
-            "save" => self
-                .effects
-                .push(json!({"kind":"save-write","generation":generation,"bytes":data["bytes"]})),
+            "save" => {
+                let pending = self.save_operation(SaveOperation::Write);
+                self.effects.push(json!({"kind":"save-write","request":pending.request,"generation":pending.generation,"bytes":data["bytes"]}));
+            }
             "outcome" => {
                 self.state["outcome"] = json!({"code":data["code"],"text":data["text"]});
                 self.notice("notice.game_ended", json!({}), false);
@@ -573,7 +619,12 @@ impl Controller {
     fn api(&mut self, r: &Value) -> bool {
         let ok = flag(&r["ok"]);
         let operation = text(&r["operation"]);
-        if r.get("generation").is_some() && r["generation"] != self.model["generation"] {
+        if matches!(operation, "init" | "load" | "import" | "save-write") {
+            if self.saves.finish(r, number(&self.model["generation"])).is_none() {
+                self.save_candidate(&r["request"], false);
+                return false;
+            }
+        } else if r.get("generation").is_some() && r["generation"] != self.model["generation"] {
             return false;
         }
         match operation {
@@ -605,24 +656,33 @@ impl Controller {
             "import" => {
                 self.model["starting"] = json!(false);
                 if ok {
-                    if self.validate_save(&r["bytes"]) {
-                        self.effects.push(json!({"kind":"save-import-accept"}));
+                    if let Some(length) = self.validate_save(&r["bytes"]) {
+                        self.saved(&r["request"], length);
                         self.start(true);
+                    } else {
+                        self.save_candidate(&r["request"], false);
+                        return false;
                     }
-                } else if !flag(&r["cancelled"]) {
-                    self.log(r["error"].clone());
-                    self.notice("error.load", json!({}), true);
+                } else {
+                    self.save_candidate(&r["request"], false);
+                    if !flag(&r["cancelled"]) {
+                        self.log(r["error"].clone());
+                        self.notice("error.load", json!({}), true);
+                    }
                 }
             }
             "init" | "load" => {
                 if ok {
-                    if number(&r["length"]) > 0 && !self.validate_save(&r["bytes"]) {
-                        self.state["savedLength"] = json!(0);
-                        self.model["saved"] = json!(false);
+                    let length = if r["bytes"].is_null() && number(&r["length"]) == 0 {
+                        0
+                    } else if let Some(length) = self.validate_save(&r["bytes"]) {
+                        length
+                    } else {
+                        self.save_candidate(&r["request"], false);
                         return false;
-                    }
-                    self.state["savedLength"] = r["length"].clone();
-                    self.model["saved"] = json!(number(&r["length"]) > 0);
+                    };
+                    self.saved(&r["request"], length);
+                    self.model["saved"] = json!(length > 0);
                     if operation == "load" {
                         if flag(&self.model["saved"]) {
                             self.start(true);
@@ -632,6 +692,7 @@ impl Controller {
                         }
                     }
                 } else {
+                    self.save_candidate(&r["request"], false);
                     self.log(r["error"].clone());
                     self.model["starting"] = json!(false);
                     self.notice(
@@ -647,17 +708,20 @@ impl Controller {
             }
             "save-write" => {
                 if ok {
-                    self.state["savedLength"] = r["length"].clone();
+                    self.saved(&r["request"], number(&r["length"]) as usize);
                     self.model["saved"] = json!(true);
                     self.notice("notice.saved", json!({}), false);
                 } else {
+                    self.save_candidate(&r["request"], false);
                     self.log(r["error"].clone());
                     self.notice("error.save", json!({}), true);
                 }
                 self.model["savePending"] = json!(false);
             }
             "assets" => {
-                let plan = tiles::assets(text(&r["set"]));
+                let set = text(&r["set"]);
+                if !matches!(set, "tiles" | "pixels") { return false; }
+                let plan = tiles::assets(set);
                 let m = &plan["manifest"];
                 let valid = r["images"].as_array().is_some_and(|images| {
                     images.len() == plan["files"].as_array().unwrap().len()
@@ -667,8 +731,8 @@ impl Controller {
                         })
                 });
                 if ok && valid {
-                    self.assets_ready += 1;
-                    self.model["ready"] = json!(self.assets_ready == 2);
+                    self.assets_ready.insert(set.to_string());
+                    self.model["ready"] = json!(self.assets_ready.contains("tiles") && self.assets_ready.contains("pixels"));
                 } else {
                     self.state["runtimeError"] =
                         json!("Invalid tile dimensions or unavailable assets");
@@ -725,7 +789,14 @@ impl Controller {
         self.model["entries"] = json!(
             entries
                 .iter()
-                .map(|e| json!({"source":e["source"],"id":e["id"],"error":e["error"],"text":self.entry_text(e)}))
+                .map(|e| json!({
+                    "source":e["source"],
+                    "id":if e["message"].is_object() { &e["message"]["id"] } else { &e["id"] },
+                    "error":e["error"],
+                    "mobile_keyboard_hint":crate::log_visibility::keyboard_hint(&e["message"]),
+                    "message":e["message"],
+                    "text":self.entry_text(e),
+                }))
                 .collect::<Vec<_>>()
         );
         self.model["input"] = self.input.clone();
@@ -793,8 +864,8 @@ impl Controller {
                 self.field("seed", json!({"value":"12345"}));
                 self.field("command-key", json!({"maxLength":1}));
                 self.notice("notice.start", json!({}), false);
-                self.effects
-                    .push(json!({"kind":"save-read","operation":"init","generation":0}));
+                self.retire_saves();
+                self.read_save(SaveOperation::Init);
                 self.effects.push(tiles::assets("tiles"));
                 self.effects.push(tiles::assets("pixels"));
                 self.effects.push(json!({"kind":"timer","interval":500}));

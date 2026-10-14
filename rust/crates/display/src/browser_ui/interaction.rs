@@ -503,6 +503,7 @@ impl BrowserUi {
                                 "result-top",
                                 "inventory-tab-",
                                 "inventory-history",
+                                "inventory-return",
                             ]
                             .iter()
                             .any(|prefix| c.id.starts_with(prefix)))

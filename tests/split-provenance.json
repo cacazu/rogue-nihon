@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "original_source": "C:\\Users\\kit\\gameme\\jnethack\\jrouge\\investigation-20261002-original-rogue\\sources\\rogue5.4.4",
+  "original_source": "../investigation-20261002-original-rogue/sources/rogue5.4.4",
   "original_c_files": [
     {
       "file": "armor.c",

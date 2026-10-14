@@ -1,7 +1,7 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import os from "node:os";
@@ -11,12 +11,12 @@ import { createPreviewServer } from "../../../tools/server.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const output = artifactDirectory(path.join(root, "tests/browser-smoke/output/underfoot/fixed"));
-const { chromium } = createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE || path.join(os.homedir(), ".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"));
+const {chromium} = loadPlaywright();
 await mkdir(output, { recursive: true });
 const server = process.argv[2] ? null : createPreviewServer();
 if (server) await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
 const base = process.argv[2] || "http://127.0.0.1:" + server.address().port + "/";
-const browser = await chromium.launch({ executablePath: process.env.ROGUE_CHROME || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", headless: true, args: ["--disable-gpu"] });
+const browser = await chromium.launch({ executablePath: browserExecutable(), headless: true, args: ["--disable-gpu"] });
 const evidence = { url: base, checks: [], pixels: [], screenshots: [], errors: [], started_at: new Date().toISOString() };
 let context, page, mobile = false, prefix;
 async function scene() { return page.evaluate(() => __rogueBrowserTest.canvas); }

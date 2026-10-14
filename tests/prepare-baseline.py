@@ -7,6 +7,7 @@ Every difference from the acquisition is emitted as a unified diff and hash pair
 from __future__ import annotations
 
 import argparse
+import os
 import difflib
 import hashlib
 import json
@@ -14,7 +15,7 @@ import re
 from pathlib import Path
 
 PROJECT = Path(__file__).resolve().parent.parent
-DEFAULT_ORIGINAL = Path(r"C:\Users\kit\gameme\jnethack\jrouge\investigation-20261002-original-rogue\sources\rogue5.4.4")
+DEFAULT_ORIGINAL = PROJECT.parent / "investigation-20261002-original-rogue/sources/rogue5.4.4"
 
 # These files have only platform startup, observation, typed callback, or state
 # access changes. The generated diff is authoritative; no rule algorithm is
@@ -197,7 +198,7 @@ def main() -> None:
                        "shared_sha256": sha(before), "baseline_sha256": sha(output),
                        "include_path_only_change": before != output})
     manifest = {
-        "schema": 1, "original_source": str(original), "original_version": "Rogue 5.4.4",
+        "schema": 1, "original_source": Path(os.path.relpath(original, PROJECT)).as_posix(), "original_version": "Rogue 5.4.4",
         "preparation_script_sha256": sha(Path(__file__).read_bytes()),
         "compiler_required": ["-DROGUE_LAYERED", "-std=gnu11", "-fwrapv", "-fno-strict-aliasing"],
         "original_files": records, "shared_infrastructure": shared,

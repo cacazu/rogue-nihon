@@ -1,8 +1,8 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
-import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -14,7 +14,7 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const browserName = process.env.ROGUE_CHROME?.includes("Brave") ? "brave" : "chrome";
 const output = artifactDirectory(path.join(root, "tests/browser-smoke/output/throw-direction", browserName));
 await mkdir(output, { recursive: true });
-const { chromium } = createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE || path.join(os.homedir(), ".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"));
+const {chromium} = loadPlaywright();
 const server = createPreviewServer();
 await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
 const base = "http://127.0.0.1:" + server.address().port + "/";
@@ -88,7 +88,7 @@ async function reference(text, label) {
 async function check(label, fn) { await fn(); evidence.checks.push(label); console.log("PASS " + label); }
 async function shot(name) { await page.screenshot({ path: path.join(output, name + ".png") }); evidence.screenshots.push(name + ".png"); }
 try {
-  browser = await chromium.launch({ executablePath: process.env.ROGUE_CHROME || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", headless: true, args: ["--disable-gpu"] });
+  browser = await chromium.launch({ executablePath: browserExecutable(), headless: true, args: ["--disable-gpu"] });
   for (const mobile of [true, false]) for (const menu of [true, false]) for (const [direction, physical] of directions) {
     await check((mobile ? "Touch pad" : "Movement key") + " / " + (menu ? "item menu" : "t command") + " / " + direction, async () => {
       await open({ mobile }); const before = await state();

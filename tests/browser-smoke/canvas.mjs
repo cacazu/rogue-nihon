@@ -1,7 +1,7 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
@@ -12,7 +12,7 @@ import { createPreviewServer } from "../../../tools/server.mjs";
 import { runGame } from "../run-game.mjs";
 import { prepareBrowserRuntime } from "./browser-runtime.mjs";
 const root=fileURLToPath(new URL("../../",import.meta.url)),output=artifactDirectory(path.join(root,"tests/browser-smoke/output/canvas"));
-const {chromium}=createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE||path.join(os.homedir(),".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"));
+const {chromium} = loadPlaywright();
 await mkdir(output,{recursive:true});
 const server=createPreviewServer();await new Promise(r=>server.listen(0,"127.0.0.1",r));const base="http://127.0.0.1:"+server.address().port+"/";
 const headers={"Cross-Origin-Opener-Policy":"same-origin","Cross-Origin-Embedder-Policy":"require-corp","Cross-Origin-Resource-Policy":"same-origin"};
@@ -79,7 +79,7 @@ async function touchDrag(from,to) {
 
 try{
   runtime=await prepareBrowserRuntime(root);evidence.runtime=runtime.diagnostics;
-  browser=await chromium.launch({executablePath:process.env.ROGUE_CHROME||"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",headless:true,args:["--disable-gpu"],downloadsPath:runtime.downloadsPath});
+  browser=await chromium.launch({executablePath:browserExecutable(),headless:true,args:["--disable-gpu"],downloadsPath:runtime.downloadsPath});
   evidence.browser=browser.version();
   await open();
   await check("HTML title stays above the Canvas start fields",async()=>{

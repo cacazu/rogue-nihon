@@ -65,7 +65,7 @@ def inputs(scope):
         paths += list((ROOT / "rust" / "crates").rglob("*.rs"))
         paths += list((ROOT / "rust" / "crates").rglob("Cargo.toml"))
         paths += [ROOT / "rust" / "Cargo.toml", ROOT / "rust" / "Cargo.lock",
-                  ROOT / "tools" / "check-rust-layers.ps1"]
+                  ROOT / "tools" / "check-rust-layers.py"]
         paths += list((ROOT / "locales").glob("*.json"))
     elif scope == "host":
         paths += list((ROOT / "web").glob("*"))
@@ -205,13 +205,11 @@ def specifications(args):
     manifest = str(ROOT / "rust" / "Cargo.toml")
     cargo = shutil.which("cargo") or "cargo"
     node = shutil.which("node") or "node"
-    sdk = Path(args.sdk_root).resolve()
-    linker = str(sdk / "upstream" / "emscripten" / "emcc.exe")
-    python = str(sdk / "python" / "3.13.3_64bit" / "python.exe")
+    python = sys.executable
 
     def wasm(binary):
         build = [cargo, "rustc", "--offline", "--locked", "--manifest-path", manifest, "--bin", binary,
-                 "--release", "--target", "wasm32-unknown-emscripten", "--", "-C", "linker=" + linker,
+                 "--release", "--target", "wasm32-unknown-emscripten", "--features", "test-hooks", "--",
                  "-C", "panic=abort", "-C", "link-arg=-sENVIRONMENT=node", "-C", "link-arg=-sEXIT_RUNTIME=1",
                  "-C", "link-arg=-sALLOW_MEMORY_GROWTH=1"]
         base = Path(os.environ.get("CARGO_TARGET_DIR", ROOT / "rust" / "target")) / "wasm32-unknown-emscripten" / "release"
@@ -377,7 +375,7 @@ def existing_evidence(output, resolving_merge):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--sdk-root", default=r"C:\Users\kit\emsdk")
+    parser.add_argument("--sdk-root", default=os.environ.get("EMSDK"))
     parser.add_argument("--scopes", nargs="+", choices=SCOPES, default=list(SCOPES))
     parser.add_argument("--output", default="build/supplementary-results.json")
     parser.add_argument("--merge", action="append", default=[])
@@ -393,12 +391,14 @@ def main():
         return 0
     with TemporaryArtifacts(ROOT) as artifacts:
         operations = specifications(args)
-        sdk = Path(args.sdk_root).resolve()
-        environment = os.environ.copy()
-        environment.update({"EM_CONFIG": str(sdk / ".emscripten"),
-                            "EMSDK_PYTHON": str(sdk / "python" / "3.13.3_64bit" / "python.exe"),
-                            "EM_CACHE": os.environ["EM_CACHE"],
-                            "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"})
+        from build import sdk_environment
+        if any(scope in {"rust_standalone", "entities"} for scope in args.scopes):
+            _, environment = sdk_environment(args.sdk_root)
+            from rust_linker import rust_environment
+            environment = rust_environment(environment)
+        else:
+            environment = os.environ.copy()
+        environment.update(PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
         log_directory = artifacts.path("build/verification-logs")
         log_directory.mkdir(parents=True, exist_ok=True)
         output = artifacts.path(args.output)

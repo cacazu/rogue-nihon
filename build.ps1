@@ -38,6 +38,9 @@ $includeTestHooks = $TestFixtures -or $TestHooks
 if (-not $SkipCatalogGeneration) {
     & $pythonPath (Join-Path $project 'tools\generate_catalog.py')
     if ($LASTEXITCODE -ne 0) { throw 'Catalog generation failed' }
+} elseif (-not $LogicDirectory) {
+    & $pythonPath (Join-Path $project 'tools\generate_catalog.py') --check
+    if ($LASTEXITCODE -ne 0) { throw 'Message catalog does not match the C source; rebuild without -SkipCatalogGeneration' }
 }
 if (-not $SkipRust -or $includeTestHooks) {
     $rustArguments = @('build','--offline','--locked','--manifest-path',$rustManifest,'--release','--lib','--target','wasm32-unknown-emscripten','--no-default-features')
@@ -59,6 +62,8 @@ foreach ($source in $sources) {
 }
 $compilerArguments.Add($rustLibrary)
 if ($TestFixtures) {
+    & $pythonPath (Join-Path $project 'tools\generate-wording-tests.py')
+    if ($LASTEXITCODE -ne 0) { throw 'Wording test case generation failed' }
     $compilerArguments.Add('-DRG_TEST_FIXTURES')
     $compilerArguments.Add((Join-Path $project 'tests\game-fixtures.c'))
 }

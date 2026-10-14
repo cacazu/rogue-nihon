@@ -1,7 +1,7 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -9,7 +9,7 @@ import os from 'node:os';import path from 'node:path';import { fileURLToPath } f
 import { createPreviewServer } from '../../../tools/server.mjs';
 import { runGame } from '../run-game.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));const output=artifactDirectory(path.join(root,'tests/browser-smoke/output/session-rng'));await mkdir(output,{recursive:true});
-const {chromium}=createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE||path.join(os.homedir(),'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'));
+const {chromium} = loadPlaywright();
 const old=Object.fromEntries(['web/index.html','web/app.js','web/style.css','locales/ui-web-ja.json','locales/ui-web-en.json'].map(file=>['/'+file,execFileSync('git',['show','HEAD:rogue-nihon/'+file],{cwd:root,maxBuffer:10*1024*1024})]));old['/']=old['/web/index.html'];
 const previousWasm=await readFile(path.join(output,'pre-conversation/game.wasm'));
 const previousJavaScript=await readFile(path.join(output,'pre-conversation/game.js'));
@@ -44,7 +44,7 @@ async function pureDisplay(label){
 async function capture(label){const value=await state();evidence.snapshots.push({label,...value});return value;}
 async function shot(name){await page.screenshot({path:path.join(output,name+'.png')});evidence.screenshots.push(name+'.png');}
 try {
- browser=await chromium.launch({executablePath:process.env.ROGUE_CHROME||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',headless:true,args:['--disable-gpu']});
+ browser=await chromium.launch({executablePath:browserExecutable(),headless:true,args:['--disable-gpu']});
  const runs=[];
  for(const role of ['before','current']){
   await start(role);const states=[];states.push(await capture(role+'-start'));await pureDisplay(role+' normal');

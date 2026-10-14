@@ -33,7 +33,8 @@ MESSAGE_ALIASES = {
 }
 # These are exact presentation IDs, not a blanket exemption for Latin text.
 LITERAL_EXCEPTIONS = {
-    ('ui-web', 'messages', 'app.title'): 'Rogue 5.4.4 — Web',
+    ('ui-web', 'messages', 'credits.repository'): 'GitHub',
+    ('ui-web', 'messages', 'status.hp'): 'HP',
     ('ui-web', 'messages', 'language.en'): 'English',
     ('ui-web', 'messages', 'language.ja'): '日本語',
 }

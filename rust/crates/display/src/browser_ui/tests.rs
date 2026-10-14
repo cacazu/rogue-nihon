@@ -1,4 +1,71 @@
 use super::*;
+
+#[test]
+fn mobile_log_subjects_only_hide_semantic_player_prefixes() {
+    fn entry(message: Value) -> Value {
+        let text = crate::display::message_language(s(&message["id"]), &message["args"], "", "ja");
+        assert!(text.missing_ids.is_empty());
+        json!({"message":message,"text":text.text})
+    }
+    fn text(ui: &BrowserUi, entry: &Value, mobile: bool) -> String {
+        ui.log_runs(entry, mobile).iter().map(|run| s(&run["text"])).collect()
+    }
+    fn part(id: &str, args: Value) -> Value {
+        json!({"kind":"part","value":{"id":id,"args":args}})
+    }
+    let mut ui = BrowserUi::new(measure);
+    ui.model = model();
+    let item = json!({"kind":"entity","value":{"type":"item","category":"weapon","which":2,"count":1,"identified":false}});
+    for (prefix, body, args, expected) in [
+        ("armor.wear.you_are_now", "armor.wear.wearing", json!([item.clone()]), "短弓を身につけた。"),
+        ("weapons.wield.you_are_now", "weapons.wield.wielding", json!([item.clone(),{"kind":"signed","value":99}]), "短弓を構えた。"),
+        ("pack.move_msg.you", "pack.move_msg.moved_onto", json!([item.clone()]), "短弓の上に移動した。"),
+        ("fight.killed.you_have", "fight.killed.defeated_trailing_space", json!([]), "倒した敵：ホブゴブリン"),
+    ] {
+        let mut parts = vec![part(prefix, json!([])), part(body, args)];
+        if prefix == "fight.killed.you_have" {
+            parts.push(part("message.entity",json!([{"kind":"entity","value":{"type":"monster","display":"name","index":7}}])));
+        }
+        let message = json!({"id":"message.sequence","args":parts});
+        let e = entry(message.clone());
+        assert_eq!(text(&ui,&e,true), expected, "{prefix}");
+        assert_eq!(text(&ui,&e,false), s(&e["text"]));
+        assert_eq!(e["message"], message);
+        let recalled = entry(json!({"id":"command.command.string","args":[{"kind":"entity","value":{"type":"message","id":"message.sequence","args":parts}}]}));
+        assert_eq!(text(&ui,&recalled,true),expected,"nested {prefix}");
+    }
+    for (hit,index,expected) in [
+        (true,0,"ホブゴブリンに痛烈な一撃を与えた"),
+        (true,2,"ホブゴブリンに傷を負わせた"),
+        (true,3,"振りかぶり、ホブゴブリンに攻撃を当てた"),
+        (false,1,"振りかぶったが、ホブゴブリンには当たらなかった"),
+        (true,1,"あなたの攻撃がホブゴブリンに命中した"),
+    ] {
+        let parts = json!([
+            part("message.entity",json!([{"kind":"entity","value":{"type":"monster","display":"you","role":"subject"}}])),
+            part("message.entity",json!([{"kind":"entity","value":{"type":"combat_verb","hit":hit,"index":index}}])),
+            part("message.entity",json!([{"kind":"entity","value":{"type":"monster","display":"name","index":7,"role":"object"}}]))
+        ]);
+        let e = entry(json!({"id":"message.sequence","args":parts}));
+        assert_eq!(text(&ui,&e,true),expected);
+        assert_eq!(text(&ui,&e,false),s(&e["text"]));
+        let recalled = entry(json!({"id":"command.command.string","args":[{"kind":"entity","value":{"type":"message","id":"message.sequence","args":parts}}]}));
+        assert_eq!(text(&ui,&recalled,true),expected);
+    }
+    for literal in ["あなたはという名前", "あなたがという名前"] {
+        let e = entry(json!({"id":"message.entity","args":[{"kind":"entity","value":{"type":"literal","text":literal}}]}));
+        assert_eq!(text(&ui,&e,true),literal);
+    }
+    let enemy = entry(json!({"id":"message.entity","args":[{"kind":"entity","value":{"type":"combat","hit":true,"index":0,
+        "actor":{"type":"monster","display":"name","index":7},"target":{"type":"monster","display":"you"}}}]}));
+    assert_eq!(text(&ui,&enemy,true),s(&enemy["text"]));
+    ui.model["language"] = json!("en");
+    let message = json!({"id":"message.sequence","args":[part("armor.wear.you_are_now",json!([])),part("armor.wear.wearing",json!([item]))]});
+    let english = crate::display::message_language("message.sequence",&message["args"],"","en").text;
+    let e = json!({"message":message,"text":english});
+    assert_eq!(text(&ui,&e,true),english);
+}
+
 fn measure(text: &str, size: f64, _bold: bool, _mono: bool) -> TextSize {
     TextSize {
         width: text

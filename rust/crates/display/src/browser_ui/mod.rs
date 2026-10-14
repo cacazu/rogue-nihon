@@ -6,6 +6,7 @@ pub mod hud;
 mod interaction;
 mod inventory_tabs;
 mod inventory_item;
+mod log_text;
 mod mobile;
 mod mobile_dialog;
 mod mobile_map;
@@ -338,10 +339,10 @@ impl BrowserUi {
         self.widgets
             .rect(Rect::new(0., 0., self.width, self.height), BG);
         self.animate_zoom();
-        if mobile {
-            self.draw_mobile();
-        } else if b(&self.model["topOpen"]) {
+        if b(&self.model["topOpen"]) {
             self.draw_top();
+        } else if mobile {
+            self.draw_mobile();
         } else {
             self.draw_game();
         }

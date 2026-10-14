@@ -1,21 +1,19 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import os from 'node:os';
 import { createPreviewServer } from '../../../tools/server.mjs';
-const require = createRequire(import.meta.url);
-const modulePath = process.env.ROGUE_PLAYWRIGHT_MODULE || path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
-const { chromium } = require(modulePath);
+const {chromium, modulePath} = loadPlaywright();
 const output = artifactDirectory(fileURLToPath(new URL('./output/windows/', import.meta.url)));
 await mkdir(output, { recursive: true });
 const server = createPreviewServer();
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-const executablePath = process.env.ROGUE_CHROME || 'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe';
+const executablePath = browserExecutable();
 let browser, page;
 const evidence = { started_at: new Date().toISOString(), playwright: modulePath, executablePath, checks: [], screenshots: [], errors: [] };
 async function record(label, fn) { await fn(); evidence.checks.push(label); console.log('PASS: ' + label); }

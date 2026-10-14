@@ -401,7 +401,8 @@ get_str(void *vopt, WINDOW *win)
 	strucpy(opt, buf, (int) strlen(buf));
 #ifdef ROGUE_LAYERED /* RG_UTF8_TEXT */
     rg_host_text_mode(0, 0, opt);
-    if (opt == whoami) rg_host_player_name(whoami);
+    /* C owns whether this option changed; consumed navigation keys are not edits. */
+    if (opt == whoami && sp > buf) rg_host_player_name(whoami);
     if (win == hw) rg_ui_printf("options", oy, ox, __FILE__, __LINE__, "%s", opt);
 #endif
     mvwprintw(win, oy, ox, "%s\n", opt);

@@ -111,7 +111,7 @@ impl HudWidget {
             icon: "food",
             separator: "",
             label: label("hud.hunger"),
-            values: Vec::new(),
+            values: vec![label(&format!("hud.hunger.{hunger}"))],
             detail: label(&format!("hud.hunger.{hunger}")),
             color: if hunger == "0" {
                 ACCENT
@@ -191,8 +191,8 @@ impl HudWidget {
             offset,
             label,
         } = data;
-        let panel = Rect::new(map.x + 8., map.y + 8., map.w - 16., 48.);
-        let row = Rect::new(panel.x + 8., panel.y + 4., panel.w - 16., 40.);
+        let mut panel = Rect::new(map.x + 8., map.y + 8., map.w - 16., 48.);
+        let mut row = Rect::new(panel.x + 8., panel.y + 4., panel.w - 16., 40.);
         let size = if map.w < 700. { 18. } else { 20. };
         let gap = 10.;
         let name_width = (measure)(name, size, true, false)
@@ -212,6 +212,8 @@ impl HudWidget {
             layout = Self::measure_hud(&metrics, size, 1, gap, 22., measure);
         }
         let content_width = name_width + gap + layout.width;
+        panel.w = panel.w.min(content_width + 16.);
+        row.w = panel.w - 16.;
         let max_scroll = (content_width - row.w).max(0.);
         let offset = offset.clamp(0., max_scroll);
         let name_rect = Rect::new(row.x - offset, row.y, name_width, row.h);

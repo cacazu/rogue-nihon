@@ -14,6 +14,36 @@ fn text(id: &str, language: &str) -> String {
 fn descriptor(row: &Value) -> &Value {
     &row["args"][1]["value"]
 }
+/// Classify a visible number using only the item's revealed type.
+pub fn parameter_kind<'a>(item: &Value, field: &'a str) -> &'a str {
+    if field != "bonus" || item["category"] != "ring" || !crate::entities::type_known(item) {
+        return field;
+    }
+    // Original rogue.h ring types: R_PROTECT, R_ADDSTR, R_ADDHIT, R_ADDDAM.
+    match item["which"].as_u64() {
+        Some(0) => "protection",
+        Some(1) => "strength",
+        Some(7) => "hplus",
+        Some(8) => "dplus",
+        _ => field,
+    }
+}
+/// Only numbers already made visible by the original inventory observation.
+pub fn parameters(item: &Value) -> Vec<(&'static str, i64)> {
+    ["hplus", "dplus", "enchantment", "protection", "charges", "bonus"]
+        .into_iter()
+        .filter_map(|field| {
+            let visibility = match field {
+                "protection" | "enchantment" => "ac",
+                "bonus" => "ring_bonus",
+                other => other,
+            };
+            (item["visible_fields"][visibility] == true)
+                .then(|| item[field].as_i64().map(|value| (field, value)))
+                .flatten()
+        })
+        .collect()
+}
 /// Hide choices that public equipment/identification information already rules out.
 /// Typed keys still reach the original C checks, including unknown curses.
 pub fn choice_visible(row: &Value, action: Option<&str>, rows: &[Value]) -> bool {
@@ -123,24 +153,11 @@ pub fn decorate(view: &InventoryView, ui: &mut Value, language: &str) {
                 ),
             );
         }
-        for field in [
-            "hplus",
-            "dplus",
-            "protection",
-            "enchantment",
-            "charges",
-            "bonus",
-        ] {
-            let visibility = match field {
-                "protection" | "enchantment" => "ac",
-                "bonus" => "ring_bonus",
-                other => other,
-            };
-            if item["visible_fields"][visibility] == true
-                && let Some(value) = item[field].as_i64()
-            {
-                add(&format!("inventory.{field}"), value.to_string());
-            }
+        for (field, value) in parameters(item) {
+            rows.push(json!({
+                "text":format!("{}：{}", text(&format!("inventory.{field}"), language), value),
+                "parameter":field,
+            }));
         }
     }
     ui["lines"] = json!(rows);

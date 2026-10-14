@@ -1,7 +1,7 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
@@ -15,7 +15,7 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const browserName = process.env.ROGUE_CHROME?.includes("Brave") ? "brave" : "chrome";
 const output = artifactDirectory(path.join(root, "tests/browser-smoke/output/context-controls", browserName + (process.env.ROGUE_CONTEXT_FILTER ? "-focused" : "")));
 await mkdir(output, { recursive: true });
-const { chromium } = createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE || path.join(os.homedir(), ".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"));
+const {chromium} = loadPlaywright();
 const server = createPreviewServer(); await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
 const base = "http://127.0.0.1:" + server.address().port + "/";
 const worker = await readFile(path.join(root, "web/worker.js"), "utf8");
@@ -88,7 +88,7 @@ async function reference(text, label) {
 }
 try {
   runtime = await prepareBrowserRuntime(root); evidence.runtime = runtime.diagnostics;
-  browser = await chromium.launch({ executablePath: process.env.ROGUE_CHROME || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", headless: true, args: ["--disable-gpu"], downloadsPath: runtime.downloadsPath });
+  browser = await chromium.launch({ executablePath: browserExecutable(), headless: true, args: ["--disable-gpu"], downloadsPath: runtime.downloadsPath });
   await check("Map actions appear only where applicable; stairs disappear after leaving and descending", async () => {
     await open("plain"); await shot("normal-map"); await tap("touch-.");
     for (let n = 0; n < 5; n++) await tap("touch-l"); await shot("on-stairs");

@@ -1,3 +1,4 @@
+import {browserExecutable} from '../../tools/toolchain.mjs';
 import { browserTestAdapterSource } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
@@ -14,7 +15,7 @@ import { createPlaywrightCdp } from "./playwright-cdp.mjs";
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const jaScenario = process.env.ROGUE_JA_SCENARIO === "1";
 const output = artifactDirectory(path.join(directory, jaScenario ? (process.env.ROGUE_VIEW === "pixels" ? "../pixel-output/japanese" : "output-ja") : "output"));
-const chrome = process.env.ROGUE_CHROME || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+const chrome = browserExecutable();
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let readBrowserDiagnostics = null;
 async function until(callback, label, timeout = 30000) {
@@ -29,19 +30,12 @@ async function until(callback, label, timeout = 30000) {
   }
   throw new Error("Timed out: " + label);
 }
-class CDP {
-  constructor(socket) { this.socket = socket; this.id = 0; this.pending = new Map(); this.events = []; socket.addEventListener("message", (event) => { const packet = JSON.parse(event.data); if (packet.id) { const pending = this.pending.get(packet.id); if (pending) { this.pending.delete(packet.id); clearTimeout(pending.timer); packet.error ? pending.reject(new Error(JSON.stringify(packet.error))) : pending.resolve(packet.result); } } else this.events.push(packet); }); }
-  call(method, params = {}) { return new Promise((resolve, reject) => { const id = ++this.id; const timer = setTimeout(() => { this.pending.delete(id); reject(new Error("CDP timeout: " + method)); }, 30000); this.pending.set(id, { resolve, reject, timer }); this.socket.send(JSON.stringify({ id, method, params })); }); }
-  async evaluate(expression) { const value = await this.call("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true }); if (value.exceptionDetails) throw new Error(JSON.stringify(value.exceptionDetails)); return value.result.value; }
-}
 
 await mkdir(output, { recursive: true });
 const profile = await mkdtemp(path.join(output, "rogue-browser-smoke-"));
 const server = createPreviewServer();
 await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const base = `http://127.0.0.1:${server.address().port}/`;
-const processHandle = process.env.ROGUE_PLAYWRIGHT_MODULE ? null : spawn(chrome, ["--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check", "--disable-background-networking", "--disable-component-update", "--remote-debugging-port=0", "--user-data-dir=" + profile, "about:blank"], { windowsHide: true, stdio: ["ignore", "ignore", "pipe"] });
-let chromeErrors = ""; processHandle?.stderr.on("data", (chunk) => { chromeErrors += chunk.toString(); });
 let socket = null, cdp = null;
 const evidence = { started_at: new Date().toISOString(), checks: [], base };
 try {
@@ -51,16 +45,8 @@ try {
     const bytes = await readFile(path.join(buildDirectory, file));
     return { file, bytes: bytes.byteLength, sha256: createHash("sha256").update(bytes).digest("hex") };
   }));
-  if (process.env.ROGUE_PLAYWRIGHT_MODULE) {
-    cdp = await createPlaywrightCdp({ executable: chrome, profile });
-    evidence.launch = cdp.launch;
-  } else {
-    const debugPort = await until(async () => { try { return Number((await readFile(path.join(profile, "DevToolsActivePort"), "utf8")).split("\n")[0]); } catch { return false; } }, "Chrome debug port");
-    const pages = await (await fetch(`http://127.0.0.1:${debugPort}/json/list`)).json();
-    socket = new WebSocket(pages.find((page) => page.type === "page").webSocketDebuggerUrl);
-    await new Promise((resolve, reject) => { socket.addEventListener("open", resolve, { once: true }); socket.addEventListener("error", reject, { once: true }); });
-    cdp = new CDP(socket);
-  }
+  cdp = await createPlaywrightCdp({executable: chrome, profile});
+  evidence.launch = cdp.launch;
   await cdp.call("Runtime.enable"); await cdp.call("Page.enable");
   await cdp.call("Page.addScriptToEvaluateOnNewDocument", {source: browserTestAdapterSource()});
   readBrowserDiagnostics = () => cdp.evaluate("window.__rogueBrowserTest ? __rogueBrowserTest.diagnostics : null");
@@ -126,7 +112,7 @@ try {
   await writeFile(path.join(output, "evidence.json"), JSON.stringify(evidence, null, 2) + "\n");
   console.log(JSON.stringify({ status: "passed", checks: evidence.checks, evidence: path.join(output, "evidence.json"), screenshot: path.join(output, "browser.png") }, null, 2));
 } catch (error) {
-  evidence.status = "failed"; evidence.error = error.stack || String(error); evidence.chrome_stderr = chromeErrors;
+  evidence.status = "failed"; evidence.error = error.stack || String(error);
   if (cdp) {
     try { evidence.browser = await readBrowserDiagnostics?.(); } catch (diagnosticError) { evidence.diagnostic_error = diagnosticError.message; }
     evidence.browser_events = cdp.events.filter((event) => ["Runtime.exceptionThrown", "Runtime.consoleAPICalled"].includes(event.method)).slice(-32);
@@ -134,5 +120,5 @@ try {
   await writeFile(path.join(output, "evidence.json"), JSON.stringify(evidence, null, 2) + "\n"); throw error;
 } finally {
   try { if (socket) socket.close(); await cdp?.close?.(); }
-  finally { processHandle?.kill(); await new Promise((resolve) => server.close(resolve)); }
+  finally { await new Promise((resolve) => server.close(resolve)); }
 }

@@ -67,25 +67,24 @@ test("explicit evidence retention keeps the requested output", () => {
   finally { rmSync(output, { recursive: true, force: true }); }
 });
 
-test("PowerShell removes a partial build and restores absent environment variables", { skip: process.platform !== "win32" }, () => {
-  const script = `Set-Location -LiteralPath '${root.replaceAll("'", "''")}';
-    . ./tools/temporary-artifacts.ps1
-    Remove-Item Env:CARGO_TARGET_DIR -ErrorAction SilentlyContinue
-    $scope = New-RogueArtifactScope -ProjectPath $PWD
-    $owned = $scope.Path
-    try { Set-Content -LiteralPath (Join-Path $owned 'partial.wasm') -Value 'partial'; throw 'expected' }
-    catch { if ($_.Exception.Message -ne 'expected') { throw } }
-    finally { Close-RogueArtifactScope $scope }
-    if ((Test-Path -LiteralPath $owned) -or $null -ne $env:CARGO_TARGET_DIR) { throw 'Incomplete cleanup or environment restoration' }
-    Write-Output 'PASS'`;
-  const run = spawnSync("pwsh", ["-NoProfile", "-Command", script], { encoding: "utf8", env: {...process.env, ROGUE_KEEP_ARTIFACTS: "0"} });
-  assert.equal(run.status, 0, run.stderr);
-  assert.equal(run.stdout.trim(), "PASS");
+test("compiler workspace removes partial output and restores absent environment variables", () => {
+  const workspace = new URL('../tools/compiler-workspace.mjs', import.meta.url).href;
+  const script = `import {compilerWorkspace} from ${JSON.stringify(workspace)};
+    import {existsSync,writeFileSync} from 'node:fs';import path from 'node:path';
+    delete process.env.CARGO_TARGET_DIR;
+    const scope=compilerWorkspace(${JSON.stringify(root)});const owned=scope.directory;
+    try {writeFileSync(path.join(owned,'partial.wasm'),'partial');throw Error('expected');}
+    catch(error){if(error.message!=='expected')throw error;}finally{scope.close();}
+    if(existsSync(owned)||process.env.CARGO_TARGET_DIR!==undefined)throw Error('Incomplete cleanup or restoration');
+    console.log('PASS');`;
+  const run = spawnSync(process.execPath, ['--input-type=module','-e',script], {encoding:'utf8',env:{...process.env,ROGUE_ARTIFACT_SCOPE:'',ROGUE_KEEP_ARTIFACTS:'0'}});
+  assert.equal(run.status,0,run.stderr);
+  assert.equal(run.stdout.trim(),'PASS');
 });
 
-test("the command wrapper cleans up and preserves native failure status", { skip: process.platform !== "win32" }, () => {
-  const run = spawnSync("pwsh", ["-NoProfile", "-File", path.join(root, "tools/run-clean.ps1"),
-    process.execPath, "-e", "console.log(process.env.ROGUE_ARTIFACT_SCOPE);process.exit(23)"], { encoding: "utf8", env: {...process.env, ROGUE_KEEP_ARTIFACTS: "0"} });
-  assert.equal(run.status, 23, run.stderr);
-  assert.equal(existsSync(run.stdout.trim()), false);
+test("the command wrapper cleans up and preserves native failure status", () => {
+  const run = spawnSync(process.execPath, [path.join(root,'tools/run-clean.mjs'),
+    process.execPath,'-e',"console.log(process.env.ROGUE_ARTIFACT_SCOPE);process.exit(23)"], {encoding:'utf8',env:{...process.env,ROGUE_ARTIFACT_SCOPE:'',ROGUE_KEEP_ARTIFACTS:'0'}});
+  assert.equal(run.status,23,run.stderr);
+  assert.equal(existsSync(run.stdout.trim()),false);
 });

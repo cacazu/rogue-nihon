@@ -35,9 +35,7 @@ fn serialize_save(session: Res<Session>, mut port: ResMut<SavePort>) {
         return;
     }
     port.requested = false;
-    let mut presentation = port.presentation.take();
-    session.message_paging.mark(&mut presentation);
-    port.result = Some(session.save_bytes(presentation));
+    port.result = Some(session.save_bytes(port.presentation.take()));
 }
 
 #[cfg(test)]
@@ -49,18 +47,24 @@ mod tests {
         app.add_plugins(RoguePlatformPlugin);
         app.world_mut().resource_mut::<JournalPort>().key = Some(32);
         app.update();
-        assert_eq!(app.world().resource::<Session>().journal, vec![32]);
+        assert_eq!(app.world().resource::<Session>().journal(), &[32]);
         assert_eq!(app.world().resource::<JournalPort>().committed, Some(32));
         {
             let mut session = app.world_mut().resource_mut::<Session>();
-            session.input_index = u32::MAX;
-            session.checkpoint_error = Some("checkpoint unavailable".into());
+            let saved = crate::Envelope::new(0, String::new(), &[1], vec![32], u32::MAX)
+                .expect("journal limit fixture");
+            *session = Session::restore(saved, crate::MessagePaging::Legacy)
+                .expect("restored cursor")
+                .0;
+            assert_eq!(session.next_replay_key(), Some(32));
+            assert!(session.accept_key(32));
+            session.reject_checkpoint("checkpoint unavailable".into());
         }
         app.world_mut().resource_mut::<JournalPort>().key = Some(46);
         app.world_mut().resource_mut::<SavePort>().requested = true;
         app.update();
         assert!(!app.world().resource::<JournalPort>().accepted);
-        assert_eq!(app.world().resource::<Session>().journal, vec![32]);
+        assert_eq!(app.world().resource::<Session>().journal(), &[32]);
         assert_eq!(
             app.world_mut().resource_mut::<SavePort>().result.take(),
             Some(Err("checkpoint unavailable".into()))

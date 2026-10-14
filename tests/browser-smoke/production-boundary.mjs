@@ -1,6 +1,6 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
-import {createRequire} from "node:module";
 import {cp, mkdir, mkdtemp, readFile, readdir, writeFile} from "node:fs/promises";
 import {once} from "node:events";
 import net from "node:net";
@@ -15,8 +15,7 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const previewServer = fileURLToPath(new URL("../../../tools/server.mjs", import.meta.url));
 const output = artifactDirectory(path.join(root, "tests/browser-smoke/output/production-boundary"));
 await mkdir(output, {recursive: true});
-const {chromium} = createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE ||
-  path.join(os.homedir(), ".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"));
+const {chromium} = loadPlaywright();
 const evidence = {started_at: new Date().toISOString(), checks: [], errors: [], screenshots: []};
 let runtime, browser, child, context, serverPid;
 
@@ -35,7 +34,6 @@ async function copyRuntime(destination) {
   }
   for (const file of ["game.js", "game.wasm", "browser-ui.wasm", "build-manifest.json"])
     await cp(path.join(root, "build", file), path.join(destination, "build", file));
-  await cp(path.join(root, "start.ps1"), path.join(destination, "start.ps1"));
 }
 
 async function unusedPort() {
@@ -46,21 +44,13 @@ async function unusedPort() {
   return port;
 }
 
-async function start(destination, launcher) {
-  const args = launcher === "node" ? [previewServer, "--root", destination, "0"] :
-    ["-NoProfile", "-File", path.join(destination, "start.ps1"), "-PreviewServer", previewServer, "-Port", String(await unusedPort())];
+async function start(destination) {
+  const args = [previewServer, "--root", destination, "0"];
   const environment = {...process.env, ROGUE_KEEP_ARTIFACTS: "0"};
   for (const name of ["ROGUE_PORT", "ROGUE_HOST", "ROGUE_TLS_CERT", "ROGUE_TLS_KEY"]) delete environment[name];
-  // Observe the Node grandchild PID without querying unrelated OS processes.
-  // This observer lives in the test output, outside the deployed runtime files.
-  if (launcher !== "node") {
-    const observer = path.join(output, "server-process.cjs");
-    await writeFile(observer, 'process.stdout.write("TEST_SERVER_PID=" + process.pid + "\\n");');
-    environment.NODE_OPTIONS = '--require "' + observer.replaceAll("\\", "/") + '"';
-  }
-  child = spawn(launcher === "node" ? process.execPath : "pwsh", args,
+  child = spawn(process.execPath, args,
     {cwd: destination, env: environment, windowsHide: true, stdio: ["pipe", "pipe", "pipe"]});
-  serverPid = launcher === "node" ? child.pid : null;
+  serverPid = child.pid;
   return new Promise((resolve, reject) => {
     let stdout = "", stderr = "";
     const timer = setTimeout(() => reject(Error("Server startup timeout: " + stderr + stdout)), 15000);
@@ -90,17 +80,18 @@ const paint = page => page.evaluate(() => new Promise(resolve => requestAnimatio
 async function click(page, id, touch) {
   await page.waitForFunction(id => __rogueBrowserTest.canvas?.controls.some(control => control.id === id && !control.disabled), id);
   const rect = await page.evaluate(id => __rogueBrowserTest.canvas.controls.find(control => control.id === id).rect, id);
-  if (touch) await page.touchscreen.tap(rect.x + rect.w/2, rect.y + rect.h/2);
-  else await page.mouse.click(rect.x + rect.w/2, rect.y + rect.h/2);
+  const box=await page.locator('#rogue-canvas').boundingBox();
+  if (touch) await page.touchscreen.tap(box.x+rect.x+rect.w/2,box.y+rect.y+rect.h/2);
+  else await page.mouse.click(box.x+rect.x+rect.w/2,box.y+rect.y+rect.h/2);
   await paint(page);
 }
 
 try {
   runtime = await prepareBrowserRuntime(root);
-  browser = await chromium.launch({executablePath: process.env.ROGUE_CHROME || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  browser = await chromium.launch({executablePath: browserExecutable(),
     headless: true, args: ["--disable-gpu"], downloadsPath: runtime.downloadsPath});
   evidence.browser = browser.version();
-  for (const [label, launcher, poison, touch] of [["missing-tools", "node", false, false], ["broken-tools", "powershell", true, true]]) {
+  for (const [label, poison, touch] of [["missing-tools", false, false], ["broken-tools", true, true]]) {
     const destination = await mkdtemp(path.join(output, label + "-"));
     await copyRuntime(destination);
     const sentinel = path.join(destination, ".local/tasks/node-interrupted/partial.wasm");
@@ -110,9 +101,9 @@ try {
     if (poison) {
       await mkdir(path.join(destination, "tools"));
       await writeFile(path.join(destination, "tools/temporary-artifacts.mjs"), 'throw Error("Recovery must never be imported by production");');
-      await writeFile(path.join(destination, "tools/artifact-registry.ps1"), 'throw "Recovery must never be invoked by production"');
+      await writeFile(path.join(destination, "tools/artifact_registry.py"), 'raise RuntimeError("Recovery must never be invoked by production")');
     }
-    const base = await start(destination, launcher);
+    const base = await start(destination);
     context = await browser.newContext({viewport: touch ? {width: 390, height: 844} : {width: 1240, height: 900},
       isMobile: touch, hasTouch: touch, deviceScaleFactor: touch ? 2 : 1, acceptDownloads: true});
     let page = await context.newPage();
@@ -149,7 +140,8 @@ try {
     });
     await check(label + " inventory, settings, save and actual export work without recovery", async () => {
       await page.keyboard.press("i"); await page.waitForFunction(() => __rogueBrowserTest.frame.ui.window);
-      await click(page, "settings-toggle", touch); await click(page, "view-tiles", touch);
+      await click(page, "settings-toggle", touch);
+      await click(page, "select-display-mode", touch); await click(page, "select-display-mode-tiles", touch);
       await click(page, "save", touch);
       await page.waitForFunction(() => __rogueBrowserTest.savedLength > 0 && !__rogueBrowserTest.savePending);
       const pending = page.waitForEvent("download"); await click(page, "download-save", touch);

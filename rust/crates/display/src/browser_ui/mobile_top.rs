@@ -1,4 +1,4 @@
-//! Phone title screen. Screen ownership and all actions remain in the controller.
+//! Shared PC and phone title screen. Screen ownership and all actions remain in the controller.
 use super::*;
 
 impl BrowserUi {

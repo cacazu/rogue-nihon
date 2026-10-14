@@ -86,6 +86,7 @@ void rg_host_ui(const char *scope, int32_t row, int32_t column,
  * enabled=3 edits the fruit option (its default can be shown as a placeholder);
  * enabled=0 closes the editor. The limit counts UTF-8 bytes. */
 void rg_host_text_mode(int32_t enabled, uint32_t limit_bytes, const char *initial);
+/* C calls only when its editor actually replaces whoami with a nonempty edit. */
 void rg_host_player_name(const char *utf8_name);
 void rg_host_outcome(int32_t code, const char *message);
 /* Called only at a command's outer boundary, before BEFORE/AFTER processing. */

@@ -1,5 +1,5 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import assert from "node:assert/strict";
-import {createRequire} from "node:module";
 import {mkdir, readFile, writeFile} from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
@@ -12,7 +12,7 @@ import {installBrowserTestAdapter} from "./test-adapter.mjs";
 const root=fileURLToPath(new URL("../../",import.meta.url));
 const output=artifactDirectory(path.join(root,"tests/browser-smoke/output/mobile-ui"));
 await mkdir(output,{recursive:true});
-const {chromium}=createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE||path.join(os.homedir(),".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"));
+const {chromium} = loadPlaywright();
 const server=createPreviewServer();await new Promise(r=>server.listen(0,"127.0.0.1",r));
 const base="http://127.0.0.1:"+server.address().port+"/";
 const evidence={checks:[],screenshots:[],errors:[],started_at:new Date().toISOString()};
@@ -45,7 +45,7 @@ async function check(label,fn){await fn();evidence.checks.push(label);console.lo
 async function send(id){const before=await state();await tap(id);await page.waitForFunction(n=>__rogueBrowserTest.inputRequestCount>n&&__rogueBrowserTest.queuePending===0,before.input);await paint();}
 try{
   runtime=await prepareBrowserRuntime(root);
-  browser=await chromium.launch({executablePath:process.env.ROGUE_CHROME||"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",headless:true,args:["--disable-gpu"],downloadsPath:runtime.downloadsPath});
+  browser=await chromium.launch({executablePath:browserExecutable(),headless:true,args:["--disable-gpu"],downloadsPath:runtime.downloadsPath});
   evidence.browser=browser.version();
   for(const lang of ["ja","en"]){
     await context?.close();context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:2,acceptDownloads:true});

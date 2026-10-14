@@ -99,3 +99,32 @@ impl History {
         self.append(json!({"source":"system","id":id,"args":args,"error":error}));
     }
 }
+
+
+#[cfg(test)]
+mod all_catalog {
+    use super::*;
+    #[test]
+    fn all_catalog_ui_labels_and_missing_entries() {
+        let mut catalog=Catalog::default();
+        for language in ["ja","en"] {
+            let entries=catalog.catalogs[usize::from(language=="en")]["messages"].as_object().unwrap().clone();
+            for (id,entry) in entries {
+                let template=entry.as_str().unwrap();let mut args=serde_json::Map::new();
+                let mut rest=template;
+                while let Some(open)=rest.find('{') {
+                    rest=&rest[open+1..];let close=rest.find('}').unwrap();
+                    args.insert(rest[..close].into(),json!(7));rest=&rest[close+1..];
+                }
+                let rendered=catalog.label(language,&id,&Value::Object(args));
+                assert!(!rendered.contains('{')&&!rendered.contains('}'),"{language}:{id}: {rendered}");
+                assert!(!rendered.contains('\u{fffd}'),"{language}:{id}");
+                assert!(catalog.missing.is_empty(),"{language}:{id}");
+            }
+        }
+        catalog.catalogs[0]["messages"].as_object_mut().unwrap().remove("action.inventory");
+        let rendered=catalog.label("ja","action.inventory",&json!({}));
+        assert!(rendered.starts_with("Missing UI catalog entry"));
+        assert_eq!(catalog.missing.len(),1);
+    }
+}

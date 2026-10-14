@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "original_source": "C:\\Users\\kit\\gameme\\jnethack\\jrouge\\investigation-20261002-original-rogue\\sources\\rogue5.4.4",
+  "original_source": "../investigation-20261002-original-rogue/sources/rogue5.4.4",
   "original_version": "Rogue 5.4.4",
   "preparation_script_sha256": "3a491bffd304ff8a2313811b213a78d4b00f96e1af0ba9738551fae8fa0c3deb",
   "compiler_required": [

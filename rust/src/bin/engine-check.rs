@@ -13,10 +13,7 @@ use serde_json::{Value, json};
 use session::Session;
 fn fresh() {
     engine::reset(Session {
-        platform: platform::Session {
-            name: "勇者".into(),
-            ..platform::Session::default()
-        },
+        platform: platform::Session::new(0, "勇者".into()),
         display: rogue_display::DisplayState {
             language: "ja".into(),
             ..Default::default()
@@ -41,7 +38,7 @@ fn main() {
     assert_eq!(engine::decode(abi::RG_KEY_SAVE), Input::Save);
     assert_eq!(engine::decode(abi::RG_KEY_END_INPUT), Input::End);
     assert_eq!(engine::decode(abi::RG_EVENT_ALT | 27), Input::Ignore);
-    assert_eq!(engine::with_session(|s| s.input_index), 0);
+    assert_eq!(engine::with_session(|s| s.platform.input_index()), 0);
     engine::with_session_mut(|s| {
         s.display.presentation.update(
             "menu",
@@ -60,11 +57,17 @@ fn main() {
         assert_eq!(engine::decode(key), Input::Key(32));
         assert!(engine::accept_key(32));
     }
-    assert_eq!(engine::with_session(|s| s.journal.clone()), vec![32, 32]);
+    assert_eq!(
+        engine::with_session(|s| s.platform.journal().to_vec()),
+        vec![32, 32]
+    );
     fresh();
     engine::with_session_mut(|s| {
-        s.input.text_mode = true;
-        s.input.text_limit = 6;
+        s.platform.capture_checkpoint(
+            vec![1, 2, 3],
+            serde_json::to_value(&s.display.presentation).unwrap(),
+        );
+        s.input.begin_text(6, "");
         s.display.presentation.input = json!({"kind":"text"});
     });
     for character in ['勇', '者'] {
@@ -72,26 +75,22 @@ fn main() {
             panic!("UTF-8 scalar must be accepted");
         };
         assert!(engine::accept_key(first));
-        while let Some(key) = engine::with_session_mut(|s| s.input.text_pending.pop_front()) {
+        while let Some(key) = engine::with_session_mut(|s| s.input.pending_key()) {
             assert!(engine::accept_key(key));
         }
     }
     assert_eq!(
-        engine::with_session(|s| s.input.text_bytes.clone()),
-        "勇者".as_bytes()
+        engine::with_session(|s| s.input.current_text().map(str::to_owned)),
+        Some("勇者".into())
     );
     assert_eq!(engine::decode('界' as u32), Input::Ignore);
-    assert_eq!(engine::with_session(|s| s.input.text_pending.len()), 0);
+    assert!(engine::with_session_mut(|s| s.input.pending_key()).is_none());
     assert_eq!(engine::decode(127), Input::Key(8));
     assert!(engine::accept_key(8));
     assert_eq!(
-        engine::with_session(|s| s.input.text_bytes.clone()),
-        "勇".as_bytes()
+        engine::with_session(|s| s.input.current_text().map(str::to_owned)),
+        Some("勇".into())
     );
-    engine::with_session_mut(|s| {
-        s.checkpoint = vec![1, 2, 3];
-        s.checkpoint_presentation = serde_json::to_value(&s.display.presentation).unwrap();
-    });
     let bytes = engine::save_bytes().expect("save envelope");
     let saved = platform::Envelope::parse(&bytes).expect("valid envelope");
     assert_eq!(saved.name, "勇者");
@@ -130,7 +129,7 @@ fn main() {
         engine::render_ui();
     }
     assert_eq!(engine::cached_frame(), Some(menu));
-    assert_eq!(engine::with_session(|s| s.input_index), 0);
+    assert_eq!(engine::with_session(|s| s.platform.input_index()), 0);
     fresh();
     assert!(engine::cached_frame().is_none());
     assert!(engine::render_ui()["window"].is_null());
@@ -174,7 +173,7 @@ fn main() {
     let cleared = engine::present(frame(actors));
     assert_eq!(cleared["map_underlays"], json!([]));
     assert!(cleared["map_player_underlay"].is_null());
-    assert_eq!(engine::with_session(|s| s.input_index), 0);
+    assert_eq!(engine::with_session(|s| s.platform.input_index()), 0);
     println!(
         "{{\"engine\":\"Bevy\",\"version\":\"{}\",\"checks\":46,\"passed\":true}}",
         abi::BEVY_VERSION

@@ -2,12 +2,16 @@
 import hashlib
 import difflib
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TESTS = ROOT / "tests"
 manifest = json.loads((TESTS / "baseline-provenance.json").read_text(encoding="utf-8"))
-original = Path(manifest["original_source"])
+original = Path(os.environ.get("ROGUE_ORIGINAL_SOURCE", manifest["original_source"]))
+if not original.is_absolute(): original = ROOT / original
+if not original.is_dir():
+    raise SystemExit('Original-source archive is unavailable. Set ROGUE_ORIGINAL_SOURCE or run prepare-baseline.py --original <archive-directory>.')
 baseline = TESTS / "baseline-src"
 
 

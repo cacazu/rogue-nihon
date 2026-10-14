@@ -159,8 +159,10 @@ fn text_save_is_atomic_unicode_without_enter_and_commits_after_transaction() {
     assert_eq!(r["state"]["savePending"], true);
     let r = event(&mut c, json!({"type":"invoke","id":"settings-top"}));
     assert_eq!(r["state"]["topOpen"], false);
+    let r = c.request(json!({"type":"worker","generation":1,"data":{"type":"save","bytes":[1]}}));
+    let request = r["effects"].as_array().unwrap().iter().find(|e| e["kind"] == "save-write").unwrap()["request"].clone();
     let r = c.request(
-        json!({"type":"api","operation":"save-write","ok":true,"generation":1,"length":120}),
+        json!({"type":"api","operation":"save-write","ok":true,"generation":1,"request":request,"length":120}),
     );
     assert_eq!(r["state"]["savePending"], false);
     assert_eq!(r["state"]["savedLength"], 120);
@@ -206,14 +208,16 @@ fn randomization_collision_and_restore_selection() {
     );
     let r = event(&mut c, json!({"type":"invoke","id":"load"}));
     assert_eq!(r["state"]["starting"], true);
-    let r = c.request(json!({"type":"api","operation":"load","ok":true,"generation":0,"length":0}));
+    let request = save_effect(&r, "save-read")["request"].clone();
+    let r = c.request(json!({"type":"api","operation":"load","ok":true,"generation":0,"request":request,"length":0}));
     assert_eq!(r["state"]["starting"], false);
-    event(&mut c, json!({"type":"invoke","id":"load"}));
+    let r = event(&mut c, json!({"type":"invoke","id":"load"}));
+    let request = save_effect(&r, "save-read")["request"].clone();
     let bytes = rogue_platform::Envelope::new(17, "Saved".into(), &[1], vec![], 0)
         .unwrap()
         .bytes()
         .unwrap();
-    let r = c.request(json!({"type":"api","operation":"load","ok":true,"generation":0,"length":bytes.len(),"bytes":bytes}));
+    let r = c.request(json!({"type":"api","operation":"load","ok":true,"generation":0,"request":request,"length":bytes.len(),"bytes":bytes}));
     let e = r["effects"]
         .as_array()
         .unwrap()
@@ -225,4 +229,107 @@ fn randomization_collision_and_restore_selection() {
         e["files"],
         json!([["/message-paging.txt", "log"], ["/trace.enabled", "1"]])
     );
+}
+
+fn save_effect<'a>(response: &'a Value, kind: &str) -> &'a Value {
+    response["effects"].as_array().unwrap().iter().find(|e| e["kind"] == kind).unwrap()
+}
+
+fn save_bytes(name: &str) -> Vec<u8> {
+    rogue_platform::Envelope::new(17, name.into(), &[1], vec![], 0).unwrap().bytes().unwrap()
+}
+
+#[test]
+fn save_candidates_require_the_pending_operation_and_retire_with_the_session() {
+    let mut c = Controller::new(measure);
+    let initial = c.request(json!({"type":"boot","environment":{"isolated":true,"parameters":{}}}));
+    let initial_request = save_effect(&initial, "save-read")["request"].clone();
+    let r = event(&mut c, json!({"type":"invoke","id":"import-save"}));
+    let request = save_effect(&r, "save-import")["request"].clone();
+    let bytes = save_bytes("Imported");
+    for (operation, generation) in [("load", 0), ("import", 7)] {
+        let r = c.request(json!({"type":"api","operation":operation,"ok":true,"generation":generation,"request":request,"bytes":bytes}));
+        assert_eq!(r["accepted"], false);
+        assert_eq!(r["state"]["saved"], false);
+    }
+    let r = c.request(json!({"type":"api","operation":"import","ok":true,"generation":0,"request":request,"bytes":bytes}));
+    assert_eq!(r["accepted"], true);
+    assert_eq!(r["state"]["savedLength"], bytes.len());
+    assert_eq!(r["state"]["saved"], false);
+    assert_eq!(r["state"]["downloadAvailable"], true);
+    assert_eq!(save_effect(&r, "save-accept")["request"], request);
+    assert_eq!(save_effect(&r, "save-discard")["request"], initial_request);
+    assert_eq!(r["state"]["generation"], 1);
+    let r = c.request(json!({"type":"api","operation":"init","ok":true,"generation":0,"request":initial_request,"bytes":save_bytes("Older")}));
+    assert_eq!(r["accepted"], false);
+    assert_eq!(r["state"]["savedLength"], bytes.len());
+    assert_eq!(save_effect(&r, "save-discard")["request"], initial_request);
+    let r = c.request(json!({"type":"api","operation":"import","ok":true,"generation":0,"request":request,"bytes":bytes}));
+    assert_eq!(r["accepted"], false);
+    assert_eq!(r["state"]["generation"], 1);
+}
+
+#[test]
+fn invalid_cancelled_or_retired_import_keeps_the_accepted_save_and_game() {
+    let mut c = boot();
+    let bytes = save_bytes("Existing");
+    let r = event(&mut c, json!({"type":"invoke","id":"load"}));
+    let request = save_effect(&r, "save-read")["request"].clone();
+    c.request(json!({"type":"api","operation":"load","ok":true,"generation":0,"request":request,"bytes":bytes}));
+    c.request(json!({"type":"worker","generation":1,"data":{"type":"ready"}}));
+    for cancelled in [false, true] {
+        let r = event(&mut c, json!({"type":"invoke","id":"import-save"}));
+        let request = save_effect(&r, "save-import")["request"].clone();
+        let r = c.request(json!({"type":"api","operation":"import","ok":!cancelled,"cancelled":cancelled,"generation":1,"request":request,"bytes":[1,2]}));
+        assert_eq!(r["state"]["running"], true);
+        assert_eq!(r["state"]["generation"], 1);
+        assert_eq!(r["state"]["savedLength"], bytes.len());
+        assert_eq!(save_effect(&r, "save-discard")["request"], request);
+    }
+    let r = event(&mut c, json!({"type":"invoke","id":"import-save"}));
+    let request = save_effect(&r, "save-import")["request"].clone();
+    let r = event(&mut c, json!({"type":"invoke","id":"settings-top"}));
+    assert_eq!(save_effect(&r, "save-discard")["request"], request);
+    let r = c.request(json!({"type":"api","operation":"import","ok":true,"generation":1,"request":request,"bytes":bytes}));
+    assert_eq!(r["accepted"], false);
+    assert_eq!(r["state"]["topOpen"], true);
+    assert_eq!(r["state"]["savedLength"], bytes.len());
+}
+
+#[test]
+fn assets_are_ready_only_after_both_distinct_sets() {
+    let mut c = Controller::new(measure);
+    for _ in 0..3 {
+        let r = c.request(json!({"type":"api","operation":"assets","ok":true,"set":"tiles","images":vec![json!({"width":96,"height":96});46]}));
+        assert_eq!(r["state"]["ready"], false);
+    }
+    for _ in 0..3 {
+        let r = c.request(json!({"type":"api","operation":"assets","ok":true,"set":"pixels","images":vec![json!({"width":32,"height":32});46]}));
+        assert_eq!(r["state"]["ready"], true);
+    }
+    let r = c.request(json!({"type":"api","operation":"assets","ok":true,"set":"unknown","images":vec![json!({"width":96,"height":96});46]}));
+    assert_eq!(r["accepted"], false);
+    assert_eq!(r["state"]["ready"], true);
+}
+
+#[test]
+fn failed_write_releases_its_candidate_and_preserves_the_previous_save() {
+    let mut c = boot();
+    let bytes = save_bytes("Existing");
+    let r = event(&mut c, json!({"type":"invoke","id":"load"}));
+    let request = save_effect(&r, "save-read")["request"].clone();
+    c.request(json!({"type":"api","operation":"load","ok":true,"generation":0,"request":request,"bytes":bytes}));
+    c.request(json!({"type":"worker","generation":1,"data":{"type":"ready"}}));
+    let r = c.request(json!({"type":"worker","generation":1,"data":{"type":"save","bytes":save_bytes("Newer")}}));
+    let request = save_effect(&r, "save-write")["request"].clone();
+    let r = c.request(json!({"type":"api","operation":"save-write","ok":false,"generation":1,"request":request,"error":"transaction aborted"}));
+    assert_eq!(r["state"]["running"], true);
+    assert_eq!(r["state"]["saved"], true);
+    assert_eq!(r["state"]["downloadAvailable"], true);
+    assert_eq!(r["state"]["savedLength"], bytes.len());
+    assert_eq!(r["state"]["savePending"], false);
+    assert_eq!(save_effect(&r, "save-discard")["request"], request);
+    let r = c.request(json!({"type":"api","operation":"save-write","ok":true,"generation":1,"request":request,"length":100}));
+    assert_eq!(r["accepted"], false);
+    assert_eq!(r["state"]["savedLength"], bytes.len());
 }

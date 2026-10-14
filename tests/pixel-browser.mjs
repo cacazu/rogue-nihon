@@ -1,3 +1,4 @@
+import {browserExecutable} from '../tools/toolchain.mjs';
 import { browserTestAdapterSource } from "./browser-smoke/test-adapter.mjs";
 import { artifactDirectory } from "../tools/temporary-artifacts.mjs";
 import assert from 'node:assert/strict';
@@ -11,22 +12,15 @@ import {createPlaywrightCdp} from './browser-smoke/playwright-cdp.mjs';
 const directory=path.dirname(fileURLToPath(import.meta.url)),output=artifactDirectory(path.join(directory,'pixel-output'));
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function until(fn,label){const end=Date.now()+30000;while(Date.now()<end){if(await fn())return;await pause(100);}throw new Error('Timed out: '+label);}
-class CDP{
- constructor(socket){this.socket=socket;this.id=0;this.pending=new Map();this.events=[];socket.addEventListener('message',event=>{const p=JSON.parse(event.data);if(p.id){const q=this.pending.get(p.id);if(q){this.pending.delete(p.id);clearTimeout(q.timer);p.error?q.reject(new Error(JSON.stringify(p.error))):q.resolve(p.result);}}else this.events.push(p);});}
- call(method,params={}){return new Promise((resolve,reject)=>{const id=++this.id,timer=setTimeout(()=>reject(new Error('CDP timeout '+method)),30000);this.pending.set(id,{resolve,reject,timer});this.socket.send(JSON.stringify({id,method,params}));});}
- async evaluate(expression,userGesture=false){const r=await this.call('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true,userGesture});if(r.exceptionDetails)throw new Error(JSON.stringify(r.exceptionDetails));return r.result.value;}
-}
+
 await mkdir(output,{recursive:true});
 const profile=await mkdtemp(path.join(output,'rogue-pixels-'));
 const server=createPreviewServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base=`http://127.0.0.1:${server.address().port}/`;
-const browser=process.env.ROGUE_PLAYWRIGHT_MODULE?null:spawn(process.env.ROGUE_CHROME||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',['--headless=new','--disable-gpu','--no-first-run','--no-default-browser-check','--disable-background-networking','--disable-component-update','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{windowsHide:true,stdio:'ignore'});
 const evidence={started_at:new Date().toISOString(),checks:[],screenshots:[]};let socket,cdp;
 async function shot(name){const r=await cdp.call('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await writeFile(path.join(output,name+'.png'),Buffer.from(r.data,'base64'));evidence.screenshots.push(name+'.png');}
 try{
- if(process.env.ROGUE_PLAYWRIGHT_MODULE){cdp=await createPlaywrightCdp({executable:process.env.ROGUE_CHROME||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',profile});evidence.launch=cdp.launch;}
- else{let port;await until(async()=>{try{port=Number((await readFile(path.join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0]);return port;}catch{return false;}},'Chrome');
- const pages=await(await fetch(`http://127.0.0.1:${port}/json/list`)).json();socket=new WebSocket(pages.find(p=>p.type==='page').webSocketDebuggerUrl);await new Promise((resolve,reject)=>{socket.addEventListener('open',resolve,{once:true});socket.addEventListener('error',reject,{once:true});});cdp=new CDP(socket);}
+ cdp=await createPlaywrightCdp({profile});evidence.launch=cdp.launch;
  await cdp.call('Runtime.enable');await cdp.call('Page.enable');
   await cdp.call("Page.addScriptToEvaluateOnNewDocument", {source: browserTestAdapterSource()});
  await cdp.call('Emulation.setDeviceMetricsOverride',{width:1280,height:960,deviceScaleFactor:1,mobile:false});
@@ -138,4 +132,4 @@ try{
  assert.deepEqual(cdp.events.filter(e=>e.method==='Runtime.exceptionThrown'),[]);evidence.checks.push('No main-browser Runtime exceptions');
  evidence.status='passed';evidence.finished_at=new Date().toISOString();await writeFile(path.join(output,'evidence.json'),JSON.stringify(evidence,null,2)+'\n');console.log(JSON.stringify(evidence,null,2));
 }catch(error){evidence.status='failed';evidence.error=error.stack;await writeFile(path.join(output,'evidence.json'),JSON.stringify(evidence,null,2)+'\n');throw error;}
-finally{try{socket?.close();await cdp?.close?.();}finally{browser?.kill();await new Promise(resolve=>server.close(resolve));}}
+finally{try{socket?.close();await cdp?.close?.();}finally{await new Promise(resolve=>server.close(resolve));}}

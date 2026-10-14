@@ -19,15 +19,9 @@ class TemporaryArtifacts:
         self.base = self.base.resolve()
         self.directory = Path(tempfile.mkdtemp(prefix="python-", dir=self.base))
         self.keep = os.environ.get("ROGUE_KEEP_ARTIFACTS") == "1"
-        if os.name == "nt":
-            result = subprocess.run([shutil.which("pwsh") or "powershell.exe", "-NoProfile", "-NonInteractive", "-File",
-                                     str(self.project / "tools" / "artifact-registry.ps1"), "-Mode", "Register",
-                                     "-ProjectPath", str(self.project), "-ScopePath", str(self.directory),
-                                     "-OwnerPid", str(os.getpid()), "-Keep", "1" if self.keep else "0"],
-                                    check=True, capture_output=True, text=True, timeout=30,
-                                    creationflags=subprocess.CREATE_NO_WINDOW)
-            if result.stdout.strip():
-                print(result.stdout.strip(), flush=True)
+        from artifact_registry import register, recover
+        recover(self.project)
+        register(self.project, self.directory, os.getpid(), self.keep)
         temp = self.directory / "temp"
         temp.mkdir()
         settings = {"CARGO_TARGET_DIR": str(self.directory / "cargo-target"),

@@ -2,10 +2,14 @@
 import difflib
 import hashlib
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-original = Path(json.loads((ROOT / 'tests/baseline-provenance.json').read_text(encoding='utf-8'))['original_source'])
+original = Path(os.environ.get('ROGUE_ORIGINAL_SOURCE') or json.loads((ROOT / 'tests/baseline-provenance.json').read_text(encoding='utf-8'))['original_source'])
+if not original.is_absolute(): original = ROOT / original
+if not original.is_dir():
+    raise SystemExit('Original-source archive is unavailable. Set ROGUE_ORIGINAL_SOURCE or run prepare-baseline.py --original <archive-directory>.')
 target = ROOT / 'tests/split-diffs'
 target.mkdir(exist_ok=True)
 assert target.resolve().parent == (ROOT / 'tests').resolve()

@@ -1,7 +1,7 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from 'node:assert/strict';
-import {createRequire} from 'node:module';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
@@ -11,8 +11,8 @@ import {createPreviewServer} from '../../../tools/server.mjs';
 import {runGame} from '../run-game.mjs';
 
 const root=fileURLToPath(new URL('../../',import.meta.url));
-const {chromium}=createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE||path.join(os.homedir(),'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'));
-const executablePath=process.env.ROGUE_CHROME||'C:/Program Files/Google/Chrome/Application/chrome.exe';
+const {chromium} = loadPlaywright();
+const executablePath=browserExecutable();
 const browserName=executablePath.toLowerCase().includes('brave')?'brave':'chrome';
 const output=artifactDirectory(path.join(root,'tests/browser-smoke/output/playthrough-fixes',browserName));
 const baseline=path.join(root,'build/playthrough-before.js');

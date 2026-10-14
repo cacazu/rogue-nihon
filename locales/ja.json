@@ -4744,14 +4744,38 @@
       },
       "argument_values": {
         "0": {
-          "potion": {"text": "薬"},
-          "scroll": {"text": "巻物"},
-          "food": {"text": "食べ物"},
-          "ring, wand or staff": {"text": "指輪か杖"},
-          "ring": {"text": "指輪"},
-          "wand or staff": {"text": "杖"},
-          "weapon": {"text": "武器"},
-          "suit of armor": {"text": "鎧"}
+          "potion": {
+            "text": "薬",
+            "id": "identify.potion"
+          },
+          "scroll": {
+            "text": "巻物",
+            "id": "identify.scroll"
+          },
+          "food": {
+            "text": "食べ物",
+            "id": "identify.food"
+          },
+          "ring, wand or staff": {
+            "text": "指輪か杖",
+            "id": "identify.ring_or_stick"
+          },
+          "ring": {
+            "text": "指輪",
+            "id": "identify.ring"
+          },
+          "wand or staff": {
+            "text": "杖",
+            "id": "identify.stick"
+          },
+          "weapon": {
+            "text": "武器",
+            "id": "identify.weapon"
+          },
+          "suit of armor": {
+            "text": "鎧",
+            "id": "identify.armor"
+          }
         }
       },
       "unresolved": [],
@@ -4770,7 +4794,9 @@
       "argument_values": {},
       "unresolved": [],
       "source": "wizard.c:44",
-      "function": "whatis"
+      "function": "whatis",
+      "compatibility_only": true,
+      "compatibility_reason": "Previous saved message ID; no current C call site."
     }
   }
 }

@@ -2305,6 +2305,7 @@
     "called": "{name} (命名：{label})",
     "details": "{name} ({details})",
     "quantity": "{name} ×{count}",
+    "pickup_arrows": "{name} {count}本",
     "weapon_bonus": "{name} (命中{hit} 威力{damage})",
     "armor_bonus": "{name} (強化{bonus} 防御力{protection})",
     "armor_bonus_brief": "{name} (強化{bonus} 防御力{protection})",

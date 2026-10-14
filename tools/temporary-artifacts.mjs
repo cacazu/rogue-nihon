@@ -1,3 +1,4 @@
+import {pythonExecutable} from './toolchain.mjs';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, rmdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,18 +24,10 @@ function checkAncestor(target) {
 }
 
 function registry(mode, directory, keep = false) {
-  if (process.platform !== "win32") return;
-  const arguments_ = ["-NoProfile", "-NonInteractive", "-File",
-    path.join(project, "tools", "artifact-registry.ps1"), "-Mode", mode, "-ProjectPath", project];
-  if (directory) arguments_.push("-ScopePath", directory, "-OwnerPid", String(process.pid), "-Keep", keep ? "1" : "0");
-  const options = { encoding: "utf8", windowsHide: true, timeout: 30000 };
-  let result;
-  try { result = execFileSync("pwsh", arguments_, options); }
-  catch (error) {
-    if (error.code !== "ENOENT") throw error;
-    result = execFileSync("powershell.exe", arguments_, options);
-  }
-  if (result.trim()) process.stderr.write(result.trim() + "\n");
+  const args = [path.join(project, 'tools/artifact_registry.py'), mode.toLowerCase(), '--project', project];
+  if (directory) args.push('--directory', directory, '--pid', String(process.pid));
+  if (keep) args.push('--keep');
+  execFileSync(pythonExecutable(), args, {encoding: 'utf8', windowsHide: true, timeout: 30000});
 }
 
 export function recoverTemporaryArtifacts() {

@@ -1,7 +1,7 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -9,21 +9,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createPreviewServer } from "../../../tools/server.mjs";
 
-const require = createRequire(import.meta.url);
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const project = path.resolve(directory, "../..");
 const output = artifactDirectory(path.join(directory, "output/combat-log"));
-const executable = process.env.ROGUE_CHROME || "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe";
+const executable = browserExecutable();
 const launchArgs = ["--disable-gpu", "--no-first-run", "--no-default-browser-check", "--disable-background-networking", "--disable-component-update"];
-const candidates = [process.env.ROGUE_PLAYWRIGHT_MODULE, "playwright", "playwright-core",
-  path.join(os.homedir(), ".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"),
-  path.join(os.homedir(), ".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright-core")].filter(Boolean);
-let playwright, modulePath;
-for (const candidate of candidates) {
-  try { modulePath = require.resolve(candidate); playwright = require(modulePath); break; }
-  catch (error) { if (error.code !== "MODULE_NOT_FOUND") throw error; }
-}
-if (!playwright?.chromium) throw new Error("Playwright is unavailable. Set ROGUE_PLAYWRIGHT_MODULE to the existing Playwright package path.");
+const {playwright, modulePath} = loadPlaywright();
 
 await mkdir(output, { recursive: true });
 // Each run owns a new browser profile and origin. Never use a person's browser data.

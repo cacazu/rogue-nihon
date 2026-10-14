@@ -227,7 +227,7 @@ fn main() {
         json!({"type":"combat","hit":true,"index":0,"terse":true,"actor":{"type":"monster","display":"name","index":14}}),
         "オークの攻撃が命中した",
     );
-    assert_eq!(entities::render(&json!({"type":"item","category":"weapon","which":4,"count":2,"identified":true,"hplus":1,"dplus":2}), "en").expect("English weapon"), "2 +1,+2 daggers");
+    assert_eq!(entities::render(&json!({"type":"item","category":"weapon","which":4,"count":2,"identified":true,"hplus":1,"dplus":2}), "en").expect("English weapon"), "2 daggers (hit +1 damage +2)");
     checks += 1;
     assert_eq!(
         entities::render(

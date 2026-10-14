@@ -3,6 +3,7 @@ import {installTileTestAdapter} from "../tile-test-adapter.mjs";
 // Installed by Playwright/CDP before navigation; never loaded by the game.
 function browserTestAdapter(installTileTestAdapter) {
   let ui, queue, commands;
+  const observedTranslationFailures = new Map();
   for (const name of ["RogueCanvasUi", "RogueEventQueue", "RogueTiles"]) {
     let value;
     Object.defineProperty(globalThis, name, {
@@ -17,6 +18,10 @@ function browserTestAdapter(installTileTestAdapter) {
             ui.request = function(...args) {
               const result = request.apply(this, args);
               if (result.commands) commands = result.commands;
+              for (const failure of result.state?.translationFallbacks || []) {
+                const record = {...failure, generation: result.state.generation};
+                observedTranslationFailures.set(JSON.stringify(record), record);
+              }
               return result;
             };
             return ui;
@@ -36,6 +41,7 @@ function browserTestAdapter(installTileTestAdapter) {
   const enqueueMany = events => ui.dispatch({type: "enqueue", events}).accepted;
   const descriptors = {
     canvas: {get: () => ui?.scene},
+    observedTranslationFailures: {get: () => [...observedTranslationFailures.values()]},
     commands: {get: () => commands},
     enqueue: {value: key => enqueueMany([key])}, enqueueMany: {value: enqueueMany},
     rawKey: {value: (key, flags = {}) => ui.request({type: "event", event: {type: "raw-key", key, ...flags}}).raw},

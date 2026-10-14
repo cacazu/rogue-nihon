@@ -1,7 +1,8 @@
 /* Browser API connections. Session and input policy live in browser-ui.wasm. */
 "use strict";
 (async () => {
-  let canvasUi, worker=null, queue=null, savedBytes=null, importBytes=null, databasePromise=null;
+  let canvasUi, worker=null, queue=null, savedBytes=null, databasePromise=null;
+  const saveCandidates=new Map();
   const tileSets=new Map(), board=document.getElementById("rogue-canvas");
   function lockPortrait() {
     if(matchMedia("(pointer: coarse)").matches){
@@ -31,7 +32,7 @@
     });
   }
   function result(effect,operation,ok,values={}) {
-    return canvasUi.dispatchRequest({type:"api",operation,ok,generation:effect.generation,...values});
+    return canvasUi.dispatchRequest({type:"api",operation,ok,generation:effect.generation,request:effect.request,...values});
   }
   function execute(effect) {
     switch(effect.kind) {
@@ -45,17 +46,21 @@
         worker.postMessage({type:"start",queue:queue.buffer,capacity:queue.capacity,seed:effect.seed,name:effect.name,restore,locale:effect.locale,files:effect.files},restore?[restore.buffer]:[]);break;
       }
       case "queue":return result(effect,"queue",queue?.pushMany(effect.events)??false,{after:effect.after,request:effect.request});
-      case "save-read":readSave().then(bytes=>{savedBytes=bytes;result(effect,effect.operation,true,{length:bytes?.byteLength||0,bytes});},error=>result(effect,effect.operation,false,{error:error.stack||String(error)}));break;
+      case "save-read":readSave().then(bytes=>{saveCandidates.set(effect.request,bytes);result(effect,effect.operation,true,{length:bytes?.byteLength||0,bytes});},error=>result(effect,effect.operation,false,{error:error.stack||String(error)}));break;
       case "save-import":RogueSaveImport.choose().then(bytes=>{
-        importBytes=bytes;
+        saveCandidates.set(effect.request,bytes);
         result(effect,"import",Boolean(bytes),{cancelled:!bytes,bytes});
       },error=>result(effect,"import",false,{error:String(error)}));break;
-      case "save-import-accept":savedBytes=importBytes;importBytes=null;break;
+      case "save-accept":{
+        if(!saveCandidates.has(effect.request))throw new Error("Missing accepted save candidate");
+        savedBytes=saveCandidates.get(effect.request);saveCandidates.delete(effect.request);break;
+      }
+      case "save-discard":saveCandidates.delete(effect.request);break;
       case "save-write":{
         const bytes=new Uint8Array(effect.bytes);
-        writeSave(bytes).then(()=>{savedBytes=bytes;result(effect,"save-write",true,{length:bytes.byteLength});},error=>result(effect,"save-write",false,{error:error.stack||String(error)}));break;
+        writeSave(bytes).then(()=>{saveCandidates.set(effect.request,bytes);result(effect,"save-write",true,{length:bytes.byteLength});},error=>result(effect,"save-write",false,{error:error.stack||String(error)}));break;
       }
-      case "assets":RogueTiles.load(effect).then(tiles=>{tileSets.set(effect.set,tiles);result(effect,"assets",true,{set:effect.set,images:[...tiles.images.values()].map(image=>({width:image.naturalWidth,height:image.naturalHeight}))});},error=>result(effect,"assets",false,{error:error.stack||String(error)}));break;
+      case "assets":RogueTiles.load(effect).then(tiles=>{tileSets.set(effect.set,tiles);result(effect,"assets",true,{set:effect.set,images:[...tiles.images.values()].map(image=>({width:image.naturalWidth,height:image.naturalHeight}))});},error=>result(effect,"assets",false,{set:effect.set,error:error.stack||String(error)}));break;
       case "storage-write":try{localStorage.setItem(effect.key,effect.value);}catch(error){result(effect,"storage-write",false,{error:String(error)});}break;
       case "random":return result(effect,"random",true,{id:effect.id,value:crypto.getRandomValues(new Uint32Array(1))[0]});
       case "fullscreen":{

@@ -71,6 +71,23 @@ void hit(void) {
         self.assertNotEqual(calls[0]['ids']['ouch!'], 'fight.hit.ouch')
         self.assertEqual(ids['fight.hit.ouch'], 'ouch')
 
+    def test_all_current_source_sites_match_the_catalog(self):
+        catalog.generate(MODULE_PATH.parent.parent, check=True)
+
+    def test_shifted_source_is_rejected_without_rewriting_the_catalog(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            (root / 'logic').mkdir()
+            source = root / 'logic' / 'pack.c'
+            source.write_text('void add_pack(void) { msg("picked %d arrows", 1); }\n', encoding='utf-8')
+            catalog.generate(root)
+            table = root / 'logic' / 'message_catalog.inc'
+            before = table.read_bytes()
+            source.write_text('\n' + source.read_text(encoding='utf-8'), encoding='utf-8')
+            with self.assertRaisesRegex(SystemExit, 'out of date'):
+                catalog.generate(root, check=True)
+            self.assertEqual(table.read_bytes(), before)
+
     def test_generated_multiline_metadata_resolves_at_both_macro_locations(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = pathlib.Path(temporary)

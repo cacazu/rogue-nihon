@@ -1,7 +1,7 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -12,8 +12,8 @@ import { createPreviewServer } from '../../../tools/server.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const output = artifactDirectory(path.join(root, 'tests/browser-smoke/output/top-screen'));
-const { chromium } = createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE || path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'));
-const executablePath = process.env.ROGUE_CHROME || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const {chromium} = loadPlaywright();
+const executablePath = browserExecutable();
 const server = createPreviewServer(); await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const base = 'http://127.0.0.1:' + server.address().port + '/';
 const worker = await readFile(path.join(root, 'web/worker.js'), 'utf8');

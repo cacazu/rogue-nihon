@@ -2,6 +2,15 @@
 use crate::{game_window, map_tiles};
 use serde_json::{Value, json};
 
+const COLUMNS: u32 = 80;
+const ROWS: u32 = 24;
+
+fn can_drop_on(frame: &Value) -> bool {
+    !frame["map_player_underlay"]["tile"]
+        .as_u64()
+        .is_some_and(|tile| tile > 2)
+}
+
 #[derive(bevy::prelude::Component, Default)]
 pub struct ObservedMap {
     last_frame: Option<Value>,
@@ -13,11 +22,7 @@ impl ObservedMap {
     pub fn can_drop(&self) -> bool {
         // Only a publicly displayed door/stair/trap rules placement out.
         // An unknown surface still goes through the original C validation.
-        !self
-            .last_frame
-            .as_ref()
-            .and_then(|frame| frame["map_player_underlay"]["tile"].as_u64())
-            .is_some_and(|tile| tile > 2)
+        self.last_frame.as_ref().is_none_or(can_drop_on)
     }
 }
 
@@ -43,8 +48,8 @@ impl ObservedMap {
             self.effects.clear();
         } else if let (Ok(x), Ok(y), Ok(glyph)) =
             (u32::try_from(x), u32::try_from(y), u8::try_from(glyph))
-            && x < 80
-            && y < 24
+            && x < COLUMNS
+            && y < ROWS
             && map_tiles::bolt(glyph).is_some()
         {
             if let Some(effect) = self
@@ -58,9 +63,26 @@ impl ObservedMap {
             }
         }
     }
+    /// Reject malformed observations without replacing the last public frame.
+    /// The original game's logical screen is always 80 columns by 24 rows.
     pub fn present(&mut self, mut frame: Value, ui: &Value, version: &str) -> Value {
-        let rows = frame["height"].as_u64().unwrap_or(0) as u32;
-        let columns = frame["width"].as_u64().unwrap_or(0) as u32;
+        let rows = ROWS;
+        let columns = COLUMNS;
+        let valid = frame["height"].as_u64() == Some(u64::from(rows))
+            && frame["width"].as_u64() == Some(u64::from(columns))
+            && frame["cells"]
+                .as_str()
+                .is_some_and(|cells| cells.is_ascii() && cells.len() == (rows * columns) as usize)
+            && frame["player"]["x"]
+                .as_u64()
+                .is_some_and(|x| x < u64::from(columns))
+            && frame["player"]["y"]
+                .as_u64()
+                .is_some_and(|y| y < u64::from(rows))
+            && ui.is_object();
+        if !valid {
+            return Value::Null;
+        }
         if ui["mode"] != "game"
             && let Some(cached) = self.map_frame.as_ref()
         {
@@ -113,15 +135,18 @@ impl ObservedMap {
                 .unwrap_or(Value::Null);
             // floor_at() is already an observed surface beneath the displayed
             // player. Keep item glyphs too, without treating them as terrain.
-            frame["map_player_surface"] = frame["player"]["x"].as_u64()
+            frame["map_player_surface"] = frame["player"]["x"]
+                .as_u64()
                 .zip(frame["player"]["y"].as_u64())
                 .and_then(|(x, y)| {
                     let index = (y * u64::from(columns) + x) as usize;
                     (cells.get(index) == Some(&b'@'))
-                        .then(|| self.terrain.get(index).copied()).flatten()
+                        .then(|| self.terrain.get(index).copied())
+                        .flatten()
                         .and_then(map_tiles::glyph)
                         .map(|tile| json!({"x":x,"y":y,"tile":tile}))
-                }).unwrap_or(Value::Null);
+                })
+                .unwrap_or(Value::Null);
             frame["map_underlays"] = json!(underlays);
             frame["map_tiles"] = json!(tiles);
             frame["map_tile_ids"] = json!(&map_tiles::IDS[..]);
@@ -132,10 +157,46 @@ impl ObservedMap {
             }
         }
         frame["ui"] = ui.clone();
+        frame["ui"]["can_drop"] = json!(can_drop_on(&frame));
         frame["ui"]["map_controls"] =
-            game_window::map_controls(ui, frame["map_player_underlay"]["tile"] == 6);
+            game_window::map_controls(&frame["ui"], frame["map_player_underlay"]["tile"] == 6);
         frame["engine"] = json!({"name":"Bevy","version":version,"renderer":"browser-canvas"});
         self.last_frame = Some(frame.clone());
         frame
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn frame() -> Value {
+        json!({"width":COLUMNS,"height":ROWS,"cells":" ".repeat((COLUMNS * ROWS) as usize),
+            "player":{"x":2,"y":2}})
+    }
+
+    #[test]
+    fn malformed_observations_are_rejected_without_replacing_the_public_map() {
+        let mut map = ObservedMap::default();
+        let ui = json!({"mode":"game","input":{"kind":"command"}});
+        let original = map.present(frame(), &ui, "test");
+        assert!(!original.is_null());
+        for (field, value) in [
+            ("height", json!(0)),
+            ("height", json!(23)),
+            ("width", json!(0)),
+            ("width", json!(81)),
+            ("width", json!(u64::MAX)),
+            ("cells", json!(" ".repeat(1919))),
+            ("cells", json!(" ".repeat(1921))),
+            ("cells", json!("あ".repeat(640))),
+            ("player", json!({"x":80,"y":2})),
+            ("player", json!({"x":2,"y":24})),
+        ] {
+            let mut invalid = frame();
+            invalid[field] = value;
+            assert!(map.present(invalid, &ui, "test").is_null(), "{field}");
+            assert_eq!(map.frame(), Some(&original));
+        }
     }
 }

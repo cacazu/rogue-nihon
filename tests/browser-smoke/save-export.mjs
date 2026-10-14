@@ -1,7 +1,7 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
-import {createRequire} from "node:module";
 import {mkdir,readFile,writeFile} from "node:fs/promises";
 import {createHash} from "node:crypto";
 import path from "node:path";
@@ -13,7 +13,7 @@ import {prepareBrowserRuntime} from "./browser-runtime.mjs";
 const root=fileURLToPath(new URL("../../",import.meta.url));
 const browserName=process.env.ROGUE_CHROME?.includes("Brave")?"brave":"chrome",output=artifactDirectory(path.join(root,"tests/browser-smoke/output/save-export",browserName));
 await mkdir(output,{recursive:true});
-const {chromium}=createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE||path.join(os.homedir(),".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"));
+const {chromium} = loadPlaywright();
 const server=createPreviewServer();await new Promise(r=>server.listen(0,"127.0.0.1",r));
 const base="http://127.0.0.1:"+server.address().port+"/",evidence={started_at:new Date().toISOString(),browser:browserName,checks:[],exports:[],screenshots:[],errors:[]};
 let browser,context,page,runtime;
@@ -37,7 +37,7 @@ async function persistedBytes(){
 }
 try{
   runtime=await prepareBrowserRuntime(root);evidence.runtime=runtime.diagnostics;
-  browser=await chromium.launch({executablePath:process.env.ROGUE_CHROME||"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",headless:true,args:["--disable-gpu"],downloadsPath:runtime.downloadsPath});
+  browser=await chromium.launch({executablePath:browserExecutable(),headless:true,args:["--disable-gpu"],downloadsPath:runtime.downloadsPath});
   evidence.version=browser.version();
   for(const [lang,touch] of [["ja",false],["ja",true],["en",true]]){
     const label=lang+"-"+(touch?"mobile":"pc");

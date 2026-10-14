@@ -69,7 +69,7 @@ test("server denies private files even when they exist within the project", asyn
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   try {
     const base = `http://127.0.0.1:${server.address().port}`;
-    for (const resource of ["/.gitignore", "/start.ps1", "/rust/Cargo.toml", "/web/%2e%2e/.gitignore", "/tools/server.mjs"]) {
+    for (const resource of ["/.gitignore", "/tools/build.py", "/rust/Cargo.toml", "/web/%2e%2e/.gitignore", "/tools/server.mjs"]) {
       const response = await fetch(base + resource);
       assert.equal(response.status, 403, resource);
     }

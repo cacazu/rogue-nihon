@@ -37,144 +37,23 @@ impl BrowserUi {
         );
     }
     pub(super) fn draw_top(&mut self) {
-        let mobile = self.width < 700.;
-        let w = 960_f64.min(self.width - 32.);
-        let x = (self.width - w) / 2.;
-        let viewport = Rect::new(0., 12., self.width, self.height - 64.);
-        let content_height = if mobile { 880. } else { 610. };
-        let max = (content_height - viewport.h).max(0.);
-        self.regions.insert(
-            "top".into(),
-            Region {
-                rect: viewport,
-                max,
-            },
-        );
-        self.scrolls
-            .insert("top".into(), clamp(self.scrolls["top"], 0., max));
-        self.widgets.begin_clip(viewport);
-        let mut y = 28. - self.scrolls["top"];
-        y += 66.;
-        let left_w = if mobile { w } else { (w * 0.57).floor() };
-        let right_x = if mobile { x } else { x + left_w + 20. };
-        let right_w = if mobile { w } else { w - left_w - 20. };
-        self.widgets
-            .box_rect(Rect::new(x, y, left_w, 360.), PANEL, Some(LINE), 9.);
-        let mut row = y + 24.;
-        self.text(
-            &self.t("action.new"),
-            x + 22.,
-            row,
-            left_w - 44.,
-            20.,
-            TEXT,
-            true,
-        );
-        row += 40.;
-        for id in ["name", "seed"] {
-            self.text(
-                &self.t(&format!("form.{id}")),
-                x + 22.,
-                row,
-                left_w - 44.,
-                16.,
-                MUTED,
-                false,
-            );
-            row += 25.;
-            let r = Rect::new(x + 22., row, left_w - 128., 42.);
-            self.field(id, r, b(&self.model["starting"]));
-            self.button(
-                &format!("random-{id}"),
-                &self.t("action.random"),
-                Rect::new(r.x + r.w + 8., row, 76., 42.),
-                ControlStyle {
-                    disabled: b(&self.model["starting"]),
-                    size: 16.,
-                    ..Default::default()
-                },
-            );
-            row += 70.;
-        }
+        self.draw_mobile_top();
+        let fullscreen = b(&self.view["fullscreen"]);
+        self.top_language_control(Rect::new(self.width - 56., 8., 48., 48.));
         self.button(
-            "new-game",
-            &self.t("action.new"),
-            Rect::new(x + 22., y + 292., left_w - 44., 44.),
+            "header-fullscreen",
+            &self.t(if fullscreen {
+                "action.exit_fullscreen"
+            } else {
+                "action.fullscreen"
+            }),
+            Rect::new(self.width - 56., 8., 48., 48.),
             ControlStyle {
-                primary: true,
-                disabled: !b(&self.model["ready"]) || b(&self.model["starting"]),
+                icon: Some(if fullscreen { "collapse" } else { "expand" }),
+                icon_size: 24.,
                 ..Default::default()
             },
         );
-        let ry = if mobile { y + 380. } else { y };
-        self.widgets.box_rect(
-            Rect::new(right_x, ry, right_w, if mobile { 220. } else { 360. }),
-            PANEL,
-            Some(LINE),
-            9.,
-        );
-        self.text(
-            &self.t("action.load"),
-            right_x + 22.,
-            ry + 24.,
-            right_w - 44.,
-            20.,
-            TEXT,
-            true,
-        );
-        self.resume_buttons(
-            Rect::new(
-                right_x + 22.,
-                ry + if mobile { 98. } else { 224. },
-                right_w - 44.,
-                48.,
-            ),
-            b(&self.model["starting"]),
-        );
-        self.button(
-            "credits-repository",
-            &self.t("credits.repository"),
-            Rect::new(
-                right_x + 22.,
-                ry + if mobile { 154. } else { 280. },
-                right_w - 44.,
-                48.,
-            ),
-            ControlStyle {
-                size: 17.,
-                ..Default::default()
-            },
-        );
-        let ny = if mobile { ry + 240. } else { y + 380. };
-        if b(&self.model["topNotice"]["error"]) {
-            let value = self.label(
-                s(&self.model["topNotice"]["id"]),
-                &self.model["topNotice"]["args"],
-            );
-            let h = self.wrap(&value, w - 32., 16.).len() as f64 * 27. + 24.;
-            let error = b(&self.model["topNotice"]["error"]);
-            self.widgets.box_rect(
-                Rect::new(x, ny, w, h),
-                BG,
-                Some(if error { "#76534a" } else { LINE }),
-                9.,
-            );
-            self.text(
-                &value,
-                x + 16.,
-                ny + 12.,
-                w - 32.,
-                16.,
-                if error { ERROR } else { "#b9dcec" },
-                false,
-            );
-        }
-        self.widgets.end_clip();
-        self.top_language_control(Rect::new(self.width - 52., 10., 44., 44.));
-        self.game_buttons(Rect::new(0., 0., self.width, self.height));
-        if b(&self.model["settingsOpen"]) {
-            self.draw_settings(Rect::new(0., 0., self.width, self.height - 52.));
-        }
     }
     pub(super) fn draw_game(&mut self) {
         let mobile = self.width < 700. || b(&self.view["coarse"]);
@@ -349,13 +228,14 @@ impl BrowserUi {
         let mut rows = Vec::new();
         let mut total = 0.;
         for e in array(&self.model["entries"]) {
-            let text = format!(
-                "{}{}",
-                if e["source"] == "system" { "ⓘ " } else { "" },
-                s(&e["text"])
-            );
-            let height = self.wrap(&text, viewport.w - 8., 18.).len() as f64 * 30. + 8.;
-            rows.push((text, e.clone(), height, total));
+            if (self.width < 700. || b(&self.view["coarse"])) && b(&e["mobile_keyboard_hint"]) {
+                continue;
+            }
+            let mut runs = self.log_runs(e,self.width < 700. || b(&self.view["coarse"]));
+            if e["source"] == "system" { runs.insert(0,json!({"text":"ⓘ "})); }
+            let lines = self.log_lines(&runs,viewport.w-8.,18.);
+            let height = lines.len() as f64 * 30. + 8.;
+            rows.push((lines, e.clone(), height, total));
             total += height;
         }
         let max = (total - viewport.h).max(0.);
@@ -372,26 +252,21 @@ impl BrowserUi {
             },
         );
         self.widgets.begin_clip(viewport);
-        for (text, e, height, top) in rows {
+        for (lines, e, height, top) in rows {
             let y = viewport.y + top - self.scrolls["log"];
             if y + height < viewport.y || y > viewport.y + viewport.h {
                 continue;
             }
-            self.text(
-                &text,
-                viewport.x,
-                y,
-                viewport.w - 8.,
-                18.,
-                if b(&e["error"]) {
+            let color = if b(&e["error"]) {
                     ERROR
                 } else if e["source"] == "game" {
                     "#d6e6da"
                 } else {
                     "#9dcbe9"
-                },
-                false,
-            );
+                };
+            for (index,line) in lines.iter().enumerate() {
+                self.draw_log_line(line,viewport.x,y+index as f64*30.,18.,color);
+            }
         }
         self.widgets.end_clip();
         self.widgets.scrollbar(viewport, total, self.scrolls["log"]);
@@ -458,6 +333,29 @@ impl BrowserUi {
             );
         }
     }
+    fn after_use_naming_effects(&self, ui: &Value) -> Vec<Value> {
+        let id = s(&ui["window"]["message"]["id"]);
+        if ui["mode"] != "game" || self.model["input"]["kind"] != "text"
+            || !matches!(id, "misc.call_it.call_it" | "misc.call_it.what_do_you_want_to_call_it") {
+            return Vec::new();
+        }
+        let entries = array(&self.model["entries"]);
+        let Some(prompt) = entries.iter().rposition(|entry| entry["source"] == "game" && entry["id"] == id) else {
+            return Vec::new();
+        };
+        let mut effects = Vec::new();
+        for entry in entries[..prompt].iter().rev().filter(|entry| entry["source"] == "game") {
+            // The selection prompt marks this use; never include an earlier
+            // item's effect or infer a hidden identity from the consumed item.
+            if b(&entry["mobile_keyboard_hint"]) || s(&entry["id"]).starts_with("pack.get_item.")
+                || s(&entry["id"]).starts_with("misc.call_it.") {
+                break;
+            }
+            if !s(&entry["text"]).trim().is_empty() { effects.push(entry.clone()); }
+        }
+        effects.reverse();
+        effects
+    }
     pub(super) fn draw_dialog(&mut self, game: Rect) {
         self.widgets.controls.clear();
         self.widgets.rect(game, "#0006");
@@ -475,8 +373,21 @@ impl BrowserUi {
         let inner = w - 32.;
         let mut rows = Vec::new();
         let mut total = 0.;
+        let naming_effects = self.after_use_naming_effects(&ui);
+        if !naming_effects.is_empty() {
+            let label = self.t("naming.effect");
+            let height = self.wrap(&label, inner - 8., 17.).len() as f64 * 27. + 8.;
+            rows.push((label, json!({"naming_effect_label":true}), height, total, false));
+            total += height;
+            for entry in naming_effects {
+                let lines = self.log_lines(&self.log_runs(&entry, mobile), inner - 8., font);
+                let height = lines.len() as f64 * line_h + 16.;
+                rows.push((String::new(), json!({"naming_effect":entry}), height, total, false));
+                total += height;
+            }
+        }
         for source_line in array(&ui["lines"]) {
-            let line = self.inventory_item_row(source_line);
+            let line = self.inventory_item_row(source_line, mobile);
             if inventory_list && !self.inventory_row_visible(&line) { continue; }
             if mobile
                 && matches!(
@@ -536,15 +447,16 @@ impl BrowserUi {
             } else {
                 text
             };
-            let height = self
+            let height = if line["item_runs"].is_array() {
+                self.inventory_item_height(&line, inner - if b(&line["selectable"]) { 28. } else { 12. },font)
+            } else { self
                 .wrap(
                     &text,
-                    inner - if b(&line["selectable"]) { 28. } else { 12. }
-                        - if b(&line["equipped_icon"]) { 26. } else { 0. },
+                    inner - if b(&line["selectable"]) { 28. } else { 12. },
                     font,
                 )
                 .len() as f64
-                * line_h
+                * line_h }
                 + if b(&line["selectable"]) { 18. } else { 8. };
             rows.push((text, line.clone(), height, total, false));
             total += height;
@@ -645,25 +557,30 @@ impl BrowserUi {
         let y = game.y + 24_f64.min(8_f64.max((game.h - h) / 3.));
         let panel = Rect::new(x, y, w, h);
         self.widgets.box_rect(panel, PANEL, Some("#81978e"), 9.);
-        let history = inventory_list;
-        let title_width = if history {
-            (self.measure)(s(&d["title"]), 20., true, false).width
+        let item_history = b(&self.model["itemHistoryOpen"]) && !b(&ui["inventory"]);
+        let title = if item_history { self.t("inventory.history") } else { s(&d["title"]).to_string() };
+        let title_width = if inventory_list || item_history {
+            (self.measure)(&title, 20., true, false).width
         } else { inner - 56. };
         let title_height = 20.;
-        self.text(s(&d["title"]), x + 16., y + 15., title_width, title_height, TEXT, true);
-        if history {
-            let label = self.t("inventory.history");
+        let mut title_x = x + 16.;
+        if inventory_list || item_history {
+            let label = self.t(if item_history { "action.inventory" } else { "inventory.history" });
             let available = (inner - 56. - title_width - 8.).max(48.);
             let width = ((self.measure)(&label, 17., false, false).width + 16.).min(available);
+            let button_x = if item_history { title_x } else { title_x + title_width + 8. };
             self.control(
-                "inventory-history", &label,
-                Rect::new(x + 16. + title_width + 8., y + 15., width, title_height),
-                json!({"kind":"send","key":68}),
-                ControlStyle { custom: true, key: Some(json!(68)), ..Default::default() },
+                if item_history { "inventory-return" } else { "inventory-history" }, &label,
+                Rect::new(button_x, y + 15., width, title_height),
+                if item_history { json!({"kind":"invoke","id":"inventory-return"}) } else { json!({"kind":"send","key":68}) },
+                ControlStyle { custom: true, key: if item_history { None } else { Some(json!(68)) },
+                    disabled: b(&self.model["windowClosing"]), ..Default::default() },
             );
-            self.widgets.single_line(&label,Rect::new(x+16.+title_width+8.,y+15.,width,title_height),
+            self.widgets.single_line(&label,Rect::new(button_x,y+15.,width,title_height),
                 LineStyle { text:TextStyle::new(17.,TEXT,false),center:true,ellipsis:false },self.measure);
+            if item_history { title_x += width + 8.; }
         }
+        self.text(&title, title_x, y + 15., title_width, title_height, TEXT, true);
         self.control(
             close_id,
             &self.t("mobile.dialog.close"),
@@ -709,27 +626,38 @@ impl BrowserUi {
                 self.detection_map(Rect::new(viewport.x, ry, viewport.w, height));
                 continue;
             }
+            if line["naming_effect"].is_object() {
+                let lines = self.log_lines(&self.log_runs(&line["naming_effect"], mobile), viewport.w - 8., font);
+                for (index, value) in lines.iter().enumerate() {
+                    self.draw_log_line(value, viewport.x + 4., ry + 4. + index as f64 * line_h, font, ACCENT);
+                }
+                continue;
+            }
+            if b(&line["naming_effect_label"]) {
+                self.text(&text, viewport.x + 4., ry + 4., viewport.w - 12., 17., MUTED, true);
+                continue;
+            }
             let key = s(&line["key"]);
             if b(&line["selectable"]) && key.chars().count() == 1 {
                 let rect = Rect::new(viewport.x, ry, viewport.w - 8., height - 3.);
                 self.control(
                     &format!("item-{key}"),
-                    &if b(&line["equipped_icon"]) { format!("{} {text}",self.t("inventory.tab.equipped")) } else { text.clone() },
+                    &if !s(&line["equipped_slot"]).is_empty() { format!("{text} {}",s(&line["equipped_slot"])) } else { text.clone() },
                     rect,
                     json!({"kind":"send","key":key.chars().next().unwrap() as u32}),
                     ControlStyle {
                         left: true,
                         size: font,
-                        custom: b(&line["equipped_icon"]),
+                        custom: line["item_runs"].is_array(),
                         key: Some(json!(key)),
                         disabled: !b(&self.model["running"]) || b(&self.model["windowClosing"]),
                         ..Default::default()
                     },
                 );
-                if b(&line["equipped_icon"]) { self.draw_equipped_item(&text,rect,true,font); }
+                if line["item_runs"].is_array() { self.draw_inventory_item(&line,rect,true,font); }
             } else {
-                if b(&line["equipped_icon"]) {
-                    self.draw_equipped_item(&text,Rect::new(viewport.x,ry,viewport.w,height),false,font);
+                if line["item_runs"].is_array() {
+                    self.draw_inventory_item(&line,Rect::new(viewport.x,ry,viewport.w,height),false,font);
                     continue;
                 }
                 if line["scope"] == "options" && line["row"] == d["active_row"] {

@@ -65,7 +65,7 @@ fn field_visible(value: &Value, name: &str, original_branch: bool) -> bool {
             .unwrap_or(original_branch)
 }
 
-fn type_known(value: &Value) -> bool {
+pub(crate) fn type_known(value: &Value) -> bool {
     match (
         value.get("known").and_then(Value::as_bool),
         value.get("type_known").and_then(Value::as_bool),
@@ -213,6 +213,17 @@ fn render_item(value: &Value, language: &str) -> Option<String> {
     // o_count == 0. Neither original name branch uses it as a stack count.
     if count < 1 && !(count == 0 && matches!(category, "gold" | "amulet")) {
         return None;
+    }
+    if japanese(language) && boolean(value, "pickup") {
+        let mut single = value.clone();
+        single.as_object_mut()?.remove("pickup");
+        single["count"] = Value::from(1);
+        let name = render_item(&single, language)?;
+        return form(language,
+            if category == "weapon" && number(value, "which") == Some(3) {
+                "pickup_arrows"
+            } else { "quantity" },
+            &[("name", name), ("count", count.to_string())]);
     }
     let known = type_known(value);
     let identified = boolean(value, "identified");
@@ -585,5 +596,33 @@ pub fn render(value: &Value, language: &str) -> Option<String> {
             table_text(language, if hit { "hit" } else { "miss" }, index).map(str::to_owned)
         }
         _ => None,
+    }
+}
+
+
+#[cfg(test)]
+mod all_catalog {
+    use super::*;
+    #[test]
+    fn all_catalog_entity_names_and_forms() {
+        for language in ["ja","en"] {
+            for id in catalog(language)["entries"].as_object().unwrap().keys() {
+                let rendered=text(language,id).unwrap();
+                assert!(!rendered.contains('\u{fffd}'),"{language}:{id}");
+            }
+            for (id,template) in catalog(language)["forms"].as_object().unwrap() {
+                let mut args=Vec::new();let mut rest=template.as_str().unwrap();
+                while let Some(open)=rest.find('{') {
+                    rest=&rest[open+1..];let close=rest.find('}').unwrap();
+                    args.push((&rest[..close],"検証値7".into()));rest=&rest[close+1..];
+                }
+                let rendered=form(language,id,&args).unwrap();
+                assert!(!rendered.contains('{')&&!rendered.contains('}'),"{language}:{id}");
+                assert!(!rendered.contains('\u{fffd}'),"{language}:{id}");
+                if !args.is_empty(){assert!(form(language,id,&[]).is_none(),"Missing field must fail: {id}");}
+            }
+        }
+        assert!(text("ja","test.missing").is_none());
+        assert!(render(&serde_json::json!({"type":"test.missing"}),"ja").is_none());
     }
 }

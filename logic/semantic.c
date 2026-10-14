@@ -160,7 +160,7 @@ static void appearance_argument(struct writer *out,const char *kind,int index,co
     field_string(out,"text",text);append_raw(out,"}");
 }
 
-void rg_semantic_item(const char *text,const THING *object,int drop)
+static void semantic_item(const char *text,const THING *object,int drop,int picked_count)
 {
     char json[RG_SEMANTIC_JSON]; struct writer out;
     const struct obj_info *info=NULL;
@@ -199,9 +199,10 @@ void rg_semantic_item(const char *text,const THING *object,int drop)
     }
     init(&out,json,sizeof json);append_raw(&out,"{\"type\":\"item\",\"category\":");string(&out,category);
     formatted(&out,",\"category_code\":%d,\"count\":%d,\"known\":%s,\"type_known\":%s,\"identified\":%s,\"flags\":%u,\"which\":",
-        object->o_type,object->o_count,boolean(known),boolean(known),boolean(identified),(unsigned)(object->o_flags&ISKNOW));
+        object->o_type,picked_count > 0 ? picked_count : object->o_count,boolean(known),boolean(known),boolean(identified),(unsigned)(object->o_flags&ISKNOW));
     if(known) formatted(&out,"%d",which);else append_raw(&out,"null");
     formatted(&out,",\"describe\":%s,\"drop\":%s,\"brief\":false,\"terse\":%s",boolean(inv_describe),boolean(drop),boolean(terse));
+    if(picked_count > 0) append_raw(&out,",\"pickup\":true");
     field_string(&out,"equipped",equipment);
     formatted(&out,",\"visible_fields\":{\"hplus\":%s,\"dplus\":%s,\"ac\":%s,\"charges\":%s,\"ring_bonus\":%s}",
         boolean(show_weapon),boolean(show_weapon),boolean(show_armor),boolean(show_charges),boolean(show_bonus));
@@ -216,6 +217,15 @@ void rg_semantic_item(const char *text,const THING *object,int drop)
     if(object->o_type==FOOD && which==1) field_string(&out,"fruit",fruit);
     if(appearance_kind) {append_raw(&out,",\"appearance\":");appearance(&out,appearance_kind,index,appearance_text);}
     append_raw(&out,"}");if(out.valid) remember(text,json);
+}
+
+void rg_semantic_item(const char *text,const THING *object,int drop)
+{
+    semantic_item(text,object,drop,0);
+}
+void rg_semantic_pickup_item(const char *text,const THING *object,int drop,int picked_count)
+{
+    semantic_item(text,object,drop,picked_count);
 }
 
 void rg_semantic_monster(const char *text,int index,const char *display,int article,int upper,int hallucinated)

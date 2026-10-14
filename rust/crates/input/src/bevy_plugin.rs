@@ -2,8 +2,7 @@
 use crate::{Input, State};
 use bevy::prelude::*;
 use rogue_contract::{JournalPort, RogueSystems};
-use rogue_display::{DisplayState, GameWindowView, map::ObservedMap};
-use serde_json::{Value, json};
+use rogue_display::InputView;
 
 #[derive(Resource, Default)]
 pub struct InputPort {
@@ -27,51 +26,38 @@ impl Plugin for RogueInputPlugin {
 
 fn decode_input(
     mut state: ResMut<State>,
-    display: Res<DisplayState>,
-    window: Single<&GameWindowView>,
-    map: Single<&ObservedMap>,
+    view: Res<InputView>,
     mut port: ResMut<InputPort>,
 ) {
     let Some(raw) = port.raw.take() else {
         return;
     };
-    let mut ui = display
-        .presentation
-        .render(&display.language, &display.name);
-    ui["can_drop"] = json!(map.can_drop());
-    port.decoded = Some(state.decode(raw, &ui, !window.descriptor.is_null()));
+    port.decoded = Some(state.decode(raw, &view.ui, view.window_open));
 }
 
 fn update_accepted_input(
     mut state: ResMut<State>,
-    mut display: ResMut<DisplayState>,
     mut port: ResMut<JournalPort>,
 ) {
     let Some(key) = port.committed.take() else {
         return;
     };
-    if let Some(text) = state.accepted(key) {
-        display.presentation.input["current_text"] = Value::String(text);
-    }
+    state.accepted(key);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use rogue_display::RogueDisplayPlugin;
+    use serde_json::json;
     #[test]
     fn plugin_decodes_unicode_and_only_committed_bytes_update_the_editor() {
         let mut app = App::new();
         app.add_plugins((RogueDisplayPlugin, RogueInputPlugin));
-        app.world_mut().resource_mut::<DisplayState>().language = "ja".into();
-        app.world_mut()
-            .resource_mut::<DisplayState>()
-            .presentation
-            .input = json!({"kind":"text"});
+        app.world_mut().resource_mut::<InputView>().ui = json!({"input":{"kind":"text"}});
         {
             let mut state = app.world_mut().resource_mut::<State>();
-            state.text_mode = true;
-            state.text_limit = 4;
+            state.begin_text(4, "");
         }
         app.world_mut().resource_mut::<InputPort>().raw = Some('🗡' as u32);
         app.update();
@@ -79,15 +65,11 @@ mod tests {
             app.world_mut().resource_mut::<InputPort>().decoded.take(),
             Some(Input::Key(0xf0))
         );
-        assert!(app.world().resource::<State>().text_bytes.is_empty());
+        assert_eq!(app.world().resource::<State>().current_text(), Some(""));
         for byte in "🗡".as_bytes() {
             app.world_mut().resource_mut::<JournalPort>().committed = Some(i32::from(*byte));
             app.update();
         }
-        assert_eq!(app.world().resource::<State>().text_bytes, "🗡".as_bytes());
-        assert_eq!(
-            app.world().resource::<DisplayState>().presentation.input["current_text"],
-            "🗡"
-        );
+        assert_eq!(app.world().resource::<State>().current_text(), Some("🗡"));
     }
 }

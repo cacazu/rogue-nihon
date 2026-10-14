@@ -1,15 +1,16 @@
-import { createRequire } from "node:module";
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import path from "node:path";
 
-const require = createRequire(import.meta.url);
-
-// Optional browser driver only: the regression scenarios and game assertions stay unchanged.
+// Shared Playwright driver for the original CDP regression scenarios.
 export async function createPlaywrightCdp({ executable, profile }) {
-  const modulePath = require.resolve(process.env.ROGUE_PLAYWRIGHT_MODULE);
-  const { chromium } = require(modulePath);
+  const {chromium, modulePath} = loadPlaywright();
+  executable ||= browserExecutable();
   const args = ["--disable-gpu", "--no-first-run", "--no-default-browser-check", "--disable-background-networking", "--disable-component-update"];
-  process.env.TEMP = profile;
-  process.env.TMP = profile;
+  const previous = new Map(['TEMP', 'TMP', 'TMPDIR'].map(name => [name, process.env[name]]));
+  for (const name of previous.keys()) process.env[name] = profile;
+  const restore = () => {for (const [name, value] of previous) {
+    if (value === undefined) delete process.env[name]; else process.env[name] = value;
+  }};
   let context;
   try {
   context = await chromium.launchPersistentContext(profile, { executablePath: executable, headless: true, args, downloadsPath: path.join(profile, "downloads") });
@@ -33,10 +34,11 @@ export async function createPlaywrightCdp({ executable, profile }) {
       if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));
       return result.result.value;
     },
-    async close() { await context.close(); }
+    async close() { try {await context.close();} finally {restore();} }
   };
   } catch (error) {
     try { await context?.close(); } catch (closeError) { error.cause ??= closeError; }
+    restore();
     throw error;
   }
 }

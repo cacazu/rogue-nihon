@@ -1,7 +1,7 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from "node:assert/strict";
-import { createRequire } from "node:module";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
@@ -11,11 +11,11 @@ import { runGame } from "../run-game.mjs";
 
 const target = process.argv[2] || process.env.ROGUE_LAN_URL;
 if (!target || new URL(target).protocol !== "https:") throw new Error("Pass the running LAN HTTPS URL");
-const { chromium } = createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE || path.join(os.homedir(), ".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"));
+const {chromium} = loadPlaywright();
 const output = artifactDirectory(fileURLToPath(new URL("./output/lan/", import.meta.url)));
 await mkdir(output, { recursive: true });
 const evidence = { url: target, started_at: new Date().toISOString(), certificate: "Local certificate; browser warning accepted for this test", checks: [], errors: [], screenshots: [] };
-const browser = await chromium.launch({ executablePath: process.env.ROGUE_CHROME || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", headless: true });
+const browser = await chromium.launch({ executablePath: browserExecutable(), headless: true });
 let page;
 try {
   const context = await browser.newContext({ ignoreHTTPSErrors: true, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
@@ -55,7 +55,7 @@ try {
     await shot("top-mobile");
   });
   await check("LAN server serves game resources but denies private keys and source configuration", async () => {
-    for (const resource of ["/.local/lan/192.168.11.4-key.pem", "/.gitignore", "/start.ps1", "/rust/Cargo.toml", "/web/%2e%2e/.local/lan/192.168.11.4-key.pem"]) {
+    for (const resource of ["/.local/lan/192.168.11.4-key.pem", "/.gitignore", "/tools/build.py", "/rust/Cargo.toml", "/web/%2e%2e/.local/lan/192.168.11.4-key.pem"]) {
       const denied = await context.request.get(new URL(resource, target).href);
       assert.equal(denied.status(), 403, resource);
       assert.ok(!(await denied.text()).includes("PRIVATE KEY"));

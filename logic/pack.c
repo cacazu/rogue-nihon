@@ -30,6 +30,9 @@ add_pack(THING *obj, bool silent)
 {
     THING *op, *lp;
     bool from_floor;
+#ifdef ROGUE_LAYERED
+    int picked_count;
+#endif
 
     from_floor = FALSE;
     if (obj == NULL)
@@ -38,6 +41,11 @@ add_pack(THING *obj, bool silent)
 	    return;
 	from_floor = TRUE;
     }
+#ifdef ROGUE_LAYERED
+    /* Retain the incoming quantity before stacking replaces obj with the pack
+     * entry and discards the floor object. This affects message metadata only. */
+    picked_count = obj->o_count > 0 ? obj->o_count : 1;
+#endif
 
     /*
      * Check for and deal with scare monster scrolls
@@ -154,9 +162,13 @@ out:
      */
     if (!silent)
     {
+        const char *picked_name = inv_name(obj, !terse);
+#ifdef ROGUE_LAYERED
+        rg_semantic_pickup_item(picked_name, obj, !terse, picked_count);
+#endif
 	if (!terse)
 	    addmsg("you now have ");
-	msg("%s (%c)", inv_name(obj, !terse), obj->o_packch);
+        msg("%s (%c)", picked_name, obj->o_packch);
     }
 }
 

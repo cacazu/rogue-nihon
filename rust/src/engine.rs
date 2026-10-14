@@ -36,6 +36,12 @@ impl Default for Runtime {
                 Update,
                 sync_display_state.before(RogueSystems::Presentation),
             )
+            .add_systems(
+                Update,
+                sync_editor_display
+                    .after(RogueSystems::AcceptedInput)
+                    .before(RogueSystems::Frame),
+            )
             .edit_schedule(Update, |schedule| {
                 schedule.set_executor(SingleThreadedExecutor::new());
             });
@@ -191,7 +197,7 @@ pub(crate) fn save_bytes() -> Result<Vec<u8>, String> {
         let world = runtime.app.world_mut();
         let mut presentation = world
             .resource::<PlatformSession>()
-            .checkpoint_presentation
+            .checkpoint_presentation()
             .clone();
         world
             .resource::<InputState>()
@@ -217,6 +223,18 @@ fn sync_display_state(
     input: Res<InputState>,
     mut display: ResMut<DisplayState>,
 ) {
-    display.name.clone_from(&platform.name);
+    display.name = platform.name().into();
     display.inventory = input.inventory.view();
+    project_editor(&input, &mut display);
+}
+
+// Input owns the consumed editor bytes; integration only projects its public view.
+fn project_editor(input: &InputState, display: &mut DisplayState) {
+    if let Some(text) = input.current_text() {
+        display.presentation.input["current_text"] = Value::String(text.into());
+    }
+}
+
+fn sync_editor_display(input: Res<InputState>, mut display: ResMut<DisplayState>) {
+    project_editor(&input, &mut display);
 }

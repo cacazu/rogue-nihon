@@ -1,7 +1,7 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
 import assert from 'node:assert/strict';
-import {createRequire} from 'node:module';
 import {readFile,writeFile,mkdir,access} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
@@ -10,7 +10,7 @@ import {createHash} from 'node:crypto';
 import {createPreviewServer} from '../../../tools/server.mjs';
 import {runGame} from '../run-game.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
-const {chromium}=createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE||path.join(os.homedir(),'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'));
+const {chromium} = loadPlaywright();
 const brave=(process.env.ROGUE_CHROME||'').toLowerCase().includes('brave'),mobile=process.env.ROGUE_INVENTORY_MOBILE==='1',output=artifactDirectory(path.join(root,'tests/browser-smoke/output/inventory-actions',(brave?'brave':'chrome')+(mobile?'-mobile':'')));
 await mkdir(output,{recursive:true});
 const server=createPreviewServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));
@@ -69,7 +69,7 @@ async function reference(text,label='',module=referenceBaseline){
 async function shot(name){await page.screenshot({path:path.join(output,name+'.png')});evidence.screenshots.push(name+'.png');}
 async function menu(item,command,after=''){await select(item);await action(command.charCodeAt(0));if(after)await chars(after);await idle();}
 try{
- browser=await chromium.launch({executablePath:process.env.ROGUE_CHROME||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',headless:true,args:['--disable-gpu']});
+ browser=await chromium.launch({executablePath:browserExecutable(),headless:true,args:['--disable-gpu']});
  await check('Mobile touch: item menus/details/back preserve map, log, C journal, turn and RNG; hidden knowledge stays hidden',async()=>{
   await open({width:390,height:844,scale:2});await press('i');const before=await state();await shot('inventory-mobile');
   for(const item of ['a','b','c','d','e','f','g','h','i','j','k','l','m']){

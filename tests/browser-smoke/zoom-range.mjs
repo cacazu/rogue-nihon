@@ -1,5 +1,5 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import assert from "node:assert/strict";
-import {createRequire} from "node:module";
 import {mkdir, writeFile} from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
@@ -12,7 +12,7 @@ import {installBrowserTestAdapter} from "./test-adapter.mjs";
 const root=fileURLToPath(new URL("../../",import.meta.url));
 const output=artifactDirectory(path.join(root,"tests/browser-smoke/output/zoom-range"));
 await mkdir(output,{recursive:true});
-const {chromium}=createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE||path.join(os.homedir(),".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"));
+const {chromium} = loadPlaywright();
 const server=createPreviewServer();await new Promise(r=>server.listen(0,"127.0.0.1",r));
 const base="http://127.0.0.1:"+server.address().port+"/";
 const evidence={checks:[],screenshots:[],errors:[],started_at:new Date().toISOString()};
@@ -38,7 +38,7 @@ async function wheel(delta,deltaMode=0){
 }
 const snapshot=async()=>{const s=await scene();return {size:s.camera.size,cell_h:s.camera.cellH,columns:s.mapRect?.w/s.camera.size,rows:s.mapRect?.h/s.camera.cellH};};
 try{
-  runtime=await prepareBrowserRuntime(root);browser=await chromium.launch({executablePath:process.env.ROGUE_CHROME||"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",headless:true,args:["--disable-gpu"],downloadsPath:runtime.downloadsPath});
+  runtime=await prepareBrowserRuntime(root);browser=await chromium.launch({executablePath:browserExecutable(),headless:true,args:["--disable-gpu"],downloadsPath:runtime.downloadsPath});
   evidence.zooms=[];
   for(const viewport of [{width:390,height:844},{width:844,height:390},{width:1200,height:800}])for(const mode of ["tiles","pixels","ascii"]){
     const mobile=viewport.width!==1200;

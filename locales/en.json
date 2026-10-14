@@ -874,163 +874,163 @@
     },
     "pack.add_pack.string_character": {
       "template": "%s (%c)",
-      "source": "pack.c:159",
+      "source": "pack.c:171",
       "function": "add_pack",
       "note": "original English printf format"
     },
     "pack.add_pack.the_scroll_turns_to_dust_as_you_pick_it_up": {
       "template": "the scroll turns to dust as you pick it up",
-      "source": "pack.c:52",
+      "source": "pack.c:60",
       "function": "add_pack",
       "note": "original English printf format"
     },
     "pack.add_pack.you_now_have": {
       "template": "you now have ",
-      "source": "pack.c:158",
+      "source": "pack.c:170",
       "function": "add_pack",
       "note": "original English printf format"
     },
     "pack.get_item.for_list": {
       "template": "? (* for list): ",
-      "source": "pack.c:487",
+      "source": "pack.c:499",
       "function": "get_item",
       "note": "original English printf format"
     },
     "pack.get_item.is_not_a_valid_item": {
       "template": "'%s' is not a valid item",
-      "source": "pack.c:521",
+      "source": "pack.c:533",
       "function": "get_item",
       "note": "original English printf format"
     },
     "pack.get_item.what": {
       "template": " what",
-      "source": "pack.c:486",
+      "source": "pack.c:498",
       "function": "get_item",
       "note": "original English printf format"
     },
     "pack.get_item.which_object_do_you_want_to": {
       "template": "which object do you want to ",
-      "source": "pack.c:483",
+      "source": "pack.c:495",
       "function": "get_item",
       "note": "original English printf format"
     },
     "pack.get_item.you_arent_carrying_anything": {
       "template": "you aren't carrying anything",
-      "source": "pack.c:466",
+      "source": "pack.c:478",
       "function": "get_item",
       "note": "original English printf format"
     },
     "pack.get_item.you_ran_out": {
       "template": "you ran out",
-      "source": "pack.c:471",
+      "source": "pack.c:483",
       "function": "get_item",
       "note": "original English printf format"
     },
     "pack.inventory.empty_handed": {
       "template": "empty handed",
-      "source": "pack.c:300",
+      "source": "pack.c:312",
       "function": "inventory",
       "note": "original English printf format"
     },
     "pack.inventory.nothing_appropriate": {
       "template": "nothing appropriate",
-      "source": "pack.c:300",
+      "source": "pack.c:312",
       "function": "inventory",
       "note": "original English printf format"
     },
     "pack.inventory.you_are_empty_handed": {
       "template": "you are empty handed",
-      "source": "pack.c:303",
+      "source": "pack.c:315",
       "function": "inventory",
       "note": "original English printf format"
     },
     "pack.inventory.you_dont_have_anything_appropriate": {
       "template": "you don't have anything appropriate",
-      "source": "pack.c:303",
+      "source": "pack.c:315",
       "function": "inventory",
       "note": "original English printf format"
     },
     "pack.money.gold_pieces": {
       "template": "%d gold pieces",
-      "source": "pack.c:546",
+      "source": "pack.c:558",
       "function": "money",
       "note": "original English printf format"
     },
     "pack.money.you_found": {
       "template": "you found ",
-      "source": "pack.c:545",
+      "source": "pack.c:557",
       "function": "money",
       "note": "original English printf format"
     },
     "pack.move_msg.moved_onto": {
       "template": "moved onto %s",
-      "source": "pack.c:365",
+      "source": "pack.c:377",
       "function": "move_msg",
       "note": "original English printf format"
     },
     "pack.move_msg.you": {
       "template": "you ",
-      "source": "pack.c:364",
+      "source": "pack.c:376",
       "function": "move_msg",
       "note": "original English printf format"
     },
     "pack.pack_room.in_your_pack": {
       "template": " in your pack",
-      "source": "pack.c:177",
+      "source": "pack.c:189",
       "function": "pack_room",
       "note": "original English printf format"
     },
     "pack.pack_room.no_room": {
       "template": "no room",
-      "source": "pack.c:175",
+      "source": "pack.c:187",
       "function": "pack_room",
       "note": "original English printf format"
     },
     "pack.pack_room.theres": {
       "template": "there's ",
-      "source": "pack.c:174",
+      "source": "pack.c:186",
       "function": "pack_room",
       "note": "original English printf format"
     },
     "pack.pick_up.where_did_you_pick_a_up": {
       "template": "Where did you pick a '%s' up???",
-      "source": "pack.c:340",
+      "source": "pack.c:352",
       "function": "pick_up",
       "note": "original English printf format"
     },
     "pack.picky_inven.a": {
       "template": "a) %s",
-      "source": "pack.c:413",
+      "source": "pack.c:425",
       "function": "picky_inven",
       "note": "original English printf format"
     },
     "pack.picky_inven.character_string": {
       "template": "%c) %s",
-      "source": "pack.c:435",
+      "source": "pack.c:447",
       "function": "picky_inven",
       "note": "original English printf format"
     },
     "pack.picky_inven.item": {
       "template": "item: ",
-      "source": "pack.c:416",
+      "source": "pack.c:428",
       "function": "picky_inven",
       "note": "original English printf format"
     },
     "pack.picky_inven.not_in_pack": {
       "template": "'%s' not in pack",
-      "source": "pack.c:438",
+      "source": "pack.c:450",
       "function": "picky_inven",
       "note": "original English printf format"
     },
     "pack.picky_inven.which_item_do_you_wish_to_inventory": {
       "template": "which item do you wish to inventory: ",
-      "source": "pack.c:416",
+      "source": "pack.c:428",
       "function": "picky_inven",
       "note": "original English printf format"
     },
     "pack.picky_inven.you_arent_carrying_anything": {
       "template": "you aren't carrying anything",
-      "source": "pack.c:411",
+      "source": "pack.c:423",
       "function": "picky_inven",
       "note": "original English printf format"
     },
@@ -1651,6 +1651,13 @@
       "source": "wizard.c:62",
       "function": "whatis",
       "note": "original English printf format"
+    },
+    "wizard.whatis.you_must_identify_something": {
+      "template": "you must identify something",
+      "source": "wizard.c:44",
+      "function": "whatis",
+      "compatibility_only": true,
+      "compatibility_reason": "Previous saved message ID; no current C call site."
     }
   }
 }

@@ -12,4 +12,6 @@ pub mod presentation;
 pub mod widgets;
 
 mod bevy_plugin;
-pub use bevy_plugin::{DisplayState, FramePort, GameWindowView, RogueDisplayPlugin, ViewPort};
+pub use bevy_plugin::{
+    DisplayState, FramePort, GameWindowView, InputView, RogueDisplayPlugin, ViewPort,
+};

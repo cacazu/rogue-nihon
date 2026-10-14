@@ -2305,6 +2305,7 @@
     "called": "{name} called {label}",
     "details": "{name} ({details})",
     "quantity": "{count} {name}",
+    "pickup_arrows": "{count} {name}",
     "weapon_bonus": "{name} (hit {hit} damage {damage})",
     "armor_bonus": "{name} (enchantment {bonus} protection {protection})",
     "armor_bonus_brief": "{name} (enchantment {bonus} protection {protection})",

@@ -19,18 +19,17 @@ test("shipped browser modules exclude the local server, tests and artifact manag
     }
   }
   assert.doesNotMatch(await text("web/index.html"), /tests\/|tools\/|fixture|artifact/i);
-  assert.doesNotMatch(await text("start.ps1"), /tests[\\/]|artifact|recover/i);
-  assert.doesNotMatch(await text("start.ps1"), /web[\\/]server\.mjs/);
   const previewSource = await readFile(new URL("../../tools/server.mjs", import.meta.url), "utf8");
   assert.doesNotMatch(previewSource, /tests[\\/]|recoverTemporaryArtifacts|artifact-registry|temporary.artifacts/);
+  assert.doesNotMatch(previewSource, /test-adapter|__rogueBrowserTest/);
+  assert.doesNotMatch(previewSource, /web[\\/]server\.mjs/);
 });
 
 test("production compiler entry points do not register or recover interrupted runs", async () => {
-  for (const file of ["build.ps1", "build-ui.ps1", "tools/temporary-artifacts.ps1",
-    "generate-abi.ps1", "tools/generate_catalog.py", "tools/generate_game_ui.py", "tools/generate_entities.py"]) {
+  for (const file of ["tools/build.py", "tools/compiler_workspace.py", "tools/compiler-workspace.mjs", "tools/generate_catalog.py", "tools/generate_game_ui.py", "tools/generate_entities.py"]) {
     assert.doesNotMatch(await text(file), /artifact-registry|artifact-processes|recoverTemporaryArtifacts|Invoke-RogueRecovery/, file);
   }
-  assert.match(await text("build.ps1"), /\$OutputName -eq 'game' -and \(\$TestFixtures -or \$TestHooks -or \$LogicDirectory\)/);
+  assert.match(await text("tools/build.py"), /options.output_name == 'game' and \(hooks or options.logic_directory\)/);
 });
 
 test("published Wasm and loader exclude regression exports and fixture code", async () => {
@@ -56,29 +55,25 @@ test("explicit regression builds retain the hooks without modifying the publishe
   for (const name of ["rg_test_repaint", "rg_test_save_roundtrip"]) assert.ok(exports.includes(name), name);
 });
 
-test("compiler workspace lifecycle works without any recovery registry or process-query tools", {skip: process.platform !== "win32"}, async () => {
-  const parent = await realpath(path.join(root, ".local"));
-  const project = await mkdtemp(path.join(parent, "production-compile-"));
+test("compiler workspace lifecycle works without recovery registry or process-query tools", async () => {
+  const parent=await realpath(path.join(root,'.local'));
+  const project=await mkdtemp(path.join(parent,'production-compile-'));
   try {
-    await mkdir(path.join(project, "tools"));
-    const helper = path.join(project, "tools/temporary-artifacts.ps1");
-    await copyFile(path.join(root, "tools/temporary-artifacts.ps1"), helper);
-    const script = `. '${helper.replaceAll("'", "''")}';
-      Remove-Item Env:CARGO_TARGET_DIR -ErrorAction SilentlyContinue;
-      $scope=New-RogueArtifactScope -ProjectPath '${project.replaceAll("'", "''")}';
-      $owned=$scope.Path;
-      try {Set-Content -LiteralPath (Join-Path $owned 'partial.wasm') -Value 'partial'}
-      finally {Close-RogueArtifactScope $scope};
-      if ((Test-Path -LiteralPath $owned) -or $null -ne $env:CARGO_TARGET_DIR) {throw 'Incomplete compiler workspace cleanup'};
-      Write-Output 'PASS'`;
-    const run = spawnSync("pwsh", ["-NoProfile", "-Command", script],
-      {encoding: "utf8", windowsHide: true, env: {...process.env, ROGUE_KEEP_ARTIFACTS: "0", ROGUE_ARTIFACT_SCOPE: ""}});
-    assert.equal(run.status, 0, run.stderr + run.stdout);
-    assert.equal(run.stdout.trim(), "PASS");
+    await mkdir(path.join(project,'tools'));
+    const helper=path.join(project,'tools/compiler-workspace.mjs');
+    await copyFile(path.join(root,'tools/compiler-workspace.mjs'),helper);
+    const {pathToFileURL}=await import('node:url');
+    const script=`import {compilerWorkspace} from ${JSON.stringify(pathToFileURL(helper).href)};
+      import {existsSync,writeFileSync} from 'node:fs';import path from 'node:path';
+      delete process.env.CARGO_TARGET_DIR;
+      const scope=compilerWorkspace(${JSON.stringify(project)});const owned=scope.directory;
+      try{writeFileSync(path.join(owned,'partial.wasm'),'partial');}finally{scope.close();}
+      if(existsSync(owned)||process.env.CARGO_TARGET_DIR!==undefined)throw Error('Incomplete compiler cleanup');
+      console.log('PASS');`;
+    const run=spawnSync(process.execPath,['--input-type=module','-e',script],{encoding:'utf8',windowsHide:true,env:{...process.env,ROGUE_KEEP_ARTIFACTS:'0',ROGUE_ARTIFACT_SCOPE:''}});
+    assert.equal(run.status,0,run.stderr+run.stdout);assert.equal(run.stdout.trim(),'PASS');
   } finally {
-    assert.equal(await realpath(project), project);
-    assert.equal(path.dirname(project), parent);
-    assert.ok(path.basename(project).startsWith("production-compile-"));
-    await rm(project, {recursive: true, force: true});
+    assert.equal(await realpath(project),project);assert.equal(path.dirname(project),parent);
+    assert.ok(path.basename(project).startsWith('production-compile-'));await rm(project,{recursive:true,force:true});
   }
 });

@@ -117,82 +117,59 @@ impl BrowserUi {
 
     pub(super) fn draw_mobile(&mut self) {
         let game = Rect::new(0., 0., self.width, self.height);
-        if b(&self.model["topOpen"]) {
-            self.draw_mobile_top();
-        } else {
-            let dock = self.mobile_controls
-                && b(&self.model["running"])
-                && !self.model["frame"]["ui"]["window"].is_object();
-            let dock_height = if dock { 184. } else { 0. };
-            let map = Rect::new(
-                0.,
-                0.,
-                self.width,
-                (self.height - 64. - dock_height).max(1.),
-            );
-            self.map_rect = Some(map);
-            self.regions
-                .insert("map".into(), Region { rect: map, max: 0. });
-            self.widgets.rect(map, MAP);
-            if self.model["frame"].is_object() {
-                self.draw_map(map);
-                self.draw_mobile_status(Rect::new(0., 8., self.width - 64., 48.));
-                if !self.model["frame"]["ui"]["window"].is_object()
-                    && !b(&self.model["settingsOpen"])
-                {
-                    self.mobile_message(map.y + map.h);
-                }
-            }
-            if self.model["frame"]["ui"]["window"].is_object() && !b(&self.model["settingsOpen"]) {
-                // Same window renderer, rows, actions and input as the desktop UI.
-                self.draw_dialog(game);
-            }
-            if dock && !b(&self.model["settingsOpen"]) {
-                self.mobile_dock(self.height - dock_height);
-            }
-            if !self.model["frame"].is_object() {
-                self.text(
-                    &self.t("notice.loading"),
-                    24.,
-                    (self.height / 2. - 24.).max(80.),
-                    self.width - 48.,
-                    FONT,
-                    MUTED,
-                    false,
-                );
+        let dock = self.mobile_controls
+            && b(&self.model["running"])
+            && !self.model["frame"]["ui"]["window"].is_object();
+        let dock_height = if dock { 184. } else { 0. };
+        let map = Rect::new(
+            0.,
+            0.,
+            self.width,
+            (self.height - 64. - dock_height).max(1.),
+        );
+        self.map_rect = Some(map);
+        self.regions
+            .insert("map".into(), Region { rect: map, max: 0. });
+        self.widgets.rect(map, MAP);
+        if self.model["frame"].is_object() {
+            self.draw_map(map);
+            self.draw_mobile_status(Rect::new(0., 8., self.width - 64., 48.));
+            if !self.model["frame"]["ui"]["window"].is_object()
+                && !b(&self.model["settingsOpen"])
+            {
+                self.mobile_message(map.y + map.h);
             }
         }
-        if b(&self.model["topOpen"]) {
-            let fullscreen = b(&self.view["fullscreen"]);
-            self.top_language_control(Rect::new(self.width - 56., 8., TARGET, TARGET));
-            self.button(
-                "header-fullscreen",
-                &self.t(if fullscreen {
-                    "action.exit_fullscreen"
-                } else {
-                    "action.fullscreen"
-                }),
-                Rect::new(self.width - 56., 8., TARGET, TARGET),
-                ControlStyle {
-                    icon: Some(if fullscreen { "collapse" } else { "expand" }),
-                    icon_size: 24.,
-                    ..Default::default()
-                },
-            );
-        } else {
-            self.button(
-                "settings-toggle",
-                &self.t("action.settings"),
-                Rect::new(self.width - 56., 8., TARGET, TARGET),
-                ControlStyle {
-                    icon: Some("settings"),
-                    icon_size: 22.,
-                    ..Default::default()
-                },
-            );
-            self.widgets
-                .icon("expand", Rect::new(self.width - 52., 12., 40., 40.), TEXT);
+        if self.model["frame"]["ui"]["window"].is_object() && !b(&self.model["settingsOpen"]) {
+            // Same window renderer, rows, actions and input as the desktop UI.
+            self.draw_dialog(game);
         }
+        if dock && !b(&self.model["settingsOpen"]) {
+            self.mobile_dock(self.height - dock_height);
+        }
+        if !self.model["frame"].is_object() {
+            self.text(
+                &self.t("notice.loading"),
+                24.,
+                (self.height / 2. - 24.).max(80.),
+                self.width - 48.,
+                FONT,
+                MUTED,
+                false,
+            );
+        }
+        self.button(
+            "settings-toggle",
+            &self.t("action.settings"),
+            Rect::new(self.width - 56., 8., TARGET, TARGET),
+            ControlStyle {
+                icon: Some("settings"),
+                icon_size: 22.,
+                ..Default::default()
+            },
+        );
+        self.widgets
+            .icon("expand", Rect::new(self.width - 52., 12., 40., 40.), TEXT);
         if self.mobile_operations && !b(&self.model["settingsOpen"]) {
             self.mobile_operations_sheet(game);
         }
@@ -209,10 +186,10 @@ impl BrowserUi {
         for entry in array(&self.model["entries"])
             .iter()
             .rev()
-            .filter(|e| e["source"] == "game" && !s(&e["text"]).trim().is_empty())
+            .filter(|e| e["source"] == "game" && !b(&e["mobile_keyboard_hint"]) && !s(&e["text"]).trim().is_empty())
         {
-            for line in self.wrap(s(&entry["text"]), width, FONT).into_iter().rev() {
-                if !line.trim().is_empty() {
+            for line in self.log_lines(&self.log_runs(entry,true),width,FONT).into_iter().rev() {
+                if !line.is_empty() {
                     lines.push(line);
                 }
                 if lines.len() == 2 {
@@ -225,20 +202,11 @@ impl BrowserUi {
         }
         lines.reverse();
         if lines.is_empty() {
-            lines = self.wrap(&self.t("mobile.message_history"), width, FONT);
+            lines = self.log_lines(&[json!({"text":self.t("mobile.message_history")})],width,FONT);
             lines.truncate(2);
         }
         for (i, line) in lines.iter().enumerate() {
-            self.widgets.single_line(
-                line,
-                Rect::new(12., y + 6. + i as f64 * 26., width, 26.),
-                LineStyle {
-                    text: TextStyle::new(FONT, ACCENT, false),
-                    center: false,
-                    ellipsis: true,
-                },
-                self.measure,
-            );
+            self.draw_log_line(line,12.,y+6.+i as f64*26.,FONT,ACCENT);
         }
     }
 

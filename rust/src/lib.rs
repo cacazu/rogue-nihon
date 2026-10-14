@@ -26,6 +26,44 @@ unsafe extern "C" {
     fn js_rg_outcome(code: i32, text: *const u8, length: u32);
 }
 
+/// Owns a C serializer allocation. All exits use its matching C deallocator.
+struct CoreSaveBuffer {
+    pointer: *mut u8,
+    length: u32,
+}
+impl CoreSaveBuffer {
+    fn capture() -> Result<Self, String> {
+        let mut buffer = Self {
+            pointer: std::ptr::null_mut(),
+            length: 0,
+        };
+        // SAFETY: C writes the allocation and length; no runtime borrow is held.
+        let result = unsafe { rg_core_save_bytes(&mut buffer.pointer, &mut buffer.length) };
+        if result != 0
+            || buffer.pointer.is_null()
+            || buffer.length == 0
+            || buffer.length as usize > platform::MAX_CHECKPOINT
+        {
+            return Err(format!("checkpoint capture failed ({result})"));
+        }
+        Ok(buffer)
+    }
+    fn bytes(&self) -> &[u8] {
+        // SAFETY: capture validated the serializer result and bounded its length;
+        // the C allocation remains owned by self until Drop.
+        unsafe { std::slice::from_raw_parts(self.pointer, self.length as usize) }
+    }
+}
+impl Drop for CoreSaveBuffer {
+    fn drop(&mut self) {
+        if !self.pointer.is_null() {
+            // SAFETY: C owns any non-null output even on failure. This is its
+            // matching deallocator, called exactly once by the sole owner.
+            unsafe { rg_core_save_free(self.pointer) };
+        }
+    }
+}
+
 fn emit(value: &Value) {
     if let Ok(bytes) = serde_json::to_vec(value)
         && let Ok(length) = u32::try_from(bytes.len())
@@ -100,25 +138,15 @@ pub unsafe extern "C" fn rg_host_text_mode(enabled: i32, limit: u32, initial: *c
             .into_owned()
     };
     engine::with_session_mut(|session| {
-        if enabled == 0 && session.input.text_is_name {
-            session.input.name_edit_changed = !session.input.text_bytes.is_empty();
-        }
-        session.input.text_mode = enabled != 0;
-        session.input.text_limit = (limit as usize).min(50);
-        session.input.text_bytes.clear();
-        session.input.text_pending.clear();
         if enabled != 0 {
-            session.input.text_is_name = enabled == 2;
-            if session.input.text_is_name {
-                session.input.name_edit_changed = false;
-            }
             let initial = if enabled == 2 {
-                session.name.clone()
+                session.platform.name().to_owned()
             } else if enabled == 3 && initial == "slime-mold" {
                 String::new()
             } else {
                 initial
             };
+            session.input.begin_text(limit as usize, &initial);
             let row = session
                 .display
                 .presentation
@@ -127,7 +155,7 @@ pub unsafe extern "C" fn rg_host_text_mode(enabled: i32, limit: u32, initial: *c
                 .rev()
                 .find(|line| line["scope"] == "options")
                 .map(|line| line["row"].clone());
-            session.display.presentation.input = json!({"kind":"text","limit_bytes":session.input.text_limit,
+            session.display.presentation.input = json!({"kind":"text","limit_bytes":session.input.text_limit(),
                 "initial":initial,"current_text":initial,"row":row});
             if enabled == 3 && initial.is_empty() {
                 session.display.presentation.input["placeholder"] = Value::String(
@@ -141,6 +169,7 @@ pub unsafe extern "C" fn rg_host_text_mode(enabled: i32, limit: u32, initial: *c
                 );
             }
         } else {
+            session.input.end_text();
             session.display.presentation.input = json!({"kind":"command"});
         }
     });
@@ -148,7 +177,7 @@ pub unsafe extern "C" fn rg_host_text_mode(enabled: i32, limit: u32, initial: *c
 }
 
 /// # Safety
-/// `name` is a live NUL-terminated UTF-8 string from C's completed name editor.
+/// `name` is a live NUL-terminated UTF-8 string from C's changed name editor.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn rg_host_player_name(name: *const c_char) {
     if name.is_null() {
@@ -159,13 +188,9 @@ pub unsafe extern "C" fn rg_host_player_name(name: *const c_char) {
         && name.len() <= 50
         && !name.chars().any(char::is_control)
     {
-        engine::with_session_mut(|session| {
-            // An empty Enter keeps the original name in C. Preserve the real
-            // identity too when that C name is only the initial ASCII alias.
-            if session.input.name_edit_changed {
-                session.name = name.into();
-            }
-        });
+        // C owns whether get_str actually changed the option, including its
+        // empty edit, previous-option '-' and home-expansion '~' semantics.
+        engine::with_session_mut(|session| session.platform.set_player_name(name.into()));
     }
 }
 
@@ -200,10 +225,10 @@ fn words() -> [u32; RG_SNAPSHOT_WORDS as usize] {
 }
 
 fn trace() {
-    let enabled = engine::with_session(|session| session.trace_enabled);
+    let enabled = engine::with_session(|session| session.platform.trace_enabled());
     if enabled {
         let snapshot = words();
-        let input_index = engine::with_session(|session| session.input_index);
+        let input_index = engine::with_session(|session| session.platform.input_index());
         emit(&json!({"type":"trace","words":snapshot,"input_index":input_index}));
     }
 }
@@ -243,58 +268,44 @@ pub unsafe extern "C" fn rg_run(seed: u32, name: *const c_char) -> i32 {
         return -2;
     }
     let mut session = Session {
-        platform: platform::Session {
-            seed,
-            name,
-            ..platform::Session::default()
-        },
+        platform: platform::Session::new(seed, name),
         display: rogue_display::DisplayState {
             language: language.into(),
             ..Default::default()
         },
         ..Session::default()
     };
-    session.trace_enabled = std::fs::metadata("/trace.enabled").is_ok();
+    let trace_enabled = std::fs::metadata("/trace.enabled").is_ok();
+    session.platform.set_trace_enabled(trace_enabled);
     if std::fs::read_to_string("/message-paging.txt")
         .ok()
         .is_some_and(|text| text.trim() == "log")
     {
-        session.message_paging = platform::MessagePaging::Log;
+        session
+            .platform
+            .set_message_paging(platform::MessagePaging::Log);
     }
     match std::fs::read("/restore.json") {
-        Ok(bytes) => match platform::Envelope::parse(&bytes) {
-            Ok(mut saved) => match saved.checkpoint() {
-                Ok(checkpoint) => {
-                    let requested_log = session.message_paging == platform::MessagePaging::Log;
-                    session.message_paging =
-                        platform::MessagePaging::from_saved(&saved.presentation);
-                    if requested_log && session.message_paging == platform::MessagePaging::Legacy {
-                        session.message_paging =
-                            platform::MessagePaging::ReplayLegacyUntil(saved.input_index);
-                    }
-                    session.input.inventory =
-                        inventory::Inventory::restore(&mut saved.presentation, saved.input_index);
-                    platform::MessagePaging::remove_marker(&mut saved.presentation);
-                    session.seed = saved.seed;
-                    session.name = saved.name;
-                    session.input_index = saved.input_index - saved.inputs.len() as u32;
-                    session.restore_checkpoint = checkpoint;
-                    session.replay = saved.inputs.into();
-                    if !saved.presentation.is_null() {
-                        match serde_json::from_value(saved.presentation) {
-                            Ok(presentation) => session.display.presentation = presentation,
-                            Err(_) => {
-                                notice("invalid saved presentation");
-                                return -2;
-                            }
+        Ok(bytes) => match platform::Envelope::parse(&bytes).and_then(|saved| {
+            let restore_index = saved.input_index;
+            platform::Session::restore(saved, session.platform.message_paging())
+                .map(|(platform, presentation)| (platform, presentation, restore_index))
+        }) {
+            Ok((mut platform, mut presentation, restore_index)) => {
+                platform.set_trace_enabled(trace_enabled);
+                session.input.inventory =
+                    inventory::Inventory::restore(&mut presentation, restore_index);
+                session.platform = platform;
+                if !presentation.is_null() {
+                    match serde_json::from_value(presentation) {
+                        Ok(presentation) => session.display.presentation = presentation,
+                        Err(_) => {
+                            notice("invalid saved presentation");
+                            return -2;
                         }
                     }
                 }
-                Err(error) => {
-                    notice(&error);
-                    return -2;
-                }
-            },
+            }
             Err(error) => {
                 notice(&error);
                 return -2;
@@ -306,11 +317,11 @@ pub unsafe extern "C" fn rg_run(seed: u32, name: *const c_char) -> i32 {
             return -2;
         }
     }
-    let initial_seed = session.seed;
+    let initial_seed = session.platform.seed();
     // The real UTF-8 identity is owned by Rust. The original fixed-cell C name
     // has an ASCII alias until the user explicitly changes it in the editor.
-    let c_name = if session.name.is_ascii() {
-        session.name.clone()
+    let c_name = if session.platform.name().is_ascii() {
+        session.platform.name().to_owned()
     } else {
         "Player".into()
     };
@@ -331,15 +342,23 @@ pub extern "C" fn rg_host_message_requires_acknowledgement() -> i32 {
     engine::with_session(|session| {
         i32::from(
             session
-                .message_paging
-                .requires_acknowledgement(session.input_index),
+                .platform
+                .message_paging()
+                .requires_acknowledgement(session.platform.input_index()),
         )
     })
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn rg_host_inventory_browser_enabled() -> i32 {
-    engine::with_session(|session| i32::from(session.input.inventory.enabled(session.input_index)))
+    engine::with_session(|session| {
+        i32::from(
+            session
+                .input
+                .inventory
+                .enabled(session.platform.input_index()),
+        )
+    })
 }
 
 /// Returns one original game key, consuming raw browser events in Rust.
@@ -349,9 +368,9 @@ pub extern "C" fn rg_host_read_key() -> i32 {
     emit(&json!({"type":"presentation","ui":ui}));
     trace();
     loop {
-        let pending = engine::with_session_mut(|session| session.input.text_pending.pop_front());
+        let pending = engine::with_session_mut(|session| session.input.pending_key());
         let replay = if pending.is_none() {
-            engine::with_session_mut(|session| session.replay.pop_front())
+            engine::with_session_mut(|session| session.platform.next_replay_key())
         } else {
             None
         };
@@ -408,6 +427,9 @@ pub extern "C" fn rg_host_flush_input() {
 /// `cells` points to `rows * columns` bytes for this synchronous call.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn rg_host_present(cells: *const u8, rows: u32, columns: u32) {
+    if rows != 24 || columns != 80 {
+        return;
+    }
     let Some(length) = rows.checked_mul(columns).filter(|length| *length <= 4096) else {
         return;
     };
@@ -455,6 +477,9 @@ pub extern "C" fn rg_host_map_effect(x: i32, y: i32, glyph: i32, active: i32) {
 /// `glyphs` points to `rows * columns` bytes for this synchronous call.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn rg_host_map_terrain(glyphs: *const u8, rows: u32, columns: u32) {
+    if rows != 24 || columns != 80 {
+        return;
+    }
     let Some(length) = rows.checked_mul(columns).filter(|length| *length <= 4096) else {
         return;
     };
@@ -508,7 +533,9 @@ pub unsafe extern "C" fn rg_host_message(
         session.display.language.clone()
     });
     let mut rendered_arguments = arguments.clone();
-    engine::with_session(|session| replace_player_names(&mut rendered_arguments, &session.name));
+    engine::with_session(|session| {
+        replace_player_names(&mut rendered_arguments, session.platform.name())
+    });
     let text = display::message_language(&id, &rendered_arguments, &fallback, &language);
     let event = json!({"type":"message","id":id,"text":text.text,"args":arguments,"fallback":fallback,
         "fallback_used":!text.missing_ids.is_empty(),"missing_ids":text.missing_ids});
@@ -519,40 +546,17 @@ pub unsafe extern "C" fn rg_host_message(
 /// C's safe outer-command boundary: capture state, then start a fresh journal.
 #[unsafe(no_mangle)]
 pub extern "C" fn rg_host_checkpoint() {
-    let mut pointer = std::ptr::null_mut();
-    let mut length = 0_u32;
-    // SAFETY: C writes the owned allocation pointer/length; no Session borrow is
-    // active while the serializer runs. Only C's matching allocator frees it.
-    let result = unsafe { rg_core_save_bytes(&mut pointer, &mut length) };
-    if result == 0
-        && !pointer.is_null()
-        && length > 0
-        && length as usize <= platform::MAX_CHECKPOINT
-    {
-        // SAFETY: A successful serializer returns length readable owned bytes.
-        let bytes = unsafe { std::slice::from_raw_parts(pointer, length as usize) }.to_vec();
-        // SAFETY: Pointer was allocated by C save_bytes and is freed once.
-        unsafe {
-            rg_core_save_free(pointer);
+    match CoreSaveBuffer::capture() {
+        Ok(buffer) => {
+            let bytes = buffer.bytes().to_vec();
+            engine::with_session_mut(|session| {
+                session.platform.capture_checkpoint(
+                    bytes,
+                    serde_json::to_value(&session.display.presentation).unwrap_or(Value::Null),
+                );
+            });
         }
-        engine::with_session_mut(|session| {
-            session.message_paging = session.message_paging.at_checkpoint(session.input_index);
-            session.checkpoint = bytes;
-            session.journal.clear();
-            session.checkpoint_error = None;
-            session.checkpoint_presentation =
-                serde_json::to_value(&session.display.presentation).unwrap_or(Value::Null);
-        });
-    } else {
-        if !pointer.is_null() {
-            // SAFETY: The save API owns any non-null output allocation even on failure.
-            unsafe {
-                rg_core_save_free(pointer);
-            }
-        }
-        engine::with_session_mut(|session| {
-            session.checkpoint_error = Some(format!("checkpoint capture failed ({result})"))
-        });
+        Err(error) => engine::with_session_mut(|session| session.platform.reject_checkpoint(error)),
     }
 }
 
@@ -567,14 +571,15 @@ pub unsafe extern "C" fn rg_host_restore_data(out: *mut *const u8, length: *mut 
         return -1;
     }
     engine::with_session(|session| {
-        if session.restore_checkpoint.is_empty() {
+        let checkpoint = session.platform.restore_data();
+        if checkpoint.is_empty() {
             return 0;
         }
         // SAFETY: Caller provides valid outputs. Session's Vec allocation is not
         // modified while C runs; checkpoint callbacks use a distinct Vec.
         unsafe {
-            *out = session.restore_checkpoint.as_ptr();
-            *length = session.restore_checkpoint.len() as u32;
+            *out = checkpoint.as_ptr();
+            *length = checkpoint.len() as u32;
         }
         1
     })
@@ -693,19 +698,11 @@ pub unsafe extern "C" fn rg_validate_envelope(bytes: *const u8, length: u32) -> 
 #[unsafe(no_mangle)]
 pub extern "C" fn rg_test_save_roundtrip() -> i32 {
     let before = words();
-    let mut pointer = std::ptr::null_mut();
-    let mut length = 0_u32;
-    // SAFETY: No callback/Session borrow is held. C API owns outputs.
-    let result = unsafe { rg_core_save_bytes(&mut pointer, &mut length) };
-    if result != 0 || pointer.is_null() {
+    let Ok(buffer) = CoreSaveBuffer::capture() else {
         return -1;
-    }
-    // SAFETY: C-provided save buffer remains alive during load.
-    let loaded = unsafe { rg_core_load_bytes(pointer, length) };
-    // SAFETY: Matching C allocator, exactly one free after load finishes.
-    unsafe {
-        rg_core_save_free(pointer);
-    }
+    };
+    // SAFETY: The owned C buffer remains alive throughout this synchronous load.
+    let loaded = unsafe { rg_core_load_bytes(buffer.pointer, buffer.length) };
     if loaded != 0 || words() != before {
         -1
     } else {

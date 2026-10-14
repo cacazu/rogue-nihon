@@ -13,6 +13,8 @@
 #error "game-fixtures.c must only be linked into a RG_TEST_FIXTURES build"
 #endif
 
+#include "wording-fixture.inc"
+
 static void clear_objects(THING **list)
 {
     THING *item, *next_item;
@@ -132,7 +134,31 @@ void rg_test_apply_fixture(void)
     name[name_length] = 0;
     name[strcspn(name, "\r\n")] = 0;
     clean_world();
-    if (!strcmp(name,"actor-underfoot-moving")) {
+    if (!strcmp(name,"parameter-rings") || !strcmp(name,"parameter-rings-unknown")) {
+        int type;
+        if (!strcmp(name,"parameter-rings")) {
+            for (type = 0; type < MAXRINGS; type++) {
+                object = new_item(); object->o_type = RING; object->o_which = type;
+                object->o_count = 1; object->o_flags = ISKNOW;
+                object->o_arm = type == R_ADDSTR ? 2 : type == R_ADDHIT ? -1 : type == R_ADDDAM ? 0 : 1;
+                ring_info[type].oi_know = TRUE;
+                add_pack(object, TRUE);
+            }
+        } else {
+            for (type = R_ADDSTR; type <= R_ADDHIT; type += R_ADDHIT - R_ADDSTR) {
+                object = new_item(); object->o_type = RING; object->o_which = type;
+                object->o_count = 1; object->o_flags = ISKNOW; object->o_arm = 7;
+                ring_info[type].oi_know = FALSE;
+                if (type == R_ADDHIT) {
+                    ring_info[type].oi_guess = malloc(12);
+                    strcpy(ring_info[type].oi_guess, "trial-name");
+                }
+                add_pack(object, TRUE);
+            }
+        }
+    } else if (!strcmp(name,"wording-catalog")) {
+        wording_catalog_fixture();
+    } else if (!strcmp(name,"actor-underfoot-moving")) {
         int x;
         for (x = 11; x <= 14; x++) {
             chat(9,x) = chat(11,x) = '-';
@@ -362,6 +388,27 @@ void rg_test_apply_fixture(void)
         monster = monster_at('N', 11, 10);
         monster->t_flags |= ISRUN;
         monster->t_dest = &hero;
+    } else if (!strcmp(name, "pickup-quantity")) {
+        THING *arrows, *copy;
+        int i;
+        for (arrows = pack; arrows && !(arrows->o_type == WEAPON && arrows->o_which == ARROW); arrows = next(arrows)) { }
+        if (!arrows || arrows->o_label) abort();
+        arrows->o_count = 10;
+        for (i = 0; i < 2; i++) {
+            copy = new_item();
+            *copy = *arrows;
+            next(copy) = prev(copy) = NULL;
+            copy->o_count = i == 0 ? 1 : 3;
+            copy->o_pos.x = 11 + i; copy->o_pos.y = 10;
+            attach(lvl_obj, copy);
+            chat(10, 11 + i) = WEAPON;
+            mvaddch(10, 11 + i, WEAPON);
+        }
+        copy = new_item();
+        copy->o_type = FOOD; copy->o_which = 0; copy->o_count = 1;
+        copy->o_pos.x = 13; copy->o_pos.y = 10;
+        attach(lvl_obj, copy);
+        chat(10, 13) = FOOD; mvaddch(10, 13, FOOD);
     } else if (!strcmp(name, "label-split")) {
         THING *copy;
         for (object = pack; object && !(object->o_type == WEAPON && object->o_which == ARROW); object = next(object)) { }

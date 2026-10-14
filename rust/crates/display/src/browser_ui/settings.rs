@@ -93,7 +93,7 @@ impl BrowserUi {
             "download-save",
             &self.t("action.download"),
             Rect::new(viewport.x + half + 8., row, half, 48.),
-            style(busy || !b(&self.model["saved"])),
+            style(busy || !b(&self.model["downloadAvailable"])),
         );
         row += 60.;
         self.button(

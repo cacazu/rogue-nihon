@@ -1,0 +1,3 @@
+import runpy
+from pathlib import Path
+runpy.run_path(str(Path(__file__).with_name('build-fixtures.py')))['main']('save')

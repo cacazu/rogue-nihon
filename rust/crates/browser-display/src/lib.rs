@@ -1,7 +1,9 @@
 //! Main-thread UI FFI. Independent from the C/Worker game instance and its RNG.
 mod controller;
+mod log_visibility;
 mod policies;
 mod save_loading;
+mod save_operations;
 #[cfg(test)]
 mod tests;
 use controller::Controller;

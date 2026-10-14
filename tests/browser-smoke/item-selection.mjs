@@ -1,8 +1,9 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
-import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {readFile,writeFile,mkdir} from 'node:fs/promises';import {createHash} from 'node:crypto';import os from 'node:os';import path from 'node:path';import {fileURLToPath} from 'node:url';import {createPreviewServer} from '../../../tools/server.mjs';
+import assert from 'node:assert/strict';import {readFile,writeFile,mkdir} from 'node:fs/promises';import {createHash} from 'node:crypto';import os from 'node:os';import path from 'node:path';import {fileURLToPath} from 'node:url';import {createPreviewServer} from '../../../tools/server.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url)),output=artifactDirectory(path.join(root,'tests/browser-smoke/output/item-selection'));await mkdir(output,{recursive:true});
-const {chromium}=createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE||path.join(os.homedir(),'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'));
+const {chromium} = loadPlaywright();
 const worker=await readFile(path.join(root,'web/worker.js'),'utf8');const server=createPreviewServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const evidence={started_at:new Date().toISOString(),checks:[],errors:[],operations:[],screenshots:[]};let browser,context,page;
 async function snap(){return page.evaluate(()=>({ui:__rogueBrowserTest.frame.ui,game:__rogueBrowserTest.trace.words.slice(1,16),input:__rogueBrowserTest.inputRequestCount}));}
@@ -18,7 +19,7 @@ async function closed(){await page.waitForFunction(()=>!__rogueBrowserTest.frame
 async function cleanChoice(){const state=await snap();assert.equal(state.ui.input.kind,'item');assert.deepEqual(state.ui.window.actions.map(a=>a.key),[27]);assert.equal(await page.locator('[data-window-key="42"]').count(),0);assert.doesNotMatch(await page.locator('#more-prompt').innerText(),/\*/);return state;}
 async function shot(name){await page.screenshot({path:path.join(output,name+'.png')});evidence.screenshots.push(name+'.png');}
 try{
- browser=await chromium.launch({executablePath:process.env.ROGUE_CHROME||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',headless:true,args:['--disable-gpu']});
+ browser=await chromium.launch({executablePath:browserExecutable(),headless:true,args:['--disable-gpu']});
  for(const [locale,mobile] of [['ja',false],['en',true]]){
   await start(locale,mobile);
   for(const command of ['q','w','r','e','W','P','d','c','t','z','I']){

@@ -1,3 +1,4 @@
+import {loadPlaywright, browserExecutable, pythonExecutable} from '../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./browser-smoke/test-adapter.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -7,15 +8,14 @@ import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { once } from "node:events";
-import { createRequire } from "node:module";
 import os from "node:os";
 
 const root = realpathSync(fileURLToPath(new URL("../", import.meta.url)));
 const previewServer = fileURLToPath(new URL("../../tools/server.mjs", import.meta.url));
 const base = path.join(root, ".local", "tasks");
 const helper = new URL("../tools/temporary-artifacts.mjs", import.meta.url).href;
-const registry = path.join(root, "tools/artifact-registry.ps1");
-const python = process.env.ROGUE_TEST_PYTHON || "C:\\Users\\kit\\emsdk\\python\\3.13.3_64bit\\python.exe";
+const registry = path.join(root, "tools/artifact_registry.py");
+const python = pythonExecutable();
 const protectedFiles = ["build/game.js", "build/game.wasm", "build/build-manifest.json", "locales/ja.json"];
 if (existsSync(path.join(root, "build/browser-ui.wasm"))) protectedFiles.push("build/browser-ui.wasm");
 const hashes = () => protectedFiles.map(file => createHash("sha256").update(readFileSync(path.join(root, file))).digest("hex"));
@@ -46,13 +46,27 @@ async function stop(child, force = true) {
 function removeOwn(directory) {
   if (!existsSync(directory)) return;
   assert.equal(path.dirname(directory), base);
-  assert.match(path.basename(directory), /^(node|python|powershell)-[a-zA-Z0-9_-]+$/);
+  assert.match(path.basename(directory), /^(node|python)-[a-zA-Z0-9_-]+$/);
   assert.equal(realpathSync(directory), directory);
   rmSync(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 }
 
+const ownedRuns = [];
+// Scope simulated enumeration to this test's own processes/directories. The
+// native restricted-snapshot branch is exercised separately; it must retain data.
+function recoveryScript(extra = '') {
+  const pids=ownedRuns.map(r=>r.child.pid);
+  for(const run of ownedRuns){const file=path.join(run.directory,'child-pid.txt');if(existsSync(file))pids.push(Number(readFileSync(file,'utf8')));}
+  return `import sys;sys.path.insert(0,${JSON.stringify(path.join(root,'tools'))});import artifact_registry as registry
+allowed=set(${JSON.stringify(ownedRuns.map(r=>r.directory))})
+record=registry.record_for
+registry.record_for=lambda project,directory: record(project,directory) if str(directory) in allowed else None
+registry.snapshot=lambda: [registry.query(pid) for pid in ${JSON.stringify(pids)}]
+${extra}
+registry.recover(${JSON.stringify(root)})`;
+}
 function recover() {
-  const result = spawnSync("pwsh", ["-NoProfile", "-File", registry, "-Mode", "Recover", "-ProjectPath", root], { encoding: "utf8" });
+  const result = spawnSync(python, ['-c',recoveryScript()], { encoding: "utf8" });
   assert.equal(result.status, 0, result.stdout + result.stderr);
 }
 
@@ -60,20 +74,23 @@ async function owner(runtime = "node", keep = false, extra = "") {
   let command, arguments_;
   if (runtime === "node") {
     command = process.execPath;
+    const retainedWorkspace = new URL('../tools/compiler-workspace.mjs',import.meta.url).href;
     arguments_ = ["--input-type=module", "-e", `import {artifactDirectory} from ${JSON.stringify(helper)};
+      import {compilerWorkspace} from ${JSON.stringify(retainedWorkspace)};
+      import {execFileSync} from 'node:child_process';
       import path from 'node:path';import {mkdirSync,writeFileSync} from 'node:fs';
-      const output=artifactDirectory(path.join(${JSON.stringify(root)},'tests/browser-smoke/output/recovery-${randomUUID()}'));
-      const scope=output.slice(0,output.indexOf(path.sep+'artifacts'+path.sep));
+      let scope,output;
+      if(${keep}){
+        const workspace=compilerWorkspace(${JSON.stringify(root)},true);scope=workspace.directory;output=path.join(scope,'artifacts');
+        execFileSync(${JSON.stringify(python)},[${JSON.stringify(registry)},'register','--project',${JSON.stringify(root)},'--directory',scope,'--pid',String(process.pid),'--keep']);
+        process.once('exit',()=>workspace.close());
+      }else{
+        output=artifactDirectory(path.join(${JSON.stringify(root)},'tests/browser-smoke/output/recovery-${randomUUID()}'));
+        scope=output.slice(0,output.indexOf(path.sep+'artifacts'+path.sep));
+      }
       mkdirSync(output,{recursive:true});writeFileSync(path.join(output,'result.json'),'{}');
       ${extra}
       console.log(scope);process.stdin.resume();`];
-  } else if (runtime === "powershell") {
-    command = "pwsh";
-    arguments_ = ["-NoProfile", "-Command", `. '${path.join(root, "tools/temporary-artifacts.ps1").replaceAll("'", "''")}';
-      $scope=New-RogueArtifactScope -ProjectPath '${root.replaceAll("'", "''")}';
-      & '${registry.replaceAll("'", "''")}' -Mode Register -ProjectPath '${root.replaceAll("'", "''")}' -ScopePath $scope.Path -OwnerPid $PID -Keep '0';
-      try {Set-Content -LiteralPath (Join-Path $scope.Path 'partial.wasm') -Value 'partial';Write-Output $scope.Path;[Console]::In.ReadToEnd() | Out-Null}
-      finally {Close-RogueArtifactScope $scope}`];
   } else {
     command = python;
     arguments_ = ["-B", "-c", `import sys,pathlib;sys.path.insert(0,${JSON.stringify(path.join(root, "tools"))});from temporary_artifacts import TemporaryArtifacts
@@ -83,12 +100,12 @@ with TemporaryArtifacts(${JSON.stringify(root)}) as scope:
     sys.stdin.read()`];
   }
   const child = spawn(command, arguments_, { cwd: root, env: { ...environment, ROGUE_KEEP_ARTIFACTS: keep ? "1" : "0" }, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
-  try { return { child, directory: await firstLine(child) }; }
+  try {const run={child,directory:await firstLine(child)};ownedRuns.push(run);return run;}
   catch (error) { await stop(child); throw error; }
 }
 
-const windows = { skip: process.platform !== "win32" };
-test("preview startup preserves interrupted and live run directories and playable files", windows, async () => {
+
+test("preview startup preserves interrupted and live run directories and playable files", async () => {
   const before = hashes();
   const dead = await owner(), live = await owner();
   let server, browser, runtime;
@@ -102,25 +119,26 @@ test("preview startup preserves interrupted and live run directories and playabl
     assert.ok(existsSync(live.directory));
     const { prepareBrowserRuntime } = await import('./browser-smoke/browser-runtime.mjs');
     runtime = await prepareBrowserRuntime(root);
-    const { chromium } = createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE || path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'));
-    browser = await chromium.launch({ executablePath: process.env.ROGUE_CHROME || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', headless: true, downloadsPath: runtime.downloadsPath });
+    const {chromium} = loadPlaywright();
+    browser = await chromium.launch({ executablePath: browserExecutable(), headless: true, downloadsPath: runtime.downloadsPath });
     const page = await browser.newPage({ viewport: { width: 1240, height: 900 } });await installBrowserTestAdapter(page);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(ready.replace(/^Rogue (?:private )?preview: /, '') + '?trace=1&lang=ja');
     await page.waitForFunction(() => window.__rogueBrowserTest);
     const canvasUi = await page.evaluate(() => Boolean(__rogueBrowserTest.canvas));
+    const canvasBox = await page.locator('#rogue-canvas').boundingBox();
     if (canvasUi) {
     await page.waitForFunction(() => __rogueBrowserTest.canvas.paintCount > 0);
     for (const [id, value] of [['name', '回収検査勇者'], ['seed', '17']]) {
       const field = await page.evaluate(id => __rogueBrowserTest.canvas.controls.find(control => control.id === id).rect, id);
-      await page.mouse.click(field.x + field.w / 2, field.y + field.h / 2);
+      await page.mouse.click(canvasBox.x + field.x + field.w / 2, canvasBox.y + field.y + field.h / 2);
       await page.keyboard.press('Control+a'); await page.keyboard.insertText(value);
       await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     }
     await page.waitForFunction(() => __rogueBrowserTest.canvas.controls.some(control => control.id === 'new-game' && !control.disabled));
     const button = await page.evaluate(() => __rogueBrowserTest.canvas.controls.find(control => control.id === 'new-game').rect);
-    await page.mouse.click(button.x + button.w / 2, button.y + button.h / 2);
+    await page.mouse.click(canvasBox.x + button.x + button.w / 2, canvasBox.y + button.y + button.h / 2);
     } else {
       await page.locator('#name').fill('回収検査勇者');
       await page.locator('#seed').fill('17');
@@ -141,7 +159,7 @@ test("preview startup preserves interrupted and live run directories and playabl
   }
 });
 
-for (const runtime of ["powershell", "python"]) test(`${runtime} recovers killed output and preserves explicit retention`, windows, async () => {
+for (const runtime of ["node", "python"]) test(`${runtime} recovers killed output and preserves explicit retention`, async () => {
   const dead = await owner(runtime), kept = await owner(runtime, true);
   try {
     await stop(dead.child); await stop(kept.child);
@@ -155,7 +173,7 @@ for (const runtime of ["powershell", "python"]) test(`${runtime} recovers killed
   }
 });
 
-test("surviving subprocesses protect an interrupted run until they exit", windows, async () => {
+test("surviving subprocesses protect an interrupted run until they exit", async () => {
   const dead = await owner("node", false, `import {spawn} from 'node:child_process';
     const child=spawn(process.execPath,['-e','setInterval(()=>{},1000)',scope],{windowsHide:true,detached:true,stdio:'ignore'});
     writeFileSync(path.join(scope,'child-pid.txt'),String(child.pid));`);
@@ -175,7 +193,7 @@ test("surviving subprocesses protect an interrupted run until they exit", window
   }
 });
 
-test("unknown metadata and junctions are preserved", windows, async () => {
+test("unknown metadata and junctions are preserved", async () => {
   const dead = await owner();
   const unknown = path.join(base, "node-unknown-" + randomUUID());
   const before = hashes();
@@ -189,27 +207,39 @@ test("unknown metadata and junctions are preserved", windows, async () => {
       recover(); assert.ok(existsSync(dead.directory)); assert.ok(existsSync(unknown));
     }
     writeFileSync(marker, JSON.stringify(record));
-    symlinkSync(path.join(root, "build"), path.join(dead.directory, "protected-build"), "junction");
+    try {
+      symlinkSync(path.join(root, "build"), path.join(dead.directory, "protected-build"), process.platform==='win32'?'junction':'dir');
+    } catch (error) {
+      if (!['EPERM','EACCES'].includes(error.code)) throw error;
+      // Exercise the same refusal branch if the host cannot create filesystem links.
+      const link=path.join(dead.directory,'protected-build');writeFileSync(link,'link probe');
+      const script=recoveryScript(`from pathlib import Path
+original=Path.is_symlink
+Path.is_symlink=lambda p: str(p)==${JSON.stringify(link)} or original(p)`);
+      const probe=spawnSync(python,['-c',script],{encoding:'utf8'});assert.equal(probe.status,0,probe.stderr);
+      assert.ok(existsSync(dead.directory));assert.deepEqual(hashes(),before);
+      return;
+    }
     recover(); assert.ok(existsSync(dead.directory)); assert.deepEqual(hashes(), before);
   } finally {
     await stop(dead.child); removeOwn(dead.directory); removeOwn(unknown);
   }
 });
 
-test("PID reuse cannot remove the replacement owner's work", windows, async () => {
+test("PID reuse cannot remove the replacement owner's work", async () => {
   const dead = await owner(), live = await owner();
   try {
     await stop(dead.child);
     const marker = path.join(dead.directory, '.rogue-owner.json');
     const record = JSON.parse(readFileSync(marker, 'utf8'));
     writeFileSync(marker, JSON.stringify({ ...record, owner_pid: live.child.pid, owner_start: '1' }));
-    const probe = spawnSync('pwsh', ['-NoProfile', '-Command', `Add-Type -Path '${path.join(root, 'tools/artifact-processes.cs').replaceAll("'", "''")}';[RogueArtifactProcesses]::Query(${live.child.pid}) | ConvertTo-Json -Compress`], { encoding: 'utf8' });
+    const probe = spawnSync(python, [registry, 'query', '--pid', String(live.child.pid)], {encoding:'utf8'});
     assert.equal(probe.status, 0, probe.stderr);
     const identity = JSON.parse(probe.stdout);
     recover();
     // A replacement PID's busy descendants may conservatively retain the old
     // directory too; its current work must always remain intact.
-    if (identity.Status === 'unknown') assert.ok(existsSync(dead.directory));
+    if (identity.status === 'unknown') assert.ok(existsSync(dead.directory));
     assert.ok(existsSync(live.directory));
     const current = JSON.parse(readFileSync(path.join(live.directory, '.rogue-owner.json'), 'utf8'));
     assert.equal(current.owner_pid, live.child.pid);
@@ -220,49 +250,45 @@ test("PID reuse cannot remove the replacement owner's work", windows, async () =
   }
 });
 
-test("restricted process snapshots defer recovery", windows, async t => {
-  const probe = spawnSync('pwsh', ['-NoProfile', '-Command', `Add-Type -Path '${path.join(root, 'tools/artifact-processes.cs').replaceAll("'", "''")}';try {[RogueArtifactProcesses]::Snapshot() | Out-Null;Write-Output 'complete'} catch {if ($_.Exception.Message -notlike '*Process list is restricted*') {throw};Write-Output 'restricted'}`], { encoding: 'utf8' });
-  assert.equal(probe.status, 0, probe.stderr);
-  if (probe.stdout.trim() !== 'restricted') { t.skip('This environment exposes the complete process list'); return; }
-  const dead = await owner();
-  const before = hashes();
+test("restricted process snapshots defer recovery", async () => {
+  const dead=await owner(),before=hashes();
   try {
     await stop(dead.child);
-    recover();
-    assert.ok(existsSync(dead.directory));
-    assert.deepEqual(hashes(), before);
-  } finally { await stop(dead.child); removeOwn(dead.directory); }
+    const script=`import sys;sys.path.insert(0,${JSON.stringify(path.join(root,'tools'))});import artifact_registry as registry
+registry.snapshot=lambda: (_ for _ in ()).throw(OSError('Process list is restricted'))
+registry.recover(${JSON.stringify(root)})`;
+    const probe=spawnSync(python,['-c',script],{encoding:'utf8'});
+    assert.equal(probe.status,0,probe.stderr);
+    assert.match(probe.stderr,/recovery deferred/);
+    assert.ok(existsSync(dead.directory));assert.deepEqual(hashes(),before);
+  } finally {await stop(dead.child);removeOwn(dead.directory);}
 });
 
-test("two simultaneous recoveries can safely claim the same abandoned directory", windows, async () => {
+test("two simultaneous recoveries can safely claim the same abandoned directory", async () => {
   const dead = await owner();
   try {
     await stop(dead.child);
-    const runs = [0, 1].map(() => spawn('pwsh', ['-NoProfile', '-File', registry, '-Mode', 'Recover', '-ProjectPath', root], { stdio: 'ignore', windowsHide: true }));
+    const runs = [0, 1].map(() => spawn(python, ['-c',recoveryScript()], { stdio: 'ignore', windowsHide: true }));
     const statuses = await Promise.all(runs.map(child => once(child, 'close')));
     assert.deepEqual(statuses.map(([code]) => code), [0, 0]);
     assert.equal(existsSync(dead.directory), false);
   } finally { await stop(dead.child); removeOwn(dead.directory); }
 });
 
-test("a partially failed cleanup retains ownership and can be retried", windows, async () => {
-  const dead = await owner();
-  let locker;
+test("a partially failed cleanup retains ownership and can be retried", async () => {
+  const dead=await owner();
   try {
     await stop(dead.child);
-    const locked = path.join(dead.directory, 'locked.bin');
-    writeFileSync(locked, 'temporarily locked');
-    locker = spawn('pwsh', ['-NoProfile', '-Command', `$lockedFile=[Console]::In.ReadLine();$stream=[IO.File]::Open($lockedFile,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::None);try {Write-Output 'LOCKED';[Console]::In.ReadToEnd() | Out-Null} finally {$stream.Dispose()}`], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
-    locker.stdin.write(locked + '\n');
-    assert.equal(await firstLine(locker), 'LOCKED');
-    recover();
-    assert.ok(existsSync(locked));
-    assert.ok(existsSync(path.join(dead.directory, '.rogue-owner.json')));
-    await stop(locker, false);
-    recover();
-    assert.equal(existsSync(dead.directory), false);
-  } finally {
-    if (locker) await stop(locker, false);
-    await stop(dead.child); removeOwn(dead.directory);
-  }
+    const blocked=path.join(dead.directory,'locked.bin');writeFileSync(blocked,'temporarily locked');
+    const script=recoveryScript(`from pathlib import Path
+unlink=Path.unlink
+def fail_once(p,*a,**k):
+    if p.name=='locked.bin': raise PermissionError('test locked file')
+    return unlink(p,*a,**k)
+Path.unlink=fail_once`);
+    const probe=spawnSync(python,['-c',script],{encoding:'utf8'});
+    assert.equal(probe.status,0,probe.stderr);
+    assert.ok(existsSync(blocked));assert.ok(existsSync(path.join(dead.directory,'.rogue-owner.json')));
+    recover();assert.equal(existsSync(dead.directory),false);
+  } finally {await stop(dead.child);removeOwn(dead.directory);}
 });

@@ -19,6 +19,8 @@ void rg_semantic_register_message(const char *text, const char *id,
 
 union thing;
 void rg_semantic_item(const char *text, const union thing *object, int drop);
+void rg_semantic_pickup_item(const char *text, const union thing *object,
+                            int drop, int picked_count);
 void rg_semantic_monster(const char *text, int index, const char *display,
                          int article, int upper, int hallucinated);
 void rg_semantic_combatant(const char *text, const char *source, int upper);

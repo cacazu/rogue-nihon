@@ -1,9 +1,9 @@
+import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import {installBrowserTestAdapter} from "./test-adapter.mjs";
 import {prepareBrowserRuntime} from "./browser-runtime.mjs";
 import {artifactDirectory} from "../../tools/temporary-artifacts.mjs";
 import {createPreviewServer} from "../../../tools/server.mjs";
 import assert from "node:assert/strict";
-import {createRequire} from "node:module";
 import {mkdir,readFile,writeFile} from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
@@ -11,7 +11,7 @@ import {fileURLToPath} from "node:url";
 
 const root=fileURLToPath(new URL("../../",import.meta.url));
 const output=artifactDirectory(path.join(root,"tests/browser-smoke/output/wall-blocks"));
-const {chromium}=createRequire(import.meta.url)(process.env.ROGUE_PLAYWRIGHT_MODULE||path.join(os.homedir(),".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright"));
+const {chromium} = loadPlaywright();
 await mkdir(output,{recursive:true});
 const manifests=Object.fromEntries(await Promise.all(["pixels-v2","tiles"].map(async set=>[set,JSON.parse(await readFile(path.join(root,"web/assets",set,"manifest.json"),"utf8"))])));
 const server=createPreviewServer();await new Promise(resolve=>server.listen(0,"127.0.0.1",resolve));
@@ -73,7 +73,7 @@ async function verifyWallPixels(){
 const directions=[[-1,0,"h"],[1,0,"l"],[0,-1,"k"],[0,1,"j"]];
 try{
   runtime=await prepareBrowserRuntime(root);
-  browser=await chromium.launch({executablePath:process.env.ROGUE_CHROME||"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",headless:true,args:["--disable-gpu"],downloadsPath:runtime.downloadsPath});
+  browser=await chromium.launch({executablePath:browserExecutable(),headless:true,args:["--disable-gpu"],downloadsPath:runtime.downloadsPath});
   evidence.browser=browser.version();
   await check("Both active sets have distinct unrotated square patterns for the two original wall IDs",async()=>{
     for(const manifest of Object.values(manifests)){
