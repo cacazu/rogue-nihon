@@ -317,7 +317,7 @@ impl Browser {
                 let effect = effect.clone();
                 let host = self.clone();
                 wasm_bindgen_futures::spawn_local(async move {
-                    let result = images::Tiles::load(&effect)
+                    let result = images::load(&effect)
                         .await
                         .map(|(tiles, dimensions)| {
                             host.tiles

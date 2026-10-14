@@ -73,7 +73,6 @@ const manifest={schema_version:1,source_release:'RRP Rogue 5.4.4',tile_pixels:96
   usage:'Animation assets. Gameplay renderer still uses its existing static image.',
   entries};
 await writeFile(path.join(destination,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
-await writeFile(path.join(destination,'asset-data.js'),'window.ROGUE_ANIMATIONS = '+JSON.stringify(manifest)+';\n');
 const prompts={mode:'built-in image_gen',entries:{}};
 for(const entry of entries){
   prompts.entries[entry.id]=JSON.parse((await readFile(path.join(destination,'prompts',entry.id+'.json'),'utf8')).replace(/^\uFEFF/,''));
@@ -81,9 +80,8 @@ for(const entry of entries){
 await writeFile(path.join(destination,'prompts.json'),JSON.stringify(prompts,null,2)+'\n');
 const template=await readFile(new URL('../web/assets/pixels-v2/animations-v1/index.html',import.meta.url),'utf8');
 const preview=template.replaceAll('全キャラアニメーション','イラスト版・全キャラアニメーション')
-  .replace('32×32透過PNG','96×96透過PNG').replace('canvas.width = canvas.height = 32','canvas.width = canvas.height = manifest.tile_pixels')
-  .replace('context.clearRect(0,0,32,32)','context.clearRect(0,0,manifest.tile_pixels,manifest.tile_pixels)')
-  .replaceAll('image-rendering: pixelated;','').replace('context.imageSmoothingEnabled = false','context.imageSmoothingEnabled = true')
+  .replace('32×32透過PNG','96×96透過PNG')
+  .replaceAll('image-rendering: pixelated;','')
   .replaceAll('width: 64px;','width: 96px;').replace('<a href="poses.json">ポーズ定義</a>',
     '<a href="prompts.json">生成プロンプト</a><a href="../../pixels-v2/animations-v1/index.html">ドット絵版</a>');
 await writeFile(path.join(destination,'index.html'),preview);

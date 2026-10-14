@@ -5,6 +5,42 @@ Cargo runtime and code-generation dependencies cover the two shipped Wasm target
 Rust std covers the installed target libraries, including backtrace/unwind support.
 Unused lockfile packages, other target runtimes, compiler tools and test libraries are excluded.
 
+Component: NotoColorEmoji/e20cbc2bbec1
+Declared license: OFL-1.1
+Selected license: OFL-1.1
+Targets: wasm32-unknown-unknown
+Attribution: Copyright 2022 Google Inc.
+Attribution: Unmodified NotoColorEmoji.ttf; Version 2.057;GOOG;noto-emoji:20260911:fc4ca365e7c20e78278ae702aa20434bfe704c8f.
+Source: https://raw.githubusercontent.com/googlefonts/noto-emoji/e20cbc2bbec1926686be9f9bee7d1d2cfa1fea0e/2D/fonts/NotoColorEmoji.ttf
+Source: https://raw.githubusercontent.com/googlefonts/noto-emoji/e20cbc2bbec1926686be9f9bee7d1d2cfa1fea0e/2D/fonts/LICENSE
+Source: https://raw.githubusercontent.com/googlefonts/noto-emoji/e20cbc2bbec1926686be9f9bee7d1d2cfa1fea0e/AUTHORS
+Notice: LICENSE -> 6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2
+Notice: AUTHORS -> 451de3fcfd07574e43cb5131f7a6cc688372fa8b1d4f52c26d1a3f7ce03aff32
+
+Component: NotoSansJP/67bc647ce191
+Declared license: OFL-1.1
+Selected license: OFL-1.1
+Targets: wasm32-unknown-unknown
+Attribution: (c) 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.
+Attribution: Unmodified NotoSansJP.ttf; Version 2.004-H2;hotconv 1.0.118;makeotfexe 2.5.65603.
+Source: https://raw.githubusercontent.com/google/fonts/67bc647ce1910e92f461bcc82aae30f21d21a9cc/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf
+Source: https://raw.githubusercontent.com/google/fonts/67bc647ce1910e92f461bcc82aae30f21d21a9cc/ofl/notosansjp/OFL.txt
+Notice: OFL.txt -> 1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9
+
+Component: adler2-2.0.1
+Declared license: 0BSD OR MIT OR Apache-2.0
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/adler2/2.0.1
+Notice: LICENSE-MIT -> 23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3
+
+Component: arrayref-0.3.9
+Declared license: BSD-2-Clause
+Selected license: BSD-2-Clause
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/arrayref/0.3.9
+Notice: LICENSE -> 1bc7e6f475b3ec99b7e2643411950ae2368c250dd4c5c325f80f9811362a94a1
+
 Component: arrayvec-0.7.8
 Declared license: MIT OR Apache-2.0
 Selected license: MIT
@@ -245,6 +281,13 @@ Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://crates.io/crates/convert_case/0.10.0
 Notice: LICENSE -> aed7b1758e35afa0cd0fde059d61950747ca11cd0e5e169cb21c11608daed772
 
+Component: crc32fast-1.5.2
+Declared license: MIT OR Apache-2.0
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/crc32fast/1.5.2
+Notice: LICENSE-MIT -> 61d383b05b87d78f94d2937e2580cce47226d17823c0430fbcad09596537efcf
+
 Component: crossbeam-channel-0.5.17
 Declared license: MIT OR Apache-2.0
 Selected license: MIT
@@ -344,6 +387,13 @@ Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://crates.io/crates/event-listener-strategy/0.5.4
 Notice: LICENSE-MIT -> 23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3
 
+Component: fdeflate-0.3.7
+Declared license: MIT OR Apache-2.0
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/fdeflate/0.3.7
+Notice: LICENSE-MIT -> c77a4cf9da729987d0fe7ccd811e3bd27393914ddf3d23467c18cc22954513b3
+
 Component: fixedbitset-0.5.7
 Declared license: MIT OR Apache-2.0
 Selected license: MIT
@@ -351,12 +401,26 @@ Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://crates.io/crates/fixedbitset/0.5.7
 Notice: LICENSE-MIT -> ce592787ff2321feab698a4c612237f4378cc658ebb1d472913e5802cc47afb4
 
+Component: flate2-1.1.10
+Declared license: MIT OR Apache-2.0
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/flate2/1.1.10
+Notice: LICENSE-MIT -> 025436edff4cfcdde17a5811fdea78892d8482efd1abdec5a17872d07a4f2112
+
 Component: foldhash-0.2.0
 Declared license: Zlib
 Selected license: Zlib
 Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://crates.io/crates/foldhash/0.2.0
 Notice: LICENSE -> b1181a40b2a7b25cf66fd01481713bc1005df082c53ef73e851e55071b102744
+
+Component: font-types-0.12.6
+Declared license: MIT OR Apache-2.0
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/font-types/0.12.6
+Notice: LICENSE-MIT -> 7b4c9a3946dfcea7967582760e963e27799e225dcf20565c8ef55324bb017427
 
 Component: futures-channel-0.3.34
 Declared license: MIT OR Apache-2.0
@@ -443,6 +507,13 @@ Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://crates.io/crates/js-sys/0.3.105
 Notice: LICENSE-MIT -> 378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397
 
+Component: kurbo-0.13.1
+Declared license: Apache-2.0 OR MIT
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/kurbo/0.13.1
+Notice: LICENSE-MIT -> 23c23145f6eac25c28cdcc03d38506a5712a9a8cffb5bd5301457f6173ea696e
+
 Component: libc-0.2.189
 Declared license: MIT OR Apache-2.0
 Selected license: MIT
@@ -479,6 +550,22 @@ Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://crates.io/crates/memchr/2.8.3
 Notice: LICENSE-MIT -> 0f96a83840e146e43c0ec96a22ec1f392e0680e6c1226e6f3ba87e0740af850f
 
+Component: miniz_oxide-0.8.9
+Declared license: MIT OR Zlib OR Apache-2.0
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/miniz_oxide/0.8.9
+Notice: LICENSE -> 4108245a1f2df9d4e94df8abed5b4ba0759bb2f9b40a6b939f1be141077ae50b
+Notice: LICENSE-MIT.md -> 799e9ca9d179295ef372f25d3769cdda7d25bb2668add6a6a1e22d1e4c678b8d
+
+Component: miniz_oxide-0.9.1
+Declared license: MIT OR Zlib OR Apache-2.0
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/miniz_oxide/0.9.1
+Notice: LICENSE -> 4108245a1f2df9d4e94df8abed5b4ba0759bb2f9b40a6b939f1be141077ae50b
+Notice: LICENSE-MIT.md -> 799e9ca9d179295ef372f25d3769cdda7d25bb2668add6a6a1e22d1e4c678b8d
+
 Component: musl/6.0.8
 Declared license: MIT AND BSD notices
 Selected license: MIT AND BSD notices
@@ -514,6 +601,20 @@ Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://crates.io/crates/pin-project-lite/0.2.17
 Notice: LICENSE-MIT -> 23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3
 
+Component: png-0.18.1
+Declared license: MIT OR Apache-2.0
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/png/0.18.1
+Notice: LICENSE-MIT -> eaf40297c75da471f7cda1f3458e8d91b4b2ec866e609527a13acfa93b638652
+
+Component: polycool-0.4.0
+Declared license: MIT OR Apache-2.0
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/polycool/0.4.0
+Notice: LICENSE-MIT -> 23c23145f6eac25c28cdcc03d38506a5712a9a8cffb5bd5301457f6173ea696e
+
 Component: proc-macro2-1.0.107
 Declared license: MIT OR Apache-2.0
 Selected license: MIT
@@ -527,6 +628,13 @@ Selected license: MIT
 Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://crates.io/crates/quote/1.0.47
 Notice: LICENSE-MIT -> 23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3
+
+Component: read-fonts-0.41.0
+Declared license: MIT OR Apache-2.0
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/read-fonts/0.41.0
+Notice: LICENSE-MIT -> 7b4c9a3946dfcea7967582760e963e27799e225dcf20565c8ef55324bb017427
 
 Component: rust-std/1.98.1
 Declared license: (MIT OR Apache-2.0) AND Unicode-3.0
@@ -553,11 +661,9 @@ Notice: LICENSE-MIT -> e99d88d232bf57d70f0fb87f6b496d44b6653f99f8a63d250a54c61ea
 
 Component: rust-std/adler2-2.0.1
 Declared license: 0BSD OR MIT OR Apache-2.0
-Selected license: 0BSD OR MIT OR Apache-2.0
+Selected license: MIT
 Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://crates.io/crates/adler2/2.0.1
-Notice: LICENSE-0BSD -> 861399f8c21c042b110517e76dc6b63a2b334276c8cf17412fc3c8908ca8dc17
-Notice: LICENSE-APACHE -> 8ada45cd9f843acf64e4722ae262c622a2b3b3007c7310ef36ac1061a30f6adb
 Notice: LICENSE-MIT -> 23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3
 
 Component: rust-std/cfg-if-1.0.4
@@ -615,13 +721,11 @@ Notice: LICENSE-MIT -> 0f96a83840e146e43c0ec96a22ec1f392e0680e6c1226e6f3ba87e074
 
 Component: rust-std/miniz_oxide-0.8.9
 Declared license: MIT OR Zlib OR Apache-2.0
-Selected license: MIT OR Zlib OR Apache-2.0
+Selected license: MIT
 Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://crates.io/crates/miniz_oxide/0.8.9
 Notice: LICENSE -> 4108245a1f2df9d4e94df8abed5b4ba0759bb2f9b40a6b939f1be141077ae50b
-Notice: LICENSE-APACHE.md -> 0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594
 Notice: LICENSE-MIT.md -> 799e9ca9d179295ef372f25d3769cdda7d25bb2668add6a6a1e22d1e4c678b8d
-Notice: LICENSE-ZLIB.md -> 0a54e647fe54104658b5e563c04c6f9edf251710e47bce692e0bd990a4ddaa39
 
 Component: rust-std/object-0.37.3
 Declared license: Apache-2.0 OR MIT
@@ -686,6 +790,28 @@ Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://crates.io/crates/serde_json/1.0.151
 Notice: LICENSE-MIT -> 23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3
 
+Component: simd-adler32-0.3.10
+Declared license: MIT
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/simd-adler32/0.3.10
+Notice: LICENSE.md -> 42a35170233e83e18856792e748de4c1ce4a63b2afce9a370c89ef3fe23f9f2d
+
+Component: siphasher-1.0.4
+Declared license: MIT OR Apache-2.0
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/siphasher/1.0.4
+Notice: COPYING -> c962ee4d1d05ddc138b202b2540219ebc57893fcf97b364852094a9a94ce1365
+Notice: LICENSE-MIT -> f9c4c77baa3828004ee54b8a4f2db2e88ed44a6237a493965bf551fac0fcb62d
+
+Component: skrifa-0.44.0
+Declared license: MIT OR Apache-2.0
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/skrifa/0.44.0
+Notice: LICENSE-MIT -> 7b4c9a3946dfcea7967582760e963e27799e225dcf20565c8ef55324bb017427
+
 Component: slab-0.4.12
 Declared license: MIT
 Selected license: MIT
@@ -713,6 +839,28 @@ Selected license: MIT
 Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://crates.io/crates/spin/0.10.1
 Notice: LICENSE -> 6ac8711fb340c62ce0a4ecd463342d3fa0e8e70de697c863a2e1c0c53006003c
+
+Component: strict-num-0.1.1
+Declared license: MIT
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/strict-num/0.1.1
+Notice: LICENSE -> 3085885678bb161f6c472bbd331f66a2550b555eb76128f7f8247779128199c0
+
+Component: svgtypes-0.16.1
+Declared license: Apache-2.0 OR MIT
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/svgtypes/0.16.1
+Notice: AUTHORS -> f49d7e15695022ed1dcd72eb88adf16c9e3fa7f2de63cd71963ba233d3d51264
+Notice: LICENSE-MIT -> f3c9fe731c701ed77fd5fbaac573872af04dc5869385eb9bd5e3c73c42713814
+
+Component: swash-0.2.10
+Declared license: Apache-2.0 OR MIT
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/swash/0.2.10
+Notice: LICENSE-MIT -> 122dadfc2eb4de0f4bafcd9eb4e7502cfe338a7965ebd1d18708cc5050f43f76
 
 Component: syn-2.0.119
 Declared license: MIT OR Apache-2.0
@@ -748,6 +896,20 @@ Selected license: MIT
 Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://crates.io/crates/thread_local/1.1.10
 Notice: LICENSE-MIT -> c9a75f18b9ab2927829a208fc6aa2cf4e63b8420887ba29cdb265d6619ae82d5
+
+Component: tiny-skia-0.11.4
+Declared license: BSD-3-Clause
+Selected license: BSD-3-Clause
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/tiny-skia/0.11.4
+Notice: LICENSE -> 6d41e05f1d54fe726997cb0334ec539f1dff50600b1d5d90462ec2b392770ced
+
+Component: tiny-skia-path-0.11.4
+Declared license: BSD-3-Clause
+Selected license: BSD-3-Clause
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/tiny-skia-path/0.11.4
+Notice: LICENSE -> 6d41e05f1d54fe726997cb0334ec539f1dff50600b1d5d90462ec2b392770ced
 
 Component: toml_datetime-1.1.1+spec-1.1.0
 Declared license: MIT OR Apache-2.0
@@ -879,6 +1041,20 @@ Targets: wasm32-unknown-emscripten, wasm32-unknown-unknown
 Source: https://crates.io/crates/winnow/1.0.4
 Notice: LICENSE-MIT -> cb5aedb296c5246d1f22e9099f925a65146f9f0d6b4eebba97fd27a6cdbbab2d
 
+Component: yazi-0.2.1
+Declared license: Apache-2.0 OR MIT
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/yazi/0.2.1
+Notice: LICENSE-MIT -> df62e3ef3f207c91073fedd78b4156a278681d0dd3f942379242c62c6a71a3ec
+
+Component: zeno-0.3.3
+Declared license: Apache-2.0 OR MIT
+Selected license: MIT
+Targets: wasm32-unknown-unknown
+Source: https://crates.io/crates/zeno/0.3.3
+Notice: LICENSE-MIT -> 34dff8202d63e6df022f4f0ce88dab24f254c35ee0d5958b74dcf74d9eae21cc
+
 Component: zmij-1.0.23
 Declared license: MIT
 Selected license: MIT
@@ -887,21 +1063,32 @@ Source: https://crates.io/crates/zmij/1.0.23
 Notice: LICENSE-MIT -> 23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3
 
 
-===== NOTICE 0a54e647fe54104658b5e563c04c6f9edf251710e47bce692e0bd990a4ddaa39 (984 bytes) =====
-Copyright 2013-2014 RAD Game Tools and Valve Software
-Copyright 2010-2014 Rich Geldreich and Tenacious Software LLC
-Copyright (c) 2020 Frommi
-Copyright (c) 2017-2024 oyvindln
+===== NOTICE 025436edff4cfcdde17a5811fdea78892d8482efd1abdec5a17872d07a4f2112 (1062 bytes) =====
+Copyright (c) 2014-2026 Alex Crichton
 
-This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
 
-Permission is granted to anyone to use this software for any purpose, including commercial applications, and to alter it and redistribute it freely, subject to the following restrictions:
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
 
-1. The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
-
-2. Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
-
-3. This notice may not be removed or altered from any source distribution.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
 
 ===== END NOTICE =====
 
@@ -963,187 +1150,6 @@ DEALINGS IN THE SOFTWARE.
 
 ===== END NOTICE =====
 
-===== NOTICE 0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594 (10174 bytes) =====
-
-                                 Apache License
-                           Version 2.0, January 2004
-                        http://www.apache.org/licenses/
-
-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
-
-   1. Definitions.
-
-      "License" shall mean the terms and conditions for use, reproduction,
-      and distribution as defined by Sections 1 through 9 of this document.
-
-      "Licensor" shall mean the copyright owner or entity authorized by
-      the copyright owner that is granting the License.
-
-      "Legal Entity" shall mean the union of the acting entity and all
-      other entities that control, are controlled by, or are under common
-      control with that entity. For the purposes of this definition,
-      "control" means (i) the power, direct or indirect, to cause the
-      direction or management of such entity, whether by contract or
-      otherwise, or (ii) ownership of fifty percent (50%) or more of the
-      outstanding shares, or (iii) beneficial ownership of such entity.
-
-      "You" (or "Your") shall mean an individual or Legal Entity
-      exercising permissions granted by this License.
-
-      "Source" form shall mean the preferred form for making modifications,
-      including but not limited to software source code, documentation
-      source, and configuration files.
-
-      "Object" form shall mean any form resulting from mechanical
-      transformation or translation of a Source form, including but
-      not limited to compiled object code, generated documentation,
-      and conversions to other media types.
-
-      "Work" shall mean the work of authorship, whether in Source or
-      Object form, made available under the License, as indicated by a
-      copyright notice that is included in or attached to the work
-      (an example is provided in the Appendix below).
-
-      "Derivative Works" shall mean any work, whether in Source or Object
-      form, that is based on (or derived from) the Work and for which the
-      editorial revisions, annotations, elaborations, or other modifications
-      represent, as a whole, an original work of authorship. For the purposes
-      of this License, Derivative Works shall not include works that remain
-      separable from, or merely link (or bind by name) to the interfaces of,
-      the Work and Derivative Works thereof.
-
-      "Contribution" shall mean any work of authorship, including
-      the original version of the Work and any modifications or additions
-      to that Work or Derivative Works thereof, that is intentionally
-      submitted to Licensor for inclusion in the Work by the copyright owner
-      or by an individual or Legal Entity authorized to submit on behalf of
-      the copyright owner. For the purposes of this definition, "submitted"
-      means any form of electronic, verbal, or written communication sent
-      to the Licensor or its representatives, including but not limited to
-      communication on electronic mailing lists, source code control systems,
-      and issue tracking systems that are managed by, or on behalf of, the
-      Licensor for the purpose of discussing and improving the Work, but
-      excluding communication that is conspicuously marked or otherwise
-      designated in writing by the copyright owner as "Not a Contribution."
-
-      "Contributor" shall mean Licensor and any individual or Legal Entity
-      on behalf of whom a Contribution has been received by Licensor and
-      subsequently incorporated within the Work.
-
-   2. Grant of Copyright License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      copyright license to reproduce, prepare Derivative Works of,
-      publicly display, publicly perform, sublicense, and distribute the
-      Work and such Derivative Works in Source or Object form.
-
-   3. Grant of Patent License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      (except as stated in this section) patent license to make, have made,
-      use, offer to sell, sell, import, and otherwise transfer the Work,
-      where such license applies only to those patent claims licensable
-      by such Contributor that are necessarily infringed by their
-      Contribution(s) alone or by combination of their Contribution(s)
-      with the Work to which such Contribution(s) was submitted. If You
-      institute patent litigation against any entity (including a
-      cross-claim or counterclaim in a lawsuit) alleging that the Work
-      or a Contribution incorporated within the Work constitutes direct
-      or contributory patent infringement, then any patent licenses
-      granted to You under this License for that Work shall terminate
-      as of the date such litigation is filed.
-
-   4. Redistribution. You may reproduce and distribute copies of the
-      Work or Derivative Works thereof in any medium, with or without
-      modifications, and in Source or Object form, provided that You
-      meet the following conditions:
-
-      (a) You must give any other recipients of the Work or
-          Derivative Works a copy of this License; and
-
-      (b) You must cause any modified files to carry prominent notices
-          stating that You changed the files; and
-
-      (c) You must retain, in the Source form of any Derivative Works
-          that You distribute, all copyright, patent, trademark, and
-          attribution notices from the Source form of the Work,
-          excluding those notices that do not pertain to any part of
-          the Derivative Works; and
-
-      (d) If the Work includes a "NOTICE" text file as part of its
-          distribution, then any Derivative Works that You distribute must
-          include a readable copy of the attribution notices contained
-          within such NOTICE file, excluding those notices that do not
-          pertain to any part of the Derivative Works, in at least one
-          of the following places: within a NOTICE text file distributed
-          as part of the Derivative Works; within the Source form or
-          documentation, if provided along with the Derivative Works; or,
-          within a display generated by the Derivative Works, if and
-          wherever such third-party notices normally appear. The contents
-          of the NOTICE file are for informational purposes only and
-          do not modify the License. You may add Your own attribution
-          notices within Derivative Works that You distribute, alongside
-          or as an addendum to the NOTICE text from the Work, provided
-          that such additional attribution notices cannot be construed
-          as modifying the License.
-
-      You may add Your own copyright statement to Your modifications and
-      may provide additional or different license terms and conditions
-      for use, reproduction, or distribution of Your modifications, or
-      for any such Derivative Works as a whole, provided Your use,
-      reproduction, and distribution of the Work otherwise complies with
-      the conditions stated in this License.
-
-   5. Submission of Contributions. Unless You explicitly state otherwise,
-      any Contribution intentionally submitted for inclusion in the Work
-      by You to the Licensor shall be under the terms and conditions of
-      this License, without any additional terms or conditions.
-      Notwithstanding the above, nothing herein shall supersede or modify
-      the terms of any separate license agreement you may have executed
-      with Licensor regarding such Contributions.
-
-   6. Trademarks. This License does not grant permission to use the trade
-      names, trademarks, service marks, or product names of the Licensor,
-      except as required for reasonable and customary use in describing the
-      origin of the Work and reproducing the content of the NOTICE file.
-
-   7. Disclaimer of Warranty. Unless required by applicable law or
-      agreed to in writing, Licensor provides the Work (and each
-      Contributor provides its Contributions) on an "AS IS" BASIS,
-      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-      implied, including, without limitation, any warranties or conditions
-      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-      PARTICULAR PURPOSE. You are solely responsible for determining the
-      appropriateness of using or redistributing the Work and assume any
-      risks associated with Your exercise of permissions under this License.
-
-   8. Limitation of Liability. In no event and under no legal theory,
-      whether in tort (including negligence), contract, or otherwise,
-      unless required by applicable law (such as deliberate and grossly
-      negligent acts) or agreed to in writing, shall any Contributor be
-      liable to You for damages, including any direct, indirect, special,
-      incidental, or consequential damages of any character arising as a
-      result of this License or out of the use or inability to use the
-      Work (including but not limited to damages for loss of goodwill,
-      work stoppage, computer failure or malfunction, or any and all
-      other commercial damages or losses), even if such Contributor
-      has been advised of the possibility of such damages.
-
-   9. Accepting Warranty or Additional Liability. While redistributing
-      the Work or Derivative Works thereof, You may choose to offer,
-      and charge a fee for, acceptance of support, warranty, indemnity,
-      or other liability obligations and/or rights consistent with this
-      License. However, in accepting such obligations, You may act only
-      on Your own behalf and on Your sole responsibility, not on behalf
-      of any other Contributor, and only if You agree to indemnify,
-      defend, and hold each Contributor harmless for any liability
-      incurred by, or claims asserted against, such Contributor by reason
-      of your accepting any such warranty or additional liability.
-
-   END OF TERMS AND CONDITIONS
-
-===== END NOTICE =====
-
 ===== NOTICE 0f96a83840e146e43c0ec96a22ec1f392e0680e6c1226e6f3ba87e0740af850f (1081 bytes) =====
 The MIT License (MIT)
 
@@ -1192,6 +1198,34 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+===== END NOTICE =====
+
+===== NOTICE 122dadfc2eb4de0f4bafcd9eb4e7502cfe338a7965ebd1d18708cc5050f43f76 (1054 bytes) =====
+Copyright (c) 2020 Chad Brokaw
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
 ===== END NOTICE =====
 
 ===== NOTICE 123a331b5dbf04c30097fa43b8f858bc85df671fe776de498d01f3d6b7c1f69e (1066 bytes) =====
@@ -1538,6 +1572,133 @@ THE SOFTWARE.
 
 ===== END NOTICE =====
 
+===== NOTICE 1bc7e6f475b3ec99b7e2643411950ae2368c250dd4c5c325f80f9811362a94a1 (1336 bytes) =====
+Copyright (c) 2015 David Roundy <roundyd@physics.oregonstate.edu>
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the
+   distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+===== END NOTICE =====
+
+===== NOTICE 1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9 (4388 bytes) =====
+Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is copied below, and is also available with a FAQ at:
+https://scripts.sil.org/OFL
+
+
+-----------------------------------------------------------
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font creation
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded, 
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the
+copyright statement(s).
+
+"Original Version" refers to the collection of Font Software components as
+distributed by the Copyright Holder(s).
+
+"Modified Version" refers to any derivative made by adding to, deleting,
+or substituting -- in part or in whole -- any of the components of the
+Original Version, by changing formats or by porting the Font Software to a
+new environment.
+
+"Author" refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
+
+PERMISSION & CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components,
+in Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this license. These can be
+included either as stand-alone text files, human-readable headers or
+in the appropriate machine-readable metadata fields within text or
+binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the corresponding
+Copyright Holder. This restriction only applies to the primary font name as
+presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
+
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created
+using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
+
+===== END NOTICE =====
+
 ===== NOTICE 1e2b7ade3fb228130408b9990cae6a7618eb314c75aa0b164bfe485d9d9756ee (1472 bytes) =====
 # 3rd Party Notices
 
@@ -1598,6 +1759,35 @@ according to those terms.
 
 ===== END NOTICE =====
 
+===== NOTICE 23c23145f6eac25c28cdcc03d38506a5712a9a8cffb5bd5301457f6173ea696e (1055 bytes) =====
+Copyright (c) 2018 Raph Levien
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+===== END NOTICE =====
+
 ===== NOTICE 23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3 (1023 bytes) =====
 Permission is hereby granted, free of charge, to any
 person obtaining a copy of this software and associated
@@ -1625,6 +1815,29 @@ DEALINGS IN THE SOFTWARE.
 
 ===== END NOTICE =====
 
+===== NOTICE 3085885678bb161f6c472bbd331f66a2550b555eb76128f7f8247779128199c0 (1060 bytes) =====
+Copyright (c) 2022 Yevhenii Reizner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+===== END NOTICE =====
+
 ===== NOTICE 31b94860253d8ec7b4529f51901044d3b459d6292d996504a36b1bae3a36a812 (1076 bytes) =====
 MIT License
 
@@ -1636,6 +1849,34 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+===== END NOTICE =====
+
+===== NOTICE 34dff8202d63e6df022f4f0ce88dab24f254c35ee0d5958b74dcf74d9eae21cc (1078 bytes) =====
+Copyright (c) 2020 Chad Brokaw
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
 ===== END NOTICE =====
 
 ===== NOTICE 378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397 (1057 bytes) =====
@@ -1958,6 +2199,46 @@ SOFTWARE.
 
 ===== END NOTICE =====
 
+===== NOTICE 42a35170233e83e18856792e748de4c1ce4a63b2afce9a370c89ef3fe23f9f2d (1078 bytes) =====
+MIT License
+
+Copyright (c) [2021] [Marvin Countryman]
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+===== END NOTICE =====
+
+===== NOTICE 451de3fcfd07574e43cb5131f7a6cc688372fa8b1d4f52c26d1a3f7ce03aff32 (364 bytes) =====
+# This is the official list of Noto authors for copyright
+# purposes.
+# This file is distinct from the CONTRIBUTORS files.
+# See the latter for an explanation.
+
+# Names should be added to this file as:
+# Name or Organization <email address>
+# The email address is not required for organizations.
+
+Google Inc.
+Arjen Nienhuis <a.g.nienhuis@gmail.com>  # SVG cleanup
+
+===== END NOTICE =====
+
 ===== NOTICE 4da95ec4ecb65b738d470b7d762894ad9c97da93e6cbfb18b570fc2c96f4b871 (1071 bytes) =====
 Copyright (c) Ulrik Sverdrup "bluss" 2015-2023
 
@@ -2038,6 +2319,31 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
 IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
+
+===== END NOTICE =====
+
+===== NOTICE 61d383b05b87d78f94d2937e2580cce47226d17823c0430fbcad09596537efcf (1097 bytes) =====
+MIT License
+
+Copyright (c) 2018 Sam Rijs, Alex Crichton and contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ===== END NOTICE =====
 
@@ -2334,6 +2640,102 @@ THE SOFTWARE.
 
 ===== END NOTICE =====
 
+===== NOTICE 6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2 (4301 bytes) =====
+This Font Software is licensed under the SIL Open Font License,
+Version 1.1.
+
+This license is copied below, and is also available with a FAQ at:
+http://scripts.sil.org/OFL
+
+-----------------------------------------------------------
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font
+creation efforts of academic and linguistic communities, and to
+provide a free and open framework in which fonts may be shared and
+improved in partnership with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded,
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply to
+any document created using the fonts or their derivatives.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+"Reserved Font Name" refers to any names specified as such after the
+copyright statement(s).
+
+"Original Version" refers to the collection of Font Software
+components as distributed by the Copyright Holder(s).
+
+"Modified Version" refers to any derivative made by adding to,
+deleting, or substituting -- in part or in whole -- any of the
+components of the Original Version, by changing formats or by porting
+the Font Software to a new environment.
+
+"Author" refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
+
+PERMISSION & CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed,
+modify, redistribute, and sell modified and unmodified copies of the
+Font Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components, in
+Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this license. These can be
+included either as stand-alone text files, human-readable headers or
+in the appropriate machine-readable metadata fields within text or
+binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the
+corresponding Copyright Holder. This restriction only applies to the
+primary font name as presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
+
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created using
+the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
+
+===== END NOTICE =====
+
 ===== NOTICE 6ac8711fb340c62ce0a4ecd463342d3fa0e8e70de697c863a2e1c0c53006003c (1084 bytes) =====
 The MIT License (MIT)
 
@@ -2378,6 +2780,40 @@ the following restrictions:
     misrepresented as being the original software.
 
  3. This notice may not be removed or altered from any source distribution.
+
+===== END NOTICE =====
+
+===== NOTICE 6d41e05f1d54fe726997cb0334ec539f1dff50600b1d5d90462ec2b392770ced (1564 bytes) =====
+Copyright (c) 2011 Google Inc. All rights reserved.
+Copyright (c) 2020 Yevhenii Reizner All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+  * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+
+  * Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in
+    the documentation and/or other materials provided with the
+    distribution.
+
+  * Neither the name of the copyright holder nor the names of its
+    contributors may be used to endorse or promote products derived
+    from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ===== END NOTICE =====
 
@@ -2490,6 +2926,35 @@ SOFTWARE.
 
 ===== END NOTICE =====
 
+===== NOTICE 7b4c9a3946dfcea7967582760e963e27799e225dcf20565c8ef55324bb017427 (1065 bytes) =====
+Copyright (c) 2019 Fontations Developers
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+===== END NOTICE =====
+
 ===== NOTICE 7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0 (1071 bytes) =====
 Copyright (c) 2015 The Rust Project Developers
 
@@ -2519,22 +2984,6 @@ DEALINGS IN THE SOFTWARE.
 
 ===== END NOTICE =====
 
-===== NOTICE 861399f8c21c042b110517e76dc6b63a2b334276c8cf17412fc3c8908ca8dc17 (665 bytes) =====
-Copyright (C) Jonas Schievink <jonasschievink@gmail.com>
-
-Permission to use, copy, modify, and/or distribute this software for
-any purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
-AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
-OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-===== END NOTICE =====
-
 ===== NOTICE 8a35369f3ca263b3c62fbb5032947e53b6bfebc6c8a4d1bb982de1c069f6fba5 (1080 bytes) =====
 The MIT License (MIT)
 
@@ -2557,211 +3006,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-===== END NOTICE =====
-
-===== NOTICE 8ada45cd9f843acf64e4722ae262c622a2b3b3007c7310ef36ac1061a30f6adb (10860 bytes) =====
-                              Apache License
-                        Version 2.0, January 2004
-                     https://www.apache.org/licenses/LICENSE-2.0
-
-TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
-
-1. Definitions.
-
-   "License" shall mean the terms and conditions for use, reproduction,
-   and distribution as defined by Sections 1 through 9 of this document.
-
-   "Licensor" shall mean the copyright owner or entity authorized by
-   the copyright owner that is granting the License.
-
-   "Legal Entity" shall mean the union of the acting entity and all
-   other entities that control, are controlled by, or are under common
-   control with that entity. For the purposes of this definition,
-   "control" means (i) the power, direct or indirect, to cause the
-   direction or management of such entity, whether by contract or
-   otherwise, or (ii) ownership of fifty percent (50%) or more of the
-   outstanding shares, or (iii) beneficial ownership of such entity.
-
-   "You" (or "Your") shall mean an individual or Legal Entity
-   exercising permissions granted by this License.
-
-   "Source" form shall mean the preferred form for making modifications,
-   including but not limited to software source code, documentation
-   source, and configuration files.
-
-   "Object" form shall mean any form resulting from mechanical
-   transformation or translation of a Source form, including but
-   not limited to compiled object code, generated documentation,
-   and conversions to other media types.
-
-   "Work" shall mean the work of authorship, whether in Source or
-   Object form, made available under the License, as indicated by a
-   copyright notice that is included in or attached to the work
-   (an example is provided in the Appendix below).
-
-   "Derivative Works" shall mean any work, whether in Source or Object
-   form, that is based on (or derived from) the Work and for which the
-   editorial revisions, annotations, elaborations, or other modifications
-   represent, as a whole, an original work of authorship. For the purposes
-   of this License, Derivative Works shall not include works that remain
-   separable from, or merely link (or bind by name) to the interfaces of,
-   the Work and Derivative Works thereof.
-
-   "Contribution" shall mean any work of authorship, including
-   the original version of the Work and any modifications or additions
-   to that Work or Derivative Works thereof, that is intentionally
-   submitted to Licensor for inclusion in the Work by the copyright owner
-   or by an individual or Legal Entity authorized to submit on behalf of
-   the copyright owner. For the purposes of this definition, "submitted"
-   means any form of electronic, verbal, or written communication sent
-   to the Licensor or its representatives, including but not limited to
-   communication on electronic mailing lists, source code control systems,
-   and issue tracking systems that are managed by, or on behalf of, the
-   Licensor for the purpose of discussing and improving the Work, but
-   excluding communication that is conspicuously marked or otherwise
-   designated in writing by the copyright owner as "Not a Contribution."
-
-   "Contributor" shall mean Licensor and any individual or Legal Entity
-   on behalf of whom a Contribution has been received by Licensor and
-   subsequently incorporated within the Work.
-
-2. Grant of Copyright License. Subject to the terms and conditions of
-   this License, each Contributor hereby grants to You a perpetual,
-   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-   copyright license to reproduce, prepare Derivative Works of,
-   publicly display, publicly perform, sublicense, and distribute the
-   Work and such Derivative Works in Source or Object form.
-
-3. Grant of Patent License. Subject to the terms and conditions of
-   this License, each Contributor hereby grants to You a perpetual,
-   worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-   (except as stated in this section) patent license to make, have made,
-   use, offer to sell, sell, import, and otherwise transfer the Work,
-   where such license applies only to those patent claims licensable
-   by such Contributor that are necessarily infringed by their
-   Contribution(s) alone or by combination of their Contribution(s)
-   with the Work to which such Contribution(s) was submitted. If You
-   institute patent litigation against any entity (including a
-   cross-claim or counterclaim in a lawsuit) alleging that the Work
-   or a Contribution incorporated within the Work constitutes direct
-   or contributory patent infringement, then any patent licenses
-   granted to You under this License for that Work shall terminate
-   as of the date such litigation is filed.
-
-4. Redistribution. You may reproduce and distribute copies of the
-   Work or Derivative Works thereof in any medium, with or without
-   modifications, and in Source or Object form, provided that You
-   meet the following conditions:
-
-   (a) You must give any other recipients of the Work or
-       Derivative Works a copy of this License; and
-
-   (b) You must cause any modified files to carry prominent notices
-       stating that You changed the files; and
-
-   (c) You must retain, in the Source form of any Derivative Works
-       that You distribute, all copyright, patent, trademark, and
-       attribution notices from the Source form of the Work,
-       excluding those notices that do not pertain to any part of
-       the Derivative Works; and
-
-   (d) If the Work includes a "NOTICE" text file as part of its
-       distribution, then any Derivative Works that You distribute must
-       include a readable copy of the attribution notices contained
-       within such NOTICE file, excluding those notices that do not
-       pertain to any part of the Derivative Works, in at least one
-       of the following places: within a NOTICE text file distributed
-       as part of the Derivative Works; within the Source form or
-       documentation, if provided along with the Derivative Works; or,
-       within a display generated by the Derivative Works, if and
-       wherever such third-party notices normally appear. The contents
-       of the NOTICE file are for informational purposes only and
-       do not modify the License. You may add Your own attribution
-       notices within Derivative Works that You distribute, alongside
-       or as an addendum to the NOTICE text from the Work, provided
-       that such additional attribution notices cannot be construed
-       as modifying the License.
-
-   You may add Your own copyright statement to Your modifications and
-   may provide additional or different license terms and conditions
-   for use, reproduction, or distribution of Your modifications, or
-   for any such Derivative Works as a whole, provided Your use,
-   reproduction, and distribution of the Work otherwise complies with
-   the conditions stated in this License.
-
-5. Submission of Contributions. Unless You explicitly state otherwise,
-   any Contribution intentionally submitted for inclusion in the Work
-   by You to the Licensor shall be under the terms and conditions of
-   this License, without any additional terms or conditions.
-   Notwithstanding the above, nothing herein shall supersede or modify
-   the terms of any separate license agreement you may have executed
-   with Licensor regarding such Contributions.
-
-6. Trademarks. This License does not grant permission to use the trade
-   names, trademarks, service marks, or product names of the Licensor,
-   except as required for reasonable and customary use in describing the
-   origin of the Work and reproducing the content of the NOTICE file.
-
-7. Disclaimer of Warranty. Unless required by applicable law or
-   agreed to in writing, Licensor provides the Work (and each
-   Contributor provides its Contributions) on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-   implied, including, without limitation, any warranties or conditions
-   of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-   PARTICULAR PURPOSE. You are solely responsible for determining the
-   appropriateness of using or redistributing the Work and assume any
-   risks associated with Your exercise of permissions under this License.
-
-8. Limitation of Liability. In no event and under no legal theory,
-   whether in tort (including negligence), contract, or otherwise,
-   unless required by applicable law (such as deliberate and grossly
-   negligent acts) or agreed to in writing, shall any Contributor be
-   liable to You for damages, including any direct, indirect, special,
-   incidental, or consequential damages of any character arising as a
-   result of this License or out of the use or inability to use the
-   Work (including but not limited to damages for loss of goodwill,
-   work stoppage, computer failure or malfunction, or any and all
-   other commercial damages or losses), even if such Contributor
-   has been advised of the possibility of such damages.
-
-9. Accepting Warranty or Additional Liability. While redistributing
-   the Work or Derivative Works thereof, You may choose to offer,
-   and charge a fee for, acceptance of support, warranty, indemnity,
-   or other liability obligations and/or rights consistent with this
-   License. However, in accepting such obligations, You may act only
-   on Your own behalf and on Your sole responsibility, not on behalf
-   of any other Contributor, and only if You agree to indemnify,
-   defend, and hold each Contributor harmless for any liability
-   incurred by, or claims asserted against, such Contributor by reason
-   of your accepting any such warranty or additional liability.
-
-END OF TERMS AND CONDITIONS
-
-APPENDIX: How to apply the Apache License to your work.
-
-   To apply the Apache License to your work, attach the following
-   boilerplate notice, with the fields enclosed by brackets "[]"
-   replaced with your own identifying information. (Don't include
-   the brackets!)  The text should be enclosed in the appropriate
-   comment syntax for the file format. We also recommend that a
-   file or class name and description of purpose be included on the
-   same "printed page" as the copyright notice for easier
-   identification within third-party archives.
-
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-	https://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
 
 ===== END NOTICE =====
 
@@ -4053,6 +4297,46 @@ obstacle to adoption, that text has been removed.
 
 ===== END NOTICE =====
 
+===== NOTICE c77a4cf9da729987d0fe7ccd811e3bd27393914ddf3d23467c18cc22954513b3 (1036 bytes) =====
+MIT License
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+===== END NOTICE =====
+
+===== NOTICE c962ee4d1d05ddc138b202b2540219ebc57893fcf97b364852094a9a94ce1365 (281 bytes) =====
+Copyright 2012-2016 The Rust Project Developers.
+Copyright 2016-2026 Frank Denis.
+
+Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+<LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+option.
+
+===== END NOTICE =====
+
 ===== NOTICE c9a75f18b9ab2927829a208fc6aa2cf4e63b8420887ba29cdb265d6619ae82d5 (1071 bytes) =====
 Copyright (c) 2016 The Rust Project Developers
 
@@ -4133,8 +4417,60 @@ DEALINGS IN THE SOFTWARE.
 
 ===== END NOTICE =====
 
+===== NOTICE df62e3ef3f207c91073fedd78b4156a278681d0dd3f942379242c62c6a71a3ec (1074 bytes) =====
+Copyright (c) 2020 Chad Brokaw
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+===== END NOTICE =====
+
 ===== NOTICE e99d88d232bf57d70f0fb87f6b496d44b6653f99f8a63d250a54c61ea4bcde40 (1069 bytes) =====
 Copyright (c) 2016-2018 The gimli Developers
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+===== END NOTICE =====
+
+===== NOTICE eaf40297c75da471f7cda1f3458e8d91b4b2ec866e609527a13acfa93b638652 (1048 bytes) =====
+Copyright (c) 2015 nwin
 
 Permission is hereby granted, free of charge, to any
 person obtaining a copy of this software and associated
@@ -4188,6 +4524,41 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
 IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
+
+===== END NOTICE =====
+
+===== NOTICE f3c9fe731c701ed77fd5fbaac573872af04dc5869385eb9bd5e3c73c42713814 (1061 bytes) =====
+Copyright (c) 2018 Yevhenii Reizner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+
+===== END NOTICE =====
+
+===== NOTICE f49d7e15695022ed1dcd72eb88adf16c9e3fa7f2de63cd71963ba233d3d51264 (305 bytes) =====
+# This is the list of svgtypes' significant contributors.
+#
+# This does not necessarily list everyone who has contributed code,
+# especially since many employees of one corporation may be contributing.
+# To see the full list of contributors, see the revision history in
+# source control.
+Yevhenii Reizner
 
 ===== END NOTICE =====
 
@@ -4274,6 +4645,27 @@ Except as contained in this notice, the name of a copyright holder shall
 not be used in advertising or otherwise to promote the sale, use or other
 dealings in these Data Files or Software without prior written
 authorization of the copyright holder.
+
+===== END NOTICE =====
+
+===== NOTICE f9c4c77baa3828004ee54b8a4f2db2e88ed44a6237a493965bf551fac0fcb62d (1023 bytes) =====
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ===== END NOTICE =====
 

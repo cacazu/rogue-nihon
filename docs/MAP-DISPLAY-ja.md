@@ -6,7 +6,7 @@
 
 `logic/knowledge.c:rg_knowledge_present` がCの画面を観測し、Rustの `display/src/map_tiles.rs` が文字を表示IDへ変換する。`frame.cells` は原英文画面の比較用、`frame.map_cells` は文字UI領域を除いた地図用である。論理画面は80×24セル。
 
-`display/src/browser_ui/tiles.rs` がmanifest・フレームの語彙を検証し、可視領域・重ね順・DPR座標の描画計画を作る。Rustの `browser-display/src/browser/images.rs` は指定されたPNGをdecodeしてCanvasへ描き、画像と回転rasterのcacheを所有する。ドット絵の回転計算は `display/src/browser_ui/pixels.rs` に置く。表示・拡大・スクロール・全画面・resizeは最後のframeを使い、Cのlookや入力を追加しない。
+`display/src/browser_ui/tiles.rs` がmanifest・フレームの語彙を検証し、可視領域・重ね順・DPR座標の描画計画を作る。Rustの `browser-display/src/browser/images.rs` がPNGのbytesを取得し、`raster/src/images.rs` がdecode・回転・拡大・RGBA合成とcacheを所有する。ドット絵は `display/src/browser_ui/pixels.rs` と同じ32pxの回転計算を使う。CanvasにはRustが作った全画面RGBAだけを転送する。表示・拡大・スクロール・全画面・resizeは最後のframeを使い、Cのlookや入力を追加しない。
 
 ## 表示IDと原作記号
 

@@ -107,9 +107,6 @@ const manifest = {
   entries
 };
 await writeFile(path.join(destination, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
-// Classic script data keeps the preview usable both over HTTP and when the
-// user opens index.html directly from disk, without file-origin fetch errors.
-await writeFile(path.join(destination, 'asset-data.js'), 'window.ROGUE_ANIMATIONS = ' + JSON.stringify(manifest) + ';\n');
 for (let page = 0; page < Math.ceil(entries.length / 9); page++) {
   const layers = [];
   for (const [slot, entry] of entries.slice(page * 9, page * 9 + 9).entries()) {

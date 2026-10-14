@@ -25,10 +25,17 @@ function browserTestAdapter() {
       tiles.rotated={get size(){return tiles.painter.rotations();}};return tiles;
     }
     validate(frame){ui.request({type:"tile-plan",mode:this.manifest.browser_mode,frame,camera:{size:0}});}
-    drawImage(context,entry,x,y,w,h){this.painter.draw(context,JSON.stringify({...entry,rect:{x,y,w,h}}));this.drawCount++;}
+    drawImage(context,entry,x,y,w,h){
+      const width=context.canvas.width,height=context.canvas.height;
+      const rgba=this.painter.rasterize(JSON.stringify({...entry,rect:{x,y,w,h}}),width,height);
+      context.putImageData(new ImageData(new Uint8ClampedArray(rgba),width,height),0,0);this.drawCount++;
+    }
     draw(context,frame,camera){
       const result=ui.request({type:"tile-plan",mode:this.manifest.browser_mode,frame,camera});this.drawCount=0;context.imageSmoothingEnabled=false;
-      for(const command of result.commands){const r=command.rect;this.drawImage(context,command,r.x*camera.ratio,r.y*camera.ratio,r.w*camera.ratio,r.h*camera.ratio);}
+      const commands=result.commands.map(command=>{const r=command.rect;return {...command,rect:{x:r.x*camera.ratio,y:r.y*camera.ratio,w:r.w*camera.ratio,h:r.h*camera.ratio}};});
+      const width=context.canvas.width,height=context.canvas.height;
+      const rgba=this.painter.rasterize(JSON.stringify(commands),width,height);
+      context.putImageData(new ImageData(new Uint8ClampedArray(rgba),width,height),0,0);this.drawCount=commands.length;
     }
   }
   globalThis.RogueTiles=Tiles;

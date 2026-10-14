@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "fonts": [
+    {
+      "name": "NotoSansJP",
+      "file": "NotoSansJP.ttf",
+      "source_repository": "https://github.com/google/fonts",
+      "source_revision": "67bc647ce1910e92f461bcc82aae30f21d21a9cc",
+      "source_path": "ofl/notosansjp/NotoSansJP[wght].ttf",
+      "source_url": "https://raw.githubusercontent.com/google/fonts/67bc647ce1910e92f461bcc82aae30f21d21a9cc/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+      "sha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f",
+      "bytes": 9589900,
+      "license": "OFL-1.1",
+      "tables": [
+        "BASE",
+        "GDEF",
+        "GPOS",
+        "GSUB",
+        "HVAR",
+        "OS/2",
+        "STAT",
+        "avar",
+        "cmap",
+        "fvar",
+        "gasp",
+        "glyf",
+        "gvar",
+        "head",
+        "hhea",
+        "hmtx",
+        "loca",
+        "maxp",
+        "name",
+        "post",
+        "prep",
+        "vhea",
+        "vmtx"
+      ],
+      "version": "Version 2.004-H2;hotconv 1.0.118;makeotfexe 2.5.65603",
+      "copyright": [
+        "(c) 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'."
+      ],
+      "variation_axes": [
+        {
+          "tag": "wght",
+          "minimum": 100.0,
+          "default": 100.0,
+          "maximum": 900.0
+        }
+      ],
+      "notices": [
+        {
+          "name": "OFL.txt",
+          "source_url": "https://raw.githubusercontent.com/google/fonts/67bc647ce1910e92f461bcc82aae30f21d21a9cc/ofl/notosansjp/OFL.txt",
+          "sha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9"
+        }
+      ]
+    },
+    {
+      "name": "NotoColorEmoji",
+      "file": "NotoColorEmoji.ttf",
+      "source_repository": "https://github.com/googlefonts/noto-emoji",
+      "source_revision": "e20cbc2bbec1926686be9f9bee7d1d2cfa1fea0e",
+      "source_path": "2D/fonts/NotoColorEmoji.ttf",
+      "source_url": "https://raw.githubusercontent.com/googlefonts/noto-emoji/e20cbc2bbec1926686be9f9bee7d1d2cfa1fea0e/2D/fonts/NotoColorEmoji.ttf",
+      "sha256": "15671215ab769fdc7162a045d56fd7d7e477c51b04e6b3c761d914d8fdd6cc44",
+      "bytes": 10730124,
+      "license": "OFL-1.1",
+      "tables": [
+        "CBDT",
+        "CBLC",
+        "GSUB",
+        "OS/2",
+        "cmap",
+        "head",
+        "hhea",
+        "hmtx",
+        "maxp",
+        "name",
+        "post",
+        "vhea",
+        "vmtx"
+      ],
+      "version": "Version 2.057;GOOG;noto-emoji:20260911:fc4ca365e7c20e78278ae702aa20434bfe704c8f",
+      "copyright": [
+        "Copyright 2022 Google Inc."
+      ],
+      "notices": [
+        {
+          "name": "LICENSE",
+          "source_url": "https://raw.githubusercontent.com/googlefonts/noto-emoji/e20cbc2bbec1926686be9f9bee7d1d2cfa1fea0e/2D/fonts/LICENSE",
+          "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2"
+        },
+        {
+          "name": "AUTHORS",
+          "source_url": "https://raw.githubusercontent.com/googlefonts/noto-emoji/e20cbc2bbec1926686be9f9bee7d1d2cfa1fea0e/AUTHORS",
+          "sha256": "451de3fcfd07574e43cb5131f7a6cc688372fa8b1d4f52c26d1a3f7ce03aff32"
+        }
+      ]
+    }
+  ]
+}

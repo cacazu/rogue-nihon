@@ -8,15 +8,38 @@ import {fileURLToPath} from "node:url";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const text = file => readFile(path.join(root, file), "utf8");
 
+async function webSources(directory = "web") {
+  const files = [];
+  for (const entry of await readdir(path.join(root, directory), {withFileTypes: true})) {
+    const file = directory + "/" + entry.name;
+    if (entry.isDirectory()) files.push(...await webSources(file));
+    else if (/\.(?:[cm]?js|html)$/i.test(entry.name)) files.push(file);
+  }
+  return files.sort();
+}
+
 test("shipped browser modules exclude the local server, tests and artifact management", async () => {
-  const files = (await readdir(path.join(root, "web"))).filter(file => /\.m?js$/.test(file));
-  assert.ok(!files.includes("server.mjs"));
-  assert.ok(!files.includes("library.js"));
+  const files = await webSources();
+  assert.deepEqual(files.filter(file => /\.[cm]?js$/i.test(file)), ["web/abi.js", "web/app.js", "web/worker.js"],
+    "Every shipped JavaScript file is a startup entry point or generated ABI data");
   for (const file of files) {
-    const source = await text("web/" + file);
+    const source = await text(file);
     assert.doesNotMatch(source, /__rogueBrowserTest|RogueCanvasUi\.active|recoverTemporaryArtifacts|artifact-registry|temporary.artifacts|ROGUE_KEEP_ARTIFACTS|node:/, file);
     for (const [, dependency] of source.matchAll(/(?:from\s*|import\s*\(|importScripts\s*\(|require\s*\()\s*["']([^"']+)/g)) {
       assert.ok(dependency.startsWith("/web/") || dependency === "/build/game.js" || dependency === "/build/browser-ui.js", file + " -> " + dependency);
+    }
+    if (file.endsWith(".html")) {
+      assert.doesNotMatch(source, /\bon[a-z]+\s*=|(?:href|src)\s*=\s*["']\s*javascript:/i,
+        file + " must not contain JavaScript event handlers or URLs");
+      const scripts = [...source.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)];
+      assert.equal(scripts.length, [...source.matchAll(/<script\b/gi)].length,
+        file + " script tags must have an explicit closing tag");
+      for (const [, attributes, body] of scripts) {
+        const src = attributes.match(/\bsrc\s*=\s*["']([^"']+)["']/i)?.[1];
+        assert.equal(src, "/web/app.js", file + " loads the common Wasm startup only");
+        assert.match(attributes, /\btype\s*=\s*["']module["']/i, file);
+        assert.equal(body.trim(), "", file + " must not contain inline JavaScript");
+      }
     }
   }
   assert.doesNotMatch(await text("web/index.html"), /tests\/|tools\/|fixture|artifact/i);
@@ -24,6 +47,24 @@ test("shipped browser modules exclude the local server, tests and artifact manag
   assert.doesNotMatch(previewSource, /tests[\\/]|recoverTemporaryArtifacts|artifact-registry|temporary.artifacts/);
   assert.doesNotMatch(previewSource, /test-adapter|__rogueBrowserTest/);
   assert.doesNotMatch(previewSource, /web[\\/]server\.mjs/);
+});
+
+test("the published browser binding only transfers complete Rust-rendered pixels", async () => {
+  const ui = await WebAssembly.compile(await readFile(path.join(root, "build/browser-ui.wasm")));
+  const imports = WebAssembly.Module.imports(ui).map(({name}) => name);
+  const rasterApi = /(?:fillRect|strokeRect|clearRect|fillText|strokeText|measureText|drawImage|Path2[dD]|CanvasGradient|CanvasPattern|HtmlImageElement|ImageBitmap|new_with_path_string|createImageBitmap|createLinearGradient|createRadialGradient|createConicGradient|createPattern|rotate|roundRect|beginPath|closePath|moveTo|lineTo|bezierCurveTo|quadraticCurveTo|ellipse|arc|clip|stroke|fill|translate|scale|setTransform|resetTransform|getTransform|getImageData)(?:_|\b)/;
+  for (const name of imports) {
+    assert.doesNotMatch(name, rasterApi, "Browser pixel generation must not be imported: " + name);
+    assert.doesNotMatch(name, /__wbg_decode_/, "PNG decoding must run in Rust: " + name);
+  }
+  assert.ok(imports.some(name => /__wbg_putImageData_/.test(name)), "Complete RGBA transfer must remain available");
+  const binding = await text("build/browser-ui.js");
+  assert.doesNotMatch(binding, rasterApi, "Generated JavaScript must not contain browser rasterization or image decoding");
+  // wasm-bindgen still needs TextDecoder for its string ABI. Its generated image
+  // decode import and Image constructor are distinct from that mechanical conversion.
+  assert.doesNotMatch(binding, /__wbg_decode_|\bnew\s+(?:Image|Path2D|ImageBitmap|OffscreenCanvas)\s*\(/,
+    "Images must be decoded and rasterized in Rust");
+  assert.match(binding, /\.putImageData\s*\(/, "The browser receives completed Rust pixels");
 });
 
 test("production compiler entry points do not register or recover interrupted runs", async () => {

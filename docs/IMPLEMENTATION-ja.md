@@ -12,7 +12,8 @@
 | プラットフォーム | `rust/crates/platform/` | checkpoint、消費済み入力journal、再生位置、保存envelopeと検証 |
 | ゲーム側の接続 | `rust/src/lib.rs`、`session.rs`、`engine.rs` | C/JS FFI、Bevy Appの組立て、各層への状態投影と実行順 |
 | ブラウザー側の判断 | `rust/crates/browser-display/src/controller.rs`、`policies.rs`、`display/src/browser_ui/`、`widgets.rs` | 開始・終了・保存の状態、Worker世代、IME制限、入力検証、表示設定、履歴、配置・フォーカス・カメラ・タイル計画 |
-| ブラウザー資源 | `rust/crates/browser-display/src/browser/` | イベントlistener、Canvas2D、ネイティブ文字入力、画像と回転cache、Worker/SAB、IndexedDB、保存候補bytes、ファイル・Blobの所有とAPI実行 |
+| ラスタライズ | `rust/crates/raster/` | PNG decode、画像回転・拡大・合成、図形・SVG path・クリップ・透明度、フォント計測・shaping・文字の画素、完成RGBA |
+| ブラウザー資源 | `rust/crates/browser-display/src/browser/` | イベントlistener、完成RGBAの転送、ネイティブ文字入力、画像bytesとcache、Worker/SAB、IndexedDB、保存候補bytes、ファイル・Blobの所有とAPI実行 |
 
 入力は表示が公開する不変の `InputView` を参照する。基本の入力待ち・所持品行と、持ち物の詳細・操作候補を付けた描画用UIは区別する。入力Pluginは翻訳を再実行せず、表示状態や地図Componentを直接変更しない。文字編集の消費byte・未送信byte・表示可能な文字列は入力の `State` が所有し、接続部が表示へ一方向に投影する。開始時に表示する既存値は、空のC編集bufferを埋める入力にはしない。
 
@@ -66,9 +67,13 @@ CゲームスタックはWorker内で同期実行し、入力キューが空な�
 
 ## ブラウザー資源と残るJS
 
-ブラウザーAPIは `wasm-bindgen / web-sys / js-sys` の生成bindingを通してRustから呼ぶ。`browser/mod.rs` はDOM・listener・文字計測・座標変換・再描画の登録を、`paint.rs` はCanvas命令と公開UIの意味的なDOM mirrorを担当する。listenerは弱参照でBrowserへ接続し、callbackの寿命をRustで保持する。`effects.rs::WorkerSlot` はWorker・共有キュー・callbackを所有し、Dropでキューをcloseしてcallbackを外しWorkerを終了する。`queue.rs` はSAB/Atomicsの容量検査・全公開または全拒否・待機・flushを実装し、生の整数を解釈しない。
+ブラウザーAPIは `wasm-bindgen / web-sys / js-sys` の生成bindingを通してRustから呼ぶ。製品の手書きJSはWasmの起動だけを担当する。生成bindingは実行中もブラウザーAPIへの呼出し・値の受渡し・callback接続を行うため、JS全体を起動時だけ実行するという意味ではない。ゲームの状態・入力・描画・保存の判断や処理は原作CとRustが所有する。`browser/mod.rs` はDOM・listener・座標変換・再描画の登録を、`paint.rs` は完成RGBAの転送と公開UIの意味的なDOM mirrorを担当する。listenerは弱参照でBrowserへ接続し、callbackの寿命をRustで保持する。`effects.rs::WorkerSlot` はWorker・共有キュー・callbackを所有し、Dropでキューをcloseしてcallbackを外しWorkerを終了する。`queue.rs` はSAB/Atomicsの容量検査・全公開または全拒否・待機・flushを実装し、生の整数を解釈しない。
 
-`saves.rs` はIndexedDB transaction完了・ファイル選択・Blob書出しを扱い、候補bytesと採用済みbytesはBrowserの別領域に保持する。ファイル選択と全画面のAPIはユーザーイベントの同期区間で開始し、完了はRust futureで待つ。`images.rs` は画像decode・Canvas raster・回転cacheの寿命を管理し、32px格子の回転計算は表示層の `browser_ui/pixels.rs` に置く。`worker.rs` はEmscriptenの初期化・仮想FS・同期C起動・親への転送を担当する。
+`saves.rs` はIndexedDB transaction完了・ファイル選択・Blob書出しを扱い、候補bytesと採用済みbytesはBrowserの別領域に保持する。ファイル選択と全画面のAPIはユーザーイベントの同期区間で開始し、完了はRust futureで待つ。`images.rs` は取得bytesをRustのPNG decoderへ渡し、decode済み画像と回転cacheを所有する。`worker.rs` はEmscriptenの初期化・仮想FS・同期C起動・親への転送を担当する。Emscriptenの生成runtimeには仮想FS・libc・メモリー・文字列の汎用接続が含まれる。
+
+`rogue-raster` は表示層の描画命令を受け取り、tiny-skia・svgtypes・swash・pngを使って全画面のRGBAをRust内で作る。ブラウザーへは `putImageData` で完成画像を一度だけ転送し、Canvasの図形・文字・パス・画像描画や文字計測を使わない。文字計測と描画は同じglyph planとtop基準を使い、同梱Noto Sans JPの400/600とNoto Color EmojiをRustで読み込む。文字幅はOSのフォントに依存させない。ドット絵の32px回転と最近傍拡大を保ち、図形・透明度・クリップ・輪郭もRustで計算する。PNGはbuffer確保前に寸法・画素数・bytes上限を検査する。フォントの取得・解析に失敗した場合はRustが可視の起動エラーと再読み込み操作を出す。
+
+素材ギャラリーも共通のWasm起動だけを使う。`browser/gallery.rs` がmanifest・PNG・atlasの切出し・再生時刻・停止再開・フレーム選択を所有し、元画像とsheetを含む完成RGBAを転送する。HTTPの作品サーバーから開く。素材生成・検証用JSは `tools/`・`tests/` に置き、製品から読み込まない。境界検査は `web/` 以下を再帰走査し、HTML内scriptも対象にする。
 
 ゲーム側のホスト接続は `rust/src/host.rs` の `wasm-bindgen` 宣言から生成する。Emscriptenは `WASM_BINDGEN` を有効にして生成bindingを `game.js` に組み込み、手書きのJSライブラリーを使わない。ゲーム側のAPIは借用sliceを同期区間だけ渡し、Worker側Rustは毎回現在の `HEAPU8` を取得してアドレス・長さを検査し、Rust所有のbyte列へコピーする。メモリー成長前のviewを保持せず、元のsliceの解放前にコピーを終える。JSON・UTF-8の復号と保存byte列の転送もWorker側Rustが担当する。
 

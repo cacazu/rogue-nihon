@@ -8,6 +8,8 @@ The inventory covers the `normal,build` dependencies of `rogue-layers` for `wasm
 
 Rust standard-library notices come from the matching `rust-src` dependency graph for those targets, including the installed libraries' backtrace/unwind support. Compiler-builtins notices retain their MIT and Apache/LLVM terms. Rust compiler and test-tool notices are excluded. Emscripten-generated JavaScript, musl and compiler-rt notices remain for the game runtime. The wasm-bindgen CLI support templates emitted into the browser bindings have their own component attribution.
 
-The HUD's stairs icon is adapted from [Lucide Lab's stairs.svg](https://github.com/lucide-icons/lucide-lab/blob/main/icons/stairs.svg) as a Rust vector path. Its ISC license and copyright notice are included in the consolidated notices. No third-party web font or external JavaScript package is used by the browser UI.
+The HUD's stairs icon is adapted from [Lucide Lab's stairs.svg](https://github.com/lucide-icons/lucide-lab/blob/main/icons/stairs.svg) as a Rust vector path. Its ISC license and copyright notice are included in the consolidated notices.
+
+The browser renderer bundles unmodified Noto Sans JP and Noto Color Emoji font files under the SIL Open Font License 1.1. [Font metadata](web/assets/fonts/metadata.json) pins the upstream revisions, download sources and SHA-256 hashes. Their original license texts, embedded copyright attribution and Noto Emoji AUTHORS are included in the consolidated notices. The emoji font is covered by its font-directory OFL license; this distribution does not import the upstream tools or separate image sources covered by Apache-2.0.
 
 The [license guide](docs/LICENSES-ja.md) links to the downloadable bundle.

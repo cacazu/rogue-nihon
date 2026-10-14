@@ -22,60 +22,13 @@
   .reference { width: 64px; height: auto; max-width: 100%; image-rendering: pixelated; background: #11161d; }
   a { color: #91c9ff; }
 </style>
+<body data-rogue-gallery="manifest.json">
 <h1>元祖ローグ · 全キャラアニメーション</h1>
 <p id="summary">読み込み中…</p>
 <p>32×32透過PNG。シートは横3コマ、縦に待機・移動・攻撃・被ダメージ。</p>
 <p>各キャラの左端が元画像です。「12コマのシート」を開くと全ポーズを比較できます。</p>
 <div class="controls"><button id="play">一時停止</button><label>コマ <select id="frame"><option value="auto">自動再生</option><option value="0">1</option><option value="1">2</option><option value="2">3</option></select></label><a href="manifest.json">画像manifest</a><a href="poses.json">ポーズ定義</a></div>
 <main id="characters"></main>
-<script src="asset-data.js"></script>
-<script type="module">
-const manifest = window.ROGUE_ANIMATIONS;
-const states = [['idle','待機'],['move','移動'],['attack','攻撃'],['hurt','被ダメージ']];
-const views = []; let playing = true; let pausedAt = 0; let offset = 0; let animationId;
-const summary = document.getElementById('summary');
-summary.textContent = `${manifest.character_count}キャラクター × 4状態 × 3コマ = ${manifest.image_count}枚`;
-for (const entry of manifest.entries) {
-  const article = document.createElement('article'); article.dataset.id = entry.id;
-  const h = document.createElement('h2'); h.textContent = `${entry.glyph} · ${entry.labels.ja}`; article.append(h);
-  const group = document.createElement('div'); group.className = 'states'; article.append(group);
-  const reference = document.createElement('figure'); const original = document.createElement('img');
-  original.className = 'reference'; original.src = entry.source.image; original.alt = entry.labels.ja + ' 元画像';
-  const referenceLabel = document.createElement('figcaption'); referenceLabel.textContent = '元画像'; reference.append(original,referenceLabel); group.append(reference);
-  for (const [state,label] of states) {
-    const figure = document.createElement('figure'); const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = 32; canvas.dataset.state = state; canvas.setAttribute('aria-label', `${entry.labels.ja} ${label}`);
-    const caption = document.createElement('figcaption'); caption.textContent = label; figure.append(canvas,caption); group.append(figure);
-    const images = await Promise.all(entry.animations[state].frames.map(src => new Promise((resolve,reject) => {
-      const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(Error(src)); img.src = src;
-    })));
-    views.push({ canvas, images, duration: entry.animations[state].frame_ms });
-  }
-  const details = document.createElement('details'); const title = document.createElement('summary'); title.textContent = '12コマのシート';
-  const sheet = document.createElement('img'); sheet.className = 'sheet'; sheet.src = entry.sheet; sheet.alt = entry.labels.ja + ' 全12コマ';
-  details.append(title,sheet); article.append(details); document.getElementById('characters').append(article);
-}
-document.getElementById('play').onclick = event => {
-  playing = !playing; const now = performance.now(); if (playing) offset += now - pausedAt; else pausedAt = now;
-  event.target.textContent = playing ? '一時停止' : '再生';
-  render();
-};
-function draw(now) {
-  const chosen = document.getElementById('frame').value;
-  for (const view of views) {
-    const index = chosen === 'auto' ? Math.floor(((playing ? now : pausedAt) - offset) / view.duration) % 3 : Number(chosen);
-    const context = view.canvas.getContext('2d'); context.imageSmoothingEnabled = false;
-    context.clearRect(0,0,32,32); context.drawImage(view.images[index],0,0); view.canvas.dataset.frame = index;
-  }
-}
-function tick(now) {
-  draw(now);
-  animationId = playing && document.getElementById('frame').value === 'auto' ? requestAnimationFrame(tick) : undefined;
-}
-function render() {
-  cancelAnimationFrame(animationId); tick(performance.now());
-}
-document.getElementById('frame').onchange = render;
-document.documentElement.dataset.ready = 'true'; render();
-</script>
+<script type="module" src="/web/app.js"></script>
+</body>
 </html>

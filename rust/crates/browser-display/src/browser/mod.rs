@@ -1,5 +1,6 @@
 //! Browser resources and their lifetime belong to Rust. JS only boots this instance.
 mod effects;
+mod gallery;
 mod images;
 mod paint;
 mod queue;
@@ -7,6 +8,7 @@ mod saves;
 mod worker;
 use js_sys::{Function, JSON, Reflect};
 use rogue_display::widgets::TextSize;
+use rogue_raster::Renderer;
 use serde_json::{Value, json};
 use std::{
     cell::{Cell, RefCell},
@@ -21,6 +23,7 @@ type CanvasObserver = (ResizeObserver, Closure<dyn FnMut()>);
 
 thread_local! {
     static HOST: RefCell<Option<Rc<Browser>>> = const { RefCell::new(None) };
+    static STARTUP_ERROR: RefCell<Option<Listener>> = const { RefCell::new(None) };
 }
 pub(super) fn js(value: &Value) -> Result<JsValue, JsValue> {
     JSON::parse(&value.to_string())
@@ -43,6 +46,22 @@ pub(super) fn call(object: &JsValue, name: &str, args: &js_sys::Array) -> Result
         .dyn_into::<Function>()?
         .apply(object, args)
 }
+pub(super) async fn fetch_bytes(url: &str) -> Result<Vec<u8>, JsValue> {
+    let args = js_sys::Array::new();
+    args.push(&JsValue::from_str(url));
+    let promise = call(&js_sys::global(), "fetch", &args)?.dyn_into::<js_sys::Promise>()?;
+    let response: Response = wasm_bindgen_futures::JsFuture::from(promise)
+        .await?
+        .dyn_into()?;
+    if !response.ok() {
+        return Err(JsValue::from_str(&format!(
+            "Asset fetch failed: {} {url}",
+            response.status()
+        )));
+    }
+    let bytes = wasm_bindgen_futures::JsFuture::from(response.array_buffer()?).await?;
+    Ok(js_sys::Uint8Array::new(&bytes).to_vec())
+}
 pub(super) struct Listener {
     target: EventTarget,
     name: String,
@@ -63,6 +82,7 @@ pub(super) struct Browser {
     document: Document,
     canvas: HtmlCanvasElement,
     context: CanvasRenderingContext2d,
+    renderer: RefCell<Renderer>,
     surface: HtmlElement,
     controls: HtmlElement,
     description: HtmlElement,
@@ -92,19 +112,92 @@ pub(super) struct Browser {
 }
 impl Drop for Browser {
     fn drop(&mut self) {
-        if let Some(id) = self.frame_id.take() { let _ = self.window.cancel_animation_frame(id); }
-        if let Some((id,_)) = self.hold.get_mut().take() { self.window.clear_timeout_with_handle(id); }
-        if let Some((id,_)) = self.blink.get_mut().take() { self.window.clear_interval_with_handle(id); }
-        if let Some((observer,_)) = self.observer.get_mut().take() { observer.disconnect(); }
-        if let Some(database) = self.connection.get_mut().take() { database.close(); }
+        if let Some(id) = self.frame_id.take() {
+            let _ = self.window.cancel_animation_frame(id);
+        }
+        if let Some((id, _)) = self.hold.get_mut().take() {
+            self.window.clear_timeout_with_handle(id);
+        }
+        if let Some((id, _)) = self.blink.get_mut().take() {
+            self.window.clear_interval_with_handle(id);
+        }
+        if let Some((observer, _)) = self.observer.get_mut().take() {
+            observer.disconnect();
+        }
+        if let Some(database) = self.connection.get_mut().take() {
+            database.close();
+        }
     }
 }
 #[wasm_bindgen]
-pub fn browser_start() -> Result<(), JsValue> {
+pub async fn browser_start() -> Result<(), JsValue> {
     let window = web_sys::window().ok_or_else(|| JsValue::from_str("Main window unavailable"))?;
     let document = window
         .document()
         .ok_or_else(|| JsValue::from_str("Document unavailable"))?;
+    if document
+        .body()
+        .is_some_and(|body| body.has_attribute("data-rogue-gallery"))
+    {
+        return gallery::start(document);
+    }
+    match start_main(window.clone(), document.clone()).await {
+        Ok(()) => Ok(()),
+        Err(failure) => {
+            startup_error(&window, &document)?;
+            error(failure);
+            Ok(())
+        }
+    }
+}
+fn startup_error(window: &Window, document: &Document) -> Result<(), JsValue> {
+    let english = UrlSearchParams::new_with_str(&window.location().search()?)?
+        .get("lang")
+        .as_deref()
+        == Some("en");
+    let panel: HtmlElement = document.create_element("section")?.dyn_into()?;
+    panel.set_id("rogue-startup-error");
+    panel.set_attribute("role", "alert")?;
+    panel.style().set_css_text("position:fixed;top:80px;left:16px;right:16px;padding:24px;background:#152126;color:#e8ebed;border:1px solid #3b4d53;z-index:10");
+    let message = document.create_element("p")?;
+    message.set_text_content(Some(if english {
+        "The screen could not be loaded. Please reload."
+    } else {
+        "画面を読み込めませんでした。再読み込みしてください。"
+    }));
+    panel.append_child(&message)?;
+    let retry: HtmlButtonElement = document.create_element("button")?.dyn_into()?;
+    retry.set_type("button");
+    retry.set_text_content(Some(if english { "Reload" } else { "再読み込み" }));
+    retry
+        .style()
+        .set_css_text("font:inherit;min-height:48px;padding:8px 24px");
+    let retry_window = window.clone();
+    let callback = Closure::new(move |_: Event| {
+        if let Err(failure) = retry_window.location().reload() {
+            error(failure);
+        }
+    });
+    retry.add_event_listener_with_callback("click", callback.as_ref().unchecked_ref())?;
+    panel.append_child(&retry)?;
+    document
+        .body()
+        .ok_or_else(|| JsValue::from_str("Page body unavailable"))?
+        .append_child(&panel)?;
+    STARTUP_ERROR.with(|slot| {
+        *slot.borrow_mut() = Some(Listener {
+            target: retry.into(),
+            name: "click".into(),
+            capture: false,
+            callback,
+        })
+    });
+    Ok(())
+}
+async fn start_main(window: Window, document: Document) -> Result<(), JsValue> {
+    let text_font = fetch_bytes("/web/assets/fonts/NotoSansJP.ttf").await?;
+    let emoji_font = fetch_bytes("/web/assets/fonts/NotoColorEmoji.ttf").await?;
+    let renderer = Renderer::new(text_font, emoji_font).map_err(|e| JsValue::from_str(&e))?;
     let element = |id: &str| {
         document
             .get_element_by_id(id)
@@ -136,6 +229,7 @@ pub fn browser_start() -> Result<(), JsValue> {
         document,
         canvas,
         context,
+        renderer: RefCell::new(renderer),
         surface,
         controls,
         description,
@@ -227,20 +321,12 @@ pub fn measure(text: &str, size: f64, bold: bool, mono: bool) -> TextSize {
     if let Some(metric) = host.metrics.borrow().get(&key) {
         return *metric;
     }
-    host.font(size, bold, mono);
-    let result = host
-        .context
-        .measure_text(text)
-        .map(|m| TextSize {
-            width: m.width(),
-            ascent: m.actual_bounding_box_ascent(),
-            descent: m.actual_bounding_box_descent(),
-        })
-        .unwrap_or(TextSize {
-            width: 0.,
-            ascent: 0.,
-            descent: size,
-        });
+    let measurement = host.renderer.borrow_mut().measure(text, size, bold, mono);
+    let result = TextSize {
+        width: measurement.width,
+        ascent: measurement.ascent,
+        descent: measurement.descent,
+    };
     let mut metrics = host.metrics.borrow_mut();
     if metrics.len() > 20000 {
         metrics.clear();
@@ -526,9 +612,15 @@ impl Browser {
     fn invalidate(&self) -> Result<(), JsValue> {
         if !self.pending.replace(true) {
             if let Some(callback) = self.frame_callback.borrow().as_ref() {
-                match self.window.request_animation_frame(callback.as_ref().unchecked_ref()) {
-                    Ok(id)=>self.frame_id.set(Some(id)),
-                    Err(e)=>{self.pending.set(false);return Err(e);}
+                match self
+                    .window
+                    .request_animation_frame(callback.as_ref().unchecked_ref())
+                {
+                    Ok(id) => self.frame_id.set(Some(id)),
+                    Err(e) => {
+                        self.pending.set(false);
+                        return Err(e);
+                    }
                 }
             }
         }

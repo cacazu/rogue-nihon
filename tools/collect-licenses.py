@@ -16,6 +16,7 @@ TARGETS = [("rogue-layers", "wasm32-unknown-emscripten"),
 MIT_CHOICES = {"MIT", "MIT OR Apache-2.0", "Apache-2.0 OR MIT", "MIT/Apache-2.0",
                "Unlicense OR MIT", "Zlib OR Apache-2.0 OR MIT",
                "MIT OR Apache-2.0 OR Zlib", "Zlib OR MIT OR Apache-2.0",
+               "MIT OR Zlib OR Apache-2.0", "0BSD OR MIT OR Apache-2.0",
                "(MIT OR Apache-2.0) AND Unicode-3.0"}
 
 
@@ -43,7 +44,7 @@ def license_files(directory, declared):
     chosen = declared
     if declared in MIT_CHOICES and any("MIT" in p.name.upper() for p in files):
         # Only alternate license texts are removed. Copyright and supplementary notices remain.
-        files = [p for p in files if not any(x in p.name.upper() for x in ("APACHE", "ZLIB", "UNLICENSE"))
+        files = [p for p in files if not any(x in p.name.upper() for x in ("APACHE", "ZLIB", "UNLICENSE", "0BSD"))
                  and not (p.name == "COPYING" and declared == "Unlicense OR MIT")]
         chosen = "MIT AND Unicode-3.0" if "AND Unicode-3.0" in declared else "MIT"
     if not files:
@@ -188,6 +189,34 @@ def main():
     add("lucide-lab/stairs", "adapted-asset", "ISC", "ISC", ["wasm32-unknown-unknown"],
         [("LICENSE", asset_bytes)], ["https://github.com/lucide-icons/lucide-lab/blob/main/icons/stairs.svg"],
         ["The stairs icon is adapted as a Rust vector path."])
+
+    # Fonts are redistributed unchanged. Pin both the font bytes and their upstream notices;
+    # after initial collection, the consolidated verified bodies make regeneration offline.
+    font_directory = ROOT / "web/assets/fonts"
+    font_metadata = json.loads((font_directory / "metadata.json").read_text(encoding="utf-8"))
+    if font_metadata["schema_version"] != 1:
+        raise ValueError("Unsupported font asset metadata")
+    for font in font_metadata["fonts"]:
+        data = (font_directory / font["file"]).read_bytes()
+        if len(data) != font["bytes"] or digest(data) != font["sha256"]:
+            raise ValueError(f"Font asset differs from its pinned source: {font['file']}")
+        component_name = f"{font['name']}/{font['source_revision'][:12]}"
+        retained = next((p for p in previous["components"]
+                         if p["component"] == component_name), None)
+        notices = []
+        for notice in font["notices"]:
+            if retained:
+                notice_bytes = previous_notice(retained, notice["name"])
+            else:
+                with urlopen(notice["source_url"], timeout=30) as response:
+                    notice_bytes = response.read()
+            if digest(notice_bytes) != notice["sha256"]:
+                raise ValueError(f"Font notice differs from its pinned source: {font['name']}/{notice['name']}")
+            notices.append((notice["name"], notice_bytes))
+        add(component_name, "font-asset", font["license"], font["license"],
+            ["wasm32-unknown-unknown"], notices,
+            [font["source_url"]] + [notice["source_url"] for notice in font["notices"]],
+            font["copyright"] + [f"Unmodified {font['file']}; {font['version']}."])
 
     components.sort(key=lambda p: p["component"])
     inventory = dict(format=1, scope=dict(targets=[dict(package=p, target=t) for p, t in TARGETS],

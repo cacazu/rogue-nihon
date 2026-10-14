@@ -1,4 +1,4 @@
 // Only Wasm startup. Browser resources and application behavior are implemented in Rust.
 import init, {browser_start} from "/build/browser-ui.js";
 await init();
-browser_start();
+await browser_start();

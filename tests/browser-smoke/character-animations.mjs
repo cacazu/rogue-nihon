@@ -3,13 +3,14 @@ import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { loadPlaywright, browserExecutable } from '../../tools/toolchain.mjs';
 import { prepareBrowserRuntime } from './browser-runtime.mjs';
 import { createPreviewServer } from '../../../tools/server.mjs';
 
 const require = createRequire(import.meta.url);
-const sharp = require(process.env.ROGUE_SHARP_MODULE || 'sharp');
+const galleryOnly = process.argv.includes('--gallery-only');
+const sharp = galleryOnly ? null : require(process.env.ROGUE_SHARP_MODULE || 'sharp');
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const onlyIllustrationPlayer = process.argv.includes('--illustration-player');
 const illustration = onlyIllustrationPlayer || process.argv.includes('--illustrations');
@@ -25,7 +26,7 @@ assert.deepEqual(manifest.entries.map(e => e.id), expectedIds);
 assert.equal(manifest.character_count, characters); assert.equal(manifest.image_count, characters * 12);
 if (illustration) assert.match(manifest.generator, /image_gen/);
 assert.deepEqual(manifest.layout.rows, ['idle', 'move', 'attack', 'hurt']);
-for (const entry of manifest.entries) {
+if (!galleryOnly) for (const entry of manifest.entries) {
 if (illustration) {
   const generated = await readFile(path.join(assets, entry.generated_source.image));
   assert.equal(createHash('sha256').update(generated).digest('hex'), entry.generated_source.sha256);
@@ -69,7 +70,7 @@ for (const [state, animation] of Object.entries(entry.animations)) {
 }
 assert.equal(hashes.size, 12, '12 distinct new poses');
 }
-console.log(`PASS ${characters} character IDs, ${characters * 12} transparent ${size}px PNGs, 12 distinct new poses per character`);
+if (!galleryOnly) console.log(`PASS ${characters} character IDs, ${characters * 12} transparent ${size}px PNGs, 12 distinct new poses per character`);
 
 const server = createPreviewServer({ root });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -86,24 +87,24 @@ try {
   await page.goto(base + `/web/assets/${illustration ? 'tiles' : 'pixels-v2'}/animations-v1/index.html`);
   await page.waitForFunction(() => document.documentElement.dataset.ready === 'true');
   assert.equal(await page.locator('article').count(), characters);
-  assert.equal(await page.locator('canvas').count(), characters * 4);
-  assert.equal(await page.locator('img.reference').count(), characters);
+  assert.equal(await page.locator('canvas[data-state]').count(), characters * 4);
+  assert.equal(await page.locator('canvas.reference').count(), characters);
   await page.getByRole('button', { name: '一時停止' }).click();
-  const paused = await page.locator('canvas').evaluateAll(nodes => nodes.map(n => n.dataset.frame));
+  const paused = await page.locator('canvas[data-state]').evaluateAll(nodes => nodes.map(n => n.dataset.frame));
   await page.waitForTimeout(250);
-  assert.deepEqual(await page.locator('canvas').evaluateAll(nodes => nodes.map(n => n.dataset.frame)), paused);
+  assert.deepEqual(await page.locator('canvas[data-state]').evaluateAll(nodes => nodes.map(n => n.dataset.frame)), paused);
   for (let frame = 0; frame < 3; frame++) {
     const selected = await page.locator('#frame').selectOption({ value: String(frame) });
     assert.deepEqual(selected, [String(frame)], 'Selected requested frame');
     try {
-      await page.waitForFunction(frame => [...document.querySelectorAll('canvas')].every(c => c.dataset.frame === String(frame)), frame, { timeout: 5000 });
+      await page.waitForFunction(frame => [...document.querySelectorAll('canvas[data-state]')].every(c => c.dataset.frame === String(frame)), frame, { timeout: 5000 });
     } catch (error) {
       console.error(JSON.stringify({ selected: frame, errors, display: await page.evaluate(() => ({ value: document.getElementById('frame').value,
-        canvases: [...document.querySelectorAll('canvas')].map(c => ({ state: c.dataset.state, frame: c.dataset.frame })) })) }));
+        canvases: [...document.querySelectorAll('canvas[data-state]')].map(c => ({ state: c.dataset.state, frame: c.dataset.frame })) })) }));
       throw error;
     }
     await page.evaluate(async ({ entries, frame, size }) => {
-      for (const canvas of document.querySelectorAll('canvas')) {
+      for (const canvas of document.querySelectorAll('canvas[data-state]')) {
         const entry = entries.find(e => e.id === canvas.closest('article').dataset.id);
         const image = new Image(); image.src = entry.animations[canvas.dataset.state].frames[frame]; await image.decode();
         const expected = document.createElement('canvas'); expected.width = expected.height = size;
@@ -129,21 +130,12 @@ try {
   await target.locator('summary').click();
   await page.locator('#frame').selectOption('auto');
   await page.getByRole('button', { name: '再生', exact: true }).click();
-  const before = await page.locator('canvas').first().getAttribute('data-frame');
-  await page.waitForFunction(before => document.querySelector('canvas').dataset.frame !== before, before);
+  const before = await page.locator('canvas[data-state]').first().getAttribute('data-frame');
+  await page.waitForFunction(before => document.querySelector('canvas[data-state]').dataset.frame !== before, before);
   assert.deepEqual(errors, []); assert.deepEqual(badResponses, []);
-  const filePage = await browser.newPage({ viewport: { width: 1000, height: 950 } });
-  filePage.on('pageerror', e => errors.push(e.message));
-  await filePage.goto(pathToFileURL(path.join(assets, 'index.html')).href);
-  await filePage.waitForFunction(() => document.documentElement.dataset.ready === 'true');
-  assert.equal(await filePage.locator('article').count(), characters);
-  await filePage.locator('#frame').selectOption({ value: '1' });
-  await filePage.waitForFunction(() => [...document.querySelectorAll('canvas')].every(c => c.dataset.frame === '1'));
-  assert.equal(await filePage.locator('img').evaluateAll(images => images.filter(i => !i.complete || !i.naturalWidth).length), 0);
-  assert.deepEqual(errors, []);
   await writeFile(path.join(output, 'result.json'), JSON.stringify({ status: 'passed', characters, frames: characters * 12, browser: browser.version(),
-    checks: [illustration ? 'image_gen source provenance' : 'each original palette', '12 new distinct poses per character', `all ${characters * 12} displayed frames match PNGs`, 'pause, frame selection, resume', 'sheet expansion', 'direct file preview'], errors, badResponses }, null, 2));
-  console.log(`PASS Playwright: all ${characters * 12} frames displayed correctly; pause, frame selection, resume, sheet expansion, direct file preview; screenshots: ` + output);
+    checks: [illustration ? 'image_gen source provenance' : 'each original palette', '12 new distinct poses per character', `all ${characters * 12} displayed frames match PNGs`, 'pause, frame selection, resume', 'sheet expansion'], errors, badResponses }, null, 2));
+  console.log(`PASS Playwright: all ${characters * 12} frames displayed correctly; pause, frame selection, resume, sheet expansion; screenshots: ` + output);
 } finally {
   await browser?.close(); await runtime?.dispose(); await new Promise(resolve => server.close(resolve));
 }
