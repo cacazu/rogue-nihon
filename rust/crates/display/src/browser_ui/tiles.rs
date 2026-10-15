@@ -254,8 +254,6 @@ pub fn plan(frame: &Value, camera: &Value, rect: Rect, ratio: f64, mode: &str) -
                 let mut draw_x = px / ratio;
                 let mut draw_y = py / ratio;
                 let mut flip = false;
-                let mut frontal = false;
-                let mut facing = 1;
                 if actor && let Some(projection) = projection {
                     let entry = array(&animations["entries"])
                         .iter()
@@ -285,9 +283,8 @@ pub fn plan(frame: &Value, camera: &Value, rect: Rect, ratio: f64, mode: &str) -
                         (projection["displayX"].as_f64().unwrap_or(x as f64) - x as f64) * size;
                     draw_y +=
                         (projection["displayY"].as_f64().unwrap_or(y as f64) - y as f64) * size;
-                    facing = projection["facing"].as_i64().unwrap_or(1);
+                    let facing = projection["facing"].as_i64().unwrap_or(1);
                     let native = entry.map(|e| s(&e["facing"])).unwrap_or("right");
-                    frontal = native == "front";
                     flip = if native == "left" {
                         facing > 0
                     } else {
@@ -307,12 +304,6 @@ pub fn plan(frame: &Value, camera: &Value, rect: Rect, ratio: f64, mode: &str) -
                     "rect":Rect::new(rect.x+draw_x,rect.y+draw_y,w/ratio,h/ratio)});
                 if actor {
                     actors.push(command);
-                    if frontal {
-                        let marker = (size * 0.22).clamp(5., 10.);
-                        actors.push(json!({"op":"path","path":if facing<0 {"M17 4L5 12L17 20Z"} else {"M7 4L19 12L7 20Z"},
-                            "rect":Rect::new(rect.x+draw_x+size*0.5-marker*0.5,rect.y+draw_y+size-marker,marker,marker),
-                            "color":"#ffe092","fill":true,"outline":{"color":"#101619","width":2}}));
-                    }
                 } else {
                     commands.push(command);
                 }

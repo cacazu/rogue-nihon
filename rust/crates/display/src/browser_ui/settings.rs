@@ -74,7 +74,7 @@ impl BrowserUi {
         );
         self.dropdown_control(
             "display-mode",
-            Rect::new(viewport.x + 112., row, viewport.w - 112., 48.),
+            Rect::new(viewport.x + 112., row, self.dropdown_width("display-mode").min(viewport.w - 112.), 48.),
             busy,
         );
         row += 60.;

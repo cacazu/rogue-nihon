@@ -215,6 +215,21 @@ impl ObservedMap {
                 let start = row as usize * columns as usize;
                 cells[start..start + columns as usize].fill(b' ');
             }
+            // C owns the public player pose independently of the curses
+            // foreground. Keep its transient pickup/effect erasures in `cells`
+            // for original-screen comparisons, and compose the player only in
+            // the derived game map. Enemy visibility still requires its glyph.
+            if ui["mode"] == "game"
+                && self.actors.iter().any(|actor| {
+                    actor["id"] == 0
+                        && actor["x"] == frame["player"]["x"]
+                        && actor["y"] == frame["player"]["y"]
+                })
+            {
+                let x = frame["player"]["x"].as_u64().unwrap();
+                let y = frame["player"]["y"].as_u64().unwrap();
+                cells[(y * u64::from(columns) + x) as usize] = b'@';
+            }
             let (tiles, unknown) = map_tiles::map(&cells, columns, rows, &self.effects);
             let underlays: Vec<Value> = self
                 .terrain
@@ -346,6 +361,34 @@ mod tests {
             facing: 1,
             stopped: false,
         });
+    }
+
+    #[test]
+    fn player_pose_survives_transient_curses_erasure_without_revealing_enemies() {
+        let mut map = ObservedMap::default();
+        let ui = json!({"mode":"game"});
+        for glyph in [b'.', b')', b'/'] {
+            observe_positions(&mut map, 3, 5);
+            let mut raw = actors_frame(3, 5);
+            let mut cells = raw["cells"].as_str().unwrap().as_bytes().to_vec();
+            cells[2 * COLUMNS as usize + 3] = glyph;
+            cells[2 * COLUMNS as usize + 5] = b'.';
+            raw["cells"] = json!(String::from_utf8(cells).unwrap());
+            map.terrain(vec![b'.'; (COLUMNS * ROWS) as usize]);
+            map.observe_actor(ActorObservation::Event { id: 0, kind: rogue_contract::RG_ACTOR_MOVE });
+            let projected = map.present(raw.clone(), &ui, "test");
+            assert_eq!(projected["cells"], raw["cells"]);
+            assert_eq!(projected["map_cells"].as_str().unwrap().as_bytes()[2 * COLUMNS as usize + 3], b'@');
+            assert_eq!(projected["map_tiles"][2 * COLUMNS as usize + 3], 8);
+            assert_eq!(projected["map_player_underlay"]["tile"], 1);
+            assert_eq!(projected["map_actors"].as_array().unwrap().len(), 1);
+            assert_eq!(projected["map_actors"][0]["id"], 0);
+            assert_eq!(projected["map_actor_events"][0]["kind"], "move");
+        }
+        // Only a matching, current C observation can supply the player.
+        observe_positions(&mut map, 3, 5);
+        let missing = map.present(frame(), &ui, "test");
+        assert_eq!(missing["map_actors"], json!([]));
     }
 
     #[test]

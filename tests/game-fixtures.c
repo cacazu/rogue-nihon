@@ -416,7 +416,7 @@ void rg_test_apply_fixture(void)
         monster = monster_at('N', 11, 10);
         monster->t_flags |= ISRUN;
         monster->t_dest = &hero;
-    } else if (!strcmp(name, "pickup-quantity")) {
+    } else if (!strcmp(name, "pickup-quantity") || !strcmp(name, "map-presentation")) {
         THING *arrows, *copy;
         int i;
         for (arrows = pack; arrows && !(arrows->o_type == WEAPON && arrows->o_which == ARROW); arrows = next(arrows)) { }
@@ -437,6 +437,11 @@ void rg_test_apply_fixture(void)
         copy->o_pos.x = 13; copy->o_pos.y = 10;
         attach(lvl_obj, copy);
         chat(10, 13) = FOOD; mvaddch(10, 13, FOOD);
+        if (!strcmp(name, "map-presentation")) {
+            monster = monster_at('B', 10, 11);
+            monster->t_flags |= ISHELD;
+            monster->t_flags &= ~ISRUN;
+        }
     } else if (!strcmp(name, "label-split")) {
         THING *copy;
         for (object = pack; object && !(object->o_type == WEAPON && object->o_which == ARROW); object = next(object)) { }

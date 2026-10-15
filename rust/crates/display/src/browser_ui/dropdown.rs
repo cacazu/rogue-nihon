@@ -22,18 +22,22 @@ impl BrowserUi {
         } else {
             "displayMode"
         }]);
-        let label = self
-            .dropdown_options(id)
+        self.dropdown_options(id)
             .into_iter()
             .find(|(key, _)| *key == value)
             .map(|(_, label)| label)
-            .unwrap_or_default();
-        format!("{label}  ▾")
+            .unwrap_or_default()
+    }
+
+    pub(super) fn dropdown_width(&self, id: &str) -> f64 {
+        self.dropdown_options(id)
+            .iter()
+            .map(|(_, label)| (self.measure)(label, 17., true, false).width + 44.)
+            .fold(48., f64::max)
     }
 
     pub(super) fn top_language_control(&mut self, fullscreen: Rect) {
-        let label = self.dropdown_label("language");
-        let width = ((self.measure)(&label, 17., false, false).width + 20.).max(48.);
+        let width = self.dropdown_width("language");
         self.dropdown_control(
             "language",
             Rect::new(fullscreen.x - 8. - width, fullscreen.y, width, 48.),
@@ -53,9 +57,23 @@ impl BrowserUi {
                 left: true,
                 disabled,
                 kind: Some("select"),
+                custom: true,
                 ..Default::default()
             },
         );
+        self.widgets.commands.push(json!({"op":"save","alpha":if disabled {0.45} else {1.}}));
+        self.widgets.single_line(
+            &label,
+            Rect::new(rect.x + 10., rect.y, rect.w - 40., rect.h),
+            LineStyle {
+                text: TextStyle::new(17., TEXT, false),
+                center: false,
+                ellipsis: true,
+            },
+            self.measure,
+        );
+        self.widgets.icon("chevron-down", Rect::new(rect.x + rect.w - 28., rect.y + (rect.h - 18.) / 2., 18., 18.), TEXT);
+        self.widgets.commands.push(json!({"op":"restore"}));
     }
 
     pub(super) fn draw_dropdown(&mut self) {

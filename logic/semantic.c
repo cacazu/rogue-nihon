@@ -36,9 +36,7 @@ void rg_semantic_map_terrain(const uint8_t *cells,uint32_t rows,uint32_t columns
         x = actor->t_pos.x; y = actor->t_pos.y;
         if (x < 0 || (uint32_t)x >= columns || y <= 0 || (uint32_t)y >= rows - 1)
             continue;
-        if (actor == &player) {
-            if (cells[y * columns + x] != PLAYER) continue;
-        } else if (!cells[y * columns + x] || !strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ*!?:)]/=,",cells[y * columns + x]))
+        if (actor != &player && (!cells[y * columns + x] || !strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ*!?:)]/=,",cells[y * columns + x])))
             continue;
         terrain[y * columns + x] = (uint8_t)actor_terrain(actor);
     }
@@ -119,10 +117,11 @@ void rg_semantic_map_actors(const uint8_t *cells,uint32_t rows,uint32_t columns)
         if (x<0 || (uint32_t)x>=columns || y<=0 || (uint32_t)y>=rows-1) continue;
         glyph=cells[y*columns+x];
         if (actor==&player) {
-            if (glyph==PLAYER) {
-                visual_player_observed=1;
-                rg_host_map_actor(0,x,y,glyph,visual_player_facing,no_command>0);
-            }
+            /* Own position is already public in every frame. Pickup/message
+             * refreshes can temporarily erase '@' from the curses buffer;
+             * that is not the end of the player's visual lifetime. */
+            visual_player_observed=1;
+            rg_host_map_actor(0,x,y,PLAYER,visual_player_facing,no_command>0);
         } else {
             /* A disguised item remains an item. Hallucination uses the chosen
              * public glyph and never the actor's real species or HP. */

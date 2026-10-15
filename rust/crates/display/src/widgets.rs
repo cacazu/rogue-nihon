@@ -257,6 +257,7 @@ impl Widgets {
             "experience"=>"M12 2 15 8.5 22 9.5 17 14.5 18 22 12 18.5 6 22 7 14.5 2 9.5 9 8.5Z".into(),
             "food"=>"M3 2V7C3 10 9 10 9 7V2M6 2V22M20 22V2C15 4 14 10 14 13H20".into(),
             "close"=>"M6 6 18 18M18 6 6 18".into(),
+            "chevron-down"=>"M6 9L12 15L18 9".into(),
             "equipped"=>"M21 12A9 9 0 1 1 3 12A9 9 0 1 1 21 12ZM7 12L10.5 15.5L17 8.5".into(),
             "item-hit"=>"M20 12A8 8 0 1 1 4 12A8 8 0 1 1 20 12M12 1V7M12 17V23M1 12H7M17 12H23M12 10V14M10 12H14".into(),
             "item-damage"=>"M14 3H21V10L10 21L3 14ZM6 17L3 20M2 13L11 22M10 14L18 6".into(),
