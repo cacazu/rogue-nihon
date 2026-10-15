@@ -487,7 +487,7 @@ impl Controller {
             "random-seed"|"random-name" if !flag(&self.model["starting"])=>self.effects.push(json!({"kind":"random","id":id})),_=>{}
         }
     }
-    fn worker(&mut self, data: Value, generation: &Value) {
+    fn worker(&mut self, data: Value, generation: &Value, now: f64) {
         if generation != &self.model["generation"] || flag(&self.model["topOpen"]) {
             return;
         }
@@ -539,7 +539,7 @@ impl Controller {
                     self.notice(id, json!({}), true);
                     return;
                 }
-                if let Err(error) = self.animations.observe(&data) {
+                if let Err(error) = self.animations.observe(&data, now) {
                     self.state["runtimeError"] = json!(error);
                     self.model["running"] = json!(false);
                     self.notice("error.frame", json!({}), true);
@@ -901,7 +901,11 @@ impl Controller {
                 self.effects.push(tiles::assets("pixels"));
                 self.effects.push(json!({"kind":"timer","interval":500}));
             }
-            "worker" => self.worker(r["data"].clone(), &r["generation"]),
+            "worker" => self.worker(
+                r["data"].clone(),
+                &r["generation"],
+                r["now"].as_f64().unwrap_or(0.),
+            ),
             "api" => accepted = self.api(&r, &mut redraw),
             "event" => {
                 let mut e = r["event"].clone();

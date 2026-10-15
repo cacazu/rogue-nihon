@@ -103,17 +103,11 @@ pub fn validate(frame: &Value, manifest: &Value) -> Result<(), &'static str> {
                 if actor["glyph"].as_u64() != Some(u64::from(glyph)) {
                     return Err(invalid);
                 }
-                for (field, logical, bound) in [("displayX", x, width), ("displayY", y, height)] {
+                for (field, bound) in [("displayX", width), ("displayY", height)] {
                     if let Some(value) = projection.get(field) {
                         let value = value
                             .as_f64()
-                            .filter(|v| {
-                                v.is_finite()
-                                    && *v >= 0.
-                                    && *v < bound as f64
-                                    && (*v - logical as f64).abs()
-                                        <= f64::from(crate::animation::MAX_MOVE_LAG)
-                            })
+                            .filter(|v| v.is_finite() && *v >= 0. && *v < bound as f64)
                             .ok_or(invalid)?;
                         let _ = value;
                     }
@@ -209,104 +203,106 @@ pub fn plan(frame: &Value, camera: &Value, rect: Rect, ratio: f64, mode: &str) -
         .collect::<BTreeMap<_, _>>();
     let mut commands = Vec::new();
     let mut actors = Vec::new();
-    // A moving sprite can remain visible while its logical destination lies
-    // just outside the camera. Bound the margin like the public interpolation.
-    let margin = crate::animation::MAX_MOVE_LAG as usize;
-    for y in start_y.saturating_sub(margin).max(1)..(end_y + margin).min(height.saturating_sub(1)) {
-        for x in start_x.saturating_sub(margin)..(end_x + margin).min(width) {
-            let Some(id) = frame["map_tiles"][y * width + x]
-                .as_u64()
-                .map(|v| v as usize)
-                .filter(|v| *v < entries.len())
-            else {
+    // Terrain uses the viewport. Public sprites use their displayed position,
+    // even when skipped paints put the latest destination outside the viewport.
+    let mut cells = (start_y..end_y)
+        .flat_map(|y| (start_x..end_x).map(move |x| (y, x)))
+        .collect::<std::collections::BTreeSet<_>>();
+    cells.extend(projections.keys().filter_map(|&(x, y)| {
+        (x < width as u64 && y > 0 && y < height.saturating_sub(1) as u64)
+            .then_some((y as usize, x as usize))
+    }));
+    for (y, x) in cells {
+        let Some(id) = frame["map_tiles"][y * width + x]
+            .as_u64()
+            .map(|v| v as usize)
+            .filter(|v| *v < entries.len())
+        else {
+            continue;
+        };
+        let is_actor = s(&entries[id]["id"]).starts_with("actor.")
+            || s(&entries[id]["id"]).starts_with("monster.");
+        let projection = projections.get(&(x as u64, y as u64));
+        let terrain = underlays
+            .get(&(y * width + x))
+            .copied()
+            .filter(|tile| id > 7 && *tile <= 7);
+        let ground = terrain.unwrap_or(id);
+        let base = match s(&entries[ground]["id"]) {
+            "terrain.unexplored" => 0,
+            "terrain.passage" => 2,
+            _ => 1,
+        };
+        let px = ((x as f64 * size - left) * ratio).round();
+        let py = (((y - 1) as f64 * size - top) * ratio).round();
+        let w = (((x + 1) as f64 * size - left) * ratio).round() - px;
+        let h = ((y as f64 * size - top) * ratio).round() - py;
+        let mut layers = vec![base];
+        if terrain.is_some() && ground != base {
+            layers.push(ground);
+        }
+        if id != base {
+            layers.push(id);
+        }
+        for tile in layers {
+            let actor = tile == id && is_actor;
+            if !actor && (x < start_x || x >= end_x || y < start_y || y >= end_y) {
                 continue;
-            };
-            let is_actor = s(&entries[id]["id"]).starts_with("actor.")
-                || s(&entries[id]["id"]).starts_with("monster.");
-            let projection = projections.get(&(x as u64, y as u64));
-            let terrain = underlays
-                .get(&(y * width + x))
-                .copied()
-                .filter(|tile| id > 7 && *tile <= 7);
-            let ground = terrain.unwrap_or(id);
-            let base = match s(&entries[ground]["id"]) {
-                "terrain.unexplored" => 0,
-                "terrain.passage" => 2,
-                _ => 1,
-            };
-            let px = ((x as f64 * size - left) * ratio).round();
-            let py = (((y - 1) as f64 * size - top) * ratio).round();
-            let w = (((x + 1) as f64 * size - left) * ratio).round() - px;
-            let h = ((y as f64 * size - top) * ratio).round() - py;
-            let mut layers = vec![base];
-            if terrain.is_some() && ground != base {
-                layers.push(ground);
             }
-            if id != base {
-                layers.push(id);
-            }
-            for tile in layers {
-                let actor = tile == id && is_actor;
-                if !actor && (x < start_x || x >= end_x || y < start_y || y >= end_y) {
-                    continue;
-                }
-                let mut image = entries[tile]["image"].clone();
-                let mut draw_x = px / ratio;
-                let mut draw_y = py / ratio;
-                let mut flip = false;
-                if actor && let Some(projection) = projection {
-                    let entry = array(&animations["entries"])
-                        .iter()
-                        .find(|e| e["id"] == entries[tile]["id"]);
-                    if projection["animated"] != false {
-                        let index = projection["frame"]
-                            .as_u64()
-                            .and_then(|v| usize::try_from(v).ok());
-                        let filename = entry
-                            .and_then(|e| {
-                                index.and_then(|i| {
-                                    e["animations"][s(&projection["state"])]["frames"].get(i)
-                                })
+            let mut image = entries[tile]["image"].clone();
+            let mut draw_x = px / ratio;
+            let mut draw_y = py / ratio;
+            let mut flip = false;
+            if actor && let Some(projection) = projection {
+                let entry = array(&animations["entries"])
+                    .iter()
+                    .find(|e| e["id"] == entries[tile]["id"]);
+                if projection["animated"] != false {
+                    let index = projection["frame"]
+                        .as_u64()
+                        .and_then(|v| usize::try_from(v).ok());
+                    let filename = entry
+                        .and_then(|e| {
+                            index.and_then(|i| {
+                                e["animations"][s(&projection["state"])]["frames"].get(i)
                             })
-                            .and_then(Value::as_str)
-                            .filter(|v| !v.is_empty());
-                        image = json!(
-                            filename
-                                .map(|name| format!("animations-v1/{name}"))
-                                .unwrap_or_else(|| format!(
-                                    "invalid-animation/{}",
-                                    s(&entries[tile]["id"])
-                                ))
-                        );
-                    }
-                    draw_x +=
-                        (projection["displayX"].as_f64().unwrap_or(x as f64) - x as f64) * size;
-                    draw_y +=
-                        (projection["displayY"].as_f64().unwrap_or(y as f64) - y as f64) * size;
-                    let facing = projection["facing"].as_i64().unwrap_or(1);
-                    let native = entry.map(|e| s(&e["facing"])).unwrap_or("right");
-                    flip = if native == "left" {
-                        facing > 0
-                    } else {
-                        facing < 0
-                    };
+                        })
+                        .and_then(Value::as_str)
+                        .filter(|v| !v.is_empty());
+                    image = json!(
+                        filename
+                            .map(|name| format!("animations-v1/{name}"))
+                            .unwrap_or_else(|| format!(
+                                "invalid-animation/{}",
+                                s(&entries[tile]["id"])
+                            ))
+                    );
                 }
-                if actor
-                    && (draw_x + w / ratio <= 0.
-                        || draw_y + h / ratio <= 0.
-                        || draw_x >= n(&camera["width"])
-                        || draw_y >= n(&camera["height"]))
-                {
-                    continue;
-                }
-                let command = json!({"op":"image","set":if mode=="pixels" {"pixels"} else {"tiles"},"image":image,
+                draw_x += (projection["displayX"].as_f64().unwrap_or(x as f64) - x as f64) * size;
+                draw_y += (projection["displayY"].as_f64().unwrap_or(y as f64) - y as f64) * size;
+                let facing = projection["facing"].as_i64().unwrap_or(1);
+                let native = entry.map(|e| s(&e["facing"])).unwrap_or("right");
+                flip = if native == "left" {
+                    facing > 0
+                } else {
+                    facing < 0
+                };
+            }
+            if actor
+                && (draw_x + w / ratio <= 0.
+                    || draw_y + h / ratio <= 0.
+                    || draw_x >= n(&camera["width"])
+                    || draw_y >= n(&camera["height"]))
+            {
+                continue;
+            }
+            let command = json!({"op":"image","set":if mode=="pixels" {"pixels"} else {"tiles"},"image":image,
                     "rotation":entries[tile]["rotation"].as_f64().unwrap_or(0.),"pixelArt":m["tile_pixels"]==32,"flipX":flip,
                     "rect":Rect::new(rect.x+draw_x,rect.y+draw_y,w/ratio,h/ratio)});
-                if actor {
-                    actors.push(command);
-                } else {
-                    commands.push(command);
-                }
+            if actor {
+                actors.push(command);
+            } else {
+                commands.push(command);
             }
         }
     }
@@ -392,10 +388,13 @@ mod animation_tests {
     #[test]
     fn character_animation_keeps_a_retargeted_sprite_at_the_camera_edge() {
         let mut frame = sample_frame("pixels");
-        frame["map_tiles"][4] = json!(1);
-        frame["map_tiles"][5] = json!(8);
-        frame["map_actors"][0]["x"] = json!(2);
-        frame["map_animation"][0]["x"] = json!(2);
+        frame["width"] = json!(8);
+        frame["map_tiles"] = json!([
+            0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 8, 0, 0, 0, 0, 0, 0, 0, 0
+        ]);
+        frame["map_underlays"][0]["x"] = json!(7);
+        frame["map_actors"][0]["x"] = json!(7);
+        frame["map_animation"][0]["x"] = json!(7);
         frame["map_animation"][0]["displayX"] = json!(0.);
         assert!(validate(&frame, &manifest("pixels")).is_ok());
         let commands = plan(
@@ -410,6 +409,11 @@ mod animation_tests {
             .find(|c| c["image"] == "animations-v1/actor.player/hurt.3.png")
             .unwrap();
         assert_eq!(sprite["rect"]["x"], 0.);
+        assert_eq!(
+            commands.len(),
+            2,
+            "Only visible terrain and the projected sprite are drawn"
+        );
     }
     #[test]
     fn character_animation_replaces_only_the_actor_above_its_underlay() {

@@ -25,6 +25,18 @@ const snapshot=()=>page.evaluate(async()=>{
 });
 async function open(mode){
  await context?.close();context=await browser.newContext({viewport:{width:1240,height:900}});
+ await context.addInitScript(()=>{
+  const now=Date.now,raf=window.requestAnimationFrame.bind(window);
+  Date.now=()=>window.__repeatClock??now();
+  window.__blockedPaints=[];
+  window.requestAnimationFrame=callback=>raf(time=>{
+   if(window.__pausePaint)__blockedPaints.push(callback);else callback(time);
+  });
+  window.__resumePaint=()=>{
+   window.__pausePaint=false;
+   for(const callback of __blockedPaints.splice(0))raf(callback);
+  };
+ });
  await context.route('**/web/worker.js',route=>route.fulfill({body:fixtureWorker(worker,'pickup-quantity'),contentType:'text/javascript',headers}));
  await context.route('**/build/game.wasm',route=>route.fulfill({path:path.join(root,'build/game-fixtures.wasm'),contentType:'application/wasm',headers}));
  page=await context.newPage();page.setDefaultTimeout(10000);await installBrowserTestAdapter(page);
@@ -78,13 +90,45 @@ async function movement(mode,held){
  const file=label+'-released.png';await page.screenshot({path:path.join(output,file)});report.screenshots.push(file);
  return final;
 }
+async function processingWithoutPaint(mode){
+ const label=mode+'-processing-without-paint';await open(mode);
+ const origin=await page.evaluate(()=>{
+  window.__repeatClock=Date.now();window.__pausePaint=true;__repeatPaints.length=0;
+  return __rogueBrowserTest.diagnostics.animation.find(a=>a.id===0).displayX;
+ });
+ for(let i=0;i<14;i++)await page.keyboard.press('l');
+ await page.waitForFunction(()=>__rogueBrowserTest.queuePending===0&&__rogueBrowserTest.trace.input_index===14&&__rogueBrowserTest.frame.map_actor_step===14,null,{polling:20});
+ const completed=await snapshot();
+ assert.equal((await page.evaluate(()=>__repeatPaints.length)),0,'All 14 inputs finish processing while presentation is paused');
+ await page.evaluate(()=>__resumePaint());
+ await page.waitForFunction(()=>__repeatPaints.length>0);
+ const first=await page.evaluate(()=>__repeatPaints[0]);
+ report.checks.push({label,completed,origin,first});
+ assert.equal(first.step,14,'The next paint uses the latest processed result, skipping older results');
+ assert.equal(first.pose.x,24);
+ assert.equal(first.pose.displayX,origin,'Changing the target at the same presentation time must not teleport the sprite');
+ await page.evaluate(()=>{window.__repeatClock+=60;window.dispatchEvent(new Event('resize'));});
+ await page.waitForFunction(()=>__rogueBrowserTest.diagnostics.animation.find(a=>a.id===0).displayX===17);
+ const moving=await page.evaluate(()=>({pose:__rogueBrowserTest.diagnostics.animation.find(a=>a.id===0),drawn:__rogueBrowserTest.commands.some(c=>c.op==='image'&&c.image.startsWith('animations-v1/actor.player/'))}));
+ assert.ok(moving.drawn,'The current sprite is drawn even when the logical destination is outside its camera');
+ report.checks.at(-1).moving=moving;
+ const file=label+'.png';await page.screenshot({path:path.join(output,file)});report.screenshots.push(file);
+ await page.evaluate(()=>{window.__repeatClock+=60;window.dispatchEvent(new Event('resize'));});
+ await page.waitForFunction(()=>__rogueBrowserTest.diagnostics.animation.find(a=>a.id===0).displayX===24);
+ assert.deepEqual(await snapshot(),completed,'Presentation does not process another input or game turn');
+ return completed;
+}
 try{
  runtime=await prepareBrowserRuntime(root);browser=await loadPlaywright().chromium.launch({executablePath:browserExecutable(),headless:true,downloadsPath:runtime.downloadsPath});
  for(const mode of ['pixels','tiles']){
-  const held=await movement(mode,true),tapped=await movement(mode,false);
-  assert.deepEqual(held,tapped,'Held and tapped movement consume the same input and produce the same C/RNG state');
+  const completed=await processingWithoutPaint(mode);
+  if(!process.argv.includes('--without-paint-only')){
+   const held=await movement(mode,true),tapped=await movement(mode,false);
+   assert.deepEqual(held,tapped,'Held and tapped movement consume the same input and produce the same C/RNG state');
+   assert.deepEqual(held,completed,'Rendering frequency does not control input processing or C/RNG results');
+  }
  }
  assert.deepEqual(report.errors,[]);report.result='pass';
 }catch(error){report.result='fail';report.failure=error.stack;throw error;}
 finally{await writeFile(path.join(output,'browser-evidence.json'),JSON.stringify(report,null,2)+'\n');await context?.close();await browser?.close();await runtime?.dispose();await new Promise(resolve=>server.close(resolve));}
-for(const check of report.checks)console.log('PASS '+check.label+' moves during input, stops after release and matches held/tapped C state');
+for(const check of report.checks)console.log('PASS '+check.label);

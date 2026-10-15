@@ -95,7 +95,7 @@ impl Browser {
                                 .to_vec()
                         );
                     }
-                    host.dispatch(json!({"type":"worker","generation":generation,"data":message}))?;
+                    host.dispatch(json!({"type":"worker","generation":generation,"data":message,"now":js_sys::Date::now()}))?;
                 }
                 Ok(())
             })();
