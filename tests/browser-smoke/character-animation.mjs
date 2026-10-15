@@ -100,10 +100,66 @@ async function multiStageThrow(){
  assert.equal(thrown.frame.map_actor_step,step,'Direction and item selection belong to the same original action');
  await shot('multi-stage-throw');report.checks.push({mode:'pixels',check:'Direction/item follow-up inputs still animate the actual thrown weapon'});
 }
+async function heldAnimation(){
+ for(const config of [{mode:'pixels',mobile:true},{mode:'tiles',mobile:true},{mode:'pixels',mobile:false},{mode:'pixels',mobile:true,disabled:true}]){
+  const label=config.mode+'-'+(config.mobile?'touch':'keyboard')+(config.disabled?'-off':'');
+  await open(config.mode,config.mobile);
+  if(config.disabled){await tap('settings-toggle',true);await tap('animation-toggle',true);await tap('settings-close',true);await page.locator('[data-control="settings-close"]').waitFor({state:'detached'});}
+  await page.evaluate(async()=>{
+   const module=await import('/build/browser-ui.js'),put=CanvasRenderingContext2D.prototype.putImageData;
+   window.__holdFrames=[];
+   // Observe completed presentations; this hook never injects a game input.
+   CanvasRenderingContext2D.prototype.putImageData=function(...args){
+    const result=put.apply(this,args);
+    if(this.canvas.id==='rogue-canvas'&&window.__holdFrames){
+     const snap=JSON.parse(module.browser_snapshot()),pose=snap.state.animation?.find(a=>a.id===0);
+     if(pose)window.__holdFrames.push({t:performance.now(),step:snap.state.frame.map_actor_step,pose,camera:snap.diagnostics.camera.left});
+    }
+    return result;
+   };
+  });
+  const cdp=await context.newCDPSession(page);
+  if(config.mobile){
+   const bounds=await page.locator('[data-control="touch-h"]').boundingBox();
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:bounds.x+bounds.width/2,y:bounds.y+bounds.height/2}]});
+   await page.waitForTimeout(1100);
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  }else{
+   await page.keyboard.down('h');await page.waitForTimeout(350);
+   for(let n=0;n<7;n++){await page.keyboard.down('h');await page.waitForTimeout(100);}
+   await page.keyboard.up('h');
+  }
+  const releasedAt=await page.evaluate(()=>performance.now());await idle();
+  await page.waitForTimeout(180);const released=await state();
+  await page.waitForTimeout(240);unchanged(released,await state(),'Released '+label);
+  assert.deepEqual(await page.evaluate(()=>__rogueBrowserTest.canvas.pointer.capturedIds),[]);
+  const frames=await page.evaluate(()=>__holdFrames),held=frames.filter(f=>f.t<=releasedAt);
+  assert.ok(released.frame.player.x<=7,'Held input advances real C repeatedly');
+  let retargets=0;
+  for(let i=1;i<held.length;i++){
+   const current=held[i].pose,previous=held[i-1].pose;
+   if(current.animated&&current.x!==previous.x&&Math.abs(current.x-previous.x)===1&&Math.abs(current.x-previous.displayX)<=2){
+    assert.ok(current.displayX<=previous.displayX,'Held left movement must never move backwards');
+    if(previous.displayX>previous.x&&held[i].t-held[i-1].t>1){
+     assert.ok(current.displayX<previous.displayX,'An unfinished move must progress even when the next input arrives before its next paint: '+JSON.stringify({label,current,previous}));
+    }
+    retargets++;
+   }
+  }
+  if(!config.disabled){
+   assert.ok(retargets>=3,'Multiple consecutive original moves were presented');
+   const firstMove=held.find(f=>f.pose.x<10).step;
+   assert.ok(new Set(held.filter(f=>f.step>firstMove).map(f=>f.pose.frame)).size>=2,'Held movement must not reset idle to frame zero every turn');
+  }
+  const player=released.animation.find(a=>a.id===0);assert.equal(player.displayX,player.x,'Release finishes at the real final C position');
+  await shot('hold-'+label);report.checks.push({mode:label,check:'Real held input retargets continuously, preserves idle frames and stops on release',retargets,frames:held});
+ }
+}
+const holdOnly=process.argv.includes('--hold-only');
 const throwOnly=process.argv.includes('--throw-only');
 try{
  runtime=await prepareBrowserRuntime(root);browser=await loadPlaywright().chromium.launch({executablePath:browserExecutable(),headless:true,downloadsPath:runtime.downloadsPath});
- if(!throwOnly){
+ if(!throwOnly&&!holdOnly){
  for(const mode of ['pixels','tiles']){
   await open(mode);const before=await state();const hashes=await idlePixels();unchanged(before,await state(),'Passive '+mode+' animation');
   await shot(mode+'-idle');report.checks.push({mode,check:'Idle changes real pixels while C/RNG/input stay unchanged',hashes});
@@ -148,7 +204,8 @@ try{
  assert.ok(hallucination.frame.map_actors.every(a=>!(a.x===12&&a.y===12)&&!(a.x===13&&a.y===12)));
  report.checks.push({mode:'pixels',check:'Hallucination keeps only public glyphs and actors'});
  }
- await multiStageThrow();
+ if(!holdOnly)await multiStageThrow();
+ if(!throwOnly)await heldAnimation();
  assert.deepEqual(report.errors,[]);report.result='pass';
 }catch(error){report.result='fail';report.failure=error.stack;if(page)report.last=await state().catch(()=>null);throw error;}
 finally{await writeFile(path.join(output,'browser-evidence.json'),JSON.stringify(report,null,2)+'\n');await context?.close();await browser?.close();await runtime?.dispose();await new Promise(resolve=>server.close(resolve));}

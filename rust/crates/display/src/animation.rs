@@ -7,6 +7,8 @@ const MAX_ACTORS: usize = 1024;
 const MAX_EVENTS: usize = 8192;
 const MAX_CELLS: usize = 65_536;
 const MOVE_MS: f64 = 120.;
+/// Bound presentation lag when several original moves arrive before one paint.
+pub const MAX_MOVE_LAG: u32 = 2;
 const STATES: [&str; 4] = ["idle", "move", "attack", "hurt"];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -62,6 +64,7 @@ struct Actor {
     idle_started: Option<f64>,
     motion: Option<Motion>,
     last_pose: (State, usize),
+    presented: (f64, f64),
 }
 impl Actor {
     fn new(data: ActorData) -> Self {
@@ -76,13 +79,21 @@ impl Actor {
             idle_started: None,
             motion: None,
             last_pose: (State::Idle, 0),
+            presented: (f64::from(data.x), f64::from(data.y)),
         }
     }
     fn finish(&mut self) {
-        self.chosen = State::Idle;
-        self.started = None;
+        self.finish_action();
         self.idle_started = None;
         self.motion = None;
+        self.presented = (f64::from(self.x), f64::from(self.y));
+    }
+    fn finish_action(&mut self) {
+        if self.chosen != State::Idle {
+            self.idle_started = None;
+        }
+        self.chosen = State::Idle;
+        self.started = None;
     }
     fn choose(&mut self, state: State) {
         let priority = |state| match state {
@@ -93,6 +104,7 @@ impl Actor {
         if !self.stopped && priority(state) > priority(self.chosen) {
             self.chosen = state;
             self.started = None;
+            self.idle_started = None;
         }
     }
     fn advance(&mut self, now: f64, clips: &[Clip; 4]) -> (State, usize, Option<u32>) {
@@ -136,11 +148,13 @@ impl Actor {
             let x = motion.from_x + (f64::from(self.x) - motion.from_x) * progress;
             let y = motion.from_y + (f64::from(self.y) - motion.from_y) * progress;
             if progress < 1. {
+                self.presented = (x, y);
                 return (x, y, true);
             }
             self.motion = None;
         }
-        (f64::from(self.x), f64::from(self.y), false)
+        self.presented = (f64::from(self.x), f64::from(self.y));
+        (self.presented.0, self.presented.1, false)
     }
 }
 
@@ -193,15 +207,18 @@ impl Animator {
         self.sequence = 0;
         self.clock = None;
     }
-    /// A successfully queued input immediately discards unfinished presentation.
+    /// Interrupt the old action immediately, preserving the last drawn position
+    /// and idle clock for continuous held movement. No game input waits on this.
     pub fn interrupt(&mut self) {
         for actor in self.actors.values_mut() {
-            actor.finish();
+            actor.finish_action();
         }
     }
     pub fn set_enabled(&mut self, enabled: bool) {
         if self.enabled != enabled {
-            self.interrupt();
+            for actor in self.actors.values_mut() {
+                actor.finish();
+            }
             self.enabled = enabled;
         }
     }
@@ -218,7 +235,7 @@ impl Animator {
         }
         if self.step != Some(observation.step) {
             for actor in self.actors.values_mut() {
-                actor.finish();
+                actor.finish_action();
             }
             self.step = Some(observation.step);
         }
@@ -236,12 +253,23 @@ impl Animator {
             let dx = f64::from(data.x) - f64::from(actor.x);
             let dy = f64::from(data.y) - f64::from(actor.y);
             if dx != 0. || dy != 0. {
-                actor.motion = if self.enabled && !data.stopped && dx.abs() <= 1. && dy.abs() <= 1.
+                actor.motion = if self.enabled
+                    && !data.stopped
+                    && dx.abs() <= 1.
+                    && dy.abs() <= 1.
+                    && (f64::from(data.x) - actor.presented.0).abs() <= f64::from(MAX_MOVE_LAG)
+                    && (f64::from(data.y) - actor.presented.1).abs() <= f64::from(MAX_MOVE_LAG)
                 {
                     Some(Motion {
-                        from_x: f64::from(actor.x),
-                        from_y: f64::from(actor.y),
-                        started: None,
+                        from_x: actor.presented.0,
+                        from_y: actor.presented.1,
+                        // Continue time since the last paint when retargeting a
+                        // drawn move. Restarting at the next paint would freeze
+                        // every frame if held inputs arrive at the paint rate.
+                        started: actor
+                            .motion
+                            .filter(|motion| motion.started.is_some())
+                            .and(self.clock),
                     })
                 } else {
                     None
@@ -540,11 +568,11 @@ mod tests {
         .unwrap()
     }
     fn frame(step: u32, x: u32, stopped: bool, events: Value) -> Value {
-        let mut cells = b"   ".to_vec();
+        let mut cells = vec![b' '; 6];
         cells[x as usize] = b'@';
-        let mut tiles = vec![1, 1, 1];
+        let mut tiles = vec![1; 6];
         tiles[x as usize] = 8;
-        json!({"width":3,"height":1,"map_cells":String::from_utf8(cells).unwrap(),"map_tiles":tiles,
+        json!({"width":6,"height":1,"map_cells":String::from_utf8(cells).unwrap(),"map_tiles":tiles,
             "map_tile_ids":&map_tiles::IDS[..],"map_actor_epoch":1,"map_actor_step":step,
             "map_actors":[{"id":0,"x":x,"y":0,"glyph":64,"facing":1,"stopped":stopped}],"map_actor_events":events})
     }
@@ -598,7 +626,7 @@ mod tests {
         assert_eq!(pose(&a.sample(50., "tiles")), ("idle", 0));
     }
     #[test]
-    fn animation_move_interpolates_and_interrupt_snaps_to_previous_destination() {
+    fn animation_held_moves_retarget_from_the_last_painted_position() {
         let mut a = animator();
         a.observe(&frame(1, 0, false, json!([]))).unwrap();
         a.sample(0., "tiles");
@@ -610,10 +638,49 @@ mod tests {
         assert_eq!(pose(&mid).0, "idle");
         assert_eq!(mid.next_delay_ms, Some(16));
         a.interrupt();
-        assert_eq!(a.sample(80., "tiles").frames[0]["displayX"], 1.);
+        assert_eq!(a.sample(70., "tiles").frames[0]["displayX"], 0.5);
         a.observe(&frame(3, 2, false, json!([]))).unwrap();
-        assert_eq!(a.sample(90., "tiles").frames[0]["displayX"], 1.);
-        assert_eq!(a.sample(210., "tiles").frames[0]["displayX"], 2.);
+        assert_eq!(a.sample(70., "tiles").frames[0]["displayX"], 0.5);
+        assert_eq!(a.sample(90., "tiles").frames[0]["displayX"], 0.75);
+        assert_eq!(a.sample(130., "tiles").frames[0]["displayX"], 1.25);
+        // A new target before every following paint must still advance the
+        // display, rather than stall until the lag bound forces a jump.
+        let mut previous = 1.25;
+        for (x, time) in [(3, 190.), (4, 250.), (5, 310.)] {
+            a.interrupt();
+            a.observe(&frame(x + 1, x, false, json!([]))).unwrap();
+            let position = a.sample(time, "tiles").frames[0]["displayX"]
+                .as_f64()
+                .unwrap();
+            assert!(position > previous && position - previous < 1.);
+            previous = position;
+        }
+        assert_eq!(a.sample(430., "tiles").frames[0]["displayX"], 5.);
+    }
+    #[test]
+    fn animation_repeated_idle_inputs_keep_the_idle_clock() {
+        let mut a = animator();
+        a.observe(&frame(1, 0, false, json!([]))).unwrap();
+        a.sample(0., "tiles");
+        for (step, time, index) in [(2, 210., 1), (3, 430., 2), (4, 610., 0)] {
+            a.interrupt();
+            a.observe(&frame(step, 0, false, json!([]))).unwrap();
+            assert_eq!(pose(&a.sample(time, "tiles")), ("idle", index));
+        }
+    }
+    #[test]
+    fn animation_input_bursts_skip_unpainted_history_instead_of_building_lag() {
+        let mut a = animator();
+        a.observe(&frame(1, 0, false, json!([]))).unwrap();
+        a.sample(0., "tiles");
+        for x in 1..=3 {
+            a.interrupt();
+            a.observe(&frame(x + 1, x, false, json!([]))).unwrap();
+        }
+        let latest = a.sample(20., "tiles");
+        assert_eq!(latest.frames[0]["x"], 3);
+        assert_eq!(latest.frames[0]["displayX"], 3.);
+        assert!(a.actors[&0].motion.is_none());
     }
     #[test]
     fn animation_stopped_actor_freezes_and_disabled_mode_has_no_timer() {

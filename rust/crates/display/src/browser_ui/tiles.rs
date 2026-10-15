@@ -111,7 +111,8 @@ pub fn validate(frame: &Value, manifest: &Value) -> Result<(), &'static str> {
                                 v.is_finite()
                                     && *v >= 0.
                                     && *v < bound as f64
-                                    && (*v - logical as f64).abs() <= 1.
+                                    && (*v - logical as f64).abs()
+                                        <= f64::from(crate::animation::MAX_MOVE_LAG)
                             })
                             .ok_or(invalid)?;
                         let _ = value;
@@ -209,9 +210,10 @@ pub fn plan(frame: &Value, camera: &Value, rect: Rect, ratio: f64, mode: &str) -
     let mut commands = Vec::new();
     let mut actors = Vec::new();
     // A moving sprite can remain visible while its logical destination lies
-    // just outside the camera. Only its already public adjacent path is used.
-    for y in start_y.saturating_sub(1).max(1)..(end_y + 1).min(height.saturating_sub(1)) {
-        for x in start_x.saturating_sub(1)..(end_x + 1).min(width) {
+    // just outside the camera. Bound the margin like the public interpolation.
+    let margin = crate::animation::MAX_MOVE_LAG as usize;
+    for y in start_y.saturating_sub(margin).max(1)..(end_y + margin).min(height.saturating_sub(1)) {
+        for x in start_x.saturating_sub(margin)..(end_x + margin).min(width) {
             let Some(id) = frame["map_tiles"][y * width + x]
                 .as_u64()
                 .map(|v| v as usize)
@@ -396,6 +398,28 @@ mod animation_tests {
         }
     }
 
+    #[test]
+    fn character_animation_keeps_a_retargeted_sprite_at_the_camera_edge() {
+        let mut frame = sample_frame("pixels");
+        frame["map_tiles"][4] = json!(1);
+        frame["map_tiles"][5] = json!(8);
+        frame["map_actors"][0]["x"] = json!(2);
+        frame["map_animation"][0]["x"] = json!(2);
+        frame["map_animation"][0]["displayX"] = json!(0.);
+        assert!(validate(&frame, &manifest("pixels")).is_ok());
+        let commands = plan(
+            &frame,
+            &json!({"size":32,"left":0,"top":0,"width":32,"height":32}),
+            Rect::new(0., 0., 32., 32.),
+            1.,
+            "pixels",
+        );
+        let sprite = commands
+            .iter()
+            .find(|c| c["image"] == "animations-v1/actor.player/hurt.3.png")
+            .unwrap();
+        assert_eq!(sprite["rect"]["x"], 0.);
+    }
     #[test]
     fn character_animation_replaces_only_the_actor_above_its_underlay() {
         for mode in ["tiles", "pixels"] {
