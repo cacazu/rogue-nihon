@@ -10,6 +10,10 @@ pub(super) async fn load(plan: &Value) -> Result<(Tiles, Value), JsValue> {
         .flatten()
         .map(|name| text(name).to_string())
         .collect();
+    let expected = plan["expectedDimensions"]
+        .as_array()
+        .filter(|dimensions| dimensions.len() == files.len())
+        .ok_or_else(|| values::string("Tile dimensions are missing from the asset plan"))?;
     let mut requests: Vec<_> = files
         .iter()
         .map(|name| {
@@ -43,10 +47,52 @@ pub(super) async fn load(plan: &Value) -> Result<(Tiles, Value), JsValue> {
     .await?;
     let mut images = BTreeMap::new();
     let mut dimensions = Vec::new();
-    for (name, bytes) in files.into_iter().zip(downloaded) {
+    for ((name, bytes), expected) in files.into_iter().zip(downloaded).zip(expected) {
         let image = Image::decode_png(&bytes).map_err(|e| values::string(&e))?;
+        if expected["width"].as_u64() != Some(u64::from(image.width()))
+            || expected["height"].as_u64() != Some(u64::from(image.height()))
+        {
+            return Err(values::string(&format!("Tile dimensions do not match manifest: {name}")));
+        }
         dimensions.push(json!({"width":image.width(),"height":image.height()}));
         images.insert(name, image);
+    }
+    let manifest = &plan["animations"];
+    let tile = manifest["tile_pixels"]
+        .as_u64()
+        .and_then(|value| u32::try_from(value).ok())
+        .filter(|value| *value > 0 && *value <= 4096)
+        .ok_or_else(|| values::string("Invalid animation tile size"))?;
+    if manifest["tile_pixels"] != plan["pixels"]
+        || manifest["layout"]["columns"] != 3
+        || manifest["layout"]["frame_count"] != 3
+        || manifest["layout"]["rows"] != json!(["idle", "move", "attack", "hurt"])
+    {
+        return Err(values::string("Invalid animation sheet layout"));
+    }
+    for entry in manifest["entries"].as_array().into_iter().flatten() {
+        let sheet_name = format!("animations-v1/{}", text(&entry["sheet"]));
+        let sheet = images.remove(&sheet_name)
+            .ok_or_else(|| values::string(&format!("Animation sheet unavailable: {sheet_name}")))?;
+        if sheet.width() != tile * 3 || sheet.height() != tile * 4 {
+            return Err(values::string(&format!("Invalid animation sheet dimensions: {sheet_name}")));
+        }
+        for (row, state) in ["idle", "move", "attack", "hurt"].into_iter().enumerate() {
+            let frames = entry["animations"][state]["frames"].as_array()
+                .filter(|frames| frames.len() == 3)
+                .ok_or_else(|| values::string("Invalid animation frame count"))?;
+            for (column, filename) in frames.iter().enumerate() {
+                let filename = filename.as_str().filter(|name| !name.is_empty())
+                    .ok_or_else(|| values::string("Animation frame filename unavailable"))?;
+                let name = format!("animations-v1/{filename}");
+                if images.contains_key(&name) {
+                    return Err(values::string(&format!("Duplicate animation frame filename: {name}")));
+                }
+                let cell = sheet.crop(column as u32 * tile, row as u32 * tile, tile, tile)
+                    .map_err(|e| values::string(&e))?;
+                images.insert(name, cell);
+            }
+        }
     }
     Ok((ImageSet::new(images), json!(dimensions)))
 }

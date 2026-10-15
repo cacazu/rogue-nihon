@@ -93,7 +93,7 @@ try{
   for(let y=0;y<128;y++)for(let x=0;x<128;x++)for(let c=0;c<4;c++)if(zoomed[(y*128+x)*4+c]!==native[(Math.floor(y/4)*32+Math.floor(x/4))*4+c])throw Error('Rust sprite scaling blurred a pixel');
   for(let i=3;i<native.length;i+=4)if(native[i]!==0&&native[i]!==255)throw Error('Rust sprite rotation changed binary alpha');
   return {images:tiles.images.size,rotations:tiles.rotated.size,opaque:native.some((v,i)=>i%4===3&&v===255)};
- });assert.deepEqual(pixels,{images:46,rotations:1,opaque:true});report.checks.push('Rust PNG decoding, cached native rotation and exact nearest-neighbour scaling');
+ });assert.deepEqual(pixels,{images:73,rotations:1,opaque:true});report.checks.push('Rust PNG decoding, cached native rotation and exact nearest-neighbour scaling');
  if(process.env.ROGUE_RASTER_BASELINE){
   const baseline=JSON.parse(await readFile(process.env.ROGUE_RASTER_BASELINE,'utf8'));
   assert.deepEqual(report.states,baseline,'Renderer replacement preserves original C/RNG checkpoints');report.checks.push('C/RNG checkpoints match the previous Canvas renderer');

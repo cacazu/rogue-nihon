@@ -157,6 +157,12 @@ void rg_host_map_effect(int32_t x,int32_t y,int32_t glyph,int32_t active) {
 void rg_host_map_terrain(const uint8_t *glyphs,uint32_t rows,uint32_t columns) {
     (void)glyphs;(void)rows;(void)columns;
 }
+void rg_host_map_actor_reset(uint32_t epoch) {(void)epoch;}
+int32_t rg_host_map_actors_begin(void) {return 1;}
+void rg_host_map_actor(uint32_t id,int32_t x,int32_t y,int32_t glyph) {
+    (void)id;(void)x;(void)y;(void)glyph;
+}
+void rg_host_map_actor_event(uint32_t id,uint32_t kind) {(void)id;(void)kind;}
 int32_t rg_host_restore_data(const uint8_t **bytes,uint32_t *length) {
     *bytes=NULL;*length=0;return 0;
 }

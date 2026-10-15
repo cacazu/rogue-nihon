@@ -165,6 +165,17 @@ pub(crate) fn map_terrain(glyphs: Vec<u8>) {
         runtime.app.update();
     });
 }
+pub(crate) fn map_actor(observation: rogue_display::map::ActorObservation) {
+    RUNTIME.with(|runtime| {
+        runtime
+            .borrow_mut()
+            .app
+            .world_mut()
+            .resource_mut::<FramePort>()
+            .actors
+            .push(observation);
+    });
+}
 #[cfg(feature = "test-hooks")]
 pub(crate) fn cached_frame() -> Option<Value> {
     RUNTIME.with(|runtime| {

@@ -16,7 +16,7 @@
     "anchor": "original-tile"
   },
   "generator": "Native-grid articulation of the original sprite pixels; original palette and equipment retained",
-  "usage": "Animation assets. Gameplay renderer still uses its existing static image.",
+  "usage": "Character animation assets used by the Rust gameplay renderer and preview.",
   "entries": [
     {
       "id": "actor.player",

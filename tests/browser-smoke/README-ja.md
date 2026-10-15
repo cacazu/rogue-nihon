@@ -36,6 +36,7 @@ node tests/run.mjs --playwright /path/to/playwright --browser /path/to/browser -
 | `save-export.mjs` | ダウンロードした実ファイル、IndexedDBとの一致、取消、復元と次ターン |
 | `rust-browser-host.mjs` | 配布用bindingだけでの起動・原作操作・記録送信なし、RustのIME・crypto・Canvas・全画面・ズーム・画像回転・タッチ長押し・保存再開、Worker起動失敗通知と再開始。`--recovery-only` は失敗復帰・配布導線だけを再確認 |
 | `rust-raster.mjs` | ブラウザーの図形・文字・画像描画とPNG decodeを禁止して、Rustの完成RGBA、PC・スマホ・文字/両PNGセット・文字計測・Unicode・持ち物・次ターン・32px回転/nearestを確認 |
+| `character-animation.mjs` | 実Cの移動・戦闘からRustの待機/移動/攻撃/被ダメージを再生、両画像モードの実画素変化・受動再生時の20-word/入力不変、隠れた敵/擬態/幻覚、保存復元後のidleと次攻撃、スマホのタッチ移動。`ROGUE_ANIMATION_OUTPUT` で確認画像と記録の出力先を指定 |
 | `character-animations.mjs --gallery-only` | 素材ギャラリーの全フレームRGBA、停止・フレーム選択・再生・sheet展開。`--illustrations` はイラスト版。作品のHTTPサーバーから開く |
 | `input-ownership.mjs` | 通常build・seed 17の持ち物閲覧と装備、投擲方向の取消、UTF-8草稿保存と新Worker復元後の編集、空Enter・先頭 `-`・明示改名、入力journalとC/RNG状態、最新観測と足元操作候補 |
 | `ownership-boundaries.mjs` | 通常buildの保存・実書出し・新Worker復元と次ターン、実IndexedDB read完了の遅延とファイルimportの競合、無効・取消importで以前の保存bytesを保持、画像セットの重複応答 |

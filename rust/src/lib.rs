@@ -313,6 +313,9 @@ pub unsafe extern "C" fn rg_run(seed: u32, name: *const c_char) -> i32 {
         Err(_) => return -2,
     };
     engine::reset(session);
+    engine::map_actor(rogue_display::map::ActorObservation::Replay(
+        engine::with_session(|session| !session.platform.restore_data().is_empty()),
+    ));
     // SAFETY: CString remains live until C returns. All callbacks use the same
     // single-threaded module and hold no RefCell borrow across a call into C.
     unsafe { rg_core_start(initial_seed, name.as_ptr()) }
@@ -365,6 +368,9 @@ pub extern "C" fn rg_host_read_key() -> i32 {
         let key = if let Some(key) = pending.or(replay).or(automatic) {
             key
         } else {
+            // The final replay key can produce frames after its queue empties.
+            // Keep those actions suppressed until the first real input wait.
+            engine::map_actor(rogue_display::map::ActorObservation::Replay(false));
             // The host waits on the Worker's SAB queue and does not update the game.
             let raw = host::read_event() as u32;
             match engine::decode(raw) {
@@ -447,6 +453,33 @@ pub unsafe extern "C" fn rg_host_present(cells: *const u8, rows: u32, columns: u
 #[unsafe(no_mangle)]
 pub extern "C" fn rg_host_map_effect(x: i32, y: i32, glyph: i32, active: i32) {
     engine::map_effect(x, y, glyph, active);
+}
+
+/// Replaces only ephemeral public character metadata, never C state or saves.
+#[unsafe(no_mangle)]
+pub extern "C" fn rg_host_map_actor_reset(epoch: u32) {
+    engine::map_actor(rogue_display::map::ActorObservation::Reset(epoch));
+}
+
+/// Window text is not a map observation. C retains public IDs while Rust
+/// composites the cached map beneath its existing game window.
+#[unsafe(no_mangle)]
+pub extern "C" fn rg_host_map_actors_begin() -> i32 {
+    if engine::render_ui()["mode"] != "game" {
+        return 0;
+    }
+    engine::map_actor(rogue_display::map::ActorObservation::Begin);
+    1
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn rg_host_map_actor(id: u32, x: i32, y: i32, glyph: i32) {
+    engine::map_actor(rogue_display::map::ActorObservation::Actor { id, x, y, glyph });
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn rg_host_map_actor_event(id: u32, kind: u32) {
+    engine::map_actor(rogue_display::map::ActorObservation::Event { id, kind });
 }
 
 /// Observes terrain beneath currently perceived actors without changing C state.

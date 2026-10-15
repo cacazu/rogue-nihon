@@ -164,6 +164,7 @@ void rg_knowledge_present(void) {
     const uint8_t *bytes=rg_knowledge_view();
     if(bytes) {
         rg_semantic_map_terrain(bytes,RG_ROWS,RG_COLS);
+        rg_semantic_map_actors(bytes,RG_ROWS,RG_COLS);
         rg_host_present(bytes,RG_ROWS,RG_COLS);
     }
 }

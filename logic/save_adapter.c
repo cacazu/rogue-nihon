@@ -12,6 +12,7 @@
 #include "knowledge.h"
 #include "core.h"
 #include "io_state.h"
+#include "semantic.h"
 
 #define RG_CONTAINER_HEADER 44u
 #define RG_CONTAINER_VERSION 1u
@@ -194,6 +195,7 @@ rg_core_load_bytes(const uint8_t *bytes, uint32_t length)
     if (rg_core_runtime_import(words, count) != 0 ||
         rg_knowledge_import(knowledge, knowledge_length) != 0 ||
         rg_message_state_import(message, message_length) != 0) return -1;
+    rg_semantic_actors_reset();
     return 0;
 }
 

@@ -6,6 +6,8 @@
 
 /* Observe terrain beneath actors already present in the copied screen. */
 void rg_semantic_map_terrain(const uint8_t *cells,uint32_t rows,uint32_t columns);
+void rg_semantic_map_actors(const uint8_t *cells,uint32_t rows,uint32_t columns);
+void rg_semantic_actors_reset(void);
 
 /* Return 1 for a descriptor, 0 for an ordinary literal, -1 for insufficient
  * space. The result is a JSON value object, not an English reverse translation.
@@ -18,6 +20,12 @@ void rg_semantic_register_message(const char *text, const char *id,
                                   const char *args_json);
 
 union thing;
+/* Private observer identity and action notifications. Neither the private
+ * pointer table nor its IDs are part of a THING or the saved rule state. */
+void rg_semantic_actor_forget(const union thing *actor);
+void rg_semantic_actor_event(const union thing *actor,uint32_t kind);
+void rg_semantic_actor_damage(const union thing *actor,int previous_hp);
+void rg_semantic_actor_moved(const union thing *actor,int old_x,int old_y);
 void rg_semantic_item(const char *text, const union thing *object, int drop);
 void rg_semantic_pickup_item(const char *text, const union thing *object,
                             int drop, int picked_count);

@@ -84,6 +84,22 @@ impl Image {
     pub fn rgba(&self) -> &[u8] {
         &self.rgba
     }
+    /// Copy a complete sprite cell without resampling or altering straight RGBA.
+    pub fn crop(&self, x: u32, y: u32, width: u32, height: u32) -> Result<Self, String> {
+        let bytes = byte_count(width, height)?;
+        if x.checked_add(width).is_none_or(|right| right > self.width)
+            || y.checked_add(height).is_none_or(|bottom| bottom > self.height)
+        {
+            return Err("Sprite crop is outside its image".into());
+        }
+        let row_bytes = width as usize * 4;
+        let mut rgba = Vec::with_capacity(bytes);
+        for row in y..y + height {
+            let start = (row as usize * self.width as usize + x as usize) * 4;
+            rgba.extend_from_slice(&self.rgba[start..start + row_bytes]);
+        }
+        Self::from_rgba(width, height, rgba)
+    }
     fn native_rotation(&self, degrees: f64) -> Result<Self, String> {
         if self.width != 32 || self.height != 32 || !degrees.is_finite() {
             return Err("Invalid native pixel image".into());
@@ -245,6 +261,29 @@ pub(crate) fn draw_image(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sprite_crop_preserves_pixels_and_alpha_across_rows() {
+        let pixels = vec![
+            1, 2, 3, 255, 4, 5, 6, 0, 7, 8, 9, 128,
+            10, 11, 12, 64, 13, 14, 15, 255, 16, 17, 18, 0,
+        ];
+        let sheet = Image::from_rgba(3, 2, pixels.clone()).unwrap();
+        let cell = sheet.crop(1, 0, 2, 2).unwrap();
+        assert_eq!((cell.width(), cell.height()), (2, 2));
+        assert_eq!(cell.rgba(), &[4, 5, 6, 0, 7, 8, 9, 128, 13, 14, 15, 255, 16, 17, 18, 0]);
+        assert_eq!(sheet.rgba(), pixels);
+        assert_eq!(sheet.crop(2, 1, 1, 1).unwrap().rgba(), &[16, 17, 18, 0]);
+    }
+
+    #[test]
+    fn sprite_crop_rejects_empty_outside_and_overflowing_bounds() {
+        let sheet = Image::from_rgba(3, 2, vec![0; 24]).unwrap();
+        for (x, y, w, h) in [(3, 0, 1, 1), (0, 2, 1, 1), (2, 1, 2, 1), (u32::MAX, 0, 2, 1), (0, u32::MAX, 1, 2)] {
+            assert_eq!(sheet.crop(x, y, w, h).err().as_deref(), Some("Sprite crop is outside its image"));
+        }
+        assert_eq!(sheet.crop(0, 0, 0, 1).err().as_deref(), Some("Empty image"));
+    }
 
     #[test]
     fn transparent_sprite_batch_preserves_its_underlay() {

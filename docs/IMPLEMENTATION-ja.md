@@ -7,7 +7,7 @@
 | 担当 | 実装 | 所有する状態・判断 |
 |---|---|---|
 | Cロジック | `logic/core.c`、`command.c`、原作の各ルール、`knowledge.c` | 生成・戦闘・移動・ターン・RNG・探索記憶・同期入力待ち |
-| 表示 | `rust/crates/display/` | 翻訳、ゲームウインドウ、公開済み所持品の描画、観測地図・足元・効果、不変フレーム |
+| 表示 | `rust/crates/display/` | 翻訳、ゲームウインドウ、公開済み所持品の描画、観測地図・足元・効果、不変フレーム、`animation::Animator` によるキャラクターの表示時計・クリップ再生 |
 | 入力 | `rust/crates/input/` | 物理入力から原作キーへの変換、UTF-8編集、持ち物メニューの選択と操作予約 |
 | プラットフォーム | `rust/crates/platform/` | checkpoint、消費済み入力journal、再生位置、保存envelopeと検証 |
 | ゲーム側の接続 | `rust/src/lib.rs`、`host.rs`、`startup.rs`、`runtime.rs`、`session.rs`、`engine.rs` | C/Rust FFI、型付き開始設定・転送allocation・libc環境サービス、Bevy Appの組立て、各層への状態投影と実行順 |

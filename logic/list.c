@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <curses.h>
 #include "rogue.h"
+#include "semantic.h"
 
 #ifdef MASTER
 int total = 0;			/* total dynamic memory bytes */
@@ -84,6 +85,9 @@ _free_list(THING **ptr)
 void
 discard(THING *item)
 {
+#ifdef ROGUE_LAYERED
+    rg_semantic_actor_forget(item);
+#endif
 #ifdef MASTER
     total--;
 #endif

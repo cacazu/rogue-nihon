@@ -45,6 +45,120 @@ void rg_semantic_map_terrain(const uint8_t *cells,uint32_t rows,uint32_t columns
     rg_host_map_terrain(terrain,rows,columns);
 }
 
+/* Visual identity exists only for the lifetime of a continuous public
+ * observation. It deliberately does not use THING fields or serializer IDs. */
+#define RG_ACTOR_SLOTS (MAXLINES * MAXCOLS)
+struct visual_actor {
+    const THING *pointer;
+    uint32_t id;
+    int observed;
+};
+static struct visual_actor visual_actors[RG_ACTOR_SLOTS];
+static uint32_t visual_epoch, visual_next_id = 1;
+static int visual_player_observed;
+
+void rg_semantic_actors_reset(void)
+{
+    memset(visual_actors,0,sizeof visual_actors);
+    visual_next_id=1;
+    visual_player_observed=0;
+    if (++visual_epoch==0) visual_epoch=1;
+    rg_host_map_actor_reset(visual_epoch);
+}
+
+static struct visual_actor *visual_entry(const THING *actor,int create)
+{
+    struct visual_actor *free_entry=NULL;
+    unsigned i;
+    for (i=0;i<RG_ACTOR_SLOTS;i++) {
+        if (visual_actors[i].pointer==actor) return &visual_actors[i];
+        if (!visual_actors[i].pointer && !free_entry) free_entry=&visual_actors[i];
+    }
+    /* Reaching the ID limit leaves a character static rather than reusing an
+     * ID belonging to an earlier public observation in this epoch. */
+    if (!create || !free_entry || !visual_next_id) return NULL;
+    free_entry->pointer=actor;
+    free_entry->id=visual_next_id++;
+    return free_entry;
+}
+
+void rg_semantic_actor_forget(const THING *actor)
+{
+    struct visual_actor *entry;
+    if (actor==&player) {visual_player_observed=0;return;}
+    entry=visual_entry(actor,0);
+    if (entry) memset(entry,0,sizeof *entry);
+}
+
+static int visual_perceived(const THING *actor)
+{
+    return see_monst((THING *)actor) || on(player,SEEMONST);
+}
+
+void rg_semantic_map_actors(const uint8_t *cells,uint32_t rows,uint32_t columns)
+{
+    THING *actor;
+    struct visual_actor *entry;
+    unsigned i;
+    int x,y;
+    unsigned char glyph;
+    if (!rg_host_map_actors_begin()) return;
+    visual_player_observed=0;
+    for (i=0;i<RG_ACTOR_SLOTS;i++) visual_actors[i].observed=0;
+    if (!cells || rows<2 || !columns || rows>MAXLINES || columns>MAXCOLS) return;
+    for (actor=&player;actor;actor=actor==&player?mlist:next(actor)) {
+        x=actor->t_pos.x;y=actor->t_pos.y;
+        if (x<0 || (uint32_t)x>=columns || y<=0 || (uint32_t)y>=rows-1) continue;
+        glyph=cells[y*columns+x];
+        if (actor==&player) {
+            if (glyph==PLAYER) {
+                visual_player_observed=1;
+                rg_host_map_actor(0,x,y,glyph);
+            }
+        } else {
+            /* A disguised item remains an item. Hallucination uses the chosen
+             * public glyph and never the actor's real species or HP. */
+            if (glyph<'A' || glyph>'Z' || !visual_perceived(actor)) continue;
+            entry=visual_entry(actor,1);
+            if (!entry) continue;
+            entry->observed=1;
+            rg_host_map_actor(entry->id,x,y,glyph);
+        }
+    }
+    for (i=0;i<RG_ACTOR_SLOTS;i++)
+        if (visual_actors[i].pointer && !visual_actors[i].observed)
+            memset(&visual_actors[i],0,sizeof visual_actors[i]);
+}
+
+void rg_semantic_actor_event(const THING *actor,uint32_t kind)
+{
+    struct visual_actor *entry;
+    if (!actor || (kind!=RG_ACTOR_MOVE && kind!=RG_ACTOR_ATTACK && kind!=RG_ACTOR_HURT)) return;
+    if (actor==&player) {
+        if (visual_player_observed) rg_host_map_actor_event(0,kind);
+        return;
+    }
+    entry=visual_entry(actor,0);
+    if (entry && entry->observed && visual_perceived(actor))
+        rg_host_map_actor_event(entry->id,kind);
+}
+
+void rg_semantic_actor_damage(const THING *actor,int previous_hp)
+{
+    if (actor && actor->t_stats.s_hpt<previous_hp)
+        rg_semantic_actor_event(actor,RG_ACTOR_HURT);
+}
+
+void rg_semantic_actor_moved(const THING *actor,int old_x,int old_y)
+{
+    int dx=actor->t_pos.x-old_x,dy=actor->t_pos.y-old_y;
+    if (!dx && !dy) return;
+    if (dx>=-1 && dx<=1 && dy>=-1 && dy<=1)
+        rg_semantic_actor_event(actor,RG_ACTOR_MOVE);
+    else
+        rg_semantic_actor_forget(actor); /* Teleport is a new observation. */
+}
+
 #define RG_SEMANTIC_SLOTS 64
 #define RG_SEMANTIC_TEXT 2048
 #define RG_SEMANTIC_JSON 8192

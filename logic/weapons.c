@@ -14,6 +14,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "rogue.h"
+#include "semantic.h"
 
 #define NO_WEAPON -1
 
@@ -54,6 +55,9 @@ missile(int ydelta, int xdelta)
     if (!dropcheck(obj) || is_current(obj))
 	return;
     obj = leave_pack(obj, TRUE, FALSE);
+#ifdef ROGUE_LAYERED
+    rg_semantic_actor_event(&player,RG_ACTOR_ATTACK);
+#endif
     do_motion(obj, ydelta, xdelta);
     /*
      * AHA! Here it has hit something.  If it is a wall or a door,

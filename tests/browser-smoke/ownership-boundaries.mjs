@@ -76,7 +76,7 @@ try {
     };
     globalThis.__ownership={get heldInit(){return Boolean(initial);},get starting(){return __rogueBrowserTest.diagnostics?.starting;},
       get initResult(){return initResult;},releaseInit(){const callback=initial;initial=null;callback();initResult=true;},
-      repeatAssets(){return __rogueUiAdapter.dispatchRequest({type:"api",operation:"assets",ok:true,set:"tiles",images:Array(46).fill({width:96,height:96})});}};
+      repeatAssets(){const plan=__rogueUiAdapter.request({type:"asset-plan",mode:"tiles"});return __rogueUiAdapter.dispatchRequest({type:"api",operation:"assets",ok:true,set:"tiles",images:plan.expectedDimensions});}};
   `});
   page=await context.newPage();page.on("pageerror",error=>report.errors.push(error.message));
   await page.goto(base+"?trace=1");

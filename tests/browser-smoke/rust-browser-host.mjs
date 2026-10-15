@@ -71,7 +71,7 @@ try{
    for(let y=0;y<128;y++)for(let x=0;x<128;x++)for(let k=0;k<4;k++)if(z[(y*128+x)*4+k]!==n[(Math.floor(y/4)*32+Math.floor(x/4))*4+k])throw Error('Blended pixels');
    for(let i=3;i<n.length;i+=4)if(n[i]!==0&&n[i]!==255)throw Error('Antialiased native rotation');
    return {images:tiles.images.size,rotations:tiles.rotated.size,opaque:n.some((v,i)=>i%4===3&&v===255)};
-  });assert.deepEqual(result,{images:46,rotations:1,opaque:true});
+  });assert.deepEqual(result,{images:73,rotations:1,opaque:true});
  });
  await check('Rust handles mobile taps, held input, release and captured pointer cleanup',async()=>{
   await open({mobile:true});await page.locator('#seed').fill('17');await tap('new-game',true);await idle();const before=await state();

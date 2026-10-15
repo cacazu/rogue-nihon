@@ -255,10 +255,16 @@ attack(THING *mp)
 			}
 			else
 			    fewer = roll(1, 3);
-			pstats.s_hpt -= fewer;
-			max_hp -= fewer;
-			if (pstats.s_hpt <= 0)
-			    pstats.s_hpt = 1;
+			{
+			    int observed_hp=pstats.s_hpt;
+			    pstats.s_hpt -= fewer;
+			    max_hp -= fewer;
+			    if (pstats.s_hpt <= 0)
+				pstats.s_hpt = 1;
+#ifdef ROGUE_LAYERED
+			    rg_semantic_actor_damage(&player,observed_hp);
+#endif
+			}
 			if (max_hp <= 0)
 			    death(mp->t_type);
 			msg("you suddenly feel weaker");
@@ -269,7 +275,11 @@ attack(THING *mp)
 		     */
 		    player.t_flags |= ISHELD;
 		    sprintf(monsters['F'-'A'].m_stats.s_dmg,"%dx1", ++vf_hit);
-		    if (--pstats.s_hpt <= 0)
+		    pstats.s_hpt--;
+#ifdef ROGUE_LAYERED
+		    rg_semantic_actor_event(&player,RG_ACTOR_HURT);
+#endif
+		    if (pstats.s_hpt <= 0)
 			death('F');
 		when 'L':
 		{
@@ -328,7 +338,11 @@ attack(THING *mp)
 	}
 	if (mp->t_type == 'F')
 	{
+	    int observed_hp=pstats.s_hpt;
 	    pstats.s_hpt -= vf_hit;
+#ifdef ROGUE_LAYERED
+	    rg_semantic_actor_damage(&player,observed_hp);
+#endif
 	    if (pstats.s_hpt <= 0)
 		death(mp->t_type);	/* Bye bye life ... */
 	}
@@ -450,6 +464,11 @@ roll_em(THING *thatt, THING *thdef, THING *weap, bool hurl)
      */
     if (!on(*thdef, ISRUN))
 	hplus += 4;
+#ifdef ROGUE_LAYERED
+    /* Thrown weapons and bolts report their real launch source separately.
+     * Original bolt damage calls use player stats even for a dragon's flame. */
+    if (!hurl) rg_semantic_actor_event(thatt,RG_ACTOR_ATTACK);
+#endif
     def_arm = def->s_arm;
     if (def == &pstats)
     {
@@ -476,7 +495,13 @@ roll_em(THING *thatt, THING *thdef, THING *weap, bool hurl)
 		debug("Damage for %dx%d came out %d, dplus = %d, add_dam = %d, def_arm = %d", ndice, nsides, proll, dplus, add_dam[att->s_str], def_arm);
 #endif
 	    damage = dplus + proll + add_dam[att->s_str];
-	    def->s_hpt -= max(0, damage);
+	    {
+		int observed_hp=def->s_hpt;
+		def->s_hpt -= max(0, damage);
+#ifdef ROGUE_LAYERED
+		rg_semantic_actor_damage(thdef,observed_hp);
+#endif
+	    }
 	    did_hit = TRUE;
 	}
 	if ((cp = strchr(cp, '/')) == NULL)

@@ -16,7 +16,7 @@
     "anchor": "cell-center"
   },
   "generator": "OpenAI built-in image_gen: twelve newly drawn illustration poses using the original image as design reference",
-  "usage": "Animation assets. Gameplay renderer still uses its existing static image.",
+  "usage": "Character animation assets used by the Rust gameplay renderer and preview.",
   "entries": [
     {
       "id": "actor.player",

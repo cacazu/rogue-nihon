@@ -2,6 +2,7 @@
 #include <curses.h>
 #include "rogue.h"
 #include "core.h"
+#include "semantic.h"
 #include "../contract/rogue_abi.h"
 #include <setjmp.h>
 #include <stdarg.h>
@@ -50,6 +51,7 @@ int32_t rg_core_start(uint32_t initial_seed,const char *name) {
     int restore_requested;
     if(core_started) return -3;
     core_started=1;core_active=1;
+    rg_semantic_actors_reset();
     final_code=0;final_message="ended";completed_turns=0;
     startup_name=(name && *name)?name:"Player";
     if(setjmp(core_exit_scope)) {core_active=0;return final_code;}

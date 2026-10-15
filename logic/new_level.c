@@ -14,6 +14,7 @@
 #include <curses.h>
 #include <string.h>
 #include "rogue.h"
+#include "semantic.h"
 
 #define TREAS_ROOM 20	/* one chance in TREAS_ROOM for a treasure room */
 #define MAXTREAS 10	/* maximum number of treasures in a treasure room */
@@ -26,6 +27,10 @@ new_level()
     PLACE *pp;
     char *sp;
     int i;
+
+#ifdef ROGUE_LAYERED
+    rg_semantic_actors_reset();
+#endif
 
     player.t_flags &= ~ISHELD;	/* unhold when you go down just in case */
     if (level > max_level)

@@ -143,6 +143,23 @@ impl Browser {
                 *self.blink.borrow_mut() = Some((id, callback));
             }
             "animation-frame" => self.invalidate()?,
+            "animation-wake" => {
+                if let Some((id, _)) = self.animation_timer.borrow_mut().take() {
+                    self.window.clear_timeout_with_handle(id);
+                }
+                if let Some(delay) = effect["delay"].as_u64() {
+                    let weak = Rc::downgrade(self);
+                    let callback = Closure::new(move || {
+                        if let Some(host) = weak.upgrade() {
+                            if let Err(e) = host.invalidate() { error(e); }
+                        }
+                    });
+                    let id = self.window.set_timeout_with_callback_and_timeout_and_arguments_0(
+                        callback.as_ref().unchecked_ref(), delay.clamp(1, 200) as i32,
+                    )?;
+                    *self.animation_timer.borrow_mut() = Some((id, callback));
+                }
+            }
             "hold-timer" => {
                 if let Some((id, _)) = self.hold.borrow_mut().take() {
                     self.window.clear_timeout_with_handle(id);

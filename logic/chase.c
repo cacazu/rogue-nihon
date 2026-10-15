@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <curses.h>
 #include "rogue.h"
+#include "semantic.h"
 
 #define DRAGONSHOT  5	/* one chance in DRAGONSHOT that a dragon will flame */
 
@@ -82,6 +83,7 @@ void
 relocate(THING *th, coord *new_loc)
 {
     struct room *oroom;
+    coord observed_origin=th->t_pos;
 
     if (!ce(*new_loc, th->t_pos))
     {
@@ -105,6 +107,9 @@ relocate(THING *th, coord *new_loc)
 	addch(th->t_type);
 	standend();
     }
+#ifdef ROGUE_LAYERED
+    rg_semantic_actor_moved(th,observed_origin.x,observed_origin.y);
+#endif
 }
 
 /*

@@ -1,4 +1,5 @@
 //! Presentation of C's public observations. No C imports, storage or input reads.
+pub mod animation;
 pub mod browser_ui;
 pub mod display;
 pub mod entities;

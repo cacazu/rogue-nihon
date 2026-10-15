@@ -2,7 +2,7 @@ use super::*;
 impl Browser {
     pub(super) fn paint(self: &Rc<Self>) -> Result<(), JsValue> {
         let captured: Vec<_> = self.captured.borrow().iter().copied().collect();
-        let response = self.request(json!({"type":"render","captured":captured,"view":{"width":self.surface.client_width(),"height":self.surface.client_height(),"ratio":self.window.device_pixel_ratio(),"coarse":self.coarse(),"fullscreen":self.document.fullscreen_element().is_some(),"now":js_sys::Date::now()}}));
+        let response = self.request(json!({"type":"render","captured":captured,"view":{"width":self.surface.client_width(),"height":self.surface.client_height(),"ratio":self.window.device_pixel_ratio(),"coarse":self.coarse(),"fullscreen":self.document.fullscreen_element().is_some(),"visible":!self.document.hidden(),"now":js_sys::Date::now()}}));
         let surface = &response["surface"];
         let ratio = number(&surface["ratio"]);
         let width = (number(&surface["width"]) * ratio).round() as u32;

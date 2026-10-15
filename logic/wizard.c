@@ -16,6 +16,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "rogue.h"
+#include "semantic.h"
 
 /*
  * whatis:
@@ -215,6 +216,10 @@ void
 teleport()
 {
     static coord c;
+
+#ifdef ROGUE_LAYERED
+    rg_semantic_actors_reset();
+#endif
 
     mvaddch(hero.y, hero.x, floor_at());
     find_floor((struct room *) NULL, &c, FALSE, TRUE);

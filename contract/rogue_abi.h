@@ -49,6 +49,11 @@
 #define RG_FLAG_LEVITATING 0x00000008
 #define RG_FLAG_AMULET 0x00040000
 
+/* Presentation actions only. These do not represent commands or game turns. */
+#define RG_ACTOR_MOVE 1
+#define RG_ACTOR_ATTACK 2
+#define RG_ACTOR_HURT 3
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -74,6 +79,21 @@ void rg_host_map_effect(int32_t x, int32_t y, int32_t glyph, int32_t active);
 /* Per-frame terrain beneath perceived actors. 255 means no observation.
  * Borrows rows*columns bytes; never changes world, RNG, or saved state. */
 void rg_host_map_terrain(const uint8_t *glyphs, uint32_t rows, uint32_t columns);
+/* Public character observations. Player ID is 0; enemy IDs are opaque and
+ * valid only while continuously observed in this epoch. Begin replaces the
+ * next frame's actor set. Only already displayed @/A-Z glyphs may be supplied;
+ * no THING pointer, hidden type/position/HP, or private movement path crosses
+ * this boundary. Reset clears presentation metadata at level/load/start. */
+void rg_host_map_actor_reset(uint32_t epoch);
+/* Return 0 when Rust keeps a cached map under a game window; then the C
+ * observer preserves its previous public identities without reading overlay
+ * text as characters. Return 1 when the current public map may be replaced. */
+int32_t rg_host_map_actors_begin(void);
+void rg_host_map_actor(uint32_t id, int32_t x, int32_t y, int32_t glyph);
+/* The C owner reports an actual action/damage at its source. Rust owns the
+ * bounded transient queue and sequence; each event is consumed once by the
+ * next frame. Events never enter game saves, RNG, or command processing. */
+void rg_host_map_actor_event(uint32_t id, uint32_t kind);
 void rg_host_message(const char *message_id, const char *arguments_json,
                      const char *legacy_english);
 /* UTF-8 semantic UI is presentation data only. row=-1 clears a scope;

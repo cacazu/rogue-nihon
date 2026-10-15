@@ -211,8 +211,10 @@ def generate(root, check=False):
         print('Message catalog matches the C source')
         return
     (root / 'locales').mkdir(exist_ok=True)
-    (root / 'locales' / 'en.json').write_text(json.dumps(catalog, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    table_path.write_text(source_table, encoding='utf-8')
+    catalog_path = root / 'locales' / 'en.json'
+    catalog_newline = '\r\n' if catalog_path.exists() and b'\r\n' in catalog_path.read_bytes() else '\n'
+    catalog_path.write_text(json.dumps(catalog, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline=catalog_newline)
+    table_path.write_text(source_table, encoding='utf-8', newline='\n')
     coverage = {
         'schema': 1,
         'count_basis': 'all C source msg/addmsg/debug sites, including inactive conditional and legacy OS code',
@@ -225,7 +227,7 @@ def generate(root, check=False):
         'limitations': ['runtime names, item purpose/name fragments and English grammar are not yet ID-separated',
                         'curses printw/addstr/menu/status text outside msg/addmsg is outside this catalog'],
     }
-    (root / 'locales' / 'coverage.json').write_text(json.dumps(coverage, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    (root / 'locales' / 'coverage.json').write_text(json.dumps(coverage, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline='\n')
     print(json.dumps({key: coverage[key] for key in ('calls', 'literal_template_ids', 'literal_or_choice_calls', 'printf_formats')}, ensure_ascii=False))
 
 

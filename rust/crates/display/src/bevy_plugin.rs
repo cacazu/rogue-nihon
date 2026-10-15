@@ -34,6 +34,7 @@ pub struct FramePort {
     pub ready: Option<Value>,
     pub effect: Option<(i32, i32, i32, i32)>,
     pub terrain: Option<Vec<u8>>,
+    pub actors: Vec<crate::map::ActorObservation>,
 }
 
 #[derive(Component, Default)]
@@ -97,6 +98,9 @@ fn render_frame(
     mut map: Single<&mut ObservedMap>,
     mut window: Single<&mut GameWindowView>,
 ) {
+    for observation in port.actors.drain(..) {
+        map.observe_actor(observation);
+    }
     if let Some(terrain) = port.terrain.take() {
         map.terrain(terrain);
     }

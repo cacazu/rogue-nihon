@@ -1,11 +1,13 @@
 use super::*;
 use crate::{controller::Controller, policies::*};
+fn asset_dimensions(mode: &str) -> Value {
+    rogue_display::browser_ui::tiles::assets(mode)["expectedDimensions"].clone()
+}
 fn boot() -> Controller {
     let mut c = Controller::new(measure);
     c.request(json!({"type":"boot","environment":{"isolated":true,"parameters":{"trace":"1"}}}));
     for mode in ["tiles", "pixels"] {
-        let pixels = if mode == "pixels" { 32 } else { 96 };
-        c.request(json!({"type":"api","operation":"assets","ok":true,"set":mode,"images":vec![json!({"width":pixels,"height":pixels});46]}));
+        c.request(json!({"type":"api","operation":"assets","ok":true,"set":mode,"images":asset_dimensions(mode)}));
     }
     c
 }
@@ -37,10 +39,16 @@ fn wall_assets_load_and_incomplete_sets_fail() {
     let r = c.request(json!({"type":"render","view":{"width":1240,"height":900}}));
     assert_eq!(r["state"]["ready"], true);
     assert_eq!(r["state"]["runtimeError"], Value::Null);
-    for (count, pixels) in [(45, 32), (47, 32), (46, 96)] {
+    let mut missing = asset_dimensions("pixels");
+    missing.as_array_mut().unwrap().pop();
+    let mut wrong_sheet = asset_dimensions("pixels");
+    let sheet = wrong_sheet.as_array_mut().unwrap().iter_mut()
+        .find(|image| image["width"] == 96).unwrap();
+    sheet["height"] = json!(32);
+    for images in [missing, wrong_sheet, json!(vec![json!({"width":32,"height":32});73])] {
         let mut c = Controller::new(measure);
         c.request(json!({"type":"boot","environment":{"isolated":true,"parameters":{}}}));
-        let r = c.request(json!({"type":"api","operation":"assets","ok":true,"set":"pixels","images":vec![json!({"width":pixels,"height":pixels});count]}));
+        let r = c.request(json!({"type":"api","operation":"assets","ok":true,"set":"pixels","images":images}));
         assert_eq!(r["state"]["ready"], false);
         assert_eq!(
             r["state"]["runtimeError"],
@@ -298,11 +306,11 @@ fn invalid_cancelled_or_retired_import_keeps_the_accepted_save_and_game() {
 fn assets_are_ready_only_after_both_distinct_sets() {
     let mut c = Controller::new(measure);
     for _ in 0..3 {
-        let r = c.request(json!({"type":"api","operation":"assets","ok":true,"set":"tiles","images":vec![json!({"width":96,"height":96});46]}));
+        let r = c.request(json!({"type":"api","operation":"assets","ok":true,"set":"tiles","images":asset_dimensions("tiles")}));
         assert_eq!(r["state"]["ready"], false);
     }
     for _ in 0..3 {
-        let r = c.request(json!({"type":"api","operation":"assets","ok":true,"set":"pixels","images":vec![json!({"width":32,"height":32});46]}));
+        let r = c.request(json!({"type":"api","operation":"assets","ok":true,"set":"pixels","images":asset_dimensions("pixels")}));
         assert_eq!(r["state"]["ready"], true);
     }
     let r = c.request(json!({"type":"api","operation":"assets","ok":true,"set":"unknown","images":vec![json!({"width":96,"height":96});46]}));

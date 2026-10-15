@@ -39,3 +39,6 @@ pub const RG_SNAPSHOT_FLAGS: u32 = 18;
 pub const RG_SNAPSHOT_PENDING: u32 = 19;
 pub const RG_FLAG_LEVITATING: u32 = 0x00000008;
 pub const RG_FLAG_AMULET: u32 = 0x00040000;
+pub const RG_ACTOR_MOVE: u32 = 1;
+pub const RG_ACTOR_ATTACK: u32 = 2;
+pub const RG_ACTOR_HURT: u32 = 3;

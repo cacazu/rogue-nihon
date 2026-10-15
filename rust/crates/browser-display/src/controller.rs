@@ -3,6 +3,7 @@ use crate::policies::*;
 use crate::save_operations::{PendingSave, SaveOperation, SaveOperations};
 use rogue_contract::RG_KEY_SAVE;
 use rogue_display::{
+    animation::Animator,
     browser_ui::{BrowserUi, tiles},
     widgets::{MeasureText, Rect},
 };
@@ -11,6 +12,7 @@ use std::collections::BTreeSet;
 
 pub struct Controller {
     ui: BrowserUi,
+    animations: Animator,
     model: Value,
     state: Value,
     inputs: Value,
@@ -34,6 +36,8 @@ impl Controller {
     pub fn new(measure: MeasureText) -> Self {
         Self {
             ui: BrowserUi::new(measure),
+            animations: Animator::new(tiles::animation_manifest("tiles"), tiles::animation_manifest("pixels"))
+                .expect("Character animation manifests"),
             model: json!({"language":"ja","topOpen":true,"settingsOpen":false,"starting":false,"running":false,"ready":false,"saved":false,"downloadAvailable":false,"savePending":false,"returnAfterEnd":false,"itemHistoryOpen":false,"returnToInventory":false,"generation":0,"displayMode":"tiles","tileSize":32,"frame":null,"topNotice":null}),
             state: json!({"exitCode":null,"outcome":null,"runtimeError":null,"frameCount":0,"inputRequestCount":0,"trace":null,"traces":[],"messages":[],"logs":[],"translationFallbacks":[],"savedLength":0}),
             inputs: json!({}),
@@ -145,6 +149,8 @@ impl Controller {
         }
         self.retire_saves();
         self.effects.push(json!({"kind":"worker-stop"}));
+        self.animations.reset();
+        self.state["animation"] = json!([]);
         for key in ["starting", "returnAfterEnd", "running", "settingsOpen", "windowClosing", "itemHistoryOpen", "returnToInventory"] {
             self.model[key] = json!(false);
         }
@@ -337,6 +343,8 @@ impl Controller {
         self.retire_saves();
         self.effects.push(json!({"kind":"worker-stop"}));
         self.model["generation"] = json!(number(&self.model["generation"]) + 1);
+        self.animations.reset();
+        self.state["animation"] = json!([]);
         for key in [
             "topOpen",
             "settingsOpen",
@@ -525,6 +533,12 @@ impl Controller {
                     self.notice(id, json!({}), true);
                     return;
                 }
+                if let Err(error) = self.animations.observe(&data) {
+                    self.state["runtimeError"] = json!(error);
+                    self.model["running"] = json!(false);
+                    self.notice("error.frame", json!({}), true);
+                    return;
+                }
                 self.fallback(&data, "frame");
                 self.model["frame"] = data;
                 self.state["frameCount"] = json!(number(&self.state["frameCount"]) + 1);
@@ -586,6 +600,7 @@ impl Controller {
             "exit" => {
                 self.state["exitCode"] = data["code"].clone();
                 self.model["running"] = json!(false);
+                self.animations.reset();
                 if data["code"].as_i64().unwrap_or(-1) < 0 {
                     if self.restore_pending {
                         self.restore_failed();
@@ -600,6 +615,7 @@ impl Controller {
                 let starting = flag(&self.model["starting"]);
                 self.state["runtimeError"] = data["text"].clone();
                 self.model["running"] = json!(false);
+                self.animations.reset();
                 self.model["starting"] = json!(false);
                 if self.restore_pending {
                     self.restore_failed();
@@ -724,12 +740,12 @@ impl Controller {
                 let set = text(&r["set"]);
                 if !matches!(set, "tiles" | "pixels") { return false; }
                 let plan = tiles::assets(set);
-                let m = &plan["manifest"];
+                let expected = plan["expectedDimensions"].as_array().unwrap();
                 let valid = r["images"].as_array().is_some_and(|images| {
-                    images.len() == plan["files"].as_array().unwrap().len()
-                        && images.iter().all(|image| {
-                            image["width"] == m["tile_pixels"]
-                                && image["height"] == m["tile_pixels"]
+                    images.len() == expected.len()
+                        && images.iter().zip(expected).all(|(image, expected)| {
+                            image["width"] == expected["width"]
+                                && image["height"] == expected["height"]
                         })
                 });
                 if ok && valid {
@@ -964,8 +980,21 @@ impl Controller {
                 let ratio = view["ratio"].as_f64().unwrap_or(1.).clamp(1., 2.);
                 view["ratio"] = json!(ratio);
                 view["blink"] = json!((number(&view["now"]) / 500).is_multiple_of(2));
+                let animation = self.animations.sample(view["now"].as_f64().unwrap_or(0.), text(&self.model["displayMode"]));
+                self.state["animation"] = animation.frames.clone();
+                if self.model["frame"].is_object() {
+                    self.model["frame"]["map_animation"] = animation.frames;
+                }
+                let visible = view["visible"].as_bool() != Some(false);
                 let result = self.ui.render(self.model.clone(), view);
                 commands = result["commands"].clone();
+                let animated_map = commands.as_array().into_iter().flatten().any(|command| {
+                    command["op"] == "image" && text(&command["image"]).starts_with("animations-v1/")
+                });
+                self.effects.push(json!({"kind":"animation-wake","delay":
+                    if visible && animated_map && flag(&self.model["running"]) && !flag(&self.model["topOpen"]) {
+                        animation.next_delay_ms
+                    } else { None }}));
                 if flag(&result["animate"]) {
                     self.effects.push(json!({"kind":"animation-frame"}));
                 }

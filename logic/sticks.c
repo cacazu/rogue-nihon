@@ -15,6 +15,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "rogue.h"
+#include "semantic.h"
 
 /*
  * fix_stick:
@@ -168,6 +169,11 @@ do_zap()
 			}
 			tp->t_dest = &hero;
 			tp->t_flags |= ISRUN;
+#ifdef ROGUE_LAYERED
+			/* Even a same-cell/adjacent teleport ends the old public
+			 * identity; coordinate distance cannot identify this action. */
+			rg_semantic_actor_forget(tp);
+#endif
 			relocate(tp, &new_pos);
 		    }
 		}
@@ -181,6 +187,9 @@ do_zap()
 	    bolt.o_flags = ISMISL;
 	    if (cur_weapon != NULL)
 		bolt.o_launch = cur_weapon->o_which;
+#ifdef ROGUE_LAYERED
+	    rg_semantic_actor_event(&player,RG_ACTOR_ATTACK);
+#endif
 	    do_motion(&bolt, delta.y, delta.x);
 	    if ((tp = moat(bolt.o_pos.y, bolt.o_pos.x)) != NULL
 		&& !save_throw(VS_MAGIC, tp))
@@ -251,7 +260,7 @@ drain()
     THING *mp;
     struct room *corp;
     THING **dp;
-    int cnt;
+    int cnt,observed_hp;
     bool inpass;
     static THING *drainee[40];
 
@@ -276,7 +285,14 @@ drain()
 	return;
     }
     *dp = NULL;
+    observed_hp=pstats.s_hpt;
+#ifdef ROGUE_LAYERED
+    rg_semantic_actor_event(&player,RG_ACTOR_ATTACK);
+#endif
     pstats.s_hpt /= 2;
+#ifdef ROGUE_LAYERED
+    rg_semantic_actor_damage(&player,observed_hp);
+#endif
     cnt = pstats.s_hpt / cnt;
     /*
      * Now zot all of the monsters
@@ -284,7 +300,12 @@ drain()
     for (dp = drainee; *dp; dp++)
     {
 	mp = *dp;
-	if ((mp->t_stats.s_hpt -= cnt) <= 0)
+	observed_hp=mp->t_stats.s_hpt;
+	mp->t_stats.s_hpt -= cnt;
+#ifdef ROGUE_LAYERED
+	rg_semantic_actor_damage(mp,observed_hp);
+#endif
+	if (mp->t_stats.s_hpt <= 0)
 	    killed(mp, see_monst(mp));
 	else
 	    runto(&mp->t_pos);
@@ -306,6 +327,10 @@ fire_bolt(coord *start, coord *dir, char *name)
     static coord pos;
     static coord spotpos[BOLT_LENGTH];
     THING bolt;
+
+#ifdef ROGUE_LAYERED
+    rg_semantic_actor_event(ce(*start,hero)?&player:moat(start->y,start->x),RG_ACTOR_ATTACK);
+#endif
 
     bolt.o_type = WEAPON;
     bolt.o_which = FLAME;
@@ -388,7 +413,12 @@ def:
 		    changed = !changed;
 		    if (!save(VS_MAGIC))
 		    {
-			if ((pstats.s_hpt -= roll(6, 6)) <= 0)
+			int observed_hp=pstats.s_hpt;
+			pstats.s_hpt -= roll(6, 6);
+#ifdef ROGUE_LAYERED
+			rg_semantic_actor_damage(&player,observed_hp);
+#endif
+			if (pstats.s_hpt <= 0)
 			{
 			    if (start == &hero)
 				death('b');

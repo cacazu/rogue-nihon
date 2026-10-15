@@ -328,6 +328,32 @@ void rg_test_apply_fixture(void)
             strcpy(object->o_damage, "0x0"); strcpy(object->o_hurldmg, "0x0");
             add_pack(object, TRUE);
         }
+    } else if (!strcmp(name, "animation") || !strcmp(name, "animation-hallucination")) {
+        /* Real original-rule movement and combat, with enough HP to observe
+         * the complete attack/hurt clips. Private actors test publication:
+         * invisible enemies and item-disguised xerocs remain unreported. */
+        monster = monster_at('Z', 13, 10);
+        monster->t_stats.s_hpt = monster->t_stats.s_maxhp = 200;
+        monster->t_stats.s_lvl = 20;
+        monster->t_stats.s_arm = 20; /* Both sides must land real observed hits. */
+        strcpy(monster->t_stats.s_dmg, "1x1");
+        monster->t_flags |= ISRUN;
+        monster->t_dest = &hero;
+        monster = monster_at('K', 11, 12);
+        monster->t_flags |= ISHELD;
+        monster->t_flags &= ~ISRUN;
+        monster = monster_at('E', 12, 12);
+        monster->t_flags |= ISINVIS | ISHELD;
+        monster->t_flags &= ~ISRUN;
+        monster = monster_at('X', 13, 12);
+        monster->t_disguise = POTION;
+        monster->t_flags |= ISHELD;
+        monster->t_flags &= ~ISRUN;
+        if (!strcmp(name, "animation-hallucination")) {
+            player.t_flags |= ISHALU;
+            start_daemon(visuals, 0, BEFORE);
+            fuse(come_down, 0, 50, AFTER);
+        }
     } else if (!strcmp(name, "wall")) {
         chat(hero.y, hero.x - 1) = '|';
         mvaddch(hero.y, hero.x - 1, '|');

@@ -13,6 +13,7 @@
 #include <curses.h>
 #include <ctype.h>
 #include "rogue.h"
+#include "semantic.h"
 
 /*
  * used to hold the new hero position
@@ -196,6 +197,9 @@ move_stuff:
 		if ((fl & F_PASS) && chat(oldpos.y, oldpos.x) == DOOR)
 		    leave_room(&nh);
 		hero = nh;
+#ifdef ROGUE_LAYERED
+		rg_semantic_actor_event(&player,RG_ACTOR_MOVE);
+#endif
 	    }
     }
 }
@@ -305,7 +309,11 @@ be_trapped(coord *tc)
 	when T_ARROW:
 	    if (swing(pstats.s_lvl - 1, pstats.s_arm, 1))
 	    {
+		int observed_hp=pstats.s_hpt;
 		pstats.s_hpt -= roll(1, 6);
+#ifdef ROGUE_LAYERED
+		rg_semantic_actor_damage(&player,observed_hp);
+#endif
 		if (pstats.s_hpt <= 0)
 		{
 		    msg("an arrow killed you");
@@ -335,7 +343,11 @@ be_trapped(coord *tc)
 		msg("a small dart whizzes by your ear and vanishes");
 	    else
 	    {
+		int observed_hp=pstats.s_hpt;
 		pstats.s_hpt -= roll(1, 4);
+#ifdef ROGUE_LAYERED
+		rg_semantic_actor_damage(&player,observed_hp);
+#endif
 		if (pstats.s_hpt <= 0)
 		{
 		    msg("a poisoned dart killed you");
