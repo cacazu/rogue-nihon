@@ -91,7 +91,10 @@ async function movement(mode,held){
 async function cadence(mode,enabled){
  const label=mode+'-tapped-animation-'+(enabled?'on':'off');await open(mode,enabled,false);
  await page.evaluate(()=>{__repeatKeys.length=0;__repeatPaints.length=0;__repeatRenders.length=0;});
+ await page.evaluate(async()=>{(await import('/build/browser-ui.js')).browser_take_paint_timings();});
  const cdp=await context.newCDPSession(page),pending=[];
+ const profiling=process.argv.includes('--profile');
+ if(profiling){await cdp.send('Profiler.enable');await cdp.send('Profiler.start');}
  for(let i=0;i<56;i++){
   const key=Math.floor(i/14)%2===0?'l':'h',code=key==='l'?'KeyL':'KeyH',vk=key==='l'?76:72;
   pending.push(cdp.send('Input.dispatchKeyEvent',{type:'keyDown',key,code,windowsVirtualKeyCode:vk,text:key,unmodifiedText:key}));
@@ -101,6 +104,8 @@ async function cadence(mode,enabled){
  await Promise.all(pending);
  await page.waitForFunction(()=>__rogueBrowserTest.queuePending===0&&__rogueBrowserTest.frame.map_actor_step===56);
  await page.waitForTimeout(180);
+ if(profiling){const {profile}=await cdp.send('Profiler.stop');await writeFile(path.join(output,label+'-profile.json'),JSON.stringify(profile));}
+ const phases=await page.evaluate(async()=>JSON.parse((await import('/build/browser-ui.js')).browser_take_paint_timings()));
  const data=await page.evaluate(async()=>({keys:__repeatKeys,paints:__repeatPaints,renders:__repeatRenders,state:JSON.parse((await import('/build/browser-ui.js')).browser_snapshot()).state}));
  const first=data.keys[0].t,last=data.keys.at(-1).t;
  const during=data.paints.filter(p=>p.t>=first&&p.t<=last);
@@ -112,15 +117,21 @@ async function cadence(mode,enabled){
   assert.ok(paint,'Each movement input reaches an actual presentation');return paint.t-key.t;
  }).sort((a,b)=>a-b);
  const metrics={maxKeyDelay:delays.at(-1),p95KeyDelay:delays[Math.floor(delays.length*.95)],p95Render:renders[Math.floor(renders.length*.95)],maxRender:renders.at(-1),maxPresentation:presentation.at(-1),p95Presentation:presentation[Math.floor(presentation.length*.95)],maxPaintGap:Math.max(...during.slice(1).map((p,i)=>p.t-during[i].t)),paintedSteps:new Set(changed.map(p=>p.step)).size};
- report.checks.push({label,metrics,keys:data.keys,paints:data.paints,renders:data.renders,final:{player:data.state.frame.player,step:data.state.frame.map_actor_step,requests:data.state.inputRequestCount}});
+ report.checks.push({label,profiling,metrics,phases,keys:data.keys,paints:data.paints,renders:data.renders,final:{player:data.state.frame.player,step:data.state.frame.map_actor_step,requests:data.state.inputRequestCount}});
  console.log(label+' '+JSON.stringify(metrics));
+ console.log('paint phases '+JSON.stringify(['scene','raster','transfer','dom'].map((name,index)=>{
+  const values=phases.map(sample=>sample[index+1]).sort((a,b)=>a-b);
+  return {name,mean:values.reduce((a,b)=>a+b,0)/values.length,p95:values[Math.floor(values.length*.95)]};
+ })));
  assert.equal(data.keys.length,56);assert.equal(data.state.frame.player.x,10);assert.equal(data.state.frame.map_actor_step,56);
+ if(!profiling){
  assert.ok(metrics.maxKeyDelay<50,'Rendering must not block a movement key for one input interval');
  // One nominal input interval is the rendering budget. Allow the Worker and
  // the next browser frame in the end-to-end limit, without a growing backlog.
  assert.ok(metrics.p95Render<50,'Normal rendering must finish within one movement input interval');
  assert.ok(metrics.maxPresentation<100&&metrics.p95Presentation<75,'Movement inputs must reach presentation without waiting for later input batches');
  assert.ok(metrics.paintedSteps>=52,'Processed movement results must be displayed throughout the repeated inputs');
+ }
  const file=label+'.png';await page.screenshot({path:path.join(output,file)});report.screenshots.push(file);
 }
 
@@ -141,4 +152,4 @@ try{
  assert.deepEqual(report.errors,[]);report.result='pass';
 }catch(error){report.result='fail';report.failure=error.stack;throw error;}
 finally{await writeFile(path.join(output,'browser-evidence.json'),JSON.stringify(report,null,2)+'\n');await context?.close();await browser?.close();await runtime?.dispose();await new Promise(resolve=>server.close(resolve));}
-for(const check of report.checks)console.log('PASS '+check.label);
+for(const check of report.checks)console.log((check.profiling?'PROFILE ':'PASS ')+check.label);

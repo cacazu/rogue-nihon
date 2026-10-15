@@ -4,7 +4,10 @@ mod images;
 pub use images::{Image, ImageSet};
 
 use serde_json::Value;
-use std::{collections::BTreeMap, rc::Rc};
+use std::{
+    collections::{BTreeMap, VecDeque},
+    rc::Rc,
+};
 use tiny_skia::{
     Color, FillRule, LineCap, LineJoin, Mask, Paint, Path, PathBuilder, Pixmap, Rect, Stroke,
     Transform,
@@ -20,11 +23,16 @@ pub struct Measurement {
 struct State {
     alpha: f32,
     clip: Option<Rc<Mask>>,
+    clip_key: Vec<u64>,
 }
+const MAX_MASK_CACHE_BYTES: usize = 16 * 1024 * 1024;
+const MAX_MASK_CACHE_ENTRIES: usize = 8;
 pub struct Renderer {
     fonts: fonts::Fonts,
     frame: Pixmap,
     paths: BTreeMap<String, Path>,
+    masks: VecDeque<(Vec<u64>, Rc<Mask>)>,
+    mask_bytes: usize,
 }
 impl Renderer {
     pub fn new(text_font: Vec<u8>, emoji_font: Vec<u8>) -> Result<Self, String> {
@@ -32,6 +40,8 @@ impl Renderer {
             fonts: fonts::Fonts::new(text_font, emoji_font)?,
             frame: Pixmap::new(1, 1).unwrap(),
             paths: BTreeMap::new(),
+            masks: VecDeque::new(),
+            mask_bytes: 0,
         })
     }
     pub fn measure(&mut self, text: &str, size: f64, bold: bool, mono: bool) -> Measurement {
@@ -58,11 +68,14 @@ impl Renderer {
         }
         if self.frame.width() != width || self.frame.height() != height {
             self.frame = Pixmap::new(width, height).ok_or("Invalid raster surface dimensions")?;
+            self.masks.clear();
+            self.mask_bytes = 0;
         }
         self.frame.fill(Color::BLACK);
         let mut state = State {
             alpha: 1.,
             clip: None,
+            clip_key: vec![u64::from(width), u64::from(height), ratio.to_bits()],
         };
         let mut stack = Vec::new();
         let transform = Transform::from_scale(ratio as f32, ratio as f32);
@@ -89,11 +102,24 @@ impl Renderer {
                 }
                 "clip" => {
                     stack.push(state.clone());
+                    state
+                        .clip_key
+                        .extend([x.to_bits(), y.to_bits(), w.to_bits(), h.to_bits()]);
+                    if let Some(index) = self
+                        .masks
+                        .iter()
+                        .position(|(key, _)| key == &state.clip_key)
+                    {
+                        let entry = self.masks.remove(index).unwrap();
+                        state.clip = Some(entry.1.clone());
+                        self.masks.push_back(entry);
+                        continue;
+                    }
                     if let Some(rect) = rectangle(x, y, w, h)
                         && let Some(mask) =
                             integer_clip(width, height, ratio, rect, state.clip.as_deref())
                     {
-                        state.clip = Some(Rc::new(mask));
+                        state.clip = Some(self.remember_mask(&state.clip_key, mask));
                         continue;
                     }
                     let mut mask = match state.clip.as_deref() {
@@ -111,7 +137,7 @@ impl Renderer {
                     } else {
                         mask.clear();
                     }
-                    state.clip = Some(Rc::new(mask));
+                    state.clip = Some(self.remember_mask(&state.clip_key, mask));
                 }
                 "rect" => {
                     if let Some(rect) = rectangle(x, y, w, h) {
@@ -240,6 +266,21 @@ impl Renderer {
             }
         }
         Ok(())
+    }
+    fn remember_mask(&mut self, key: &[u64], mask: Mask) -> Rc<Mask> {
+        let bytes = mask.data().len();
+        let mask = Rc::new(mask);
+        if bytes <= MAX_MASK_CACHE_BYTES {
+            while self.masks.len() >= MAX_MASK_CACHE_ENTRIES
+                || self.mask_bytes + bytes > MAX_MASK_CACHE_BYTES
+            {
+                let (_, removed) = self.masks.pop_front().unwrap();
+                self.mask_bytes -= removed.data().len();
+            }
+            self.mask_bytes += bytes;
+            self.masks.push_back((key.to_vec(), mask.clone()));
+        }
+        mask
     }
     fn text(&mut self, command: &Value, ratio: f32, state: &State) -> Result<(), String> {
         let size = number(&command["size"]) as f32;
@@ -508,6 +549,38 @@ mod tests {
     }
     fn pixel(frame: &[u8], width: usize, x: usize, y: usize) -> &[u8] {
         &frame[(y * width + x) * 4..(y * width + x + 1) * 4]
+    }
+    #[test]
+    fn clip_cache_distinguishes_parent_bounds_and_surface_sizes() {
+        let mut renderer = renderer();
+        for (parent, width, height, covered) in [
+            (16., 32, 24, true),
+            (16., 32, 24, true),
+            (8., 32, 24, false),
+            (16., 48, 32, true),
+        ] {
+            let commands = [
+                json!({"op":"rect","rect":{"x":0,"y":0,"w":width,"h":height},"color":"#fff"}),
+                json!({"op":"clip","rect":{"x":0.25,"y":0.25,"w":parent,"h":20}}),
+                json!({"op":"clip","rect":{"x":8,"y":0,"w":16,"h":20}}),
+                json!({"op":"rect","rect":{"x":0,"y":0,"w":width,"h":height},"color":"#f00"}),
+            ];
+            renderer
+                .render(width, height, 1., &commands, &mut BTreeMap::new())
+                .unwrap();
+            assert_eq!(
+                pixel(renderer.rgba(), width as usize, 12, 10),
+                if covered {
+                    &[255, 0, 0, 255][..]
+                } else {
+                    &[255, 255, 255, 255][..]
+                }
+            );
+            assert_eq!(
+                pixel(renderer.rgba(), width as usize, 25, 10),
+                &[255, 255, 255, 255]
+            );
+        }
     }
     #[test]
     fn integer_clips_match_path_coverage_and_preserve_previous_masks() {

@@ -1,15 +1,28 @@
 //! Semantic tile validation, visibility-aware composition and device rectangles.
 use super::*;
 pub fn manifest(mode: &str) -> Value {
-    let mut value: Value = serde_json::from_str(if mode == "pixels" {
-        include_str!("../../../../../web/assets/pixels-v2/manifest.json")
+    manifest_ref(mode).clone()
+}
+pub fn manifest_ref(mode: &str) -> &'static Value {
+    static PIXELS: std::sync::OnceLock<Value> = std::sync::OnceLock::new();
+    static TILES: std::sync::OnceLock<Value> = std::sync::OnceLock::new();
+    let (cache, source) = if mode == "pixels" {
+        (
+            &PIXELS,
+            include_str!("../../../../../web/assets/pixels-v2/manifest.json"),
+        )
     } else {
-        include_str!("../../../../../web/assets/tiles/manifest.json")
+        (
+            &TILES,
+            include_str!("../../../../../web/assets/tiles/manifest.json"),
+        )
+    };
+    cache.get_or_init(|| {
+        let mut value: Value = serde_json::from_str(source).expect("Tile manifest");
+        value["browser_mode"] = json!(if mode == "pixels" { "pixels" } else { "tiles" });
+        value["pixel_art"] = json!(mode == "pixels");
+        value
     })
-    .expect("Tile manifest");
-    value["browser_mode"] = json!(if mode == "pixels" { "pixels" } else { "tiles" });
-    value["pixel_art"] = json!(mode == "pixels");
-    value
 }
 /// Artwork clips only. Presentation time never advances the original game.
 pub fn animation_manifest(mode: &str) -> Value {
@@ -166,7 +179,7 @@ pub fn assets(mode: &str) -> Value {
         "pixels":m["tile_pixels"],"files":names,"expectedDimensions":expected,"manifest":m,"animations":animation})
 }
 pub fn plan(frame: &Value, camera: &Value, rect: Rect, ratio: f64, mode: &str) -> Vec<Value> {
-    let m = manifest(mode);
+    let m = manifest_ref(mode);
     let entries = array(&m["entries"]);
     let animations = animation_manifest_ref(mode);
     let size = n(&camera["size"]);

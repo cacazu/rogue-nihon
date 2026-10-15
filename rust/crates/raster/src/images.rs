@@ -1,17 +1,26 @@
 //! PNG decoding and the native pixel-art rotation cache have no browser dependencies.
 use serde_json::Value;
-use std::{collections::BTreeMap, io::Cursor};
+use std::{cell::RefCell, collections::BTreeMap, io::Cursor};
 use tiny_skia::{FilterQuality, IntSize, Mask, Pixmap, PixmapPaint, Transform};
 
 const MAX_IMAGE_DIMENSION: u32 = 4096;
 const MAX_IMAGE_PIXELS: usize = 4 * 1024 * 1024;
 const MAX_IMAGE_BYTES: usize = 16 * 1024 * 1024;
+const MAX_SCALED_PIXELS: usize = 256 * 256;
+
+struct ScaledPixels {
+    width: u32,
+    height: u32,
+    flip: bool,
+    rgba: Vec<u8>,
+}
 
 pub struct Image {
     width: u32,
     height: u32,
     rgba: Vec<u8>,
     opaque: bool,
+    scaled: RefCell<Option<ScaledPixels>>,
     pub(crate) pixmap: Pixmap,
 }
 impl Image {
@@ -75,6 +84,7 @@ impl Image {
             height,
             rgba,
             opaque,
+            scaled: RefCell::new(None),
             pixmap,
         })
     }
@@ -295,6 +305,7 @@ fn blit_opaque(
         || height <= 0.
         || width > f64::from(MAX_IMAGE_DIMENSION)
         || height > f64::from(MAX_IMAGE_DIMENSION)
+        || width * height > MAX_SCALED_PIXELS as f64
     {
         return false;
     }
@@ -307,33 +318,61 @@ fn blit_opaque(
     if left >= right || top >= bottom {
         return true;
     }
-    let xs = (left..right)
-        .map(|dx| {
-            let offset = (2 * (dx as i64 - i64::from(x)) + 1) as u64;
-            let offset = if flip {
-                2 * u64::from(width) - offset
-            } else {
-                offset
-            };
-            (offset * u64::from(image.width) / (2 * u64::from(width))) as usize
-        })
-        .collect::<Vec<_>>();
+    // Reuse the latest device size and facing; source pixels stay immutable.
+    let mut cached = image.scaled.borrow_mut();
+    let source = if width == image.width && height == image.height && !flip {
+        &image.rgba
+    } else {
+        if cached
+            .as_ref()
+            .is_none_or(|c| c.width != width || c.height != height || c.flip != flip)
+        {
+            let xs = (0..width)
+                .map(|dx| {
+                    let offset = if flip {
+                        2 * u64::from(width) - (2 * u64::from(dx) + 1)
+                    } else {
+                        2 * u64::from(dx) + 1
+                    };
+                    (offset * u64::from(image.width) / (2 * u64::from(width))) as usize
+                })
+                .collect::<Vec<_>>();
+            let mut rgba = vec![0; width as usize * height as usize * 4];
+            for dy in 0..height {
+                let sy = ((2 * u64::from(dy) + 1) * u64::from(image.height)
+                    / (2 * u64::from(height))) as usize;
+                for (dx, pixel) in rgba
+                    [dy as usize * width as usize * 4..(dy + 1) as usize * width as usize * 4]
+                    .chunks_exact_mut(4)
+                    .enumerate()
+                {
+                    let offset = (sy * image.width as usize + xs[dx]) * 4;
+                    pixel.copy_from_slice(&image.rgba[offset..offset + 4]);
+                }
+            }
+            *cached = Some(ScaledPixels {
+                width,
+                height,
+                flip,
+                rgba,
+            });
+        }
+        &cached.as_ref().unwrap().rgba
+    };
     let target = frame.data_mut();
     for dy in top..bottom {
-        let sy = ((2 * (dy as i64 - i64::from(y)) + 1) as u64 * u64::from(image.height)
-            / (2 * u64::from(height))) as usize;
-        let row = &image.rgba[sy * image.width as usize * 4..(sy + 1) * image.width as usize * 4];
+        let sy = (dy as i64 - i64::from(y)) as usize;
+        let start = (sy * width as usize + (left as i64 - i64::from(x)) as usize) * 4;
+        let row = &source[start..start + (right - left) * 4];
         let coverage = clip.map(|mask| &mask.data()[dy * fw + left..dy * fw + right]);
         let target = &mut target[(dy * fw + left) * 4..(dy * fw + right) * 4];
-        if !flip && width == image.width && coverage.is_none_or(|row| row.iter().all(|v| *v == 255))
-        {
-            let start = xs[0] * 4;
-            target.copy_from_slice(&row[start..start + target.len()]);
+        if coverage.is_none_or(|row| row.iter().all(|v| *v == 255)) {
+            target.copy_from_slice(row);
             continue;
         }
         for (i, pixel) in target.chunks_exact_mut(4).enumerate() {
             let coverage = coverage.map_or(255, |row| row[i]);
-            let source = &row[xs[i] * 4..xs[i] * 4 + 4];
+            let source = &row[i * 4..i * 4 + 4];
             match coverage {
                 0 => {}
                 255 => pixel.copy_from_slice(source),
@@ -354,6 +393,40 @@ fn blit_opaque(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn opaque_tile_scaling_cache_preserves_pixels_when_size_and_facing_change() {
+        let pixels = vec![255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255];
+        let mut set = ImageSet::new(BTreeMap::from([(
+            "tile".into(),
+            Image::from_rgba(3, 1, pixels.clone()).unwrap(),
+        )]));
+        let mut command = serde_json::json!({"image":"tile","rect":{"x":0,"y":0,"w":6,"h":2}});
+        let expanded = pixels
+            .chunks_exact(4)
+            .flat_map(|pixel| pixel.iter().chain(pixel).copied())
+            .collect::<Vec<_>>();
+        let expected = expanded.repeat(2);
+        for _ in 0..2 {
+            assert_eq!(set.rasterize(&command, 6, 2).unwrap(), expected);
+        }
+        command["flipX"] = true.into();
+        let mirrored = expanded
+            .chunks_exact(4)
+            .rev()
+            .flatten()
+            .copied()
+            .collect::<Vec<_>>()
+            .repeat(2);
+        assert_eq!(set.rasterize(&command, 6, 2).unwrap(), mirrored);
+        command["rect"]["w"] = 3.into();
+        command["rect"]["h"] = 1.into();
+        command["flipX"] = false.into();
+        assert_eq!(set.rasterize(&command, 3, 1).unwrap(), pixels);
+        command["rect"]["w"] = 6.into();
+        command["rect"]["h"] = 2.into();
+        assert_eq!(set.rasterize(&command, 6, 2).unwrap(), expected);
+    }
 
     #[test]
     fn opaque_tile_blits_preserve_sampling_flip_clipping_and_alpha() {

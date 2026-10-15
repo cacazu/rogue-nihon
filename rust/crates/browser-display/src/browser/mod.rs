@@ -25,6 +25,8 @@ type CanvasObserver = (ResizeObserver, Closure<dyn FnMut()>);
 thread_local! {
     static HOST: RefCell<Option<Rc<Browser>>> = const { RefCell::new(None) };
     static STARTUP_ERROR: RefCell<Option<Listener>> = const { RefCell::new(None) };
+    #[cfg(feature = "browser-test")]
+    static PAINT_TIMINGS: RefCell<Vec<[f64; 6]>> = const { RefCell::new(Vec::new()) };
 }
 pub(super) fn js(value: &Value) -> Result<JsValue, JsValue> {
     values::to_js(value)
@@ -337,6 +339,11 @@ pub fn browser_snapshot() -> Result<String, JsValue> {
         .transpose()?
         .unwrap_or(0);
     Ok(json!({"diagnostics":*host.scene.borrow(),"state":super::snapshot(),"commands":*host.commands.borrow(),"queuePending":pending,"drawCount":host.draw_count.get()}).to_string())
+}
+#[cfg(feature = "browser-test")]
+#[wasm_bindgen]
+pub fn browser_take_paint_timings() -> String {
+    PAINT_TIMINGS.with(|samples| json!(std::mem::take(&mut *samples.borrow_mut())).to_string())
 }
 pub fn measure(text: &str, size: f64, bold: bool, mono: bool) -> TextSize {
     let host = HOST.with(|slot| slot.borrow().clone());

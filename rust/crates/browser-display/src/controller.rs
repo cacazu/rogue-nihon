@@ -526,7 +526,7 @@ impl Controller {
                     Some(("Invalid Rust frame", "error.frame"))
                 } else if self.model["language"] == "ja" && !translated {
                     Some(("Missing translated presentation", "error.presentation"))
-                } else if tiles::validate(&data, &tiles::manifest(text(&self.model["displayMode"])))
+                } else if tiles::validate(&data, tiles::manifest_ref(text(&self.model["displayMode"])))
                     .is_err()
                 {
                     Some(("Unmapped graphical map cell", "error.frame"))
@@ -812,7 +812,7 @@ impl Controller {
             }
         }
     }
-    fn sync_model(&mut self) -> Value {
+    fn sync_model(&mut self) -> &'static Value {
         let entries = self.history.entries.clone();
         self.model["entries"] = json!(
             entries
@@ -829,7 +829,7 @@ impl Controller {
         );
         self.model["input"] = self.input.clone();
         self.model["inputRequests"] = self.state["inputRequestCount"].clone();
-        let m = tiles::manifest(text(&self.model["displayMode"]));
+        let m = tiles::manifest_ref(text(&self.model["displayMode"]));
         let locale = text(&self.model["language"]);
         self.model["tileDescriptions"] = json!(
             m["entries"]
@@ -1053,8 +1053,8 @@ impl Controller {
                 }
             }
             "tile-plan" => {
-                let m = tiles::manifest(text(&r["mode"]));
-                if let Err(error) = tiles::validate(&r["frame"], &m) {
+                let m = tiles::manifest_ref(text(&r["mode"]));
+                if let Err(error) = tiles::validate(&r["frame"], m) {
                     return json!({"error":error});
                 }
                 return json!({"commands":tiles::plan(&r["frame"],&r["camera"],Rect::new(0.,0.,0.,0.),r["camera"]["ratio"].as_f64().unwrap_or(1.),text(&r["mode"]))});

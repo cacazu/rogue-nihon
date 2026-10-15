@@ -1,6 +1,8 @@
 use super::*;
 impl Browser {
     pub(super) fn paint(self: &Rc<Self>) -> Result<(), JsValue> {
+        #[cfg(feature = "browser-test")]
+        let started = js_sys::Date::now();
         let captured: Vec<_> = self.captured.borrow().iter().copied().collect();
         let response = self.request(json!({"type":"render","captured":captured,"view":{"width":self.surface.client_width(),"height":self.surface.client_height(),"ratio":self.window.device_pixel_ratio(),"coarse":self.coarse(),"fullscreen":self.document.fullscreen_element().is_some(),"visible":!self.document.hidden(),"now":js_sys::Date::now()}}));
         let surface = &response["surface"];
@@ -15,17 +17,31 @@ impl Browser {
             .as_array()
             .map(Vec::as_slice)
             .unwrap_or(&[]);
+        #[cfg(feature = "browser-test")]
+        let planned = js_sys::Date::now();
+        #[cfg(feature = "browser-test")]
+        let rasterized;
+        #[cfg(feature = "browser-test")]
+        let uploaded;
         {
             let mut renderer = self.renderer.borrow_mut();
             renderer
                 .render(width, height, ratio, commands, &mut self.tiles.borrow_mut())
                 .map_err(|e| JsValue::from_str(&e))?;
+            #[cfg(feature = "browser-test")]
+            {
+                rasterized = js_sys::Date::now();
+            }
             let data = ImageData::new_with_u8_clamped_array_and_sh(
                 wasm_bindgen::Clamped(renderer.rgba()),
                 width,
                 height,
             )?;
             self.context.put_image_data(&data, 0., 0.)?;
+            #[cfg(feature = "browser-test")]
+            {
+                uploaded = js_sys::Date::now();
+            }
         }
         self.draw_count.set(
             commands
@@ -37,6 +53,21 @@ impl Browser {
             self.effect(effect)?;
         }
         self.accessibility()?;
+        #[cfg(feature = "browser-test")]
+        PAINT_TIMINGS.with(|samples| {
+            let mut samples = samples.borrow_mut();
+            if samples.len() == 256 {
+                samples.remove(0);
+            }
+            samples.push([
+                started,
+                planned - started,
+                rasterized - planned,
+                uploaded - rasterized,
+                js_sys::Date::now() - uploaded,
+                f64::from(self.draw_count.get()),
+            ]);
+        });
         Ok(())
     }
     fn accessibility(&self) -> Result<(), JsValue> {
