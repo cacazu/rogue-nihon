@@ -552,7 +552,7 @@
       "template": "Right hand (R)"
     },
     "save.browser": {
-      "template": "Save the game using Save in Settings."
+      "template": "The game saves automatically when changing dungeon levels or returning to the title from Settings."
     },
     "inventory.title": {
       "template": "Inventory"

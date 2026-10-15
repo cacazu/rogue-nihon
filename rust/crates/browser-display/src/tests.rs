@@ -272,6 +272,89 @@ fn save_bytes(name: &str) -> Vec<u8> {
     rogue_platform::Envelope::new(17, name.into(), &[1], vec![], 0).unwrap().bytes().unwrap()
 }
 
+fn automatic_save_frame(c: &mut Controller, generation: u64, level: u64, mode: &str) -> Value {
+    c.request(json!({"type":"worker","generation":generation,"data":{
+        "type":"frame","width":3,"height":3,"cells":"   .@.   ","player":{"x":1,"y":1},
+        "stats":{"level":level,"hp":10},"map_cells":"   .@.   ","map_tiles":[0,0,0,1,8,1,0,0,0],
+        "map_tile_ids":&rogue_display::map_tiles::IDS[..],"map_unknown_glyphs":[],
+        "map_actor_epoch":1,"map_actor_step":1,"map_actors":[{"id":0,"x":1,"y":1,"glyph":64}],
+        "map_actor_events":[],"ui":{"mode":mode,"input":{"kind":"command"}}
+    }}))
+}
+
+#[test]
+fn automatic_save_tracks_level_changes_at_original_input_boundaries() {
+    let mut c = boot(); start(&mut c);
+    automatic_save_frame(&mut c, 1, 1, "game");
+    let r = c.request(json!({"type":"worker","generation":1,"data":{"type":"input-request"}}));
+    assert!(!r["effects"].as_array().unwrap().iter().any(|e| e["kind"] == "queue"));
+    let r = automatic_save_frame(&mut c, 1, 2, "game");
+    assert!(!r["effects"].as_array().unwrap().iter().any(|e| e["kind"] == "queue"));
+    let r = c.request(json!({"type":"worker","generation":1,"data":{"type":"input-request"}}));
+    assert_eq!(queue_effect(&r)["events"], json!([rogue_contract::RG_KEY_SAVE]));
+    c.request(json!({"type":"api","operation":"queue","ok":true,"generation":1,"after":"save"}));
+    let r = c.request(json!({"type":"worker","generation":1,"data":{"type":"save","bytes":save_bytes("Floor2")}}));
+    let request = save_effect(&r, "save-write")["request"].clone();
+    let r = c.request(json!({"type":"api","operation":"save-write","ok":true,"generation":1,"request":request,"length":100}));
+    assert_eq!(r["state"]["saved"], true);
+    let r = c.request(json!({"type":"worker","generation":1,"data":{"type":"input-request"}}));
+    assert!(!r["effects"].as_array().unwrap().iter().any(|e| e["kind"] == "queue"));
+    automatic_save_frame(&mut c, 1, 1, "game");
+    let r = c.request(json!({"type":"worker","generation":1,"data":{"type":"input-request"}}));
+    assert_eq!(queue_effect(&r)["events"], json!([rogue_contract::RG_KEY_SAVE]));
+}
+
+#[test]
+fn automatic_save_return_top_waits_for_commit_and_keeps_play_on_failure() {
+    let mut c = boot(); start(&mut c);
+    for ok in [false, true] {
+        let r = event(&mut c, json!({"type":"invoke","id":"settings-top"}));
+        assert_eq!(queue_effect(&r)["events"], json!([rogue_contract::RG_KEY_SAVE]));
+        c.request(json!({"type":"api","operation":"queue","ok":true,"generation":1,"after":"save"}));
+        let r = c.request(json!({"type":"worker","generation":1,"data":{"type":"save","bytes":save_bytes("Top")}}));
+        assert_eq!(r["state"]["topOpen"], false);
+        let request = save_effect(&r, "save-write")["request"].clone();
+        let r = c.request(json!({"type":"api","operation":"save-write","ok":ok,"generation":1,"request":request,"length":100,"error":"aborted"}));
+        assert_eq!(r["state"]["topOpen"], ok);
+        assert_eq!(r["state"]["running"], !ok);
+        assert_eq!(r["state"]["savePending"], false);
+    }
+}
+
+#[test]
+fn automatic_save_successful_restore_consumes_the_slot_once() {
+    let mut c = boot();
+    let r = event(&mut c, json!({"type":"invoke","id":"load"}));
+    let request = save_effect(&r, "save-read")["request"].clone();
+    c.request(json!({"type":"api","operation":"load","ok":true,"generation":0,"request":request,"bytes":save_bytes("Restore")}));
+    c.request(json!({"type":"worker","generation":1,"data":{"type":"ready"}}));
+    let r = automatic_save_frame(&mut c, 1, 7, "game");
+    assert_eq!(r["state"]["saved"], true, "Do not consume before replay reaches its real input wait");
+    let r = c.request(json!({"type":"worker","generation":1,"data":{"type":"input-request"}}));
+    let deletion = save_effect(&r, "save-delete")["request"].clone();
+    assert_eq!(r["state"]["saved"], false);
+    assert_eq!(r["state"]["savedLength"], 0);
+    assert!(r["effects"].as_array().unwrap().iter().any(|e| e["kind"] == "save-clear"));
+    assert!(!r["effects"].as_array().unwrap().iter().any(|e| e["kind"] == "queue"));
+    c.request(json!({"type":"api","operation":"save-delete","ok":true,"generation":1,"request":deletion}));
+    let r = c.request(json!({"type":"worker","generation":1,"data":{"type":"input-request"}}));
+    assert!(!r["effects"].as_array().unwrap().iter().any(|e| e["kind"] == "save-delete"));
+}
+
+#[test]
+fn automatic_save_death_invalidates_pending_writes_and_discards_late_bytes() {
+    let mut c = boot(); start(&mut c);
+    let r = c.request(json!({"type":"worker","generation":1,"data":{"type":"save","bytes":save_bytes("Older")}}));
+    let request = save_effect(&r, "save-write")["request"].clone();
+    let r = automatic_save_frame(&mut c, 1, 1, "death");
+    save_effect(&r, "save-delete");
+    let r = c.request(json!({"type":"api","operation":"save-write","ok":true,"generation":1,"request":request,"length":100}));
+    assert_eq!(r["accepted"], false);
+    assert_eq!(r["state"]["savedLength"], 0);
+    let r = c.request(json!({"type":"worker","generation":1,"data":{"type":"save","bytes":save_bytes("Late")}}));
+    assert!(!r["effects"].as_array().unwrap().iter().any(|e| e["kind"] == "save-write"));
+}
+
 #[test]
 fn save_candidates_require_the_pending_operation_and_retire_with_the_session() {
     let mut c = Controller::new(measure);
@@ -321,7 +404,7 @@ fn invalid_cancelled_or_retired_import_keeps_the_accepted_save_and_game() {
     }
     let r = event(&mut c, json!({"type":"invoke","id":"import-save"}));
     let request = save_effect(&r, "save-import")["request"].clone();
-    let r = event(&mut c, json!({"type":"invoke","id":"settings-top"}));
+    let r = c.request(json!({"type":"worker","generation":1,"data":{"type":"error","text":"Restore failed"}}));
     assert_eq!(save_effect(&r, "save-discard")["request"], request);
     let r = c.request(json!({"type":"api","operation":"import","ok":true,"generation":1,"request":request,"bytes":bytes}));
     assert_eq!(r["accepted"], false);

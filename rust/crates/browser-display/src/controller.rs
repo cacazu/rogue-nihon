@@ -26,6 +26,10 @@ pub struct Controller {
     draft_dirty: bool,
     window_open: bool,
     restore_pending: bool,
+    last_level: Option<u64>,
+    autosave_due: bool,
+    return_after_save: bool,
+    session_ended: bool,
     ending_ack: i64,
     window_close_ack: String,
     assets_ready: BTreeSet<String>,
@@ -51,6 +55,10 @@ impl Controller {
             draft_dirty: false,
             window_open: false,
             restore_pending: false,
+            last_level: None,
+            autosave_due: false,
+            return_after_save: false,
+            session_ended: false,
             ending_ack: -1,
             window_close_ack: String::new(),
             assets_ready: BTreeSet::new(),
@@ -107,6 +115,54 @@ impl Controller {
         self.return_top();
         self.notice("error.load", json!({}), true);
     }
+    fn request_save(&mut self, return_after: bool) {
+        if !flag(&self.model["running"]) || self.session_ended || self.ending() {
+            if return_after { self.return_top(); }
+            return;
+        }
+        if self.restore_pending { return; }
+        if flag(&self.model["savePending"]) {
+            self.return_after_save |= return_after;
+            return;
+        }
+        if self.composing {
+            self.notice("error.text_composing", json!({}), true);
+            return;
+        }
+        let events = if self.text_mode && self.draft_dirty {
+            self.text_batch(RG_KEY_SAVE)
+        } else {
+            Some(json!([RG_KEY_SAVE]))
+        };
+        if let Some(events) = events {
+            self.autosave_due = false;
+            self.return_after_save = return_after;
+            self.queue(events, "save");
+        }
+    }
+    fn cancel_save(&mut self) {
+        self.model["savePending"] = json!(false);
+        self.return_after_save = false;
+        self.autosave_due = false;
+    }
+    fn discard_save(&mut self) {
+        // Retire callbacks before deleting so an older write/read cannot adopt
+        // bytes again after this slot has been consumed or the game has ended.
+        self.retire_saves();
+        self.cancel_save();
+        self.model["saved"] = json!(false);
+        self.model["downloadAvailable"] = json!(false);
+        self.state["savedLength"] = json!(0);
+        self.effects.push(json!({"kind":"save-clear"}));
+        let pending = self.save_operation(SaveOperation::Delete);
+        self.effects.push(json!({"kind":"save-delete","request":pending.request,"generation":pending.generation}));
+    }
+    fn end_session(&mut self) {
+        if !self.session_ended {
+            self.session_ended = true;
+            self.discard_save();
+        }
+    }
     fn field(&mut self, id: &str, properties: Value) {
         if let Some(value) = properties.get("value") {
             self.inputs[id]["value"] = value.clone();
@@ -161,6 +217,9 @@ impl Controller {
         self.draft_dirty = false;
         self.composing = false;
         self.restore_pending = false;
+        self.last_level = None;
+        self.autosave_due = false;
+        self.return_after_save = false;
         self.window_open = false;
         self.ending_ack = -1;
         self.history = History::default();
@@ -369,6 +428,10 @@ impl Controller {
         self.state["frameCount"] = json!(0);
         self.state["inputRequestCount"] = json!(0);
         self.restore_pending = restore;
+        self.last_level = None;
+        self.autosave_due = false;
+        self.return_after_save = false;
+        self.session_ended = false;
         self.text_mode = false;
         self.draft_dirty = false;
         self.input = Value::Null;
@@ -466,15 +529,13 @@ impl Controller {
                 self.model["starting"]=json!(true);self.read_save(SaveOperation::Load);
             },
             "save" if flag(&self.model["running"]) && !flag(&self.model["savePending"]) && !flag(&self.model["returnAfterEnd"]) => {
-                if self.composing {self.notice("error.text_composing",json!({}),true);return;}
-                let events=if self.text_mode && self.draft_dirty {self.text_batch(RG_KEY_SAVE)} else {Some(json!([RG_KEY_SAVE]))};
-                if let Some(events)=events {self.queue(events,"save");}
+                self.request_save(false);
             },
             "download-save" if flag(&self.model["downloadAvailable"])=>self.effects.push(json!({"kind":"download","filename":"rogue-save.json","mime":"application/json","revokeAfter":1000})),
             "center-map"=>{self.ui.event(json!({"type":"center"}));},
             "fullscreen"|"header-fullscreen"=>self.effects.push(json!({"kind":"fullscreen","enter":!flag(&self.environment["fullscreen"])})),
             "settings-toggle" if !flag(&self.model["topOpen"]) && !flag(&self.model["returnAfterEnd"])=>self.settings(!flag(&self.model["settingsOpen"])),
-            "settings-close"=>self.settings(false),"settings-top"=>self.return_top(),
+            "settings-close"=>self.settings(false),"settings-top"=>self.request_save(true),
             "window-close" if !flag(&self.model["windowClosing"]) => self.close_window(true),
             "inventory-return" if flag(&self.model["itemHistoryOpen"]) && !flag(&self.model["windowClosing"]) => {
                 self.model["returnToInventory"] = json!(true);
@@ -546,14 +607,23 @@ impl Controller {
                     return;
                 }
                 self.fallback(&data, "frame");
+                if let Some(level) = data["stats"]["level"].as_u64().filter(|level| *level > 0) {
+                    if self.last_level.is_some_and(|previous| previous != level)
+                        && !self.restore_pending && !self.session_ended {
+                        self.autosave_due = true;
+                    }
+                    self.last_level = Some(level);
+                }
                 self.model["frame"] = data;
                 self.state["frameCount"] = json!(number(&self.state["frameCount"]) + 1);
                 self.presentation();
+                if self.ending() { self.end_session(); }
             }
             "presentation" if self.model["frame"].is_object() && data["ui"].is_object() => {
                 self.model["frame"]["ui"] = data["ui"].clone();
                 self.input = data["ui"]["input"].clone();
                 self.presentation();
+                if self.ending() { self.end_session(); }
                 if flag(&self.model["windowClosing"]) && flag(&self.model["frame"]["ui"]["inventory"]) {
                     self.close_window(false);
                 }
@@ -564,6 +634,7 @@ impl Controller {
             }
             "input-context" => self.apply_input(data["input"].clone()),
             "message" => {
+                if data["id"] == "platform.save_error" { self.cancel_save(); }
                 push(&mut self.state["messages"], data.clone(), 128);
                 self.history.message(data);
             }
@@ -572,7 +643,11 @@ impl Controller {
                     json!(number(&self.state["inputRequestCount"]) + 1);
                 if self.restore_pending {
                     self.restore_pending = false;
+                    self.discard_save();
                     self.notice("notice.restored", json!({}), false);
+                }
+                if self.autosave_due && !flag(&self.model["savePending"]) {
+                    self.request_save(false);
                 }
                 if flag(&self.model["windowClosing"]) { self.close_window(false); }
                 if self.input["kind"] == "command" {
@@ -589,21 +664,23 @@ impl Controller {
                 if discarded.iter().any(|v| {
                     number(v) & rogue_contract::RG_EVENT_SCALAR_MASK as u64 == RG_KEY_SAVE as u64
                 }) {
-                    self.model["savePending"] = json!(false);
+                    self.cancel_save();
                     self.notice("notice.save_cancelled", json!({}), false);
                 } else {
                     self.notice("notice.input_flush", json!({"count":data["count"]}), false);
                 }
             }
-            "save" => {
+            "save" if !self.session_ended => {
                 let pending = self.save_operation(SaveOperation::Write);
                 self.effects.push(json!({"kind":"save-write","request":pending.request,"generation":pending.generation,"bytes":data["bytes"]}));
             }
             "outcome" => {
+                if data["code"].as_i64().is_some_and(|code| code >= 0) { self.end_session(); }
                 self.state["outcome"] = json!({"code":data["code"],"text":data["text"]});
                 self.notice("notice.game_ended", json!({}), false);
             }
             "exit" => {
+                self.cancel_save();
                 self.state["exitCode"] = data["code"].clone();
                 self.model["running"] = json!(false);
                 self.animations.reset();
@@ -618,6 +695,7 @@ impl Controller {
                 }
             }
             "error" => {
+                self.cancel_save();
                 let starting = flag(&self.model["starting"]);
                 self.state["runtimeError"] = data["text"].clone();
                 self.model["running"] = json!(false);
@@ -643,7 +721,7 @@ impl Controller {
     fn api(&mut self, r: &Value, redraw: &mut bool) -> bool {
         let ok = flag(&r["ok"]);
         let operation = text(&r["operation"]);
-        if matches!(operation, "init" | "load" | "import" | "save-write") {
+        if matches!(operation, "init" | "load" | "import" | "save-write" | "save-delete") {
             if self.saves.finish(r, number(&self.model["generation"])).is_none() {
                 self.save_candidate(&r["request"], false);
                 return false;
@@ -654,6 +732,7 @@ impl Controller {
         match operation {
             "queue" => {
                 if !ok {
+                    if r["after"] == "save" { self.cancel_save(); }
                     self.model["windowClosing"] = json!(false);
                     self.notice("error.queue_full", json!({}), true);
                     return false;
@@ -735,16 +814,29 @@ impl Controller {
                 }
             }
             "save-write" => {
+                self.model["savePending"] = json!(false);
                 if ok {
                     self.saved(&r["request"], number(&r["length"]) as usize);
                     self.model["saved"] = json!(true);
                     self.notice("notice.saved", json!({}), false);
+                    if self.return_after_save {
+                        self.return_after_save = false;
+                        self.return_top();
+                    } else if self.autosave_due {
+                        self.request_save(false);
+                    }
                 } else {
                     self.save_candidate(&r["request"], false);
                     self.log(r["error"].clone());
                     self.notice("error.save", json!({}), true);
+                    self.cancel_save();
                 }
-                self.model["savePending"] = json!(false);
+            }
+            "save-delete" => {
+                if !ok {
+                    self.log(r["error"].clone());
+                    self.notice("error.save", json!({}), true);
+                }
             }
             "assets" => {
                 let set = text(&r["set"]);

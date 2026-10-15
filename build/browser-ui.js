@@ -257,6 +257,10 @@ function __wbg_get_imports() {
             const ret = arg0.defaultView;
             return isLikeNone(ret) ? 0 : addToExternrefTable0(ret);
         },
+        __wbg_delete_c66e14397c562c32: function() { return handleError(function (arg0, arg1) {
+            const ret = arg0.delete(arg1);
+            return ret;
+        }, arguments); },
         __wbg_deltaMode_1f7b0a593ff1ea16: function(arg0) {
             const ret = arg0.deltaMode;
             return ret;
@@ -1119,7 +1123,7 @@ function __wbg_get_imports() {
             return ret;
         }, arguments); },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 616, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 618, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
             const ret = makeMutClosure(arg0, arg1, wasm_bindgen_466ad85e164491b1___convert__closures_____invoke___wasm_bindgen_466ad85e164491b1___JsValue__core_ed718c3d60ebd546___result__Result_____wasm_bindgen_466ad85e164491b1___JsError___true_);
             return ret;
         },
@@ -1129,7 +1133,7 @@ function __wbg_get_imports() {
             return ret;
         },
         __wbindgen_generic_0000000000000003: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [I32, U32, U32], shim_idx: 151, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [I32, U32, U32], shim_idx: 202, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
             const ret = makeMutClosure(arg0, arg1, wasm_bindgen_466ad85e164491b1___convert__closures_____invoke___i32__u32__u32__core_ed718c3d60ebd546___result__Result_____wasm_bindgen_466ad85e164491b1___JsValue___true_);
             return ret;
         },

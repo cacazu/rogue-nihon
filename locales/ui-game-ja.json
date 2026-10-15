@@ -552,7 +552,7 @@
       "template": "右手（R）"
     },
     "save.browser": {
-      "template": "保存は設定ウィンドウの「保存」から行います。"
+      "template": "階層移動時と、設定からトップ画面へ戻る時に自動保存します。"
     },
     "inventory.title": {
       "template": "持ち物"

@@ -284,13 +284,13 @@ restore(char *file, char **envp)
 #else
 /* Persistence is a Rust platform action against the last complete command
  * checkpoint plus its input journal. Saving inside this original C command
- * would lose its stack and daemon phase, so the browser action handles it. */
+ * would lose its stack and daemon phase, so Rust autosave handles it. */
 void
 save_game(void)
 {
     after = FALSE;
     rg_host_message("save.browser", "[]",
-        "Use the Save button to persist the current checkpoint.");
+        "The game saves automatically when changing dungeon levels or returning to the title from Settings.");
 }
 #endif
 

@@ -126,26 +126,6 @@ impl BrowserUi {
             ..Default::default()
         };
         self.button(
-            "save",
-            &self.t("action.save"),
-            Rect::new(viewport.x, row, half, 48.),
-            style(stopped),
-        );
-        self.button(
-            "download-save",
-            &self.t("action.download"),
-            Rect::new(viewport.x + half + 8., row, half, 48.),
-            style(busy || !b(&self.model["downloadAvailable"])),
-        );
-        row += 60.;
-        self.button(
-            "import-save",
-            &self.t("action.import"),
-            Rect::new(viewport.x, row, viewport.w, 48.),
-            style(busy),
-        );
-        row += 88.;
-        self.button(
             "settings-top",
             &self.t("action.top"),
             Rect::new(viewport.x, row, half, 56.),

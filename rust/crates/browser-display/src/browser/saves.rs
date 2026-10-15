@@ -61,20 +61,44 @@ impl Browser {
         *self.database.borrow_mut() = Some(promise.clone());
         Ok(promise)
     }
-    pub(super) async fn save_io(
+    pub(super) fn save_io(
         self: &Rc<Self>,
         bytes: Option<Vec<u8>>,
+        remove: bool,
+    ) -> impl std::future::Future<Output = Result<Option<Vec<u8>>, JsValue>> + use<> {
+        // Reserve the order synchronously, before spawn_local can start any IO.
+        // A consumed/dead save's deletion must follow every older write, and a
+        // later autosave must follow that deletion even when opening DB is slow.
+        let mut release = None;
+        let barrier = Promise::new(&mut |resolve, _| release = Some(resolve));
+        let previous = self.save_tail.replace(Some(barrier));
+        let host = self.clone();
+        async move {
+            if let Some(previous) = previous {
+                let _ = JsFuture::from(previous).await;
+            }
+            let result = host.save_transaction(bytes, remove).await;
+            let _ = release.unwrap().call0(&JsValue::NULL);
+            result
+        }
+    }
+    async fn save_transaction(
+        self: &Rc<Self>,
+        bytes: Option<Vec<u8>>,
+        remove: bool,
     ) -> Result<Option<Vec<u8>>, JsValue> {
         let database: IdbDatabase = JsFuture::from(self.database()?).await?.dyn_into()?;
         *self.connection.borrow_mut() = Some(database.clone());
-        let mode = if bytes.is_some() {
+        let mode = if bytes.is_some() || remove {
             IdbTransactionMode::Readwrite
         } else {
             IdbTransactionMode::Readonly
         };
         let transaction = database.transaction_with_str_and_mode("saves", mode)?;
         let store = transaction.object_store("saves")?;
-        let request = if let Some(bytes) = &bytes {
+        let request = if remove {
+            store.delete(&JsValue::from_str("manual"))?
+        } else if let Some(bytes) = &bytes {
             store.put_with_key(
                 &Uint8Array::from(bytes.as_slice()),
                 &JsValue::from_str("manual"),
@@ -107,7 +131,7 @@ impl Browser {
         transaction.set_onabort(None);
         drop(callbacks);
         result?;
-        if bytes.is_some() {
+        if bytes.is_some() || remove {
             return Ok(bytes);
         }
         let stored = request.result()?;

@@ -256,13 +256,17 @@ impl Browser {
                     )
                     .map(Some);
             }
-            "save-read" | "save-write" => {
+            "save-clear" => {
+                *self.saved.borrow_mut() = None;
+                self.candidates.borrow_mut().clear();
+            }
+            "save-read" | "save-write" | "save-delete" => {
                 let effect = effect.clone();
                 let host = self.clone();
                 let operation = if text(&effect["kind"]) == "save-read" {
                     text(&effect["operation"]).to_string()
                 } else {
-                    "save-write".to_string()
+                    text(&effect["kind"]).to_string()
                 };
                 let bytes = if operation == "save-write" {
                     Some(
@@ -276,17 +280,20 @@ impl Browser {
                 } else {
                     None
                 };
+                let pending_io = self.save_io(bytes, operation == "save-delete");
                 wasm_bindgen_futures::spawn_local(async move {
-                    let result = host.save_io(bytes).await.map(|bytes| {
+                    let result = pending_io.await.map(|bytes| {
                         let length = bytes.as_ref().map_or(0, Vec::len);
                         let extra = if operation == "save-write" {
                             json!({"length":length})
                         } else {
                             json!({"bytes":bytes,"length":length})
                         };
-                        host.candidates
-                            .borrow_mut()
-                            .insert(effect["request"].as_u64().unwrap_or(0), bytes);
+                        if operation != "save-delete" {
+                            host.candidates
+                                .borrow_mut()
+                                .insert(effect["request"].as_u64().unwrap_or(0), bytes);
+                        }
                         extra
                     });
                     host.completed(&effect, &operation, result);

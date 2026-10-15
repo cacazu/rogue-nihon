@@ -34,6 +34,7 @@ node tests/run.mjs --playwright /path/to/playwright --browser /path/to/browser -
 | `mobile-layout.mjs` | 共通設定行・連続ズーム・スマホのステータスと履歴・全体図の凡例・設定内の保存とファイル再開 |
 | `hud-widgets.mjs` | HUDの配置・正確な値の詳細、狭い画面の横スクロール、フォーカス、DPR |
 | `save-export.mjs` | ダウンロードした実ファイル、IndexedDBとの一致、取消、復元と次ターン |
+| `autosave.mjs` | PC・スマホの手動保存/書出し/ファイル再開の非表示、実Cの階段上り下りでの自動保存、トップ復帰時のcommit待ちと失敗時の再試行、ロード成功後・死亡時の保存削除、再読込み後の復活防止、保存復元後のC/RNG・次ターン一致。`--production-only` は配布用binding/Wasmで非表示・Sの案内・トップ復帰時の保存・一度限りのロードを確認。`ROGUE_AUTOSAVE_OUTPUT` で画像と記録の出力先を指定 |
 | `rust-browser-host.mjs` | 配布用bindingだけでの起動・原作操作・記録送信なし、RustのIME・crypto・Canvas・全画面・ズーム・画像回転・タッチ長押し・保存再開、Worker起動失敗通知と再開始。`--recovery-only` は失敗復帰・配布導線だけを再確認 |
 | `rust-raster.mjs` | ブラウザーの図形・文字・画像描画とPNG decodeを禁止して、Rustの完成RGBA、PC・スマホ・文字/両PNGセット・文字計測・Unicode・持ち物・次ターン・32px回転/nearestを確認 |
 | `character-animation.mjs` | 実Cの攻撃優先・被ダメージ・待機、次入力による再生打切り、連続座標と左右反転、停止/解除、PC/スマホの設定スイッチと再読込時の保持。`--throw-only` は方向・品物の後続入力から実投擲モーションまでを確認。`--hold-only` はスマホ両画像モードのタッチ長押し・PCのキー反復・アニメーションOFFでの長押しを実操作し、移動途中の次入力で表示が進むこと、待機周期の維持、解放後の余分なターンと入力の停止を確認。両画像モードの実画素変化・C/RNG/入力不変、隠れた敵/擬態/幻覚、保存復元後の次攻撃も確認。`ROGUE_ANIMATION_OUTPUT` で確認画像と記録の出力先を指定 |

@@ -8,6 +8,7 @@ pub(crate) enum SaveOperation {
     Load,
     Import,
     Write,
+    Delete,
 }
 
 impl SaveOperation {
@@ -17,6 +18,7 @@ impl SaveOperation {
             Self::Load => "load",
             Self::Import => "import",
             Self::Write => "save-write",
+            Self::Delete => "save-delete",
         }
     }
 }

@@ -124,7 +124,7 @@ entry('window.hand', 'Choose a hand', '指輪を着ける手')
 entry('window.left_hand', 'Left hand (L)', '左手（L）')
 entry('window.right_hand', 'Right hand (R)', '右手（R）')
 
-entry('save.browser', 'Save the game using Save in Settings.', '保存は設定ウィンドウの「保存」から行います。')
+entry('save.browser', 'The game saves automatically when changing dungeon levels or returning to the title from Settings.', '階層移動時と、設定からトップ画面へ戻る時に自動保存します。')
 entry('inventory.title', 'Inventory', '持ち物')
 entry('inventory.empty', 'You are not carrying anything.', '何も持っていません。')
 entry('inventory.choose', 'Select an item. Space / Enter / Esc: Close', 'アイテムを選択。Space / Enter / Esc：閉じる')
@@ -154,6 +154,7 @@ entry('inventory.protection', 'Protection', '防御力')
 entry('inventory.enchantment', 'Enchantment', '強化値')
 entry('inventory.charges', 'Charges', '残り使用回数')
 entry('inventory.bonus', 'Bonus', '補正値')
+entry('identify.ring_or_stick', 'ring, wand or staff', '指輪か杖')
 
 for language, values in [('en', en), ('ja', ja)]:
     catalog = {'schema': 1, 'language': language, 'messages': {key: {'template': value} for key, value in values.items()}}
