@@ -186,7 +186,7 @@
     "error.fullscreen": "Fullscreen is unavailable.",
     "view.pixels": "Pixel art",
     "log.title": "Log",
-    "action.top": "Return to title",
+    "action.top": "Return to title\n(Autosave)",
     "action.random": "Random",
     "action.random_name": "Choose a random name",
     "action.random_seed": "Choose a random seed",

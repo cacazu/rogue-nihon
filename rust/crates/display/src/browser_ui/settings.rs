@@ -125,20 +125,27 @@ impl BrowserUi {
             disabled,
             ..Default::default()
         };
+        let top_label = self.t("action.top");
+        let quit_label = self.t("mobile.quit_score");
+        let top_width = top_label.split('\n')
+            .map(|line| (self.measure)(line, 17., false, false).width + 12.)
+            .fold(half, f64::max)
+            .min((viewport.w - 8. - (self.measure)(&quit_label, 17., false, false).width - 12.).max(half));
+        let return_height = (self.wrap(&top_label, top_width - 12., 17.).len() as f64 * 17. * 1.6 + 8.).max(56.);
         self.button(
             "settings-top",
-            &self.t("action.top"),
-            Rect::new(viewport.x, row, half, 56.),
+            &top_label,
+            Rect::new(viewport.x, row, top_width, return_height),
             style(busy),
         );
         self.control(
             "mobile-system-81",
-            &self.t("mobile.quit_score"),
-            Rect::new(viewport.x + half + 8., row, half, 56.),
+            &quit_label,
+            Rect::new(viewport.x + top_width + 8., row, viewport.w - top_width - 8., return_height),
             json!({"kind":"send","key":81}),
             style(stopped),
         );
-        row += 96.;
+        row += return_height + 40.;
         self.control(
             "mobile-system-111",
             &self.mobile_help("help.options"),

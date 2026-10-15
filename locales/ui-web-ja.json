@@ -186,7 +186,7 @@
     "error.fullscreen": "全画面表示を開けませんでした。",
     "view.pixels": "ドット絵",
     "log.title": "ログ",
-    "action.top": "トップ画面に戻る",
+    "action.top": "トップ画面に戻る\n(自動セーブ)",
     "action.random": "ランダム",
     "action.random_name": "名前をランダムに決める",
     "action.random_seed": "シードをランダムに決める",
