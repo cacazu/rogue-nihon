@@ -1,4 +1,4 @@
-// A classic Worker is required by the original C game's generated Emscripten loader.
+// Wasm startup in a fresh Worker. Rust owns its resources and game calls.
 import("/build/browser-ui.js").then(async module => {
   await module.default();
   module.worker_boot();
