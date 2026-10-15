@@ -34,6 +34,33 @@ fn queue_effect(r: &Value) -> &Value {
         .unwrap()
 }
 #[test]
+fn keyboard_forwarding_redraws_new_visual_state_and_action_interruptions_only() {
+    let mut c = boot();
+    start(&mut c);
+    for repeat in [false, true] {
+        let result = event(&mut c, json!({"type":"key","key":"l","repeat":repeat}));
+        assert_eq!(result["redraw"], false);
+        assert_eq!(queue_effect(&result)["events"][0], 108 | if repeat { rogue_contract::RG_EVENT_REPEAT } else { 0 });
+        let result = c.request(json!({"type":"api","operation":"queue","ok":true,"after":"send"}));
+        assert_eq!(result["redraw"], false);
+    }
+    let frame = json!({"type":"frame","width":3,"height":3,"cells":"   .@.   ","player":{"x":1,"y":1},
+        "map_cells":"   .@.   ","map_tiles":[0,0,0,1,8,1,0,0,0],"map_tile_ids":&rogue_display::map_tiles::IDS[..],"map_unknown_glyphs":[],
+        "map_actor_epoch":1,"map_actor_step":1,"map_actors":[{"id":0,"x":1,"y":1,"glyph":64}],
+        "map_actor_events":[{"sequence":1,"id":0,"kind":"attack"}],"ui":{"mode":"game","input":{"kind":"command"}}});
+    let result = c.request(json!({"type":"worker","generation":1,"data":frame}));
+    assert_eq!(result["state"]["runtimeError"], Value::Null);
+    assert_eq!(result["redraw"], true);
+    let result = c.request(json!({"type":"api","operation":"queue","ok":true,"after":"send"}));
+    assert_eq!(result["redraw"], true, "An unfinished action is interrupted immediately");
+    let result = c.request(json!({"type":"api","operation":"queue","ok":true,"after":"send"}));
+    assert_eq!(result["redraw"], false);
+    let result = c.request(json!({"type":"api","operation":"queue","ok":false,"after":"send"}));
+    assert_eq!(result["redraw"], true, "Queue errors must remain visible");
+    let result = event(&mut c, json!({"type":"key","key":"@"}));
+    assert_eq!(result["redraw"], true, "Local status UI opens immediately");
+}
+#[test]
 fn wall_assets_load_and_incomplete_sets_fail() {
     let mut c = boot();
     let r = c.request(json!({"type":"render","view":{"width":1240,"height":900}}));

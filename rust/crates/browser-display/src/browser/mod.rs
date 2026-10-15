@@ -623,7 +623,9 @@ impl Browser {
         if accepted {
             response["accepted"] = json!(true);
         }
-        self.invalidate()?;
+        if response["redraw"].as_bool().unwrap_or(true) {
+            self.invalidate()?;
+        }
         Ok(response)
     }
     fn event(self: &Rc<Self>, event: Value, native: Option<Event>) -> Result<Value, JsValue> {

@@ -81,6 +81,8 @@ Workerの `Transfer` は `rg_alloc / rg_dealloc` で確保元のゲーム側Rust
 
 `rogue-raster` は表示層の描画命令を受け取り、tiny-skia・svgtypes・swash・pngを使って全画面のRGBAをRust内で作る。ブラウザーへは `putImageData` で完成画像を一度だけ転送し、Canvasの図形・文字・パス・画像描画や文字計測を使わない。文字計測と描画は同じglyph planとtop基準を使い、同梱Noto Sans JPの400/600とNoto Color EmojiをRustで読み込む。文字幅はOSのフォントに依存させない。ドット絵の32px回転と最近傍拡大を保ち、図形・透明度・クリップ・輪郭もRustで計算する。PNGはbuffer確保前に寸法・画素数・bytes上限を検査する。フォントの取得・解析に失敗した場合はRustが可視の起動エラーと再読み込み操作を出す。
 
+キーのCへの転送と、その成功通知だけでは古い画面を再描画しない。`Controller` が応答の `redraw` で更新要否を通知し、ブラウザー層はそれに従って描画を予約する。Workerから届く新しい画面・入力待ち、ローカルUIの変更、エラー、未完了モーションの中断は即時の描画対象にする。長押しの反復と連打は同じ入力キューへ全て渡し、速い入力中もWorkerから届いた移動を描画する。時間によるアニメーション更新は専用タイマーが継続する。
+
 素材ギャラリーも共通のWasm起動だけを使う。`browser/gallery.rs` がmanifest・PNG・atlasの切出し・再生時刻・停止再開・フレーム選択を所有し、元画像とsheetを含む完成RGBAを転送する。HTTPの作品サーバーから開く。素材生成・検証用JSは `tools/`・`tests/` に置き、製品から読み込まない。境界検査は `web/` 以下を再帰走査し、HTML内scriptも対象にする。
 
 ゲーム側のホスト接続は `rust/src/host.rs` の固定幅raw Wasm importsで、Worker側Rustのcallbackを `rogue` namespaceへ登録する。ゲーム側のAPIは借用sliceを同期区間だけ渡し、Worker側Rustは毎回現在の `WebAssembly.Memory.buffer` を取得してアドレス・長さを検査し、Rust所有のbyte列へコピーする。メモリー成長前のviewを保持せず、元のsliceの解放前にコピーを終える。JSON・UTF-8の復号と保存byte列の転送もWorker側Rustが担当する。

@@ -39,6 +39,7 @@ node tests/run.mjs --playwright /path/to/playwright --browser /path/to/browser -
 | `character-animation.mjs` | 実Cの攻撃優先・被ダメージ・待機、次入力による再生打切り、連続座標と左右反転、停止/解除、PC/スマホの設定スイッチと再読込時の保持。`--throw-only` は方向・品物の後続入力から実投擲モーションまでを確認。`--hold-only` はスマホ両画像モードのタッチ長押し・PCのキー反復・アニメーションOFFでの長押しを実操作し、移動途中の次入力で表示が進むこと、待機周期の維持、解放後の余分なターンと入力の停止を確認。両画像モードの実画素変化・C/RNG/入力不変、隠れた敵/擬態/幻覚、保存復元後の次攻撃も確認。`ROGUE_ANIMATION_OUTPUT` で確認画像と記録の出力先を指定 |
 | `character-animations.mjs --gallery-only` | 素材ギャラリーの全フレームRGBA、停止・フレーム選択・再生・sheet展開。`--illustrations` はイラスト版。作品のHTTPサーバーから開く |
 | `map-presentation.mjs` | 実Cのアイテム取得中の文字消去フレーム、弓の装備と左右への矢投射、各描画でのプレイヤー維持、正面素材の方向マークなし、設定プルダウンの実測幅・ベクター矢印・3方式の切替とC/RNG不変。スマホ390px・PCの両画像モード、英語320px。`--actors-only` / `--settings-only` で対象を限定し、`ROGUE_PRESENTATION_OUTPUT` で画像と記録の出力先を指定 |
+| `keyboard-repeat.mjs` | 移動の長押しと連打をnative keydown/upで同じ30ms間隔・14入力として送る。ドット絵のlとイラストの右矢印で入力中の画面進行・中間座標、解放後の停止、同じC/RNG・入力位置・移動先を比較。`ROGUE_KEYBOARD_OUTPUT` で画像と記録の出力先を指定 |
 | `input-ownership.mjs` | 通常build・seed 17の持ち物閲覧と装備、投擲方向の取消、UTF-8草稿保存と新Worker復元後の編集、空Enter・先頭 `-`・明示改名、入力journalとC/RNG状態、最新観測と足元操作候補 |
 | `ownership-boundaries.mjs` | 通常buildの保存・実書出し・新Worker復元と次ターン、実IndexedDB read完了の遅延とファイルimportの競合、無効・取消importで以前の保存bytesを保持、画像セットの重複応答 |
 | `startup.mjs` | Node起動、既存origin、ポート競合、HTTPS、保存後の再起動 |

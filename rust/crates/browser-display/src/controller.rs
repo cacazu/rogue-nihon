@@ -640,7 +640,7 @@ impl Controller {
             _ => {}
         }
     }
-    fn api(&mut self, r: &Value) -> bool {
+    fn api(&mut self, r: &Value, redraw: &mut bool) -> bool {
         let ok = flag(&r["ok"]);
         let operation = text(&r["operation"]);
         if matches!(operation, "init" | "load" | "import" | "save-write") {
@@ -658,7 +658,10 @@ impl Controller {
                     self.notice("error.queue_full", json!({}), true);
                     return false;
                 }
-                self.animations.interrupt();
+                let interrupted = self.animations.interrupt();
+                if r["after"] == "send" && !interrupted {
+                    *redraw = false;
+                }
                 match text(&r["after"]) {
                     "save" => {
                         self.draft_dirty = false;
@@ -866,6 +869,7 @@ impl Controller {
         self.observe(&r);
         let mut consumed = false;
         let mut accepted = false;
+        let mut redraw = true;
         let mut raw = Value::Null;
         let mut commands = Value::Null;
         let mut surface = Value::Null;
@@ -898,7 +902,7 @@ impl Controller {
                 self.effects.push(json!({"kind":"timer","interval":500}));
             }
             "worker" => self.worker(r["data"].clone(), &r["generation"]),
-            "api" => accepted = self.api(&r),
+            "api" => accepted = self.api(&r, &mut redraw),
             "event" => {
                 let mut e = r["event"].clone();
                 match text(&e["type"]) {
@@ -968,14 +972,19 @@ impl Controller {
                                     }
                                 }
                                 "submit" => self.submit(text(&effect["id"])),
-                                "send" => self.queue(
-                                    if effect["keys"].is_array() {
-                                        effect["keys"].clone()
-                                    } else {
-                                        json!([effect["key"]])
-                                    },
-                                    "send",
-                                ),
+                                "send" => {
+                                    if effect["redraw"] == false {
+                                        redraw = false;
+                                    }
+                                    self.queue(
+                                        if effect["keys"].is_array() {
+                                            effect["keys"].clone()
+                                        } else {
+                                            json!([effect["key"]])
+                                        },
+                                        "send",
+                                    );
+                                }
                                 _ => self.effects.push(effect.clone()),
                             }
                         }
@@ -1062,7 +1071,7 @@ impl Controller {
             self.effects.push(json!({"kind":"storage-write","key":"rogue-inventory-view-v1","value":inventory_preference}));
         }
         self.ui.set_context(self.model.clone());
-        json!({"commands":commands,"surface":surface,"effects":self.effects,"consumed":consumed,"stopPropagation":consumed && r["event"]["type"]=="key","accepted":accepted,"raw":raw,"state":state,"diagnostics":self.ui.diagnostics()})
+        json!({"commands":commands,"surface":surface,"effects":self.effects,"consumed":consumed,"stopPropagation":consumed && r["event"]["type"]=="key","accepted":accepted,"redraw":redraw,"raw":raw,"state":state,"diagnostics":self.ui.diagnostics()})
     }
 }
 fn push(values: &mut Value, value: Value, limit: usize) {

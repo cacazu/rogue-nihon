@@ -209,10 +209,13 @@ impl Animator {
     }
     /// Interrupt the old action immediately, preserving the last drawn position
     /// and idle clock for continuous held movement. No game input waits on this.
-    pub fn interrupt(&mut self) {
+    pub fn interrupt(&mut self) -> bool {
+        let mut changed = false;
         for actor in self.actors.values_mut() {
+            changed |= actor.chosen != State::Idle;
             actor.finish_action();
         }
+        changed
     }
     pub fn set_enabled(&mut self, enabled: bool) {
         if self.enabled != enabled {

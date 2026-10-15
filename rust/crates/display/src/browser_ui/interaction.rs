@@ -669,10 +669,13 @@ impl BrowserUi {
             if b(&self.model["running"])
                 && let Some(raw) = raw_key(e)
             {
-                if key == "@" && self.model["input"]["kind"] == "command" {
+                let redraw = key == "@" && self.model["input"]["kind"] == "command";
+                if redraw {
                     self.open_status();
                 }
-                effects.push(json!({"kind":"send","key":raw}));
+                // A forwarded key has no new map to paint. Its Worker reply
+                // supplies the next visual state; local UI changes paint now.
+                effects.push(json!({"kind":"send","key":raw,"redraw":redraw}));
                 return true;
             }
         }
