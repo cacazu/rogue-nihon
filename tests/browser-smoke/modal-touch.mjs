@@ -72,7 +72,7 @@ try{
  for(mobile of [true,false]){
   const device=mobile?'phone':'pc';context=await browser.newContext({viewport:mobile?{width:320,height:480}:{width:1280,height:900},isMobile:mobile,hasTouch:mobile,deviceScaleFactor:mobile?2:1});
   await context.route('**/web/worker.js',r=>r.fulfill({body:fixtureWorker(worker,"inventory-all"),contentType:'text/javascript',headers}));
-  await context.route('**/build/game.js',r=>r.fulfill({path:path.join(root,'build/game-fixtures.js'),contentType:'text/javascript',headers}));
+  await context.route('**/build/game.wasm',r=>r.fulfill({path:path.join(root,'build/game-fixtures.wasm'),contentType:'application/wasm',headers}));
   page=await context.newPage();page.setDefaultTimeout(12000);page.on('pageerror',e=>report.errors.push(e.message));await installBrowserTestAdapter(page);cdp=await context.newCDPSession(page);
   await page.addInitScript(()=>{
    window.__portraitRequests=[];Object.defineProperty(screen.orientation,'lock',{configurable:true,value:kind=>{__portraitRequests.push(kind);return Promise.reject(new DOMException('Emulated unsupported orientation lock','NotSupportedError'));}});

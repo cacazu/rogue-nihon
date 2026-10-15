@@ -225,10 +225,8 @@ fn randomization_collision_and_restore_selection() {
         .find(|e| e["kind"] == "worker-start")
         .unwrap();
     assert_eq!(e["restore"], true);
-    assert_eq!(
-        e["files"],
-        json!([["/message-paging.txt", "log"], ["/trace.enabled", "1"]])
-    );
+    assert_eq!(e["trace"], true);
+    assert_eq!(e["message_paging"], "log");
 }
 
 fn save_effect<'a>(response: &'a Value, kind: &str) -> &'a Value {

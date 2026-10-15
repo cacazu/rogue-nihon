@@ -45,7 +45,7 @@ try {
     evidence.security = await page.evaluate(() => ({ secure: isSecureContext, isolated: crossOriginIsolated, sab: typeof SharedArrayBuffer }));
     assert.deepEqual(evidence.security, { secure: true, isolated: true, sab: "function" });
     evidence.files = [];
-    for (const file of ["build/game.js", "build/game.wasm", "rust/crates/browser-display/src/browser/mod.rs"]) {
+    for (const file of ["build/game.wasm", "rust/crates/browser-display/src/browser/mod.rs"]) {
       const local = await readFile(new URL("../../" + file, import.meta.url));
       const served = await context.request.get(new URL(file, target).href);
       assert.equal(served.status(), 200);
@@ -97,7 +97,7 @@ try {
     await tap("window-119"); await page.waitForFunction(() => !__rogueBrowserTest.frame.ui.window && __rogueBrowserTest.queuePending === 0);
     let baseline = process.env.ROGUE_LAN_BASELINE || fileURLToPath(new URL("./output/inventory-actions/before/build/game.js", import.meta.url));
     evidence.historical_baseline = await access(baseline).then(() => true, () => false);
-    if (!evidence.historical_baseline) baseline = fileURLToPath(new URL("../../build/game.js", import.meta.url));
+    if (!evidence.historical_baseline) baseline = fileURLToPath(new URL("../../build/game.wasm", import.meta.url));
     evidence.baseline = baseline;
     const original = await runGame(baseline, { seed: 17, name: "LAN勇者", locale: "ja", messagePaging: "log", text: "i .i wd" });
     const actual = await page.evaluate(() => __rogueBrowserTest.traces);

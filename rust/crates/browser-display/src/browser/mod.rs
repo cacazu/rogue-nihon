@@ -5,8 +5,9 @@ mod images;
 mod paint;
 mod queue;
 mod saves;
+mod values;
 mod worker;
-use js_sys::{Function, JSON, Reflect};
+use js_sys::{Function, Reflect};
 use rogue_display::widgets::TextSize;
 use rogue_raster::Renderer;
 use serde_json::{Value, json};
@@ -26,14 +27,13 @@ thread_local! {
     static STARTUP_ERROR: RefCell<Option<Listener>> = const { RefCell::new(None) };
 }
 pub(super) fn js(value: &Value) -> Result<JsValue, JsValue> {
-    JSON::parse(&value.to_string())
+    values::to_js(value)
 }
 pub(super) fn value(value: &JsValue) -> Result<Value, JsValue> {
-    serde_json::from_str(&JSON::stringify(value)?.as_string().unwrap_or_default())
-        .map_err(|e| JsValue::from_str(&e.to_string()))
+    values::from_js(value)
 }
 pub(super) fn error(error: JsValue) {
-    console::error_2(&JsValue::from_str("Rust browser host"), &error);
+    console::error_2(&values::string("Rust browser host"), &error);
 }
 fn number(v: &Value) -> f64 {
     v.as_f64().unwrap_or(0.)
@@ -151,9 +151,8 @@ pub async fn browser_start() -> Result<(), JsValue> {
     }
 }
 fn startup_error(window: &Window, document: &Document) -> Result<(), JsValue> {
-    let english = UrlSearchParams::new_with_str(&window.location().search()?)?
-        .get("lang")
-        .as_deref()
+    let parameters = query_parameters(&window.location().search()?);
+    let english = parameters.get("lang").and_then(Value::as_str)
         == Some("en");
     let panel: HtmlElement = document.create_element("section")?.dyn_into()?;
     panel.set_id("rogue-startup-error");
@@ -267,14 +266,39 @@ async fn start_main(window: Window, document: Document) -> Result<(), JsValue> {
     let inventory = storage
         .as_ref()
         .and_then(|s| s.get_item("rogue-inventory-view-v1").ok().flatten());
-    let parameters = UrlSearchParams::new_with_str(&host.window.location().search()?)?;
-    let parameters = js_sys::Object::from_entries(&parameters)?;
+    let parameters = query_parameters(&host.window.location().search()?);
     let isolated = Reflect::get(&host.window, &JsValue::from_str("crossOriginIsolated"))?
         .as_bool()
         .unwrap_or(false)
         && !Reflect::get(&host.window, &JsValue::from_str("SharedArrayBuffer"))?.is_undefined();
-    host.dispatch(json!({"type":"boot","preference":preference,"inventoryPreference":inventory,"environment":{"parameters":value(&parameters)?,"isolated":isolated}}))?;
+    host.dispatch(json!({"type":"boot","preference":preference,"inventoryPreference":inventory,"environment":{"parameters":parameters,"isolated":isolated}}))?;
     Ok(())
+}
+fn query_parameters(search: &str) -> Value {
+    fn component(text: &str) -> String {
+        let mut decoded = Vec::with_capacity(text.len());
+        let mut bytes = text.as_bytes().iter().copied().peekable();
+        while let Some(byte) = bytes.next() {
+            if byte == b'+' { decoded.push(b' '); }
+            else if byte == b'%' {
+                let mut lookahead = bytes.clone();
+                let pair = lookahead.next().and_then(|high| lookahead.next().map(|low| (high, low)));
+                if let Some((high, low)) = pair.and_then(|(high, low)| {
+                    Some(((high as char).to_digit(16)?, (low as char).to_digit(16)?))
+                }) {
+                    decoded.push((high * 16 + low) as u8);
+                    bytes = lookahead;
+                } else { decoded.push(byte); }
+            } else { decoded.push(byte); }
+        }
+        String::from_utf8_lossy(&decoded).into_owned()
+    }
+    let mut parameters = serde_json::Map::new();
+    for entry in search.strip_prefix('?').unwrap_or(search).split('&').filter(|entry| !entry.is_empty()) {
+        let (key, text) = entry.split_once('=').unwrap_or((entry, ""));
+        parameters.insert(component(key), Value::String(component(text)));
+    }
+    Value::Object(parameters)
 }
 // The same policy ABI serves headless consumers; no browser resources are needed.
 #[cfg(feature = "browser-test")]

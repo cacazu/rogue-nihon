@@ -113,13 +113,13 @@ def main():
         add(f"{name}-{version}", "cargo", declared, chosen, targets,
             [(p.name, p.read_bytes()) for p in files], [f"https://crates.io/crates/{name}/{version}"])
 
-    # cli-support emits JavaScript runtime templates into both game.js and browser-ui.js. The compiler
-    # and its graph are not shipped; retain the license of these emitted templates.
+    # cli-support emits the browser API bindings. The standalone game has no
+    # generated JS; retain template notices for the browser UI target only.
     bindgen = next(p for p in metadata['packages'] if p['name'] == 'wasm-bindgen')
     version = bindgen['version']
     chosen, files = license_files(Path(bindgen['manifest_path']).parent, bindgen['license'])
     add(f'wasm-bindgen-cli-support/{version}', 'generated-javascript', bindgen['license'], chosen,
-        [target for _, target in TARGETS], [(p.name, p.read_bytes()) for p in files],
+        ['wasm32-unknown-unknown'], [(p.name, p.read_bytes()) for p in files],
         [f'https://github.com/wasm-bindgen/wasm-bindgen/blob/{version}/crates/cli-support/src/js/mod.rs',
          f'https://github.com/wasm-bindgen/wasm-bindgen/blob/{version}/LICENSE-MIT'])
 
@@ -174,13 +174,20 @@ def main():
     emscripten = args.sdk_root / "upstream/emscripten"
     em_version = (emscripten / "emscripten-version.txt").read_text().strip().strip('"')
     for name, declared, filename in [
-        ("emscripten-runtime", "MIT OR NCSA", "LICENSE"),
+        ("emscripten-standalone", "MIT OR NCSA", "LICENSE"),
         ("musl", "MIT AND BSD notices", "system/lib/libc/musl/COPYRIGHT"),
         ("compiler-rt", "Apache-2.0 WITH LLVM-exception AND legacy notices", "system/lib/compiler-rt/LICENSE.TXT"),
+        ("libunwind", "Apache-2.0 WITH LLVM-exception AND legacy notices", "system/lib/libunwind/LICENSE.TXT"),
     ]:
-        add(f"{name}/{em_version}", "emscripten-runtime", declared, declared,
+        attribution = (["Copyright 2019 The Emscripten Authors. All rights reserved.",
+                        "Standalone C support linked into game.wasm; no Emscripten JavaScript runtime is shipped."]
+                       if name == "emscripten-standalone" else None)
+        source_urls = [f"https://github.com/emscripten-core/emscripten/blob/{em_version}/{filename}"]
+        if name == "emscripten-standalone":
+            source_urls.append(f"https://github.com/emscripten-core/emscripten/blob/{em_version}/system/lib/standalone/standalone.c")
+        add(f"{name}/{em_version}", "emscripten-standalone", declared, declared,
             ["wasm32-unknown-emscripten"], [(Path(filename).name, (emscripten / filename).read_bytes())],
-            [f"https://github.com/emscripten-core/emscripten/blob/{em_version}/{filename}"])
+            source_urls, attribution)
     if args.asset_notice:
         asset_bytes = args.asset_notice.read_bytes()
     else:

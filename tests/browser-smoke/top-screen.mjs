@@ -40,7 +40,7 @@ async function open({ baseline = false, fixture = '', mobile = false, locale = '
   if (fixture) {
     const source = fixtureWorker(worker,fixture);
     await context.route('**/web/worker.js', route => route.fulfill({ body: source, contentType: 'text/javascript', headers }));
-    await context.route('**/build/game.js', route => route.fulfill({ path: path.join(root, 'build/game-fixtures.js'), contentType: 'text/javascript', headers }));
+    await context.route('**/build/game.wasm', route => route.fulfill({ path: path.join(root, 'build/game-fixtures.wasm'), contentType: 'application/wasm', headers }));
   }
   page = await context.newPage();await installBrowserTestAdapter(page); page.on('pageerror', error => evidence.errors.push(error.message));
   await page.goto(base + '?trace=1&view=pixels&lang=' + locale);
@@ -141,9 +141,9 @@ try {
     await page.locator('#result-top').click(); assert.equal(await page.locator('#top-screen').isVisible(), true);
   });
   assert.deepEqual(evidence.errors, []); assert.deepEqual(await page.evaluate(() => __rogueBrowserTest.uiMissing), []); assert.deepEqual(await page.evaluate(() => __rogueBrowserTest.translationFallbacks), []);
-  evidence.files = await Promise.all(['web/index.html','web/style.css','web/app.js','locales/ui-web-ja.json','locales/ui-web-en.json','build/game.js','build/game.wasm','build/game-fixtures.wasm'].map(async file => ({ file, sha256: createHash('sha256').update(await readFile(path.join(root,file))).digest('hex') })));
+  evidence.files = await Promise.all(['web/index.html','web/style.css','web/app.js','locales/ui-web-ja.json','locales/ui-web-en.json','build/game.wasm','build/game-fixtures.wasm'].map(async file => ({ file, sha256: createHash('sha256').update(await readFile(path.join(root,file))).digest('hex') })));
   evidence.compiledArchiveComparison = [];
-  for (const file of ['build/game.js', 'build/game.wasm']) {
+  for (const file of ['build/game.wasm']) {
     try { const current = await readFile(path.join(root,file)), before = await readFile(path.join(output,'before',file)); evidence.compiledArchiveComparison.push({file,identical:current.equals(before),current_sha256:createHash('sha256').update(current).digest('hex'),before_sha256:createHash('sha256').update(before).digest('hex')}); }
     catch (error) { if (error.code !== 'ENOENT') throw error; }
   }

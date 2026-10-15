@@ -26,7 +26,7 @@ const evidence={baseline:{directory:baseline,available:hasBaseline},started_at:n
 async function check(label,fn){await fn();evidence.checks.push(label);console.log("PASS "+label);}
 async function open({fixture="",width=1240,height=900,lang="ja",scale=1}={}){
   await context?.close();context=await browser.newContext({viewport:{width,height},hasTouch:width<700,isMobile:width<700,deviceScaleFactor:scale,acceptDownloads:true});
-  if(fixture){await context.route("**/web/worker.js",r=>r.fulfill({body:fixtureWorker(worker,fixture),contentType:"text/javascript",headers}));await context.route("**/build/game.js",r=>r.fulfill({path:path.join(root,"build/game-fixtures.js"),contentType:"text/javascript",headers}));}
+  if(fixture){await context.route("**/web/worker.js",r=>r.fulfill({body:fixtureWorker(worker,fixture),contentType:"text/javascript",headers}));await context.route("**/build/game.wasm",r=>r.fulfill({path:path.join(root,"build/game-fixtures.wasm"),contentType:"application/wasm",headers}));}
   page=await context.newPage();await installBrowserTestAdapter(page);page.on("pageerror",e=>evidence.errors.push(e.message));
   await page.goto(base+"?trace=1&view=pixels&lang="+lang);
   await page.waitForFunction(()=>window.__rogueBrowserTest?.canvas?.paintCount>0);
@@ -346,7 +346,7 @@ try{
   assert.deepEqual(evidence.errors,[]);
   assert.deepEqual(await page.evaluate(()=>__rogueBrowserTest.translationFallbacks),[]);
   assert.deepEqual(await page.evaluate(()=>__rogueBrowserTest.uiMissing),[]);
-  evidence.files=await Promise.all(["web/app.js","rust/crates/browser-display/src/browser/mod.rs","rust/crates/browser-display/src/browser/images.rs","web/worker.js","build/browser-ui.wasm","rust/crates/browser-display/src/controller.rs","rust/crates/browser-display/src/policies.rs","rust/crates/display/src/browser_ui/tiles.rs","rust/crates/display/src/widgets.rs","rust/crates/display/src/browser_ui/mod.rs","rust/crates/display/src/browser_ui/hud.rs","rust/crates/display/src/browser_ui/screens.rs","rust/crates/display/src/browser_ui/interaction.rs","web/index.html","web/style.css","tests/browser-smoke/browser-runtime.mjs","rust/src/engine.rs","build/game.js","build/game.wasm"].map(async file=>({file,sha256:createHash("sha256").update(await readFile(path.join(root,file))).digest("hex")})));
+  evidence.files=await Promise.all(["web/app.js","rust/crates/browser-display/src/browser/mod.rs","rust/crates/browser-display/src/browser/images.rs","web/worker.js","build/browser-ui.wasm","rust/crates/browser-display/src/controller.rs","rust/crates/browser-display/src/policies.rs","rust/crates/display/src/browser_ui/tiles.rs","rust/crates/display/src/widgets.rs","rust/crates/display/src/browser_ui/mod.rs","rust/crates/display/src/browser_ui/hud.rs","rust/crates/display/src/browser_ui/screens.rs","rust/crates/display/src/browser_ui/interaction.rs","web/index.html","web/style.css","tests/browser-smoke/browser-runtime.mjs","rust/src/engine.rs","build/game.wasm"].map(async file=>({file,sha256:createHash("sha256").update(await readFile(path.join(root,file))).digest("hex")})));
 
   evidence.result="pass";
 }catch(error){evidence.result="fail";evidence.failure=error.stack;if(page){evidence.diagnostics=await page.evaluate(()=>window.__rogueBrowserTest?.diagnostics).catch(()=>null);evidence.scene=await scene().catch(()=>null);await shot("failure").catch(()=>{});}throw error;}

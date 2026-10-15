@@ -40,7 +40,7 @@ const evidence = { started_at: new Date().toISOString(), checks: [], base };
 try {
   const buildDirectory = path.resolve(directory, "../../build");
   evidence.build = JSON.parse(await readFile(path.join(buildDirectory, "build-manifest.json"), "utf8"));
-  evidence.actual_build_files = await Promise.all(["game.js", "game.wasm"].map(async (file) => {
+  evidence.actual_build_files = await Promise.all(["game.wasm"].map(async (file) => {
     const bytes = await readFile(path.join(buildDirectory, file));
     return { file, bytes: bytes.byteLength, sha256: createHash("sha256").update(bytes).digest("hex") };
   }));

@@ -24,7 +24,7 @@ async function settled(){await page.waitForFunction(()=>window.__rogueBrowserTes
 async function start(role='current',fixture=false){
  await context?.close();context=await browser.newContext({viewport:{width:1240,height:900}});
  if(role==='before')await context.route('**/*',route=>{const name=new URL(route.request().url()).pathname;if(name==='/build/game.js')return route.fulfill({body:previousJavaScript,contentType:'text/javascript',headers});if(name==='/build/game.wasm')return route.fulfill({body:previousWasm,contentType:'application/wasm',headers});if(old[name])return route.fulfill({body:old[name],contentType:name.endsWith('.js')?'text/javascript':name.endsWith('.css')?'text/css':name.endsWith('.json')?'application/json':'text/html',headers});return route.continue();});
- if(fixture){await context.route('**/web/worker.js',r=>r.fulfill({body:fixtureWorker,contentType:'text/javascript',headers}));await context.route('**/build/game.js',r=>r.fulfill({path:path.join(root,'build/game-fixtures.js'),contentType:'text/javascript',headers}));}
+ if(fixture){await context.route('**/web/worker.js',r=>r.fulfill({body:fixtureWorker,contentType:'text/javascript',headers}));await context.route('**/build/game.wasm',r=>r.fulfill({path:path.join(root,'build/game-fixtures.wasm'),contentType:'application/wasm',headers}));}
  page=await context.newPage();await installBrowserTestAdapter(page);page.on('pageerror',e=>evidence.errors.push(e.message));
  await page.goto(base+'?trace=1&view=pixels');await page.locator('#seed').fill('17');await page.locator('#name').fill('Audit');await page.locator('#new-game').click();await settled();await page.locator('#board').focus();
 }
@@ -62,13 +62,13 @@ try {
  }
  for(const {method,state:value} of closeStates)assert.deepEqual(value,closeStates[0].state,'hallucination close '+method+' matches canonical Space');
  evidence.closeStates=closeStates;evidence.checks.push('Hallucination: Close button, Enter and Esc reach the exact same RNG/C state as Space; rendering the open dialog is pure.');
- const canonical=await runGame(path.join(root,'build/game-fixtures.js'),{fixture:'hallucination',seed:17,name:'Audit',locale:'ja',text:'i ',messagePaging:'log'});
+ const canonical=await runGame(path.join(root,'build/game-fixtures.wasm'),{fixture:'hallucination',seed:17,name:'Audit',locale:'ja',text:'i ',messagePaging:'log'});
  assert.deepEqual(closeStates[0].state.words,canonical.traces.at(-1).words,'browser dialog returns to actual canonical C/Rust read state');
  await start('current',true);const stages=[];stages.push(await capture('hall-quaff-before'));await key('q');stages.push(await capture('hall-quaff-selection'));assert.equal(await page.locator('[data-window-key="42"]').count(),0);await key('*');stages.push(await capture('hall-quaff-list'));
- const q=await runGame(path.join(root,'build/game-fixtures.js'),{fixture:'hallucination',seed:17,name:'Audit',locale:'ja',text:'q*',messagePaging:'log'});assert.deepEqual(stages.at(-1).words,q.traces.at(-1).words);
+ const q=await runGame(path.join(root,'build/game-fixtures.wasm'),{fixture:'hallucination',seed:17,name:'Audit',locale:'ja',text:'q*',messagePaging:'log'});assert.deepEqual(stages.at(-1).words,q.traces.at(-1).words);
  assert.notEqual(stages[0].words[1],stages.at(-1).words[1]);assert.equal(stages[0].words[13],stages.at(-1).words[13]);evidence.checks.push('Hallucination empty potion list: observed RNG advance with no turn matches the canonical C key sequence.');await shot('hallucination-empty-potions');
  assert.deepEqual(evidence.errors,[]);evidence.result='pass';
- evidence.files=await Promise.all(['web/app.js','web/index.html','web/style.css','rust/crates/input/src/lib.rs','rust/src/lib.rs','rust/crates/display/src/game_window.rs','logic/pack.c','logic/io.c','build/game.js','build/game.wasm','build/game-fixtures.js','build/game-fixtures.wasm'].map(async file=>({file,sha256:createHash('sha256').update(await readFile(path.join(root,file))).digest('hex')})));
+ evidence.files=await Promise.all(['web/app.js','web/index.html','web/style.css','rust/crates/input/src/lib.rs','rust/src/lib.rs','rust/crates/display/src/game_window.rs','logic/pack.c','logic/io.c','build/game.wasm','build/game-fixtures.wasm'].map(async file=>({file,sha256:createHash('sha256').update(await readFile(path.join(root,file))).digest('hex')})));
  console.log(JSON.stringify({result:'pass',checks:evidence.checks.length,closeStates:closeStates.map(({method,state:s})=>({method,rng:s.words[1],turn:s.words[13]}))}));
 } catch(error){evidence.result='fail';evidence.failure=error.stack;if(page){evidence.diagnostics=await page.evaluate(()=>window.__rogueBrowserTest?.diagnostics).catch(()=>null);await shot('failure').catch(()=>{});}throw error;}
 finally{evidence.finished_at=new Date().toISOString();await writeFile(path.join(output,'browser-evidence.json'),JSON.stringify(evidence,null,2)+'\n');await context?.close();await browser?.close();await new Promise(r=>server.close(r));}

@@ -17,15 +17,15 @@ await mkdir(output,{recursive:true});
 const server=createPreviewServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const base='http://127.0.0.1:'+server.address().port+'/',worker=await readFile(path.join(root,'web/worker.js'),'utf8');
 const headers={'Cross-Origin-Opener-Policy':'same-origin','Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'};
-let baseline=process.env.ROGUE_INVENTORY_BASELINE||path.join(root,'build/inventory-before.js');
-const historical=await access(baseline).then(()=>true,()=>false);if(!historical)baseline=path.join(root,'build/game-fixtures.js');
+let baseline=process.env.ROGUE_INVENTORY_BASELINE||path.join(root,'build/inventory-before.wasm');
+const historical=await access(baseline).then(()=>true,()=>false);if(!historical)baseline=path.join(root,'build/game-fixtures.wasm');
 // The untranslated historical build is retained for legacy save replay. A
 // separately built, pre-fix C reference may use corrected message-site metadata
 // so intentionally repaired English text still gets a strict 20-word comparison.
 const referenceBaseline=process.env.ROGUE_INVENTORY_REFERENCE||baseline;
 const evidence={started_at:new Date().toISOString(),baseline,reference_baseline:referenceBaseline,historical,checks:[],commands:[],screenshots:[],errors:[]};
-evidence.baseline_files=await Promise.all([baseline,baseline.replace(/\.js$/,'.wasm')].map(async file=>({file,sha256:createHash('sha256').update(await readFile(file)).digest('hex')})));
-evidence.reference_files=await Promise.all([referenceBaseline,referenceBaseline.replace(/\.js$/,'.wasm')].map(async file=>({file,sha256:createHash('sha256').update(await readFile(file)).digest('hex')})));
+evidence.baseline_files=await Promise.all([...new Set([baseline,baseline.replace(/\.js$/,'.wasm')])].map(async file=>({file,sha256:createHash('sha256').update(await readFile(file)).digest('hex')})));
+evidence.reference_files=await Promise.all([...new Set([referenceBaseline,referenceBaseline.replace(/\.js$/,'.wasm')])].map(async file=>({file,sha256:createHash('sha256').update(await readFile(file)).digest('hex')})));
 let browser,context,page,fixture='inventory-all',locale='ja';
 const scene=()=>page.evaluate(()=>__rogueBrowserTest.canvas);
 const state=()=>page.evaluate(()=>({traces:__rogueBrowserTest.traces,trace:__rogueBrowserTest.trace,frame:__rogueBrowserTest.frame,input:__rogueBrowserTest.inputRequestCount,queue:__rogueBrowserTest.queuePending,exit:__rogueBrowserTest.diagnostics.exitCode,messages:__rogueBrowserTest.messages}));
@@ -35,7 +35,7 @@ async function open(options={}){
  await context?.close();fixture=options.fixture||'inventory-all';locale=options.lang||'ja';const width=options.width||(mobile?390:1240),height=options.height||(mobile?844:900);
  context=await browser.newContext({viewport:{width,height},isMobile:width<700,hasTouch:width<700,deviceScaleFactor:options.scale||1});
  await context.route('**/web/worker.js',r=>r.fulfill({body:fixtureWorker(worker,fixture),contentType:'text/javascript',headers}));
- await context.route('**/build/game.js',r=>r.fulfill({path:options.module||path.join(root,'build/game-fixtures.js'),contentType:'text/javascript',headers}));
+ await context.route('**/build/game.wasm',r=>r.fulfill({path:options.module?.replace(/\.js$/,'.wasm')||path.join(root,'build/game-fixtures.wasm'),contentType:'application/wasm',headers}));
  page=await context.newPage();await installBrowserTestAdapter(page);page.setDefaultTimeout(10000);page.on('pageerror',error=>evidence.errors.push(error.message));
  await page.goto(base+'?trace=1&view=pixels&lang='+locale);await page.waitForFunction(()=>window.__rogueBrowserTest?.canvas?.paintCount>0);
  if(width<700)await click('settings-toggle');
@@ -118,7 +118,7 @@ try{
  if(historical)for(const [style,prefix] of [['overlay','i'],['slow','o'+'\r'.repeat(6)+'s\x1b i '],['clear','o'+'\r'.repeat(6)+'c\x1b i']])await check('Legacy '+style+' inventory save replays correctly and then opens the new menu',async()=>{
   await open({module:baseline});await chars(prefix);const before=await state();
   await click('settings-toggle');await click('save');await page.waitForFunction(()=>!__rogueBrowserTest.savePending&&__rogueBrowserTest.savedLength>0);
-  await context.unroute('**/build/game.js');await context.route('**/build/game.js',r=>r.fulfill({path:path.join(root,'build/game-fixtures.js'),contentType:'text/javascript',headers}));
+  await context.unroute('**/build/game.wasm');await context.route('**/build/game.wasm',r=>r.fulfill({path:path.join(root,'build/game-fixtures.wasm'),contentType:'application/wasm',headers}));
   await click('settings-top');await page.waitForFunction(()=>__rogueBrowserTest.topOpen);await click('load');await page.waitForFunction(index=>__rogueBrowserTest.running&&__rogueBrowserTest.trace?.input_index===index&&__rogueBrowserTest.queuePending===0,before.trace.input_index);await draw();
   assert.deepEqual((await state()).trace,before.trace);assert.equal((await state()).frame.ui.inventory,false);
   await press(style==='slow'?'Escape':'Space');await idle();await press('j');await reference(prefix+(style==='slow'?'\x1b':' ')+'j','legacy '+style,baseline);
@@ -150,7 +150,7 @@ try{
  await check('Numeric count prefix repeats movement through C',async()=>{await open({fixture:'plain'});await chars('3h');await reference('3h','count prefix');});
  await check('Quit Yes completes the original score/result flow',async()=>{await open();let text='Qy';await chars(text);for(let n=0;n<8&&(await state()).exit===null;n++){const input=(await state()).frame.ui.input;const c=input.kind==='space'?' ':input.kind==='enter'?'\r':null;assert.ok(c,'known quit prompt '+JSON.stringify(input));await chars(c);text+=c;}assert.equal((await state()).exit,3);await reference(text,'quit yes');});
  assert.deepEqual(evidence.errors,[]);
- evidence.files=await Promise.all(['rust/crates/input/src/inventory.rs','rust/crates/display/src/inventory.rs','rust/src/engine.rs','rust/src/lib.rs','rust/crates/display/src/presentation.rs','logic/pack.c','logic/command.c','build/game.js','build/game.wasm','build/game-fixtures.js'].map(async file=>({file,sha256:createHash('sha256').update(await readFile(path.join(root,file))).digest('hex')})));
+ evidence.files=await Promise.all(['rust/crates/input/src/inventory.rs','rust/crates/display/src/inventory.rs','rust/src/engine.rs','rust/src/lib.rs','rust/crates/display/src/presentation.rs','logic/pack.c','logic/command.c','build/game.wasm','build/game-fixtures.wasm'].map(async file=>({file,sha256:createHash('sha256').update(await readFile(path.join(root,file))).digest('hex')})));
  evidence.result='pass';
 }catch(error){evidence.result='fail';evidence.failure=error.stack;if(page){evidence.state=await state().catch(()=>null);evidence.scene=await scene().catch(()=>null);await shot('failure').catch(()=>{});}throw error;}
 finally{evidence.finished_at=new Date().toISOString();await writeFile(path.join(output,'evidence.json'),JSON.stringify(evidence,null,2)+'\n');await context?.close();await browser?.close();await new Promise(r=>server.close(r));}

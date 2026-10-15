@@ -31,7 +31,7 @@ python tools/check-rust-layers.py --binary engine-check
 
 ブラウザーの観測・操作は専用 `browser-test` featureの生成物を使います。`test-adapter.mjs` はPlaywrightのrouteでbindingを置き換え、配布用のJS/Wasmを変更しません。`queue-runtime.mjs` はRustのSAB実装を呼ぶ検証側の名前対応だけです。
 
-C/JSをリンクする `rogue-layers` は独立lib testから除外します。純粋な層のテスト・単体binの成功だけではCゲームやブラウザーを実行したことにはなりません。
+Cとリンクする `rogue-layers` は独立lib testから除外します。ゲームの検査はstandalone WasmとRustの開始設定ABIを使います。純粋な層のテスト・単体binの成功だけではCゲームやブラウザーを実行したことにはなりません。
 
 | 検査 | 実行入口 |
 |---|---|
@@ -63,10 +63,10 @@ python tests/prepare-baseline.py --original /path/to/rogue5.4.4
 python tests/audit-baseline.py
 python tools/build.py --logic-directory tests/baseline-src --output-name baseline --keep-artifacts
 python tools/build.py --logic-directory tests/baseline-src --output-name baseline-fixtures --test-fixtures --keep-artifacts
-node tests/run.mjs --env ROGUE_BASELINE_MODULE=build/baseline.js tests/game-regression.test.mjs tests/game-fixtures.test.mjs
+node tests/run.mjs --env ROGUE_BASELINE_MODULE=build/baseline.wasm tests/game-regression.test.mjs tests/game-fixtures.test.mjs
 ```
 
-auditはprepareが記録した原本パスを読みます。`game-fixtures.test.mjs` は `build/baseline-fixtures.js` と `game-fixtures.js` を使用します。各scriptのfixture・比較archive依存を確認してから実行してください。比較元がなくskipした検査は原作一致を確認した扱いにしません。20 word・入力位置・原英文画面に加え、保存復元後の次操作を照合します。
+auditはprepareが記録した原本パスを読みます。`game-fixtures.test.mjs` は `build/baseline-fixtures.wasm` と `game-fixtures.wasm` を使用します。`run-game.mjs` の検証hostは同じ開始設定ABIを使い、歴史的なJS loader付きarchiveも読み込めます。各scriptのfixture・比較archive依存を確認してから実行してください。比較元がなくskipした検査は原作一致を確認した扱いにしません。20 word・入力位置・原英文画面に加え、保存復元後の次操作を照合します。
 
 UI変更前・画像変更前などの歴史的比較は、各scriptの環境変数で指定した独立archiveが必要です。原作baselineとの比較と、以前のWeb版との比較を区別します。
 

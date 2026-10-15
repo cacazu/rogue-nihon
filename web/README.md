@@ -2,7 +2,7 @@
 
 起動と操作は [作品README](../README.md)、Rust/JS・Worker・Canvasの責務は [実装の判断](../docs/IMPLEMENTATION-ja.md) を参照してください。
 
-本番は `web/`、`build/game.js`、`build/game.wasm`、`build/browser-ui.js`、`build/browser-ui.wasm` と画像等の静的ファイルを配信します。WorkerのSharedArrayBuffer入力に次のHTTPヘッダーが必要です。
+本番は `web/`、`build/game.wasm`、`build/browser-ui.js`、`build/browser-ui.wasm` と画像等の静的ファイルを配信します。ゲームWasmはWorker側Rustが直接初期化します。WorkerのSharedArrayBuffer入力に次のHTTPヘッダーが必要です。
 
 ```text
 Cross-Origin-Opener-Policy: same-origin

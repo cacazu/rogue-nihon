@@ -19,14 +19,6 @@ test("all handwritten production JS excludes UI/input policies and test imports"
  for(const file of files){
   const source=await readFile(new URL("../web/"+file,import.meta.url),"utf8");
   assert.doesNotMatch(source,/(?:import|require|importScripts).*\btests\//,file);
-  if(file==="abi.js"){
-   const declaration=source.replace(/\/\*[\s\S]*?\*\//g,"").trim().match(/^globalThis\.RG_ABI\s*=\s*Object\.freeze\((\{[\s\S]*\})\);$/);
-   assert.ok(declaration,"ABI JavaScript must contain generated data only");
-   const constants=JSON.parse(declaration[1]);
-   assert.ok(Object.keys(constants).every(name=>/^RG_[A-Z0-9_]+$/.test(name)));
-   assert.ok(Object.values(constants).every(Number.isInteger));
-   continue;
-  }
   if(/\.[cm]?js$/i.test(file)){
    assert.ok(file==="app.js"||file==="worker.js",file+" is not a Wasm startup entry point");
    const code=source.replace(/\/\*[\s\S]*?\*\//g,"").replace(/^\s*\/\/.*$/gm,"");

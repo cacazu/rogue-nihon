@@ -113,7 +113,7 @@ async function inspectOverlayBounds(name) {
 }
 
 try {
-  evidence.files = await Promise.all(["web/index.html", "web/style.css", "web/app.js", "build/game.js", "build/game.wasm"].map(async (file) => {
+  evidence.files = await Promise.all(["web/index.html", "web/style.css", "web/app.js", "build/game.wasm"].map(async (file) => {
     const bytes = await readFile(path.join(project, file));
     return { file, bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") };
   }));

@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { assertEquivalent } from './compare-traces.mjs';
+import { createStandaloneGame } from './standalone-game.mjs';
 
 const require = createRequire(import.meta.url);
 export const SAVE_EVENT = 0x120001;
@@ -33,16 +34,27 @@ export async function runGame(modulePath, config = {}) {
   const result = { seed: config.seed ?? 1, traces: [], frames: [], frame_contexts: [], presentations: [],
     input_contexts: [], messages: [], reads: [], flushes: [], stores: [],
     store_contexts: [], outcomes: [], stderr: [] };
-  const jsBytes = await readFile(resolve(modulePath));
-  const wasmBytes = await readFile(resolve(modulePath).replace(/\.(?:c?js)$/, '.wasm'));
-  result.module = { javascript_sha256: digest(jsBytes), wasm_sha256: digest(wasmBytes) };
+  const sourcePath = resolve(modulePath);
+  const wasmPath = sourcePath.replace(/\.(?:c?js)$/, '.wasm');
+  let jsBytes = null;
+  if (!sourcePath.endsWith('.wasm')) {
+    try { jsBytes = await readFile(sourcePath); }
+    catch (error) {
+      // Existing regression callers can keep a former .js module path after its
+      // loader has been removed; historical loaders still take the legacy route.
+      if (error.code !== 'ENOENT' || wasmPath === sourcePath) throw error;
+    }
+  }
+  const wasmBytes = await readFile(wasmPath);
+  const standalone = jsBytes === null;
+  result.module = { javascript_sha256: standalone ? null : digest(jsBytes), wasm_sha256: digest(wasmBytes) };
   let position = 0;
   let module;
   // New Rust-declared imports pass borrowed addresses. Historical comparison
   // builds pass already copied values; support both only in this test harness.
   const bytes=(value,length)=>typeof value==='number'?module.HEAPU8.slice(value,value+length):value;
   const text=(value,length)=>typeof value==='number'?new TextDecoder().decode(bytes(value,length)):value;
-  globalThis.RogueHost = {
+  const host = globalThis.RogueHost = {
     readEvent() {
       // Test-only legacy comparison: acknowledge the currently observed C More,
       // representing explicit reader responses, never production input injection.
@@ -87,17 +99,23 @@ export async function runGame(modulePath, config = {}) {
     // scripted user actions and remain available after the game asks for them.
     flushInput() { result.flushes.push({ position, trace: result.traces.length - 1 }); },
   };
-  const factory = require(resolve(modulePath));
-  module = await factory({ printErr: (line) => result.stderr.push(String(line)), print: () => {} });
+  const printErr = (line) => result.stderr.push(String(line));
+  if (standalone) module = await createStandaloneGame(wasmBytes, host, printErr);
+  else module = await require(sourcePath)({ printErr, print: () => {} });
   if (config.repaint > 0 && typeof module._rg_test_repaint !== 'function') {
     throw new Error('Repaint regression checks require an explicit test-hooks (-TestHooks or -TestFixtures) build');
   }
-  module.FS.writeFile('/trace.enabled', '1');
-  module.FS.writeFile('/locale.txt', config.locale ?? 'en');
-  if (config.messagePaging !== undefined) module.FS.writeFile('/message-paging.txt', config.messagePaging);
-  if (config.fixture !== undefined) module.FS.writeFile('/fixture.id', config.fixture);
-  if (config.restore !== undefined) module.FS.writeFile('/restore.json', config.restore);
-  result.code = module.ccall('rg_run', 'number', ['number', 'string'], [result.seed, config.name ?? 'Test']);
+  if (standalone) {
+    module.configureStartup(config);
+    result.code = module.run(result.seed, config.name ?? 'Test');
+  } else {
+    module.FS.writeFile('/trace.enabled', '1');
+    module.FS.writeFile('/locale.txt', config.locale ?? 'en');
+    if (config.messagePaging !== undefined) module.FS.writeFile('/message-paging.txt', config.messagePaging);
+    if (config.fixture !== undefined) module.FS.writeFile('/fixture.id', config.fixture);
+    if (config.restore !== undefined) module.FS.writeFile('/restore.json', config.restore);
+    result.code = module.ccall('rg_run', 'number', ['number', 'string'], [result.seed, config.name ?? 'Test']);
+  }
   result.consumed = position;
   const snapshot = () => {
     const pointer = module._rg_snapshot_json();
@@ -120,7 +138,7 @@ export async function runGame(modulePath, config = {}) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const [, , modulePath, configPath, outputPath] = process.argv;
   if (!modulePath || !configPath || !outputPath) {
-    process.stderr.write('Usage: node run-game.mjs MODULE.js CONFIG.json OUTPUT.json\n');
+    process.stderr.write('Usage: node run-game.mjs MODULE.wasm|MODULE.js CONFIG.json OUTPUT.json\n');
     process.exitCode = 2;
   } else {
     try {

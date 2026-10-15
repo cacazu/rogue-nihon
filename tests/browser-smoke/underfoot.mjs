@@ -48,7 +48,7 @@ async function open(mode, touch = false, fixture = "") {
     const worker = await readFile(path.join(root, "web/worker.js"), "utf8");
     const headers = { "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Embedder-Policy": "require-corp", "Cross-Origin-Resource-Policy": "same-origin" };
     await context.route("**/web/worker.js", route => route.fulfill({ body: fixtureWorker(worker,fixture), contentType: "text/javascript", headers }));
-    await context.route("**/build/game.js", route => route.fulfill({ path: path.join(root, "build/game-fixtures.js"), contentType: "text/javascript", headers }));
+    await context.route("**/build/game.wasm", route => route.fulfill({ path: path.join(root, "build/game-fixtures.wasm"), contentType: "application/wasm", headers }));
   }
   page = await context.newPage();await installBrowserTestAdapter(page); page.on("pageerror", error => evidence.errors.push(error.message)); page.setDefaultTimeout(15000);
   await page.goto(new URL("?trace=1&lang=ja&view=" + mode, base).href);
@@ -219,7 +219,7 @@ try {
     await shot("detected-enemies");
   });
   assert.deepEqual(evidence.errors, []);
-  evidence.files = await Promise.all(["rust/crates/browser-display/src/browser/images.rs", "rust/src/engine.rs", "logic/semantic.c", "logic/knowledge.c", "build/game.js", "build/game.wasm"].map(async file => ({ file, sha256: createHash("sha256").update(await readFile(path.join(root, file))).digest("hex") })));
+  evidence.files = await Promise.all(["rust/crates/browser-display/src/browser/images.rs", "rust/src/engine.rs", "logic/semantic.c", "logic/knowledge.c", "build/game.wasm"].map(async file => ({ file, sha256: createHash("sha256").update(await readFile(path.join(root, file))).digest("hex") })));
   evidence.result = "pass";
 } catch (error) {
   evidence.result = "fail"; evidence.failure = error.stack;

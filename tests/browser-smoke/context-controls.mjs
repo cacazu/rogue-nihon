@@ -73,7 +73,7 @@ async function open(f = "inventory-all", phone = true) {
   await context?.close(); fixture = f; mobile = phone;
   context = await browser.newContext({ viewport: phone ? { width: 390, height: 844 } : { width: 1240, height: 900 }, hasTouch: phone, isMobile: phone, deviceScaleFactor: phone ? 2 : 1, acceptDownloads: true });
   await context.route("**/web/worker.js", r => r.fulfill({ body: fixtureWorker(worker,f), contentType: "text/javascript", headers }));
-  await context.route("**/build/game.js", r => r.fulfill({ path: path.join(root, "build/game-fixtures.js"), contentType: "text/javascript", headers }));
+  await context.route("**/build/game.wasm", r => r.fulfill({ path: path.join(root, "build/game-fixtures.wasm"), contentType: "application/wasm", headers }));
   page = await context.newPage();await installBrowserTestAdapter(page); page.setDefaultTimeout(20000); page.on("pageerror", e => evidence.errors.push(e.message));
   await page.goto(base + "?trace=1&lang=ja&view=pixels"); await page.waitForFunction(() => window.__rogueBrowserTest?.canvas?.paintCount > 0);
   await field("name", "ContextAudit"); await field("seed", "17"); await click("new-game");
@@ -221,7 +221,7 @@ try {
     await reference(text, "quit both choices"); await click("result-top"); await page.waitForFunction(() => __rogueBrowserTest.topOpen);
   });
   assert.deepEqual(evidence.errors, []);
-  evidence.files = await Promise.all(["rust/crates/display/src/game_window.rs", "rust/crates/input/src/inventory.rs", "rust/crates/display/src/inventory.rs", "rust/src/engine.rs", "rust/crates/display/src/presentation.rs", "logic/pack.c", "web/app.js", "rust/crates/browser-display/src/browser/mod.rs", "build/game.js", "build/game.wasm", "build/game-fixtures.js", "build/game-fixtures.wasm"].map(async file => ({ file, sha256: createHash("sha256").update(await readFile(path.join(root, file))).digest("hex") })));
+  evidence.files = await Promise.all(["rust/crates/display/src/game_window.rs", "rust/crates/input/src/inventory.rs", "rust/crates/display/src/inventory.rs", "rust/src/engine.rs", "rust/crates/display/src/presentation.rs", "logic/pack.c", "web/app.js", "rust/crates/browser-display/src/browser/mod.rs", "build/game.wasm", "build/game-fixtures.wasm"].map(async file => ({ file, sha256: createHash("sha256").update(await readFile(path.join(root, file))).digest("hex") })));
   evidence.result = "pass";
 } catch (error) { evidence.result = "fail"; evidence.failure = error.stack; if (page) { evidence.state = await state().catch(() => null); evidence.scene = await scene().catch(() => null); await shot("failure").catch(() => {}); } throw error;
 } finally { evidence.finished_at = new Date().toISOString(); await writeFile(path.join(output, "evidence.json"), JSON.stringify(evidence, null, 2) + "\n"); await context?.close(); await browser?.close(); await runtime?.dispose(); server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }

@@ -370,7 +370,7 @@ impl Controller {
         self.notice("notice.loading", json!({}), false);
         self.effects.push(json!({"kind":"worker-start","generation":self.model["generation"],"capacity":4096,
             "seed":entered_seed.unwrap_or(0),"name":name,"restore":restore,"locale":self.model["language"],
-            "files":if self.environment["parameters"]["trace"]=="1" {json!([["/message-paging.txt","log"],["/trace.enabled","1"]])} else {json!([["/message-paging.txt","log"]])}}));
+            "trace":self.environment["parameters"]["trace"]=="1","message_paging":"log"}));
     }
     fn persist_view(&mut self) {
         self.effects.push(json!({"kind":"storage-write","key":"rogue-map-display-v1","value":json!({"version":1,"mode":self.model["displayMode"],"zoom":self.model["tileSize"]}).to_string()}));

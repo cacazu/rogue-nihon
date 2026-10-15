@@ -45,6 +45,9 @@ def main(kind, argv=None):
             if driver.exists():
                 tracked.append(driver)
             before = [file_record(p) for p in sorted(set(tracked))]
+            # These are C-only main/stdio adapters, not the playable Rust game.
+            # Their Node runner remains a test-only .cjs; game/fixture Worker
+            # modules built by tools/build.py are standalone .wasm files.
             binary = output / (fixture + '.cjs')
             flags = [*c_flags(), '-sENVIRONMENT=node', '-sEXIT_RUNTIME=1', '-sASSERTIONS=2', '-sSAFE_HEAP=1', '-sALLOW_MEMORY_GROWTH=1', '-sSTACK_SIZE=4194304', '-o', binary]
             if kind == 'save':

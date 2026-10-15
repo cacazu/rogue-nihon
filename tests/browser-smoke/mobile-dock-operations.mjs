@@ -67,7 +67,7 @@ const groups=[
 try{
  context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:2});
  await context.route('**/web/worker.js',r=>r.fulfill({body:fixtureWorker(worker,"inventory-all"),contentType:'text/javascript',headers}));
- await context.route('**/build/game.js',r=>r.fulfill({path:path.join(root,'build/game-fixtures.js'),contentType:'text/javascript',headers}));
+ await context.route('**/build/game.wasm',r=>r.fulfill({path:path.join(root,'build/game-fixtures.wasm'),contentType:'application/wasm',headers}));
  page=await context.newPage();page.setDefaultTimeout(10000);page.on('pageerror',e=>report.errors.push(e.message));await installBrowserTestAdapter(page);cdp=await context.newCDPSession(page);
  // Published flags only, to check the conditional ascent control without changing C.
  await page.addInitScript(()=>{const NativeWorker=Worker;window.Worker=class extends NativeWorker{set onmessage(handler){super.onmessage=handler;window.__dockUi=ui=>handler({data:{type:'presentation',ui}});}};});

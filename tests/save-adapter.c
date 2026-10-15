@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "knowledge.h"
 #include "rogue.h"
 #include "core.h"
@@ -141,6 +142,11 @@ void rg_host_text_mode(int32_t enabled,uint32_t limit_bytes,const char *initial)
     (void)enabled;(void)limit_bytes;(void)initial;
 }
 void rg_host_player_name(const char *name) {(void)name;}
+int32_t rg_host_calendar_year(void) {
+    time_t now = time(NULL);
+    struct tm *local = localtime(&now);
+    return local ? local->tm_year + 1900 : 1970;
+}
 void rg_host_outcome(int32_t code,const char *text) {(void)code;(void)text;}
 void rg_host_flush_input(void) {}
 int32_t rg_host_inventory_browser_enabled(void) {return 0;}

@@ -95,9 +95,42 @@ fn present(
 }
 
 async fn image(base: &str, filename: &str) -> Result<Image, JsValue> {
-    let url = Url::new_with_base(filename, base)?;
-    let bytes = super::fetch_bytes(&url.href()).await?;
+    let path = asset_path(base, filename)?;
+    let bytes = super::fetch_bytes(&path).await?;
     Image::decode_png(&bytes).map_err(|message| JsValue::from_str(&message))
+}
+
+// Gallery manifests contain repository asset paths, not arbitrary URLs. The
+// browser supplies only the page pathname; Rust resolves manifest/image paths.
+fn asset_path(base: &str, reference: &str) -> Result<String, JsValue> {
+    if !base.starts_with('/')
+        || base.starts_with("//")
+        || reference.is_empty()
+        || reference.starts_with("//")
+        || !reference
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || b"/._-".contains(&byte))
+    {
+        return Err(JsValue::from_str("Invalid gallery asset path"));
+    }
+    let directory = if reference.starts_with('/') {
+        ""
+    } else {
+        base.rsplit_once('/')
+            .ok_or_else(|| JsValue::from_str("Gallery base directory unavailable"))?
+            .0
+    };
+    let mut segments = Vec::new();
+    for segment in directory.split('/').chain(reference.split('/')) {
+        match segment {
+            "" | "." => {}
+            ".." => {
+                segments.pop();
+            }
+            segment => segments.push(segment),
+        }
+    }
+    Ok(format!("/{}", segments.join("/")))
 }
 
 fn frames(image: &Image, tile: u32, row: u32) -> Result<Vec<Vec<u8>>, JsValue> {
@@ -129,10 +162,9 @@ async fn load(window: Window, document: &Document) -> Result<(), JsValue> {
         .body()
         .and_then(|body| body.get_attribute("data-rogue-gallery"))
         .ok_or_else(|| JsValue::from_str("Gallery manifest unavailable"))?;
-    let url = Url::new_with_base(&specification, &window.location().href()?)?;
-    let manifest: Value = serde_json::from_slice(&super::fetch_bytes(&url.href()).await?)
+    let path = asset_path(&window.location().pathname()?, &specification)?;
+    let manifest: Value = serde_json::from_slice(&super::fetch_bytes(&path).await?)
         .map_err(|failure| JsValue::from_str(&failure.to_string()))?;
-    let base = Url::new_with_base(".", &url.href())?.href();
     let tile = manifest["tile_pixels"]
         .as_u64()
         .and_then(|value| u32::try_from(value).ok())
@@ -160,7 +192,7 @@ async fn load(window: Window, document: &Document) -> Result<(), JsValue> {
         group.set_class_name("states");
         article.append_child(&group)?;
         let reference = element(document, "figure", "")?;
-        let original = image(&base, text(&entry["source"]["image"])).await?;
+        let original = image(&path, text(&entry["source"]["image"])).await?;
         let (original_canvas, original_context) = canvas(
             document,
             original.width(),
@@ -177,7 +209,7 @@ async fn load(window: Window, document: &Document) -> Result<(), JsValue> {
         reference.append_child(&original_canvas)?;
         reference.append_child(&element(document, "figcaption", "元画像")?.into())?;
         group.append_child(&reference)?;
-        let sheet = image(&base, text(&entry["sheet"])).await?;
+        let sheet = image(&path, text(&entry["sheet"])).await?;
         for (row, (state, title)) in [
             ("idle", "待機"),
             ("move", "移動"),

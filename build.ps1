@@ -68,15 +68,13 @@ if ($TestFixtures) {
     $compilerArguments.Add('-DRG_TEST_FIXTURES')
     $compilerArguments.Add((Join-Path $project 'tests\game-fixtures.c'))
 }
-$exports = @('_rg_run','_rg_snapshot_json','_rg_string_free','_rg_validate_envelope','_malloc','_free')
+$exports = @('_rg_configure','_rg_alloc','_rg_dealloc','_rg_run','_rg_snapshot_json','_rg_string_free','_rg_validate_envelope','_malloc','_free')
 if ($includeTestHooks) {
     $compilerArguments.Add('-DRG_TEST_HOOKS')
     $exports += @('_rg_test_repaint','_rg_test_save_roundtrip')
 }
 $compilerArguments.Add('-sEXPORTED_FUNCTIONS=' + ($exports | ConvertTo-Json -Compress))
-foreach ($argument in @('-DROGUE_LAYERED','-I'+$logicPath,'-I'+(Join-Path $project 'contract'),'-std=gnu11','-fwrapv','-fno-strict-aliasing','-Wno-deprecated-non-prototype','-O1','--no-entry','-sWASM_BINDGEN=1','-sMODULARIZE=1','-sEXPORT_NAME=createRogueModule','-sENVIRONMENT=web,worker,node','-sALLOW_MEMORY_GROWTH=1','-sSTACK_SIZE=4194304','-sASSERTIONS=1','-sEXPORTED_RUNTIME_METHODS=["ccall","FS","UTF8ToString","HEAPU8"]','-o',(Join-Path $buildPath ($OutputName + '.js')))) { $compilerArguments.Add($argument) }
-$wasmBindgenExecutable = & $pythonPath (Join-Path $project 'tools\bind_browser.py') --print-executable
-if ($LASTEXITCODE -ne 0) { throw 'Matching wasm-bindgen CLI missing' }
+foreach ($argument in @('-DROGUE_LAYERED','-I'+$logicPath,'-I'+(Join-Path $project 'contract'),'-std=gnu11','-fwrapv','-fno-strict-aliasing','-Wno-deprecated-non-prototype','-O1','--no-entry','-fwasm-exceptions','-sSUPPORT_LONGJMP=wasm','-sSTANDALONE_WASM=1','-sFILESYSTEM=0','-sWASM_BINDGEN=0','-sERROR_ON_UNDEFINED_SYMBOLS=0','-sALLOW_MEMORY_GROWTH=1','-sSTACK_SIZE=4194304','-sASSERTIONS=1','-o',(Join-Path $buildPath ($OutputName + '.wasm')))) { $compilerArguments.Add($argument) }
 $previousConfig = $env:EM_CONFIG
 $previousCache = $env:EM_CACHE
 $previousSdkPython = $env:EMSDK_PYTHON
@@ -86,29 +84,28 @@ try {
     $env:EM_CACHE=$cachePath
     # The SDK launcher used for fresh system libraries must find this SDK's Python.
     $env:EMSDK_PYTHON=$pythonPath
-    $env:PATH=(Split-Path -Parent $wasmBindgenExecutable)+';'+(Split-Path -Parent $pythonPath)+';'+$previousSdkPath
+    $env:PATH=(Split-Path -Parent $pythonPath)+';'+$previousSdkPath
     & $pythonPath $emccPath @compilerArguments
     if ($LASTEXITCODE -ne 0) { throw ('C/Wasm link failed: ' + $LASTEXITCODE) }
-    $gameJsPath = Join-Path $buildPath ($OutputName + '.js')
-    $gameJsCode = [regex]::Replace([IO.File]::ReadAllText($gameJsPath).Replace("`r`n","`n"),'(?m)^[ \t]+$','')
-    [IO.File]::WriteAllText($gameJsPath,$gameJsCode,[Text.UTF8Encoding]::new($false))
 } finally {
     $env:EM_CONFIG=$previousConfig
     $env:EM_CACHE=$previousCache
     $env:EMSDK_PYTHON=$previousSdkPython
     $env:PATH=$previousSdkPath
 }
-$files = @((Join-Path $buildPath ($OutputName+'.js')),(Join-Path $buildPath ($OutputName+'.wasm')),(Join-Path $buildPath 'browser-ui.wasm'),(Join-Path $buildPath 'browser-ui.js'))
+$files = @((Join-Path $buildPath ($OutputName+'.wasm')),(Join-Path $buildPath 'browser-ui.wasm'),(Join-Path $buildPath 'browser-ui.js'))
+Remove-Item -LiteralPath (Join-Path $buildPath ($OutputName + '.js')) -Force -ErrorAction SilentlyContinue
 $records = foreach ($file in $files) { [ordered]@{file=[System.IO.Path]::GetFileName($file);bytes=(Get-Item -LiteralPath $file).Length;sha256=(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()} }
 $manifestName = if ($OutputName -eq 'game') { 'build-manifest.json' } else { 'build-manifest-'+$OutputName+'.json' }
-$manifestRecord = [ordered]@{built_at_utc=(Get-Date).ToUniversalTime().ToString('o');logic_source_directory=$logicPath;c_source_files=$sources.Count;rust_library=$rustLibrary;rust_engine='Bevy 0.19.1';sdk_root=$SdkRoot;rust_version=((& rustc --version) -join '');test_hooks=[bool]$includeTestHooks;test_fixtures=[bool]$TestFixtures;c_flags=@('-DROGUE_LAYERED','-std=gnu11','-fwrapv','-fno-strict-aliasing','-O1');wasm_flags=@('WASM_BINDGEN','MODULARIZE','ALLOW_MEMORY_GROWTH','STACK_SIZE=4194304','ASSERTIONS=1','Worker+SAB input; no Asyncify');outputs=$records}
+$manifestRecord = [ordered]@{built_at_utc=(Get-Date).ToUniversalTime().ToString('o');logic_source_directory=$logicPath;c_source_files=$sources.Count;rust_library=$rustLibrary;rust_engine='Bevy 0.19.1';sdk_root=$SdkRoot;rust_version=((& rustc --version) -join '');test_hooks=[bool]$includeTestHooks;test_fixtures=[bool]$TestFixtures;c_flags=@('-DROGUE_LAYERED','-std=gnu11','-fwrapv','-fno-strict-aliasing','-O1');wasm_flags=@('STANDALONE_WASM','FILESYSTEM=0','Wasm EH longjmp','ALLOW_MEMORY_GROWTH','STACK_SIZE=4194304','ASSERTIONS=1','Worker+SAB input; no Asyncify');outputs=$records}
 $manifestJson = ($manifestRecord | ConvertTo-Json -Depth 8).Replace("`r`n", "`n") + "`n"
 [System.IO.File]::WriteAllText((Join-Path $buildPath $manifestName), $manifestJson, [System.Text.UTF8Encoding]::new($false))
 if ($OutputName -eq 'game' -or $artifactScope.Keep) {
     # Publish the runnable files only after compilation and hashing have succeeded.
-    foreach ($outputFile in @(($OutputName + '.js'),($OutputName + '.wasm'),'browser-ui.wasm','browser-ui.js',$manifestName)) {
+    foreach ($outputFile in @(($OutputName + '.wasm'),'browser-ui.wasm','browser-ui.js',$manifestName)) {
         Copy-Item -LiteralPath (Join-Path $buildPath $outputFile) -Destination (Join-Path $project ('build\' + $outputFile)) -Force
     }
+    Remove-Item -LiteralPath (Join-Path $project ('build\' + $OutputName + '.js')) -Force -ErrorAction SilentlyContinue
 }
 Write-Output ('Built ' + $OutputName + ' from ' + $sources.Count + ' C sources and Rust layers')
 if ($OutputName -ne 'game' -or $TestFixtures -or $LogicDirectory) {

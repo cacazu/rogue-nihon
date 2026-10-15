@@ -1,7 +1,7 @@
 // Modify only a regression Worker's startup data, before Rust sees the message.
 export function fixtureWorker(source,fixture) {
-  return workerFiles(source,[["/fixture.id",fixture]]);
+  return workerStartup(source,{fixture});
 }
-export function workerFiles(source,files) {
-  return 'self.addEventListener("message",event=>{if(event.data.type==="start")event.data.files.push(...'+JSON.stringify(files)+');});\n'+source;
+export function workerStartup(source,configuration) {
+  return 'self.addEventListener("message",event=>{if(event.data.type==="start")Object.assign(event.data,'+JSON.stringify(configuration)+');});\n'+source;
 }

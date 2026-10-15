@@ -61,7 +61,7 @@ async function start(lang,touch=false,scale=1,fixture=""){
     const worker=await readFile(path.join(root,"web/worker.js"),"utf8");
     const headers={"Cross-Origin-Opener-Policy":"same-origin","Cross-Origin-Embedder-Policy":"require-corp","Cross-Origin-Resource-Policy":"same-origin"};
     await context.route("**/web/worker.js",r=>r.fulfill({body:fixtureWorker(worker,fixture),contentType:"text/javascript",headers}));
-    await context.route("**/build/game.js",r=>r.fulfill({path:path.join(root,"build/game-fixtures.js"),contentType:"text/javascript",headers}));
+    await context.route("**/build/game.wasm",r=>r.fulfill({path:path.join(root,"build/game-fixtures.wasm"),contentType:"application/wasm",headers}));
   }
   page=await context.newPage();await installBrowserTestAdapter(page);page.on("pageerror",error=>evidence.errors.push(error.message));
   await page.addInitScript(()=>{

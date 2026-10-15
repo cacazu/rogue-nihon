@@ -38,7 +38,7 @@ impl Browser {
     fn completed(self: &Rc<Self>, effect: &Value, operation: &str, result: Result<Value, JsValue>) {
         let response = match result {
             Ok(extra) => self.api(effect, operation, true, extra),
-            Err(e) => self.api(effect, operation, false, json!({"error":format!("{e:?}")})),
+            Err(e) => self.api(effect, operation, false, json!({"error":values::error_message(&e)})),
         };
         if let Err(e) = response {
             error(e);
@@ -62,7 +62,7 @@ impl Browser {
         let worker = Worker::new("/web/worker.js")?;
         let generation = effect["generation"].clone();
         let start = js(
-            &json!({"type":"start","capacity":queue.capacity,"seed":effect["seed"],"name":effect["name"],"locale":effect["locale"],"files":effect["files"]}),
+            &json!({"type":"start","capacity":queue.capacity,"seed":effect["seed"],"name":effect["name"],"locale":effect["locale"],"trace":effect["trace"],"message_paging":effect["message_paging"]}),
         )?;
         Reflect::set(&start, &JsValue::from_str("queue"), &queue.buffer)?;
         let transfers = Array::new();
@@ -88,7 +88,7 @@ impl Browser {
                         endpoint.post_message_with_transfer(&start, &transfers)?;
                         return Ok(());
                     }
-                    let mut message = value(&data)?;
+                    let mut message = if kind == "save" { json!({"type":"save"}) } else { value(&data)? };
                     if kind == "save" {
                         message["bytes"] = json!(
                             Uint8Array::new(&Reflect::get(&data, &JsValue::from_str("bytes"))?)
@@ -332,7 +332,7 @@ impl Browser {
                                 &effect,
                                 "assets",
                                 false,
-                                json!({"set":effect["set"],"error":format!("{e:?}")}),
+                                json!({"set":effect["set"],"error":values::error_message(&e)}),
                             ) {
                                 error(e);
                             }

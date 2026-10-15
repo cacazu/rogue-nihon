@@ -120,19 +120,12 @@ static void potion(int type)
 
 void rg_test_apply_fixture(void)
 {
-    FILE *file;
     char name[64];
-    size_t name_length;
+    int32_t name_length;
     THING *monster, *object;
     int ending = 0;
-    file = fopen("/fixture.id", "rb");
-    if (!file) return;
-    /* rogue.h redirects fgets to console input; fread reads the MEMFS file. */
-    name_length = fread(name, 1, sizeof(name) - 1, file);
-    fclose(file);
-    if (!name_length) return;
-    name[name_length] = 0;
-    name[strcspn(name, "\r\n")] = 0;
+    name_length = rg_host_fixture_id(name, sizeof(name));
+    if (name_length <= 0) return;
     clean_world();
     if (!strcmp(name,"parameter-rings") || !strcmp(name,"parameter-rings-unknown")) {
         int type;

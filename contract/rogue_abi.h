@@ -91,18 +91,30 @@ void rg_host_player_name(const char *utf8_name);
 void rg_host_outcome(int32_t code, const char *message);
 /* Called only at a command's outer boundary, before BEFORE/AFTER processing. */
 void rg_host_checkpoint(void);
+/* Calendar observation only: the original C tombstone chooses when to use it. */
+int32_t rg_host_calendar_year(void);
 /* Borrowed restore checkpoint remains valid until rg_core_start returns. */
 int32_t rg_host_restore_data(const uint8_t **bytes, uint32_t *length);
 
-/* Browser imports used only by Rust. JS implements DOM/IndexedDB/SAB glue. */
+/* Native comparison-harness imports used only by Rust. The browser instead
+ * uses the fixed-width rogue imports declared in rust/src/host.rs. */
 int32_t js_rg_read_event(void);
 void js_rg_flush_input(void);
 void js_rg_present(const uint8_t *json_utf8, uint32_t length);
 void js_rg_store(const uint8_t *envelope_utf8, uint32_t length);
 void js_rg_outcome(int32_t code, const uint8_t *text_utf8, uint32_t length);
 
-/* Rust application exports. Browser glue enters the game only through rg_run;
- * diagnostic exports do not advance a turn. CString results have a paired free. */
+/* Rust application exports. Configure exactly once before rg_run in a fresh
+ * instance. UTF-8 JSON fields: locale (ja/en), trace (boolean), message_paging
+ * (classic/log), optional restore (null or the saved JSON as a UTF-8 string).
+ * rg_configure borrows the buffer only for the call, copies owned startup data,
+ * returns 0 on success, -2 for invalid data and -3 for an already used instance.
+ * The caller returns every rg_alloc buffer using its exact pointer/length pair.
+ * A completed or failed game must be replaced with a fresh instance/Worker.
+ * Diagnostic exports do not advance a turn. CString results have a paired free. */
+uint8_t *rg_alloc(uint32_t length);
+void rg_dealloc(uint8_t *bytes, uint32_t length);
+int32_t rg_configure(const uint8_t *json_utf8, uint32_t length);
 int32_t rg_run(uint32_t seed, const char *player_name);
 char *rg_snapshot_json(void);
 void rg_string_free(char *string);
@@ -110,6 +122,10 @@ int32_t rg_validate_envelope(const uint8_t *bytes, uint32_t length);
 #ifdef RG_TEST_HOOKS
 void rg_test_repaint(void);
 int32_t rg_test_save_roundtrip(void);
+/* Test configuration alone permits an ASCII fixture ID (1..63 bytes). Copies
+ * that ID and its NUL terminator, returns its byte length, 0 if absent or -1
+ * when the output buffer is invalid/too small. Absent from production Wasm. */
+int32_t rg_host_fixture_id(char *output, uint32_t capacity);
 #endif
 #ifdef __cplusplus
 }

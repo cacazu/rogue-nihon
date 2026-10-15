@@ -21,9 +21,9 @@ await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
 const base = "http://127.0.0.1:" + server.address().port + "/";
 const worker = await readFile(path.join(root, "web/worker.js"), "utf8");
 const headers = { "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Embedder-Policy": "require-corp", "Cross-Origin-Resource-Policy": "same-origin" };
-let baseline = process.env.ROGUE_THROW_BASELINE || path.join(root, "tests/browser-smoke/output/throw-direction/before/build/game-fixtures.js");
+let baseline = process.env.ROGUE_THROW_BASELINE || path.join(root, "tests/browser-smoke/output/throw-direction/before/build/game-fixtures.wasm");
 const historical = await access(baseline).then(() => true, () => false);
-if (!historical) baseline = path.join(root, "build/game-fixtures.js");
+if (!historical) baseline = path.join(root, "build/game-fixtures.wasm");
 const evidence = { browser: browserName, baseline, historical, started_at: new Date().toISOString(), checks: [], comparisons: [], screenshots: [], errors: [] };
 const directions = [["y", "Home"], ["k", "ArrowUp"], ["u", "PageUp"], ["h", "ArrowLeft"], ["l", "ArrowRight"], ["b", "End"], ["j", "ArrowDown"], ["n", "PageDown"]];
 let browser, context, page;
@@ -49,7 +49,7 @@ async function open({ mobile = false, before = false, lang = "ja" } = {}) {
   await context?.close();
   context = await browser.newContext({ viewport: mobile ? { width: 390, height: 844 } : { width: 1240, height: 900 }, hasTouch: mobile, isMobile: mobile, deviceScaleFactor: mobile ? 2 : 1 });
   await context.route("**/web/worker.js", r => r.fulfill({ body: fixtureWorker(worker,"inventory-all"), contentType: "text/javascript", headers }));
-  await context.route("**/build/game.js", r => r.fulfill({ path: before ? baseline : path.join(root, "build/game-fixtures.js"), contentType: "text/javascript", headers }));
+  await context.route("**/build/game.wasm", r => r.fulfill({ path: before ? baseline.replace(/\.js$/, ".wasm") : path.join(root, "build/game-fixtures.wasm"), contentType: "application/wasm", headers }));
   if (before) await context.route("**/build/game-fixtures.wasm", r => r.fulfill({ path: baseline.replace(/\.js$/, ".wasm"), contentType: "application/wasm", headers }));
   page = await context.newPage();await installBrowserTestAdapter(page); page.setDefaultTimeout(10000);
   page.on("pageerror", e => evidence.errors.push(e.message));
@@ -139,8 +139,8 @@ try {
     await page.waitForFunction(() => __rogueBrowserTest.savedLength > 0 && !__rogueBrowserTest.savePending);
     await click("settings-top"); await page.waitForFunction(() => __rogueBrowserTest.topOpen);
     if (before) {
-      await context.unroute("**/build/game.js"); await context.unroute("**/build/game-fixtures.wasm");
-      await context.route("**/build/game.js", r => r.fulfill({ path: path.join(root, "build/game-fixtures.js"), contentType: "text/javascript", headers }));
+      await context.unroute("**/build/game.wasm"); await context.unroute("**/build/game-fixtures.wasm");
+      await context.route("**/build/game.wasm", r => r.fulfill({ path: path.join(root, "build/game-fixtures.wasm"), contentType: "application/wasm", headers }));
     }
     await click("load"); await page.waitForFunction(() => __rogueBrowserTest.frame?.ui.movement_direction && __rogueBrowserTest.queuePending === 0); await draw();
     assert.deepEqual((await state()).trace, saved.trace); await aiming(true); await shot(before ? "legacy-save-aiming" : "restored-aiming");
@@ -162,7 +162,7 @@ try {
     }
   });
   assert.deepEqual(evidence.errors, []);
-  evidence.files = await Promise.all(["rust/crates/display/src/game_window.rs", "rust/crates/display/src/presentation.rs", "rust/crates/input/src/lib.rs", "rust/src/engine.rs", "logic/command.c", "rust/crates/browser-display/src/browser/mod.rs", "build/game.js", "build/game.wasm", "build/game-fixtures.js", "build/game-fixtures.wasm"].map(async file => ({ file, sha256: createHash("sha256").update(await readFile(path.join(root, file))).digest("hex") })));
+  evidence.files = await Promise.all(["rust/crates/display/src/game_window.rs", "rust/crates/display/src/presentation.rs", "rust/crates/input/src/lib.rs", "rust/src/engine.rs", "logic/command.c", "rust/crates/browser-display/src/browser/mod.rs", "build/game.wasm", "build/game-fixtures.wasm"].map(async file => ({ file, sha256: createHash("sha256").update(await readFile(path.join(root, file))).digest("hex") })));
   evidence.result = "pass";
 } catch (error) {
   evidence.result = "fail"; evidence.failure = error.stack;

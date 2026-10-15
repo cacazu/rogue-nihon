@@ -292,8 +292,7 @@ death(char monst)
     rg_core_set_outcome(1, "dead");
 #endif
     char **dp, *killer;
-    struct tm *lt;
-    static time_t date;
+    int calendar_year;
 #ifndef ROGUE_LAYERED
     struct tm *localtime();
 #endif
@@ -323,8 +322,12 @@ death(char monst)
     }
     else
     {
-	time(&date);
-	lt = localtime(&date);
+#if defined(ROGUE_LAYERED) && defined(__EMSCRIPTEN__)
+        calendar_year = rg_host_calendar_year();
+#else
+        time_t date = time(NULL);
+        calendar_year = 1900 + localtime(&date)->tm_year;
+#endif
 	move(8, 0);
 	dp = rip;
 	while (*dp)
@@ -341,9 +344,9 @@ death(char monst)
 	move(15, center(prbuf));
 	addstr(prbuf);
         rg_ending_line("tombstone", 15, center(prbuf), "ui.ending.gold", "%d Au", purse);
-	sprintf(prbuf, "%4d", 1900+lt->tm_year);
+	sprintf(prbuf, "%4d", calendar_year);
 	mvaddstr(18, 26, prbuf);
-        rg_ending_line("tombstone", 18, 26, "ui.ending.year", "%4d", 1900+lt->tm_year);
+        rg_ending_line("tombstone", 18, 26, "ui.ending.year", "%4d", calendar_year);
         rg_ui_line("tombstone", 10, 26, "ui.ending.rest", "[]", "REST");
         rg_ui_line("tombstone", 11, 27, "ui.ending.in", "[]", "IN");
         rg_ui_line("tombstone", 12, 25, "ui.ending.peace", "[]", "PEACE");

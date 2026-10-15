@@ -1,5 +1,5 @@
 {
-  "built_at_utc": "2026-10-15T08:05:44.90777+09:00",
+  "built_at_utc": "2026-10-15T00:07:35.668685+00:00",
   "logic_source_directory": "C:\\Users\\kit\\gameme\\jnethack\\jrouge\\rogue-nihon\\logic",
   "c_source_files": 38,
   "rust_library": "C:\\Users\\kit\\gameme\\jnethack\\jrouge\\rogue-nihon\\.local\\tasks\\python-en3ckht5\\cargo-target\\wasm32-unknown-emscripten\\release\\librogue_layers.a",
@@ -16,8 +16,9 @@
     "-O1"
   ],
   "wasm_flags": [
-    "WASM_BINDGEN",
-    "MODULARIZE",
+    "STANDALONE_WASM",
+    "FILESYSTEM=0",
+    "Wasm EH longjmp",
     "ALLOW_MEMORY_GROWTH",
     "STACK_SIZE=4194304",
     "ASSERTIONS=1",
@@ -25,29 +26,19 @@
   ],
   "outputs": [
     {
-      "file": "game.js",
-      "bytes": 410394,
-      "sha256": "25e8abaed524792d61d226b96e640f658cd61461ddb887a8ae7e3a8c8d4e0cc9"
-    },
-    {
       "file": "game.wasm",
-      "bytes": 2337404,
-      "sha256": "4126a67c7403a712b06995959f7f0aa01a47466d0b3d1259d012fb736d648560"
+      "bytes": 2455055,
+      "sha256": "213b1264a4324ac4bb6174cbd3f67789877f5d1729e6be906a183196857872eb"
     },
     {
       "file": "browser-ui.wasm",
-      "bytes": 4798327,
-      "sha256": "04414a4a28980d168bcd08150cef7b8d4e882be904086fb649de6beeecf0ef2f"
+      "bytes": 4826852,
+      "sha256": "24985d74b0a3942e7412f5d7bae15c61ac1ae562018d4892d4c1f467154a5004"
     },
     {
       "file": "browser-ui.js",
-      "bytes": 70160,
-      "sha256": "5c8c0b86cc1e4985636dc4f9eca9c070ceaacd8fcc45f8fcc1d1e314929b043e"
+      "bytes": 67914,
+      "sha256": "e466368cfa59ca47333012a9c1700301536a52852eb5a01025ea252733747972"
     }
-  ],
-  "browser_ui": {
-    "built_at_utc": "2026-10-14T23:37:22.5877390Z",
-    "crate": "rogue-browser-display",
-    "target": "wasm32-unknown-unknown"
-  }
+  ]
 }

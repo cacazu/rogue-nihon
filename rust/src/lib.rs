@@ -2,7 +2,10 @@
 //! Each game has one single-threaded Wasm instance. Browser repaint never calls C.
 mod engine;
 mod host;
+#[cfg(target_os = "emscripten")]
+mod runtime;
 mod session;
+mod startup;
 
 use abi::*;
 use rogue_contract as abi;
@@ -246,14 +249,14 @@ pub unsafe extern "C" fn rg_run(seed: u32, name: *const c_char) -> i32 {
         // SAFETY: Guaranteed by the exported function's caller contract.
         bounded_name(&unsafe { CStr::from_ptr(name) }.to_string_lossy())
     };
-    let language = if std::fs::read_to_string("/locale.txt")
-        .ok()
-        .is_some_and(|s| s.trim() == "en")
-    {
-        "en"
-    } else {
-        "ja"
+    let startup = match startup::take() {
+        Ok(startup) => startup,
+        Err(error) => {
+            notice(&error);
+            return -2;
+        }
     };
+    let language = startup.locale;
     engine::with_session_mut(|state| state.display.language = language.into());
     if name.chars().any(char::is_control) {
         notice("invalid player name");
@@ -267,18 +270,11 @@ pub unsafe extern "C" fn rg_run(seed: u32, name: *const c_char) -> i32 {
         },
         ..Session::default()
     };
-    let trace_enabled = std::fs::metadata("/trace.enabled").is_ok();
+    let trace_enabled = startup.trace;
     session.platform.set_trace_enabled(trace_enabled);
-    if std::fs::read_to_string("/message-paging.txt")
-        .ok()
-        .is_some_and(|text| text.trim() == "log")
-    {
-        session
-            .platform
-            .set_message_paging(platform::MessagePaging::Log);
-    }
-    match std::fs::read("/restore.json") {
-        Ok(bytes) => match platform::Envelope::parse(&bytes).and_then(|saved| {
+    session.platform.set_message_paging(startup.message_paging);
+    if let Some(bytes) = startup.restore {
+        match platform::Envelope::parse(&bytes).and_then(|saved| {
             let restore_index = saved.input_index;
             platform::Session::restore(saved, session.platform.message_paging())
                 .map(|(platform, presentation)| (platform, presentation, restore_index))
@@ -302,11 +298,6 @@ pub unsafe extern "C" fn rg_run(seed: u32, name: *const c_char) -> i32 {
                 notice(&error);
                 return -2;
             }
-        },
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-        Err(error) => {
-            notice(&format!("save read failed: {error}"));
-            return -2;
         }
     }
     let initial_seed = session.platform.seed();

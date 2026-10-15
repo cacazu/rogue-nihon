@@ -1,7 +1,7 @@
 //! PNG bytes and decoded RGBA rasters are owned and transformed in Rust.
 use super::*;
 use rogue_raster::{Image, ImageSet};
-use wasm_bindgen_futures::{JsFuture, future_to_promise};
+use std::{future::Future, task::Poll};
 pub(super) type Tiles = ImageSet;
 pub(super) async fn load(plan: &Value) -> Result<(Tiles, Value), JsValue> {
     let files: Vec<_> = plan["files"]
@@ -10,20 +10,41 @@ pub(super) async fn load(plan: &Value) -> Result<(Tiles, Value), JsValue> {
         .flatten()
         .map(|name| text(name).to_string())
         .collect();
-    let requests = js_sys::Array::new();
-    for name in &files {
-        let url = format!("{}{}", text(&plan["base"]), name);
-        requests.push(&future_to_promise(async move {
-            let bytes = fetch_bytes(&url).await?;
-            Ok(js_sys::Uint8Array::from(bytes.as_slice()).into())
-        }));
-    }
-    let downloaded = js_sys::Array::from(&JsFuture::from(js_sys::Promise::all(&requests)).await?);
+    let mut requests: Vec<_> = files
+        .iter()
+        .map(|name| {
+            let url = format!("{}{}", text(&plan["base"]), name);
+            Some(Box::pin(async move { fetch_bytes(&url).await }))
+        })
+        .collect();
+    let mut downloaded: Vec<Option<Vec<u8>>> = vec![None; requests.len()];
+    let downloaded = std::future::poll_fn(move |context| {
+        for (index, request) in requests.iter_mut().enumerate() {
+            if let Some(future) = request {
+                match future.as_mut().poll(context) {
+                    Poll::Ready(Ok(bytes)) => {
+                        downloaded[index] = Some(bytes);
+                        *request = None;
+                    }
+                    Poll::Ready(Err(failure)) => return Poll::Ready(Err(failure)),
+                    Poll::Pending => {}
+                }
+            }
+        }
+        if requests.iter().all(Option::is_none) {
+            Poll::Ready(Ok(downloaded
+                .iter_mut()
+                .map(|bytes| bytes.take().unwrap())
+                .collect::<Vec<_>>()))
+        } else {
+            Poll::Pending
+        }
+    })
+    .await?;
     let mut images = BTreeMap::new();
     let mut dimensions = Vec::new();
-    for (index, name) in files.into_iter().enumerate() {
-        let bytes = js_sys::Uint8Array::new(&downloaded.get(index as u32)).to_vec();
-        let image = Image::decode_png(&bytes).map_err(|e| JsValue::from_str(&e))?;
+    for (name, bytes) in files.into_iter().zip(downloaded) {
+        let image = Image::decode_png(&bytes).map_err(|e| values::string(&e))?;
         dimensions.push(json!({"width":image.width(),"height":image.height()}));
         images.insert(name, image);
     }

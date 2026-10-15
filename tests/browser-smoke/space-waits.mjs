@@ -1,4 +1,4 @@
-import {fixtureWorker,workerFiles} from "./fixture-worker.mjs";
+import {fixtureWorker,workerStartup} from "./fixture-worker.mjs";
 import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
@@ -23,10 +23,10 @@ async function snapshot(){return page.evaluate(()=>({ui:__rogueBrowserTest.frame
 async function settled(){await page.waitForFunction(()=>__rogueBrowserTest?.frame&&__rogueBrowserTest.trace&&__rogueBrowserTest.inputRequestCount&&__rogueBrowserTest.queuePending===0);}
 async function start(fixture='',legacy=false){
  await context?.close();context=await browser.newContext({viewport:{width:1240,height:900}});
- if(fixture||legacy){let source=worker;if(fixture)source=fixtureWorker(source,fixture);if(legacy)source=workerFiles(source,[["/message-paging.txt","legacy"]]);
+ if(fixture||legacy){let source=worker;if(fixture)source=fixtureWorker(source,fixture);if(legacy)source=workerStartup(source,{message_paging:"classic"});
  await context.route('**/web/worker.js',r=>r.fulfill({body:source,contentType:'text/javascript',headers:{'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'}}));
  }
- if(fixture)await context.route('**/build/game.js',r=>r.fulfill({path:path.join(root,'build/game-fixtures.js'),contentType:'text/javascript',headers:{'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'}}));
+ if(fixture)await context.route('**/build/game.wasm',r=>r.fulfill({path:path.join(root,'build/game-fixtures.wasm'),contentType:'application/wasm',headers:{'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'}}));
  page=await context.newPage();await installBrowserTestAdapter(page);page.on('pageerror',e=>evidence.errors.push(String(e)));
  await page.goto(base+'?trace=1');await page.locator('#seed').fill('17');await page.locator('#new-game').click();await settled();
  if(!((await snapshot()).ui.window))await page.locator('#board').focus();

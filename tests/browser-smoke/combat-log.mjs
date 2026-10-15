@@ -67,7 +67,7 @@ try {
   context=await playwright.chromium.launchPersistentContext(path.join(scratch,'profile'),{executablePath:executable,headless:true,viewport:{width:1440,height:900},args:launchArgs});
   browser=context.browser();
   await context.route('**/web/worker.js',route=>route.fulfill({headers:{'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'},contentType:'text/javascript',body:fixtureWorker(workerSource,"combat")}));
-  await context.route('**/build/game.js',route=>route.fulfill({headers:{'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'},path:path.join(project,'build/game-fixtures.js'),contentType:'text/javascript'}));
+  await context.route('**/build/game.wasm',route=>route.fulfill({headers:{'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'},path:path.join(project,'build/game-fixtures.wasm'),contentType:'application/wasm'}));
   page=await context.newPage();await installBrowserTestAdapter(page);page.on('pageerror',error=>evidence.errors.push(error.message));
   await page.goto(base+'?trace=1');await page.waitForFunction(()=>window.__rogueBrowserTest?.graphics.images===46);
   await page.locator('#seed').fill('17');await page.locator('#new-game').click();await settled();

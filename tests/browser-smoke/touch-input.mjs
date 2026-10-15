@@ -28,7 +28,7 @@ try {
   const worker = await readFile(path.join(root, "web/worker.js"), "utf8");
   const headers = { "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Embedder-Policy": "require-corp", "Cross-Origin-Resource-Policy": "same-origin" };
   await context.route("**/web/worker.js", route => route.fulfill({ body: fixtureWorker(worker,"plain"), contentType: "text/javascript", headers }));
-  await context.route("**/build/game.js", route => route.fulfill({ path: path.join(root, "build/game-fixtures.js"), contentType: "text/javascript", headers }));
+  await context.route("**/build/game.wasm", route => route.fulfill({ path: path.join(root, "build/game-fixtures.wasm"), contentType: "application/wasm", headers }));
   page = await context.newPage();await installBrowserTestAdapter(page); page.setDefaultTimeout(15000);
   page.on("pageerror", error => evidence.errors.push(error.message));
   await page.goto(new URL("?trace=1&view=pixels&lang=ja", base).href);
@@ -149,13 +149,13 @@ try {
     assert.deepEqual((await state()).player, { x, y }); await shot("final");
   });
   await check("The full touch sequence matches exactly the intended original C keys, including RNG and all inspected state words", async () => {
-    const reference = await runGame(path.join(root, "build/game-fixtures.js"), { fixture: "plain", seed: 17, name: "TouchAudit", locale: "ja", messagePaging: "log", text: intended.join("") });
+    const reference = await runGame(path.join(root, "build/game-fixtures.wasm"), { fixture: "plain", seed: 17, name: "TouchAudit", locale: "ja", messagePaging: "log", text: intended.join("") });
     const actual = await page.evaluate(() => __rogueBrowserTest.traces.map(t => t.words));
     assert.deepEqual(actual, reference.traces.map(t => t.words));
     evidence.acceptedKeys = intended; evidence.cCheckpoints = actual.length;
   });
   assert.deepEqual(evidence.errors, []);
-  evidence.files = await Promise.all(["rust/crates/browser-display/src/browser/mod.rs", "web/app.js", "build/game.js", "build/game.wasm"].map(async file => ({ file, sha256: createHash("sha256").update(await readFile(path.join(root, file))).digest("hex") })));
+  evidence.files = await Promise.all(["rust/crates/browser-display/src/browser/mod.rs", "web/app.js", "build/game.wasm"].map(async file => ({ file, sha256: createHash("sha256").update(await readFile(path.join(root, file))).digest("hex") })));
   evidence.result = "pass";
 } catch (error) {
   evidence.result = "fail"; evidence.failure = error.stack;

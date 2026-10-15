@@ -10,7 +10,7 @@
 | 表示 | `rust/crates/display/` | 翻訳、ゲームウインドウ、公開済み所持品の描画、観測地図・足元・効果、不変フレーム |
 | 入力 | `rust/crates/input/` | 物理入力から原作キーへの変換、UTF-8編集、持ち物メニューの選択と操作予約 |
 | プラットフォーム | `rust/crates/platform/` | checkpoint、消費済み入力journal、再生位置、保存envelopeと検証 |
-| ゲーム側の接続 | `rust/src/lib.rs`、`session.rs`、`engine.rs` | C/JS FFI、Bevy Appの組立て、各層への状態投影と実行順 |
+| ゲーム側の接続 | `rust/src/lib.rs`、`host.rs`、`startup.rs`、`runtime.rs`、`session.rs`、`engine.rs` | C/Rust FFI、型付き開始設定・転送allocation・libc環境サービス、Bevy Appの組立て、各層への状態投影と実行順 |
 | ブラウザー側の判断 | `rust/crates/browser-display/src/controller.rs`、`policies.rs`、`display/src/browser_ui/`、`widgets.rs` | 開始・終了・保存の状態、Worker世代、IME制限、入力検証、表示設定、履歴、配置・フォーカス・カメラ・タイル計画 |
 | ラスタライズ | `rust/crates/raster/` | PNG decode、画像回転・拡大・合成、図形・SVG path・クリップ・透明度、フォント計測・shaping・文字の画素、完成RGBA |
 | ブラウザー資源 | `rust/crates/browser-display/src/browser/` | イベントlistener、完成RGBAの転送、ネイティブ文字入力、画像bytesとcache、Worker/SAB、IndexedDB、保存候補bytes、ファイル・Blobの所有とAPI実行 |
@@ -23,9 +23,13 @@
 
 ## 実行とABI
 
-契約の正本は [contract/rogue_abi.h](../contract/rogue_abi.h)。固定幅整数と借用byte列を渡し、CのWINDOW・THING・FILE・生の関数ポインターは公開しない。ABI定数は同じヘッダーからRustの `rogue-contract` と `web/abi.js` へ生成する。Cが確保した保存bufferは接続部の `CoreSaveBuffer` が所有し、失敗経路を含めDropで `rg_core_save_free` を一度だけ呼ぶ。復元に貸すbufferは別の不変allocationで、後のcheckpoint差し替えでも寿命を保つ。
+契約の正本は [contract/rogue_abi.h](../contract/rogue_abi.h)。固定幅整数と借用byte列を渡し、CのWINDOW・THING・FILE・生の関数ポインターは公開しない。ABI定数は同じヘッダーからRustの `rogue-contract` へ生成する。Cが確保した保存bufferは接続部の `CoreSaveBuffer` が所有し、失敗経路を含めDropで `rg_core_save_free` を一度だけ呼ぶ。復元に貸すbufferは別の不変allocationで、後のcheckpoint差し替えでも寿命を保つ。
 
 CゲームスタックはWorker内で同期実行し、入力キューが空ならAtomics.waitで待つ。空キューをEscや仮の入力として扱わない。Asyncifyは使わず、新規ゲームと復元には新しいWorker/Wasm instanceを作る。
+
+ゲーム本体はstandalone reactorの `build/game.wasm` で、Worker側RustがWebAssembly APIでcompile・instantiateし、`_initialize`、`rg_configure`、`rg_run` の順に呼ぶ。`rust/src/startup.rs` が開始設定の正本であり、言語・trace・メッセージ送り方針・復元JSONを型ごとに検証する。未知のフィールドと不正な型を拒否し、成功した設定は同じinstanceで差し替えられない。ゲーム開始時に一度だけ消費する。fixture指定は `test-hooks` のbuildだけが受け付ける。
+
+Workerの `Transfer` は `rg_alloc / rg_dealloc` で確保元のゲーム側Rustへ転送bufferを返す。確保元はpointerとlengthの組を保持し、未知・重複・不一致の解放を行わない。`rg_configure` は借用byte列を同期区間でコピーして所有し、その後の転送buffer解放に依存しない。開始設定や復元byte列を仮想ファイルへ書く処理はない。
 
 `rogue-layers` のBevy Appには表示・入力・プラットフォームのPluginを登録し、CのFFI呼出しに合わせて `App.update()` を行う。SystemSetの順序は **Presentation → Input → Journal → AcceptedInput → Frame → Save**。時間経過やブラウザーの再描画だけでCのcommand・look・RNGを呼ばない。
 
@@ -69,20 +73,23 @@ CゲームスタックはWorker内で同期実行し、入力キューが空な�
 
 ブラウザーAPIは `wasm-bindgen / web-sys / js-sys` の生成bindingを通してRustから呼ぶ。製品の手書きJSはWasmの起動だけを担当する。生成bindingは実行中もブラウザーAPIへの呼出し・値の受渡し・callback接続を行うため、JS全体を起動時だけ実行するという意味ではない。ゲームの状態・入力・描画・保存の判断や処理は原作CとRustが所有する。`browser/mod.rs` はDOM・listener・座標変換・再描画の登録を、`paint.rs` は完成RGBAの転送と公開UIの意味的なDOM mirrorを担当する。listenerは弱参照でBrowserへ接続し、callbackの寿命をRustで保持する。`effects.rs::WorkerSlot` はWorker・共有キュー・callbackを所有し、Dropでキューをcloseしてcallbackを外しWorkerを終了する。`queue.rs` はSAB/Atomicsの容量検査・全公開または全拒否・待機・flushを実装し、生の整数を解釈しない。
 
-`saves.rs` はIndexedDB transaction完了・ファイル選択・Blob書出しを扱い、候補bytesと採用済みbytesはBrowserの別領域に保持する。ファイル選択と全画面のAPIはユーザーイベントの同期区間で開始し、完了はRust futureで待つ。`images.rs` は取得bytesをRustのPNG decoderへ渡し、decode済み画像と回転cacheを所有する。`worker.rs` はEmscriptenの初期化・仮想FS・同期C起動・親への転送を担当する。Emscriptenの生成runtimeには仮想FS・libc・メモリー・文字列の汎用接続が含まれる。
+`saves.rs` はIndexedDB transaction完了・ファイル選択・Blob書出しを扱い、候補bytesと採用済みbytesはBrowserの別領域に保持する。ファイル選択と全画面のAPIはユーザーイベントの同期区間で開始し、完了はRust futureで待つ。`images.rs` は取得bytesをRustのPNG decoderへ渡し、decode済み画像と回転cacheを所有する。`worker.rs` はstandalone Wasmの初期化・開始設定の転送・同期C起動・親への転送を担当する。
+
+`browser/values.rs` はブラウザーのUTF-16文字列とRustのUTF-8、JSON値とブラウザーのobject/arrayを変換する。深さ・循環参照・数値を検査し、ブラウザー由来の孤立surrogateには置換文字を使う。`tools/bind_browser.py` は生成bindingの文字列ABIをこのRust codecへ接続し、使用するwasm-bindgenの版と生成形状が一致しない場合に生成を失敗させる。生成JSにJSONの直列化・解析や文字列のencode/decode処理を置かない。
 
 `rogue-raster` は表示層の描画命令を受け取り、tiny-skia・svgtypes・swash・pngを使って全画面のRGBAをRust内で作る。ブラウザーへは `putImageData` で完成画像を一度だけ転送し、Canvasの図形・文字・パス・画像描画や文字計測を使わない。文字計測と描画は同じglyph planとtop基準を使い、同梱Noto Sans JPの400/600とNoto Color EmojiをRustで読み込む。文字幅はOSのフォントに依存させない。ドット絵の32px回転と最近傍拡大を保ち、図形・透明度・クリップ・輪郭もRustで計算する。PNGはbuffer確保前に寸法・画素数・bytes上限を検査する。フォントの取得・解析に失敗した場合はRustが可視の起動エラーと再読み込み操作を出す。
 
 素材ギャラリーも共通のWasm起動だけを使う。`browser/gallery.rs` がmanifest・PNG・atlasの切出し・再生時刻・停止再開・フレーム選択を所有し、元画像とsheetを含む完成RGBAを転送する。HTTPの作品サーバーから開く。素材生成・検証用JSは `tools/`・`tests/` に置き、製品から読み込まない。境界検査は `web/` 以下を再帰走査し、HTML内scriptも対象にする。
 
-ゲーム側のホスト接続は `rust/src/host.rs` の `wasm-bindgen` 宣言から生成する。Emscriptenは `WASM_BINDGEN` を有効にして生成bindingを `game.js` に組み込み、手書きのJSライブラリーを使わない。ゲーム側のAPIは借用sliceを同期区間だけ渡し、Worker側Rustは毎回現在の `HEAPU8` を取得してアドレス・長さを検査し、Rust所有のbyte列へコピーする。メモリー成長前のviewを保持せず、元のsliceの解放前にコピーを終える。JSON・UTF-8の復号と保存byte列の転送もWorker側Rustが担当する。
+ゲーム側のホスト接続は `rust/src/host.rs` の固定幅raw Wasm importsで、Worker側Rustのcallbackを `rogue` namespaceへ登録する。ゲーム側のAPIは借用sliceを同期区間だけ渡し、Worker側Rustは毎回現在の `WebAssembly.Memory.buffer` を取得してアドレス・長さを検査し、Rust所有のbyte列へコピーする。メモリー成長前のviewを保持せず、元のsliceの解放前にコピーを終える。JSON・UTF-8の復号と保存byte列の転送もWorker側Rustが担当する。
+
+ゲーム側の `runtime.rs` が空の環境変数・固定した作業ディレクトリー・時計の単位変換・stdioの上限検査とbyte列結合を実装する。非対応のOSファイル操作はエラーを返し、stdout/stderrはRustの診断channelへ渡す。WASIの `proc_exit` はWorker側Rustで異常終了として扱う。Cのlibc・allocator・standalone supportはWasm内で動き、メモリー成長とsetjmp/longjmpもWasm内で完結する。ビルドでは `STANDALONE_WASM / FILESYSTEM=0 / WASM_BINDGEN=0` とWasm EHを使い、EmscriptenのJSランタイムを配布しない。墓碑の年は死亡時にブラウザーが観測した現地年をRust経由で受け取り、standalone libcのUTC timezoneに依存しない。
 
 | JS | 残る接続の責務 |
 |---|---|
 | `web/app.js` | 生成bindingとWasmを読み、Rustのブラウザー起動を呼ぶ |
 | `web/worker.js` | classic Worker内で同じbindingとWasmを読みRustを起動する。Rust起動前の取得・初期化失敗だけ親へ通知する |
-| `web/abi.js` | ヘッダーから生成した定数。通常HTML/Workerでは読み込まない |
-| `build/browser-ui.js`、`build/game.js` | wasm-bindgenのブラウザーAPI bindingとEmscriptenの生成runtime。アプリケーション判断の正本にはしない |
+| `build/browser-ui.js` | wasm-bindgenのブラウザーAPI binding。Rust codecへの接続、API実行・値とcallbackの受渡しを担当する |
 
 サーバーへのプレイ記録送信は行わない。復元に必要な消費済み入力journalは、Rustの保存コンテナ内に保持する。
 
@@ -149,4 +156,4 @@ GOLDのcount=0、食料や杖のwield、方向指定の絶対target、壁移動�
 
 通常Wasmに `RG_TEST_FIXTURES` や `RG_TEST_HOOKS`、Rustの `test-hooks / browser-test` を含めない。試験用buildには `game` 以外の出力名を要求する。ブラウザーの観測・操作exportは `browser-test` featureの専用 `browser-test.js / browser-test.wasm` に限定する。テストアダプターは検証側でbindingを置き換えて注入し、本番JSから読み込まない。
 
-通常ビルドは自分の専用コンパイラー領域だけを終了時に閉じる。他の中断した実行の回収は検証ツール・明示的な開発操作に限定する。配布に必要な `game.js / game.wasm / browser-ui.js / browser-ui.wasm / build-manifest.json` は保持する。ビルド・検証の実行方法は [README](../README.md) と [tests/README](../tests/README.md) に置く。
+通常ビルドは自分の専用コンパイラー領域だけを終了時に閉じる。他の中断した実行の回収は検証ツール・明示的な開発操作に限定する。配布に必要な `game.wasm / browser-ui.js / browser-ui.wasm / build-manifest.json` は保持する。ビルド・検証の実行方法は [README](../README.md) と [tests/README](../tests/README.md) に置く。
