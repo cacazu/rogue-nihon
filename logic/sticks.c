@@ -188,7 +188,7 @@ do_zap()
 	    if (cur_weapon != NULL)
 		bolt.o_launch = cur_weapon->o_which;
 #ifdef ROGUE_LAYERED
-	    rg_semantic_actor_event(&player,RG_ACTOR_ATTACK);
+	    rg_semantic_actor_attack(&player,hero.x+delta.x);
 #endif
 	    do_motion(&bolt, delta.y, delta.x);
 	    if ((tp = moat(bolt.o_pos.y, bolt.o_pos.x)) != NULL
@@ -329,7 +329,7 @@ fire_bolt(coord *start, coord *dir, char *name)
     THING bolt;
 
 #ifdef ROGUE_LAYERED
-    rg_semantic_actor_event(ce(*start,hero)?&player:moat(start->y,start->x),RG_ACTOR_ATTACK);
+    rg_semantic_actor_attack(ce(*start,hero)?&player:moat(start->y,start->x),start->x+dir->x);
 #endif
 
     bolt.o_type = WEAPON;

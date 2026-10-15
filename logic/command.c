@@ -15,6 +15,9 @@
 #include <curses.h>
 #include <ctype.h>
 #include "rogue.h"
+#ifdef ROGUE_LAYERED
+#include "semantic.h"
+#endif
 
 /* Persistent command state; accessors permit exact outer-boundary restore. */
 static char countch, direction, newcount = FALSE;
@@ -86,6 +89,10 @@ command()
 	}
 	else
 	    ch = '.';
+#ifdef ROGUE_LAYERED
+        /* Read/wait is complete. A fresh original action replaces old poses. */
+        rg_semantic_actors_turn();
+#endif
 	if (no_command)
 	{
 	    if (--no_command == 0)

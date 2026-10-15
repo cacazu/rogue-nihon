@@ -52,16 +52,23 @@ struct visual_actor {
     const THING *pointer;
     uint32_t id;
     int observed;
+    int facing;
 };
 static struct visual_actor visual_actors[RG_ACTOR_SLOTS];
 static uint32_t visual_epoch, visual_next_id = 1;
 static int visual_player_observed;
+static uint32_t visual_step;
+static int visual_player_facing=1;
+
+void rg_semantic_actors_turn(void) {++visual_step;}
 
 void rg_semantic_actors_reset(void)
 {
     memset(visual_actors,0,sizeof visual_actors);
     visual_next_id=1;
     visual_player_observed=0;
+    visual_player_facing=1;
+    visual_step=0;
     if (++visual_epoch==0) visual_epoch=1;
     rg_host_map_actor_reset(visual_epoch);
 }
@@ -79,6 +86,7 @@ static struct visual_actor *visual_entry(const THING *actor,int create)
     if (!create || !free_entry || !visual_next_id) return NULL;
     free_entry->pointer=actor;
     free_entry->id=visual_next_id++;
+    free_entry->facing=actor->t_pos.x>hero.x?-1:1;
     return free_entry;
 }
 
@@ -102,7 +110,7 @@ void rg_semantic_map_actors(const uint8_t *cells,uint32_t rows,uint32_t columns)
     unsigned i;
     int x,y;
     unsigned char glyph;
-    if (!rg_host_map_actors_begin()) return;
+    if (!rg_host_map_actors_begin(visual_step)) return;
     visual_player_observed=0;
     for (i=0;i<RG_ACTOR_SLOTS;i++) visual_actors[i].observed=0;
     if (!cells || rows<2 || !columns || rows>MAXLINES || columns>MAXCOLS) return;
@@ -113,7 +121,7 @@ void rg_semantic_map_actors(const uint8_t *cells,uint32_t rows,uint32_t columns)
         if (actor==&player) {
             if (glyph==PLAYER) {
                 visual_player_observed=1;
-                rg_host_map_actor(0,x,y,glyph);
+                rg_host_map_actor(0,x,y,glyph,visual_player_facing,no_command>0);
             }
         } else {
             /* A disguised item remains an item. Hallucination uses the chosen
@@ -122,7 +130,8 @@ void rg_semantic_map_actors(const uint8_t *cells,uint32_t rows,uint32_t columns)
             entry=visual_entry(actor,1);
             if (!entry) continue;
             entry->observed=1;
-            rg_host_map_actor(entry->id,x,y,glyph);
+            rg_host_map_actor(entry->id,x,y,glyph,entry->facing,
+                on(*actor,ISHELD) || !on(*actor,ISRUN));
         }
     }
     for (i=0;i<RG_ACTOR_SLOTS;i++)
@@ -149,10 +158,27 @@ void rg_semantic_actor_damage(const THING *actor,int previous_hp)
         rg_semantic_actor_event(actor,RG_ACTOR_HURT);
 }
 
+static void visual_face(const THING *actor,int dx)
+{
+    struct visual_actor *entry;
+    if (!actor || !dx) return;
+    if (actor==&player) {visual_player_facing=dx<0?-1:1;return;}
+    entry=visual_entry(actor,0);
+    if (entry) entry->facing=dx<0?-1:1;
+}
+
+void rg_semantic_actor_attack(const THING *actor,int target_x)
+{
+    if (!actor) return;
+    visual_face(actor,target_x-actor->t_pos.x);
+    rg_semantic_actor_event(actor,RG_ACTOR_ATTACK);
+}
+
 void rg_semantic_actor_moved(const THING *actor,int old_x,int old_y)
 {
     int dx=actor->t_pos.x-old_x,dy=actor->t_pos.y-old_y;
     if (!dx && !dy) return;
+    visual_face(actor,dx);
     if (dx>=-1 && dx<=1 && dy>=-1 && dy<=1)
         rg_semantic_actor_event(actor,RG_ACTOR_MOVE);
     else

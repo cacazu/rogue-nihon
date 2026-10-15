@@ -211,6 +211,9 @@
     "log.parameter.protection": "防御力",
     "log.parameter.strength": "腕力",
     "log.parameter.bonus": "補正",
-    "log.parameter.charges": "残り回数"
+    "log.parameter.charges": "残り回数",
+    "settings.animation": "アニメーション",
+    "settings.on": "オン",
+    "settings.off": "オフ"
   }
 }

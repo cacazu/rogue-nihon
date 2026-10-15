@@ -77,7 +77,49 @@ impl BrowserUi {
             Rect::new(viewport.x + 112., row, viewport.w - 112., 48.),
             busy,
         );
-        row += 88.;
+        row += 60.;
+        let animated = self.model["animationEnabled"].as_bool().unwrap_or(true);
+        let label = self.t("settings.animation");
+        self.control(
+            "animation-toggle",
+            &label,
+            Rect::new(viewport.x, row, viewport.w, 48.),
+            json!({"kind":"invoke","id":"animation-toggle"}),
+            ControlStyle {
+                kind: Some("switch"),
+                key: Some(json!(animated)),
+                custom: true,
+                disabled: busy,
+                ..Default::default()
+            },
+        );
+        self.text(
+            &label,
+            viewport.x + 12.,
+            row + 10.,
+            viewport.w - 144.,
+            17.,
+            TEXT,
+            false,
+        );
+        self.text(
+            &self.t(if animated {
+                "settings.on"
+            } else {
+                "settings.off"
+            }),
+            viewport.x + viewport.w - 112.,
+            row + 10.,
+            40.,
+            17.,
+            TEXT,
+            false,
+        );
+        let track = Rect::new(viewport.x + viewport.w - 60., row + 8., 56., 32.);
+        self.widgets
+            .box_rect(track, if animated { ACCENT } else { LINE }, None, 16.);
+        self.widgets.commands.push(json!({"op":"circle","x":track.x+if animated {40.} else {16.},"y":track.y+16.,"radius":12.,"color":if animated {"#101619"} else {TEXT}}));
+        row += 76.;
         let style = |disabled| ControlStyle {
             size: 17.,
             disabled,

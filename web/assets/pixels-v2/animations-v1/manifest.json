@@ -68,7 +68,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "left"
     },
     {
       "id": "monster.aquator",
@@ -120,7 +121,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "left"
     },
     {
       "id": "monster.bat",
@@ -172,7 +174,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "front"
     },
     {
       "id": "monster.centaur",
@@ -224,7 +227,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.dragon",
@@ -276,7 +280,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.emu",
@@ -328,7 +333,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "left"
     },
     {
       "id": "monster.venus_flytrap",
@@ -380,7 +386,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.griffin",
@@ -432,7 +439,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "left"
     },
     {
       "id": "monster.hobgoblin",
@@ -484,7 +492,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "left"
     },
     {
       "id": "monster.ice_monster",
@@ -536,7 +545,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "front"
     },
     {
       "id": "monster.jabberwock",
@@ -588,7 +598,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.kestrel",
@@ -640,7 +651,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "left"
     },
     {
       "id": "monster.leprechaun",
@@ -692,7 +704,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.medusa",
@@ -744,7 +757,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "front"
     },
     {
       "id": "monster.nymph",
@@ -796,7 +810,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.orc",
@@ -848,7 +863,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "left"
     },
     {
       "id": "monster.phantom",
@@ -900,7 +916,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "front"
     },
     {
       "id": "monster.quagga",
@@ -952,7 +969,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "left"
     },
     {
       "id": "monster.rattlesnake",
@@ -1004,7 +1022,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "left"
     },
     {
       "id": "monster.snake",
@@ -1056,7 +1075,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.troll",
@@ -1108,7 +1128,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "left"
     },
     {
       "id": "monster.black_unicorn",
@@ -1160,7 +1181,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "left"
     },
     {
       "id": "monster.vampire",
@@ -1212,7 +1234,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "front"
     },
     {
       "id": "monster.wraith",
@@ -1264,7 +1287,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "left"
     },
     {
       "id": "monster.xeroc",
@@ -1316,7 +1340,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "front"
     },
     {
       "id": "monster.yeti",
@@ -1368,7 +1393,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "front"
     },
     {
       "id": "monster.zombie",
@@ -1420,7 +1446,8 @@
           "frame_ms": 120,
           "loop": false
         }
-      }
+      },
+      "facing": "right"
     }
   ]
 }

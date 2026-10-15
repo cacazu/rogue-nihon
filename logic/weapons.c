@@ -56,7 +56,7 @@ missile(int ydelta, int xdelta)
 	return;
     obj = leave_pack(obj, TRUE, FALSE);
 #ifdef ROGUE_LAYERED
-    rg_semantic_actor_event(&player,RG_ACTOR_ATTACK);
+    rg_semantic_actor_attack(&player,hero.x+xdelta);
 #endif
     do_motion(obj, ydelta, xdelta);
     /*

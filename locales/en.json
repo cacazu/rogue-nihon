@@ -76,247 +76,247 @@
     },
     "command.call.call_it": {
       "template": "call it: ",
-      "source": "command.c:875",
+      "source": "command.c:882",
       "function": "call",
       "note": "original English printf format"
     },
     "command.call.called": {
       "template": "called \"%s\"",
-      "source": "command.c:872",
+      "source": "command.c:879",
       "function": "call",
       "note": "original English printf format"
     },
     "command.call.that_has_already_been_identified": {
       "template": "that has already been identified",
-      "source": "command.c:865",
+      "source": "command.c:872",
       "function": "call",
       "note": "original English printf format"
     },
     "command.call.was": {
       "template": "Was ",
-      "source": "command.c:871",
+      "source": "command.c:878",
       "function": "call",
       "note": "original English printf format"
     },
     "command.call.what_do_you_want_to_call_it": {
       "template": "what do you want to call it? ",
-      "source": "command.c:877",
+      "source": "command.c:884",
       "function": "call",
       "note": "original English printf format"
     },
     "command.call.you_cant_call_that_anything": {
       "template": "you can't call that anything",
-      "source": "command.c:856",
+      "source": "command.c:863",
       "function": "call",
       "note": "original English printf format"
     },
     "command.command.food_left": {
       "template": "food left: %d",
-      "source": "command.c:393",
+      "source": "command.c:400",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.i_see": {
       "template": "I see ",
-      "source": "command.c:231",
+      "source": "command.c:238",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.inpack": {
       "template": "inpack = %d",
-      "source": "command.c:386",
+      "source": "command.c:393",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.no_monster_there": {
       "template": "no monster there",
-      "source": "command.c:232",
+      "source": "command.c:239",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.no_trap_there": {
       "template": "no trap there",
-      "source": "command.c:322",
+      "source": "command.c:329",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.not_wizard_any_more": {
       "template": "not wizard any more",
-      "source": "command.c:337",
+      "source": "command.c:344",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.nothing_here": {
       "template": "nothing here",
-      "source": "command.c:176",
+      "source": "command.c:183",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.number_number": {
       "template": "@ %d,%d",
-      "source": "command.c:384",
+      "source": "command.c:391",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.sorry": {
       "template": "sorry",
-      "source": "command.c:349",
+      "source": "command.c:356",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.string": {
       "template": "%s",
-      "source": "command.c:300",
+      "source": "command.c:307",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.there_is": {
       "template": "there is ",
-      "source": "command.c:175",
+      "source": "command.c:182",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.to_pick_up": {
       "template": " to pick up",
-      "source": "command.c:178",
+      "source": "command.c:185",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.version_mctesq_was_here": {
       "template": "version %s. (mctesq was here)",
-      "source": "command.c:307",
+      "source": "command.c:314",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon": {
       "template": "you are suddenly as smart as Ken Arnold in dungeon #%d",
-      "source": "command.c:346",
+      "source": "command.c:353",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.you_can_move_again": {
       "template": "you can move again",
-      "source": "command.c:94",
+      "source": "command.c:101",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.you_have_found": {
       "template": "You have found ",
-      "source": "command.c:320",
+      "source": "command.c:327",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.you_havent_typed_a_command_yet": {
       "template": "you haven't typed a command yet",
-      "source": "command.c:257",
+      "source": "command.c:264",
       "function": "command",
       "note": "original English printf format"
     },
     "command.current.character_string": {
       "template": "%c) %s",
-      "source": "command.c:911",
+      "source": "command.c:918",
       "function": "current",
       "note": "original English printf format"
     },
     "command.current.nothing": {
       "template": "%s nothing",
-      "source": "command.c:921",
+      "source": "command.c:928",
       "function": "current",
       "note": "original English printf format"
     },
     "command.current.string": {
       "template": " %s",
-      "source": "command.c:914",
+      "source": "command.c:921",
       "function": "current",
       "note": "original English printf format"
     },
     "command.current.you_are": {
       "template": "you are %s (",
-      "source": "command.c:909",
+      "source": "command.c:916",
       "function": "current",
       "note": "original English printf format"
     },
     "command.current.you_are_trailing_space": {
       "template": "you are ",
-      "source": "command.c:920",
+      "source": "command.c:927",
       "function": "current",
       "note": "original English printf format"
     },
     "command.d_level.i_see_no_way_down": {
       "template": "I see no way down",
-      "source": "command.c:768",
+      "source": "command.c:775",
       "function": "d_level",
       "note": "original English printf format"
     },
     "command.help.character_you_want_help_for_for_all": {
       "template": "character you want help for (* for all): ",
-      "source": "command.c:593",
+      "source": "command.c:600",
       "function": "help",
       "note": "original English printf format"
     },
     "command.help.string_string": {
       "template": "%s%s",
-      "source": "command.c:616",
+      "source": "command.c:623",
       "function": "help",
       "note": "original English printf format"
     },
     "command.help.unknown_character": {
       "template": "unknown character '%s'",
-      "source": "command.c:620",
+      "source": "command.c:627",
       "function": "help",
       "note": "original English printf format"
     },
     "command.identify.string_string": {
       "template": "'%s': %s",
-      "source": "command.c:755",
+      "source": "command.c:762",
       "function": "identify",
       "note": "original English printf format"
     },
     "command.identify.what_do_you_want_identified": {
       "template": "what do you want identified? ",
-      "source": "command.c:715",
+      "source": "command.c:722",
       "function": "identify",
       "note": "original English printf format"
     },
     "command.illcom.illegal_command": {
       "template": "illegal command '%s'",
-      "source": "command.c:490",
+      "source": "command.c:497",
       "function": "illcom",
       "note": "original English printf format"
     },
     "command.levit_check.you_cant_youre_floating_off_the_ground": {
       "template": "You can't.  You're floating off the ground!",
-      "source": "command.c:811",
+      "source": "command.c:818",
       "function": "levit_check",
       "note": "original English printf format"
     },
     "command.search.a_secret_door": {
       "template": "a secret door",
-      "source": "command.c:526",
+      "source": "command.c:533",
       "function": "search",
       "note": "original English printf format"
     },
     "command.search.you_found": {
       "template": "you found ",
-      "source": "command.c:538",
+      "source": "command.c:545",
       "function": "search",
       "note": "original English printf format"
     },
     "command.u_level.i_see_no_way_up": {
       "template": "I see no way up",
-      "source": "command.c:798",
+      "source": "command.c:805",
       "function": "u_level",
       "note": "original English printf format"
     },
     "command.u_level.you_feel_a_wrenching_sensation_in_your_gut": {
       "template": "you feel a wrenching sensation in your gut",
-      "source": "command.c:793",
+      "source": "command.c:800",
       "function": "u_level",
       "note": "original English printf format"
     },
     "command.u_level.your_way_is_magically_blocked": {
       "template": "your way is magically blocked",
-      "source": "command.c:796",
+      "source": "command.c:803",
       "function": "u_level",
       "note": "original English printf format"
     },
@@ -718,127 +718,127 @@
     },
     "move.be_trapped.a_gush_of_water_hits_you_on_the_head": {
       "template": "a gush of water hits you on the head",
-      "source": "move.c:361",
+      "source": "move.c:366",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.a_light_flashes_in_your_eyes": {
       "template": "a %s light flashes in your eyes",
-      "source": "move.c:297",
+      "source": "move.c:302",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.a_poisoned_dart_killed_you": {
       "template": "a poisoned dart killed you",
-      "source": "move.c:353",
+      "source": "move.c:358",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.a_small_dart_just_hit_you_in_the_shoulder": {
       "template": "a small dart just hit you in the shoulder",
-      "source": "move.c:358",
+      "source": "move.c:363",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.a_small_dart_whizzes_by_your_ear_and_vanishes": {
       "template": "a small dart whizzes by your ear and vanishes",
-      "source": "move.c:343",
+      "source": "move.c:348",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.a_spike_shoots_past_your_ear": {
       "template": "a spike shoots past your ear!",
-      "source": "move.c:298",
+      "source": "move.c:303",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.a_strange_white_mist_envelops_you_and_you_fall_asleep": {
       "template": "a strange white mist envelops you and you fall asleep",
-      "source": "move.c:308",
+      "source": "move.c:313",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.an_arrow_killed_you": {
       "template": "an arrow killed you",
-      "source": "move.c:319",
+      "source": "move.c:324",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.an_arrow_shoots_past_you": {
       "template": "an arrow shoots past you",
-      "source": "move.c:332",
+      "source": "move.c:337",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.multi_colored_lines_swirl_around_you_then_fade": {
       "template": "multi-colored lines swirl around you, then fade",
-      "source": "move.c:296",
+      "source": "move.c:301",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.oh_no_an_arrow_shot_you": {
       "template": "oh no! An arrow shot you",
-      "source": "move.c:323",
+      "source": "move.c:328",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.sparks_dance_across_your_armor": {
       "template": "%s sparks dance across your armor",
-      "source": "move.c:299",
+      "source": "move.c:304",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.the_light_in_here_suddenly_seems": {
       "template": "the light in here suddenly seems %s",
-      "source": "move.c:294",
+      "source": "move.c:299",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.time_now_seems_to_be_going_slower": {
       "template": "time now seems to be going slower",
-      "source": "move.c:302",
+      "source": "move.c:307",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.you_are_caught_in_a_bear_trap": {
       "template": "you are caught in a bear trap",
-      "source": "move.c:289",
+      "source": "move.c:294",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.you_are_suddenly_in_a_parallel_dimension": {
       "template": "you are suddenly in a parallel dimension",
-      "source": "move.c:293",
+      "source": "move.c:298",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.you_feel_a_sting_in_the_side_of_your_neck": {
       "template": "you feel a sting in the side of your neck",
-      "source": "move.c:295",
+      "source": "move.c:300",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.you_feel_time_speed_up_suddenly": {
       "template": "you feel time speed up suddenly",
-      "source": "move.c:301",
+      "source": "move.c:306",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.you_fell_into_a_trap": {
       "template": "you fell into a trap!",
-      "source": "move.c:286",
+      "source": "move.c:291",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.you_pack_turns": {
       "template": "you pack turns %s!",
-      "source": "move.c:303",
+      "source": "move.c:308",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.you_suddenly_feel_very_thirsty": {
       "template": "you suddenly feel very thirsty",
-      "source": "move.c:300",
+      "source": "move.c:305",
       "function": "be_trapped",
       "note": "original English printf format"
     },
@@ -856,19 +856,19 @@
     },
     "move.rust_armor.the_rust_vanishes_instantly": {
       "template": "the rust vanishes instantly",
-      "source": "move.c:427",
+      "source": "move.c:432",
       "function": "rust_armor",
       "note": "original English printf format"
     },
     "move.rust_armor.your_armor_appears_to_be_weaker_now_oh_my": {
       "template": "your armor appears to be weaker now. Oh my!",
-      "source": "move.c:433",
+      "source": "move.c:438",
       "function": "rust_armor",
       "note": "original English printf format"
     },
     "move.rust_armor.your_armor_weakens": {
       "template": "your armor weakens",
-      "source": "move.c:435",
+      "source": "move.c:440",
       "function": "rust_armor",
       "note": "original English printf format"
     },

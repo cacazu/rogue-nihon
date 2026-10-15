@@ -158,8 +158,9 @@ void rg_host_map_terrain(const uint8_t *glyphs,uint32_t rows,uint32_t columns) {
     (void)glyphs;(void)rows;(void)columns;
 }
 void rg_host_map_actor_reset(uint32_t epoch) {(void)epoch;}
-int32_t rg_host_map_actors_begin(void) {return 1;}
-void rg_host_map_actor(uint32_t id,int32_t x,int32_t y,int32_t glyph) {
+int32_t rg_host_map_actors_begin(uint32_t step) {(void)step;return 1;}
+void rg_host_map_actor(uint32_t id,int32_t x,int32_t y,int32_t glyph,int32_t facing,int32_t stopped) {
+    (void)facing;(void)stopped;
     (void)id;(void)x;(void)y;(void)glyph;
 }
 void rg_host_map_actor_event(uint32_t id,uint32_t kind) {(void)id;(void)kind;}

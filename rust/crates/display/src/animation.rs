@@ -1,12 +1,12 @@
 //! Presentation clocks for public actors. No game state, input, RNG or save access.
 use crate::map_tiles;
 use serde_json::{Value, json};
-use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::collections::{BTreeMap, BTreeSet};
 
 const MAX_ACTORS: usize = 1024;
 const MAX_EVENTS: usize = 8192;
 const MAX_CELLS: usize = 65_536;
-const MAX_PENDING: usize = 8;
+const MOVE_MS: f64 = 120.;
 const STATES: [&str; 4] = ["idle", "move", "attack", "hurt"];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -44,10 +44,10 @@ struct Clip {
 type Clips = BTreeMap<String, [Clip; 4]>;
 
 #[derive(Clone, Copy, Debug)]
-struct Pulse {
-    state: State,
-    /// A newly observed event receives its browser time on the first sample.
-    available: Option<f64>,
+struct Motion {
+    from_x: f64,
+    from_y: f64,
+    started: Option<f64>,
 }
 
 #[derive(Debug)]
@@ -55,120 +55,122 @@ struct Actor {
     x: u32,
     y: u32,
     tile: String,
+    facing: i32,
+    stopped: bool,
+    chosen: State,
+    started: Option<f64>,
     idle_started: Option<f64>,
-    active: Option<Pulse>,
-    pending: VecDeque<Pulse>,
+    motion: Option<Motion>,
+    last_pose: (State, usize),
 }
 impl Actor {
-    fn new(x: u32, y: u32, tile: String) -> Self {
+    fn new(data: ActorData) -> Self {
         Self {
-            x,
-            y,
-            tile,
+            x: data.x,
+            y: data.y,
+            tile: data.tile,
+            facing: data.facing,
+            stopped: data.stopped,
+            chosen: State::Idle,
+            started: None,
             idle_started: None,
-            active: None,
-            pending: VecDeque::new(),
+            motion: None,
+            last_pose: (State::Idle, 0),
         }
     }
-    fn enqueue(&mut self, state: State) {
-        // Continued walking refreshes its finite pulse. Combat events retain order.
-        if state == State::Move
-            && let Some(last) = self.pending.back_mut()
-            && last.state == State::Move
-        {
-            last.available = None;
-            return;
-        }
-        if state == State::Move
-            && self.pending.is_empty()
-            && self.active.is_some_and(|pulse| pulse.state == State::Move)
-        {
-            self.active = Some(Pulse {
-                state,
-                available: None,
-            });
-            return;
-        }
-        if self.pending.len() == MAX_PENDING {
-            self.pending.pop_front();
-        }
-        self.pending.push_back(Pulse {
-            state,
-            available: None,
-        });
+    fn finish(&mut self) {
+        self.chosen = State::Idle;
+        self.started = None;
+        self.idle_started = None;
+        self.motion = None;
     }
-    fn advance(&mut self, now: f64, clips: &[Clip; 4]) -> (State, usize, u32) {
-        for pulse in &mut self.pending {
-            pulse.available.get_or_insert(now);
+    fn choose(&mut self, state: State) {
+        let priority = |state| match state {
+            State::Attack => 2,
+            State::Hurt => 1,
+            _ => 0,
+        };
+        if !self.stopped && priority(state) > priority(self.chosen) {
+            self.chosen = state;
+            self.started = None;
         }
-        if self.active.is_none() {
-            self.active = self.pending.pop_front();
+    }
+    fn advance(&mut self, now: f64, clips: &[Clip; 4]) -> (State, usize, Option<u32>) {
+        if self.stopped {
+            return (self.last_pose.0, self.last_pose.1, None);
         }
-        if let Some(pulse) = &mut self.active {
-            pulse.available.get_or_insert(now);
-        }
-        // Pending action clips can age while ASCII has no animation timer. Each
-        // newly observed action is bounded below by its first sampling time.
-        while let Some(pulse) = self.active {
-            let clip = &clips[pulse.state.index()];
-            let end = pulse.available.unwrap_or(now)
-                + f64::from(clip.frame_ms) * clip.frames.len() as f64;
-            if now < end {
-                break;
-            }
-            self.active = self.pending.pop_front().map(|mut next| {
-                next.available = Some(end.max(next.available.unwrap_or(now)));
-                next
-            });
-            if self.active.is_none() {
-                self.idle_started = Some(end);
-            }
-        }
-        let (state, started) = if let Some(pulse) = self.active {
-            (pulse.state, pulse.available.unwrap_or(now))
+        let mut state = self.chosen;
+        let started = if state == State::Idle {
+            *self.idle_started.get_or_insert(now)
         } else {
-            (State::Idle, *self.idle_started.get_or_insert(now))
+            *self.started.get_or_insert(now)
+        };
+        let clip = &clips[state.index()];
+        let duration = f64::from(clip.frame_ms) * clip.frames.len() as f64;
+        let started = if state != State::Idle && now - started >= duration {
+            state = State::Idle;
+            *self.idle_started.get_or_insert(started + duration)
+        } else {
+            started
         };
         let clip = &clips[state.index()];
         let elapsed = (now - started).max(0.);
-        let frame_ms = f64::from(clip.frame_ms);
-        let step = (elapsed / frame_ms).floor() as usize;
+        let step = (elapsed / f64::from(clip.frame_ms)).floor() as usize;
         let index = if state == State::Idle && clip.looping {
             step % clip.frames.len()
         } else {
             step.min(clip.frames.len() - 1)
         };
-        let delay = (frame_ms - elapsed % frame_ms).ceil().max(1.) as u32;
-        (state, index, delay)
+        self.last_pose = (state, index);
+        let delay = (f64::from(clip.frame_ms) - elapsed % f64::from(clip.frame_ms))
+            .ceil()
+            .max(1.) as u32;
+        (state, index, Some(delay))
+    }
+    fn position(&mut self, now: f64) -> (f64, f64, bool) {
+        if self.stopped {
+            self.motion = None;
+        }
+        if let Some(motion) = &mut self.motion {
+            let progress = ((now - *motion.started.get_or_insert(now)) / MOVE_MS).clamp(0., 1.);
+            let x = motion.from_x + (f64::from(self.x) - motion.from_x) * progress;
+            let y = motion.from_y + (f64::from(self.y) - motion.from_y) * progress;
+            if progress < 1. {
+                return (x, y, true);
+            }
+            self.motion = None;
+        }
+        (f64::from(self.x), f64::from(self.y), false)
     }
 }
 
-/// Animation projection to attach to a copy of the latest public map frame.
+/// Projection onto a copy of the public map. Logical coordinates remain intact.
 #[derive(Debug)]
 pub struct Sample {
     pub frames: Value,
     pub next_delay_ms: Option<u32>,
 }
 
-/// Owns validated artwork clips, visible actor lifetimes and finite action pulses.
+/// One prioritized pose per original action, never a queue of past turns.
 pub struct Animator {
     tiles: Clips,
     pixels: Clips,
     actors: BTreeMap<u32, Actor>,
     epoch: Option<u32>,
+    step: Option<u32>,
     sequence: u64,
     clock: Option<f64>,
+    enabled: bool,
 }
 impl Animator {
     pub fn new(tiles_manifest: Value, pixels_manifest: Value) -> Result<Self, String> {
         let tiles = parse_manifest(&tiles_manifest, 96)?;
         let pixels = parse_manifest(&pixels_manifest, 32)?;
         for (id, clips) in &tiles {
-            let other = &pixels[id];
-            if clips.iter().zip(other).any(|(left, right)| {
-                left.frame_ms != right.frame_ms
-                    || left.looping != right.looping
-                    || left.frames.len() != right.frames.len()
+            if clips.iter().zip(&pixels[id]).any(|(a, b)| {
+                a.frame_ms != b.frame_ms
+                    || a.looping != b.looping
+                    || a.frames.len() != b.frames.len()
             }) {
                 return Err(format!("Animation modes have different clip timing: {id}"));
             }
@@ -178,61 +180,94 @@ impl Animator {
             pixels,
             actors: BTreeMap::new(),
             epoch: None,
+            step: None,
             sequence: 0,
             clock: None,
+            enabled: true,
         })
     }
-
-    /// Session/restore boundary. Animation never enters the game save container.
     pub fn reset(&mut self) {
         self.actors.clear();
         self.epoch = None;
+        self.step = None;
         self.sequence = 0;
         self.clock = None;
     }
-
-    /// Consumes only published observations. Invalid frames leave state unchanged.
+    /// A successfully queued input immediately discards unfinished presentation.
+    pub fn interrupt(&mut self) {
+        for actor in self.actors.values_mut() {
+            actor.finish();
+        }
+    }
+    pub fn set_enabled(&mut self, enabled: bool) {
+        if self.enabled != enabled {
+            self.interrupt();
+            self.enabled = enabled;
+        }
+    }
     pub fn observe(&mut self, frame: &Value) -> Result<(), String> {
-        let observations = parse_observation(frame)?;
-        let Some(observations) = observations else {
-            self.actors.clear();
-            self.epoch = None;
-            self.sequence = 0;
+        let Some(observation) = parse_observation(frame)? else {
+            self.reset();
             return Ok(());
         };
-        if self.epoch != Some(observations.epoch) {
+        if self.epoch != Some(observation.epoch) {
             self.actors.clear();
             self.sequence = 0;
-            self.epoch = Some(observations.epoch);
+            self.step = None;
+            self.epoch = Some(observation.epoch);
+        }
+        if self.step != Some(observation.step) {
+            for actor in self.actors.values_mut() {
+                actor.finish();
+            }
+            self.step = Some(observation.step);
         }
         self.actors
-            .retain(|id, _| observations.actors.contains_key(id));
-        for (id, (x, y, tile)) in observations.actors {
+            .retain(|id, _| observation.actors.contains_key(id));
+        for (id, data) in observation.actors {
             let actor = self
                 .actors
                 .entry(id)
-                .or_insert_with(|| Actor::new(x, y, tile.clone()));
-            if actor.tile != tile {
-                *actor = Actor::new(x, y, tile);
-            } else {
-                actor.x = x;
-                actor.y = y;
+                .or_insert_with(|| Actor::new(data.clone()));
+            if actor.tile != data.tile {
+                *actor = Actor::new(data);
+                continue;
             }
+            let dx = f64::from(data.x) - f64::from(actor.x);
+            let dy = f64::from(data.y) - f64::from(actor.y);
+            if dx != 0. || dy != 0. {
+                actor.motion = if self.enabled && !data.stopped && dx.abs() <= 1. && dy.abs() <= 1.
+                {
+                    Some(Motion {
+                        from_x: f64::from(actor.x),
+                        from_y: f64::from(actor.y),
+                        started: None,
+                    })
+                } else {
+                    None
+                };
+            }
+            if actor.stopped && !data.stopped {
+                actor.finish();
+            }
+            actor.x = data.x;
+            actor.y = data.y;
+            actor.facing = data.facing;
+            actor.stopped = data.stopped;
         }
-        for (sequence, id, state) in observations.events {
+        for (sequence, id, state) in observation.events {
             if sequence <= self.sequence {
                 continue;
             }
-            // An event for an actor that is no longer public is retired too.
             self.sequence = sequence;
-            if let Some(actor) = self.actors.get_mut(&id) {
-                actor.enqueue(state);
+            if self.enabled {
+                if let Some(actor) = self.actors.get_mut(&id) {
+                    actor.choose(state);
+                }
             }
         }
         Ok(())
     }
-
-    /// Advances a monotonic display clock only. ASCII suppresses timer and images.
     pub fn sample(&mut self, now: f64, mode: &str) -> Sample {
         let now = if now.is_finite() {
             self.clock.unwrap_or(now).max(now)
@@ -247,13 +282,32 @@ impl Animator {
         };
         let graphical = matches!(mode, "tiles" | "pixels");
         let mut frames = Vec::with_capacity(self.actors.len());
-        let mut next_delay_ms: Option<u32> = None;
+        let mut next_delay_ms = None;
         for (id, actor) in &mut self.actors {
-            let (state, index, delay) = actor.advance(now, &clips[&actor.tile]);
+            let (state, index, delay) = if self.enabled {
+                actor.advance(now, &clips[&actor.tile])
+            } else {
+                (State::Idle, 0, None)
+            };
+            let (x, y, moving) = if self.enabled {
+                actor.position(now)
+            } else {
+                (f64::from(actor.x), f64::from(actor.y), false)
+            };
             if graphical {
-                frames.push(json!({"id":id,"x":actor.x,"y":actor.y,
-                    "state":STATES[state.index()],"frame":index}));
-                next_delay_ms = Some(next_delay_ms.map_or(delay, |old| old.min(delay)));
+                frames.push(
+                    json!({"id":id,"x":actor.x,"y":actor.y,"displayX":x,"displayY":y,
+                    "facing":actor.facing,"stopped":actor.stopped,"animated":self.enabled,
+                    "state":STATES[state.index()],"frame":index}),
+                );
+                let delay = if moving {
+                    Some(delay.unwrap_or(16).min(16))
+                } else {
+                    delay
+                };
+                if let Some(delay) = delay {
+                    next_delay_ms = Some(next_delay_ms.map_or(delay, |old: u32| old.min(delay)));
+                }
             }
         }
         Sample {
@@ -283,6 +337,9 @@ fn parse_manifest(value: &Value, pixels: u64) -> Result<Clips, String> {
         .collect::<BTreeSet<_>>();
     let mut clips = BTreeMap::new();
     for entry in entries {
+        if !matches!(entry["facing"].as_str(), Some("left" | "right" | "front")) {
+            return Err("Invalid native character facing".into());
+        }
         let id = entry["id"]
             .as_str()
             .filter(|id| expected.contains(id))
@@ -350,9 +407,18 @@ fn parse_manifest(value: &Value, pixels: u64) -> Result<Clips, String> {
     Ok(clips)
 }
 
+#[derive(Clone)]
+struct ActorData {
+    x: u32,
+    y: u32,
+    tile: String,
+    facing: i32,
+    stopped: bool,
+}
 struct Observation {
     epoch: u32,
-    actors: BTreeMap<u32, (u32, u32, String)>,
+    step: u32,
+    actors: BTreeMap<u32, ActorData>,
     events: Vec<(u64, u32, State)>,
 }
 fn integer(value: &Value) -> Result<u32, String> {
@@ -418,7 +484,25 @@ fn parse_observation(frame: &Value) -> Result<Option<Observation>, String> {
         };
         let index = (y * width + x) as usize;
         if cells[index] == glyph && tiles[index].as_u64() == Some(u64::from(tile)) {
-            actors.insert(id, (x, y, map_tiles::IDS[usize::from(tile)].to_owned()));
+            let facing = actor.get("facing").map_or(Ok(1), |v| {
+                v.as_i64()
+                    .filter(|v| matches!(v, -1 | 1))
+                    .map(|v| v as i32)
+                    .ok_or("Invalid public actor facing")
+            })?;
+            let stopped = actor.get("stopped").map_or(Ok(false), |v| {
+                v.as_bool().ok_or("Invalid public actor stop state")
+            })?;
+            actors.insert(
+                id,
+                ActorData {
+                    x,
+                    y,
+                    tile: map_tiles::IDS[usize::from(tile)].to_owned(),
+                    facing,
+                    stopped,
+                },
+            );
         }
     }
     let raw_events = frame["map_actor_events"]
@@ -439,6 +523,7 @@ fn parse_observation(frame: &Value) -> Result<Option<Observation>, String> {
     }
     Ok(Some(Observation {
         epoch,
+        step: frame.get("map_actor_step").map_or(Ok(0), integer)?,
         actors,
         events,
     }))
@@ -454,151 +539,123 @@ mod tests {
         )
         .unwrap()
     }
-    fn frame(events: Value) -> Value {
-        json!({"width":2,"height":1,"map_cells":"@A","map_tiles":[8,23],
-            "map_tile_ids":&map_tiles::IDS[..],"map_actor_epoch":1,
-            "map_actors":[{"id":0,"x":0,"y":0,"glyph":64},
-                {"id":1,"x":1,"y":0,"glyph":65}],"map_actor_events":events})
+    fn frame(step: u32, x: u32, stopped: bool, events: Value) -> Value {
+        let mut cells = b"   ".to_vec();
+        cells[x as usize] = b'@';
+        let mut tiles = vec![1, 1, 1];
+        tiles[x as usize] = 8;
+        json!({"width":3,"height":1,"map_cells":String::from_utf8(cells).unwrap(),"map_tiles":tiles,
+            "map_tile_ids":&map_tiles::IDS[..],"map_actor_epoch":1,"map_actor_step":step,
+            "map_actors":[{"id":0,"x":x,"y":0,"glyph":64,"facing":1,"stopped":stopped}],"map_actor_events":events})
     }
-    fn event(sequence: u64, kind: &str) -> Value {
+    fn event(sequence: u32, kind: &str) -> Value {
         json!({"sequence":sequence,"id":0,"kind":kind})
     }
-    fn state(sample: &Sample) -> (&str, u64) {
+    fn pose(sample: &Sample) -> (&str, u64) {
         (
             sample.frames[0]["state"].as_str().unwrap(),
             sample.frames[0]["frame"].as_u64().unwrap(),
         )
     }
     #[test]
-    fn three_frames_loop_and_finite_actions_keep_queue_order() {
-        let mut player = animator();
-        player
-            .observe(&frame(json!([event(1, "attack"), event(2, "hurt")])))
+    fn animation_priority_is_attack_hurt_idle_without_a_queue() {
+        for events in [
+            json!([event(1, "attack"), event(2, "hurt")]),
+            json!([event(1, "hurt"), event(2, "attack")]),
+        ] {
+            let mut a = animator();
+            a.observe(&frame(1, 0, false, events)).unwrap();
+            assert_eq!(pose(&a.sample(0., "tiles")), ("attack", 0));
+            assert_eq!(pose(&a.sample(240., "tiles")), ("attack", 2));
+            assert_eq!(pose(&a.sample(360., "tiles")), ("idle", 0));
+            a.observe(&frame(1, 0, false, json!([event(3, "hurt")])))
+                .unwrap();
+            assert_eq!(pose(&a.sample(400., "tiles")), ("idle", 0));
+        }
+        let mut a = animator();
+        a.observe(&frame(1, 0, false, json!([event(1, "hurt")])))
             .unwrap();
-        assert_eq!(state(&player.sample(10., "tiles")), ("attack", 0));
-        assert_eq!(state(&player.sample(130., "tiles")), ("attack", 1));
-        assert_eq!(state(&player.sample(250., "tiles")), ("attack", 2));
-        assert_eq!(state(&player.sample(370., "tiles")), ("hurt", 0));
-        assert_eq!(state(&player.sample(610., "tiles")), ("hurt", 2));
-        assert_eq!(state(&player.sample(730., "tiles")), ("idle", 0));
-        assert_eq!(state(&player.sample(1130., "tiles")), ("idle", 2));
-        assert_eq!(state(&player.sample(1330., "tiles")), ("idle", 0));
-    }
-    #[test]
-    fn duplicate_observation_and_mode_change_do_not_restart_actions() {
-        let mut player = animator();
-        let observation = frame(json!([event(1, "move")]));
-        player.observe(&observation).unwrap();
-        assert_eq!(state(&player.sample(0., "tiles")), ("move", 0));
-        player.observe(&observation).unwrap();
-        assert_eq!(state(&player.sample(120., "pixels")), ("move", 1));
-        let ascii = player.sample(240., "ascii");
-        assert_eq!(ascii.frames, json!([]));
-        assert_eq!(ascii.next_delay_ms, None);
-        assert_eq!(state(&player.sample(360., "tiles")), ("idle", 0));
-        assert_eq!(state(&player.sample(100., "tiles")), ("idle", 0));
-    }
-    #[test]
-    fn continued_moves_refresh_finite_pulse_and_new_actions_start_now() {
-        let mut player = animator();
-        player.observe(&frame(json!([event(1, "move")]))).unwrap();
-        player.sample(0., "tiles");
-        player.observe(&frame(json!([event(2, "move")]))).unwrap();
-        assert_eq!(state(&player.sample(240., "tiles")), ("move", 0));
-        assert_eq!(state(&player.sample(600., "tiles")), ("idle", 0));
-        player.observe(&frame(json!([event(3, "attack")]))).unwrap();
-        assert_eq!(state(&player.sample(10_000., "tiles")), ("attack", 0));
-    }
-    #[test]
-    fn consecutive_moves_before_first_sample_finish_after_one_cycle() {
-        let mut player = animator();
-        let events = (1..=10)
-            .map(|sequence| event(sequence, "move"))
-            .collect::<Vec<_>>();
-        player.observe(&frame(json!(events))).unwrap();
-        assert_eq!(player.actors[&0].pending.len(), 1);
-        assert_eq!(state(&player.sample(100., "tiles")), ("move", 0));
-        assert_eq!(state(&player.sample(220., "tiles")), ("move", 1));
-        assert_eq!(state(&player.sample(460., "tiles")), ("idle", 0));
-    }
-    #[test]
-    fn ascii_ages_existing_queue_and_empty_actor_set_has_no_timer() {
-        let mut player = animator();
-        player
-            .observe(&frame(json!([event(1, "attack"), event(2, "hurt")])))
+        assert_eq!(pose(&a.sample(0., "tiles")), ("hurt", 0));
+        a.observe(&frame(1, 0, false, json!([event(2, "attack")])))
             .unwrap();
-        player.sample(0., "ascii");
-        assert_eq!(state(&player.sample(10_000., "pixels")), ("idle", 1));
-        let mut gone = frame(json!([]));
-        gone["map_actors"] = json!([]);
-        player.observe(&gone).unwrap();
-        let empty = player.sample(10_001., "tiles");
-        assert_eq!(empty.frames, json!([]));
-        assert_eq!(empty.next_delay_ms, None);
+        assert_eq!(pose(&a.sample(40., "tiles")), ("attack", 0));
     }
     #[test]
-    fn retirement_epoch_and_reset_drop_action_state() {
-        let mut player = animator();
-        let mut observation = frame(json!([event(1, "attack")]));
-        player.observe(&observation).unwrap();
-        player.sample(0., "tiles");
-        observation["map_actors"] = json!([]);
-        player.observe(&observation).unwrap();
-        player.observe(&frame(json!([event(1, "attack")]))).unwrap();
-        assert_eq!(state(&player.sample(120., "tiles")), ("idle", 0));
-        observation = frame(json!([event(1, "hurt")]));
-        observation["map_actor_epoch"] = json!(2);
-        player.observe(&observation).unwrap();
-        assert_eq!(state(&player.sample(240., "tiles")), ("hurt", 0));
-        player.reset();
-        player.observe(&frame(json!([]))).unwrap();
-        assert_eq!(state(&player.sample(0., "tiles")), ("idle", 0));
+    fn animation_new_input_and_original_action_replace_unfinished_poses() {
+        let mut a = animator();
+        a.observe(&frame(1, 0, false, json!([event(1, "attack")])))
+            .unwrap();
+        a.sample(0., "tiles");
+        a.interrupt();
+        assert_eq!(pose(&a.sample(20., "tiles")), ("idle", 0));
+        a.observe(&frame(1, 0, false, json!([event(2, "hurt")])))
+            .unwrap();
+        assert_eq!(pose(&a.sample(30., "tiles")), ("hurt", 0));
+        a.observe(&frame(2, 0, false, json!([event(3, "hurt")])))
+            .unwrap();
+        assert_eq!(pose(&a.sample(40., "tiles")), ("hurt", 0));
+        a.observe(&frame(3, 0, false, json!([]))).unwrap();
+        assert_eq!(pose(&a.sample(50., "tiles")), ("idle", 0));
     }
     #[test]
-    fn observed_glyph_and_tile_must_both_match_without_mutating_frame() {
-        let mut player = animator();
-        let mut observation = frame(json!([event(1, "attack")]));
-        observation["map_tiles"][0] = json!(1);
-        let unchanged = observation.clone();
-        player.observe(&observation).unwrap();
-        let result = player.sample(0., "tiles");
-        assert_eq!(observation, unchanged);
-        assert_eq!(result.frames.as_array().unwrap().len(), 1);
-        assert_eq!(result.frames[0]["id"], 1);
-        observation["map_cells"] = json!("@ ");
-        observation["map_tiles"] = json!([8, 0]);
-        player.observe(&observation).unwrap();
-        assert_eq!(state(&player.sample(120., "tiles")), ("idle", 0));
+    fn animation_move_interpolates_and_interrupt_snaps_to_previous_destination() {
+        let mut a = animator();
+        a.observe(&frame(1, 0, false, json!([]))).unwrap();
+        a.sample(0., "tiles");
+        a.observe(&frame(2, 1, false, json!([event(1, "move")])))
+            .unwrap();
+        assert_eq!(a.sample(10., "tiles").frames[0]["displayX"], 0.);
+        let mid = a.sample(70., "tiles");
+        assert_eq!(mid.frames[0]["displayX"], 0.5);
+        assert_eq!(pose(&mid).0, "idle");
+        assert_eq!(mid.next_delay_ms, Some(16));
+        a.interrupt();
+        assert_eq!(a.sample(80., "tiles").frames[0]["displayX"], 1.);
+        a.observe(&frame(3, 2, false, json!([]))).unwrap();
+        assert_eq!(a.sample(90., "tiles").frames[0]["displayX"], 1.);
+        assert_eq!(a.sample(210., "tiles").frames[0]["displayX"], 2.);
     }
     #[test]
-    fn overflow_discards_oldest_pending_and_keeps_current_pulse() {
-        let mut player = animator();
-        player.observe(&frame(json!([event(1, "attack")]))).unwrap();
-        player.sample(0., "tiles");
-        let events = (2..=11)
-            .map(|sequence| event(sequence, if sequence == 2 { "attack" } else { "hurt" }))
-            .collect::<Vec<_>>();
-        player.observe(&frame(json!(events))).unwrap();
-        assert_eq!(player.actors[&0].pending.len(), MAX_PENDING);
-        assert_eq!(state(&player.sample(120., "tiles")), ("attack", 1));
-        assert_eq!(state(&player.sample(360., "tiles")), ("hurt", 0));
+    fn animation_stopped_actor_freezes_and_disabled_mode_has_no_timer() {
+        let mut a = animator();
+        a.observe(&frame(1, 0, false, json!([]))).unwrap();
+        a.sample(0., "tiles");
+        let last = a.sample(200., "tiles");
+        a.observe(&frame(2, 0, true, json!([event(1, "hurt")])))
+            .unwrap();
+        let frozen = a.sample(1000., "tiles");
+        assert_eq!(pose(&last), pose(&frozen));
+        assert_eq!(frozen.next_delay_ms, None);
+        assert_eq!(pose(&a.sample(9000., "tiles")), pose(&frozen));
+        a.observe(&frame(3, 0, false, json!([]))).unwrap();
+        assert_eq!(pose(&a.sample(9010., "tiles")), ("idle", 0));
+        a.set_enabled(false);
+        a.observe(&frame(4, 1, false, json!([event(2, "attack")])))
+            .unwrap();
+        let static_pose = a.sample(9020., "tiles");
+        assert_eq!(static_pose.frames[0]["displayX"], 1.);
+        assert_eq!(static_pose.frames[0]["animated"], false);
+        assert_eq!(static_pose.next_delay_ms, None);
+        a.set_enabled(true);
+        assert_eq!(pose(&a.sample(9030., "tiles")), ("idle", 0));
     }
     #[test]
-    fn invalid_clips_and_observations_are_rejected_atomically() {
-        let mut tiles = crate::browser_ui::tiles::animation_manifest("tiles");
-        let pixels = crate::browser_ui::tiles::animation_manifest("pixels");
-        tiles["entries"][0]["animations"]["idle"]["frame_ms"] = json!(0);
-        assert!(Animator::new(tiles, pixels.clone()).is_err());
-        let mut tiles = crate::browser_ui::tiles::animation_manifest("tiles");
-        tiles["entries"][0]["animations"]["hurt"]["frames"][0] = json!("../bad.png");
-        assert!(Animator::new(tiles, pixels).is_err());
-        let mut player = animator();
-        player.observe(&frame(json!([event(1, "attack")]))).unwrap();
-        player.sample(0., "tiles");
-        let mut invalid = frame(json!([event(2, "hurt")]));
-        invalid["map_actors"][0]["x"] = json!(2);
-        assert!(player.observe(&invalid).is_err());
-        assert_eq!(player.sequence, 1);
-        assert_eq!(state(&player.sample(120., "tiles")), ("attack", 1));
+    fn animation_redraw_mode_change_epoch_and_invalid_frame_are_safe() {
+        let mut a = animator();
+        let observation = frame(1, 0, false, json!([event(1, "attack")]));
+        a.observe(&observation).unwrap();
+        a.sample(0., "tiles");
+        a.observe(&observation).unwrap();
+        assert_eq!(pose(&a.sample(120., "pixels")), ("attack", 1));
+        let mut invalid = observation.clone();
+        invalid["map_actors"][0]["facing"] = json!(0);
+        assert!(a.observe(&invalid).is_err());
+        assert_eq!(a.sequence, 1);
+        assert_eq!(a.sample(240., "ascii").next_delay_ms, None);
+        assert_eq!(pose(&a.sample(360., "tiles")), ("idle", 0));
+        let mut new = frame(1, 0, false, json!([]));
+        new["map_actor_epoch"] = json!(2);
+        a.observe(&new).unwrap();
+        assert_eq!(pose(&a.sample(400., "tiles")), ("idle", 0));
     }
 }

@@ -20,7 +20,7 @@ const report={checks:[],screenshots:[],errors:[],poses:[]};
 const server=createPreviewServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base='http://127.0.0.1:'+server.address().port;
 let runtime,browser,context,page;
-const state=()=>page.evaluate(()=>({words:__rogueBrowserTest.trace.words,inputs:__rogueBrowserTest.trace.input_index,requests:__rogueBrowserTest.inputRequestCount,generation:__rogueBrowserTest.generation,frame:__rogueBrowserTest.frame,animation:__rogueBrowserTest.diagnostics.animation}));
+const state=()=>page.evaluate(()=>({words:__rogueBrowserTest.trace.words,inputs:__rogueBrowserTest.trace.input_index,requests:__rogueBrowserTest.inputRequestCount,generation:__rogueBrowserTest.generation,frame:__rogueBrowserTest.frame,enabled:__rogueBrowserTest.diagnostics.animationEnabled,animation:__rogueBrowserTest.diagnostics.animation}));
 const idle=()=>page.waitForFunction(()=>__rogueBrowserTest.queuePending===0&&__rogueBrowserTest.frame?.ui.input.kind==='command');
 async function tap(id,mobile=false){
  const button=page.locator('[data-control="'+id+'"]:not([disabled])');await button.waitFor();
@@ -71,36 +71,84 @@ async function idlePixels(){
  assert.ok(new Set(hashes).size>=2,'Idle frames change the actual Canvas pixels');
  return hashes;
 }
+async function moving(id,targetX,fromX,freeze=false){
+ await page.waitForFunction(({id,targetX,fromX,freeze})=>{
+  const a=__rogueBrowserTest.diagnostics.animation?.find(a=>a.id===id);
+  const found=a?.x===targetX&&a.displayX>Math.min(targetX,fromX)&&a.displayX<Math.max(targetX,fromX);
+  if(found&&freeze)window.__animationFrozenAt=window.__animationLastNow;
+  return found;
+ },{id,targetX,fromX,freeze});
+ return (await state()).animation.find(a=>a.id===id);
+}
+async function staticPixels(){return createHash('sha256').update(await page.evaluate(()=>document.getElementById('rogue-canvas').toDataURL())).digest('hex');}
+async function settingsSwitch(mode,mobile=false){
+ const before=await state();await tap('settings-toggle',mobile);
+ await page.locator('[data-control="animation-toggle"][aria-checked="true"]').waitFor();
+ await tap('animation-toggle',mobile);await page.locator('[data-control="animation-toggle"][aria-checked="false"]').waitFor();
+ assert.equal((await state()).enabled,false);unchanged(before,await state(),'Switch animation off');await shot(mode+'-settings-off');
+ await tap('settings-close',mobile);await page.locator('[data-control="settings-close"]').waitFor({state:'detached'});await page.waitForFunction(()=>__rogueBrowserTest.diagnostics.animation.every(a=>a.animated===false));
+ const still=await staticPixels();await page.waitForTimeout(450);assert.equal(await staticPixels(),still,'Disabled animation keeps actual pixels still');
+ await tap('settings-toggle',mobile);await tap('animation-toggle',mobile);await tap('settings-close',mobile);await pose(0,'idle');
+ unchanged(before,await state(),'Switch animation on');
+ report.checks.push({mode,check:'Settings switch changes live rendering without C/input/RNG changes'});
+}
+async function multiStageThrow(){
+ await open('pixels');await key('t',false);assert.equal((await state()).frame.ui.input.kind,'direction');
+ await key('h',false);const selection=await state();assert.ok(selection.frame.ui.lines.some(line=>line.key==='e'&&line.selectable));
+ const step=selection.frame.map_actor_step;await key('e');await pose(0,'attack',null,true);
+ const thrown=await state();assert.equal(thrown.animation.find(a=>a.id===0).facing,-1);
+ assert.equal(thrown.frame.map_actor_step,step,'Direction and item selection belong to the same original action');
+ await shot('multi-stage-throw');report.checks.push({mode:'pixels',check:'Direction/item follow-up inputs still animate the actual thrown weapon'});
+}
+const throwOnly=process.argv.includes('--throw-only');
 try{
  runtime=await prepareBrowserRuntime(root);browser=await loadPlaywright().chromium.launch({executablePath:browserExecutable(),headless:true,downloadsPath:runtime.downloadsPath});
+ if(!throwOnly){
  for(const mode of ['pixels','tiles']){
   await open(mode);const before=await state();const hashes=await idlePixels();unchanged(before,await state(),'Passive '+mode+' animation');
-  await shot(mode+'-idle');report.checks.push({mode,check:'Three idle frames render different pixels without C/RNG/input changes',hashes});
-  const actors=(await state()).frame.map_actors;assert.ok(actors.every(a=>!(a.x===12&&a.y===12)&&!(a.x===13&&a.y===12)),'Hidden enemy and disguised xeroc are not actors');
-  await key('h');await pose(0,'move',null,true);await shot(mode+'-move');
-  await key('.');const foe=(await state()).frame.map_actors.find(a=>a.glyph===90);assert.ok(foe,'Visible chasing zombie');await pose(foe.id,'move');
-  await key('.');await key('l');await pose(0,'attack',null,true);await shot(mode+'-attack');
-  await key('l');await pose(0,'hurt',null,true);await shot(mode+'-hurt');
-  await page.waitForFunction(()=>__rogueBrowserTest.diagnostics.animation.every(a=>a.state==='idle'));
-  report.checks.push({mode,check:'Real C player/enemy moves, attack and hurt play and return to idle'});
-  await key('i',false);const menu=await state();await pose(0,'idle',2);unchanged(menu,await state(),'Inventory animation');await key('Space');
+  await shot(mode+'-idle');report.checks.push({mode,check:'Idle changes real pixels while C/RNG/input stay unchanged',hashes});
+  const actors=before.frame.map_actors;assert.ok(actors.every(a=>!(a.x===12&&a.y===12)&&!(a.x===13&&a.y===12)),'Hidden and disguised enemies remain private');
+  await key('h');const motion=await moving(0,9,10,true);assert.equal(motion.state,'idle');assert.equal(motion.facing,-1);
+  const leftFlip=await page.evaluate(()=>__rogueBrowserTest.commands.find(c=>c.image?.startsWith('animations-v1/actor.player/')).flipX);
+  assert.equal(leftFlip,mode==='tiles');await shot(mode+'-continuous-left');
+  await page.waitForFunction(()=>__rogueBrowserTest.diagnostics.animation.find(a=>a.id===0).displayX===9);
+  await key('.');await key('.');await key('l');await pose(0,'attack',0,true);
+  const rightFlip=await page.evaluate(()=>__rogueBrowserTest.commands.find(c=>c.image?.startsWith('animations-v1/actor.player/')).flipX);
+  assert.notEqual(rightFlip,leftFlip);await shot(mode+'-attack-right');
+  const phases=[];for(let n=0;n<8;n++){phases.push((await state()).animation.find(a=>a.id===0).state);await page.waitForTimeout(70);}
+  assert.ok(phases.includes('idle'));assert.ok(phases.every(p=>p==='attack'||p==='idle'),'Attack suppresses hurt for the same original action');
+  report.checks.push({mode,check:'Continuous movement, native left/right facing and attack > hurt > idle',motion,phases});
+  await key('l');await pose(0,'attack',0,true);const attacking=await state();const frozenClock=await page.evaluate(()=>window.__animationFrozenAt);
+  const started=Date.now();await key('.');await pose(0,'hurt',0);const hurt=await state();
+  assert.ok(hurt.frame.map_actor_step>attacking.frame.map_actor_step);assert.equal(await page.evaluate(()=>window.__animationFrozenAt),frozenClock,'Old action clock never reached completion');
+  report.checks.push({mode,check:'Next real input replaces an unfinished attack immediately',elapsed_ms:Date.now()-started});await shot(mode+'-next-input-hurt');
+  await settingsSwitch(mode);
   if(mode==='pixels'){
    await key('l');await pose(0,'attack');await tap('settings-toggle');const saved=await state();await tap('save');
    await page.waitForFunction(()=>__rogueBrowserTest.savedLength>0&&!__rogueBrowserTest.savePending&&__rogueBrowserTest.queuePending===0);
-   const savedState=await state();assert.deepEqual(savedState.words,saved.words,'Saving an animation never changes C/RNG');
-   await tap('settings-top');await tap('load');
-   await page.waitForFunction(generation=>__rogueBrowserTest.generation>generation&&__rogueBrowserTest.running&&__rogueBrowserTest.trace&&__rogueBrowserTest.diagnostics.animation?.length>0,savedState.generation);
-   await idle();const restored=await state();assert.deepEqual(restored.words,savedState.words,'Restore C/RNG');assert.equal(restored.inputs,savedState.inputs,'Restore journal');assert.ok(restored.animation.every(a=>a.state==='idle'),'Restore starts in idle rather than replaying old attacks');
-   await key('l');await pose(0,'attack');report.checks.push({mode,check:'Save during an action restores a fresh idle player and the next real attack works'});
+   assert.deepEqual((await state()).words,saved.words);await tap('settings-top');await tap('load');
+   await page.waitForFunction(g=>__rogueBrowserTest.generation>g&&__rogueBrowserTest.running&&__rogueBrowserTest.trace&&__rogueBrowserTest.diagnostics.animation?.length>0,saved.generation);
+   await idle();const restored=await state();assert.deepEqual(restored.words,saved.words);assert.ok(restored.animation.every(a=>a.state==='idle'));
+   await key('l');await pose(0,'attack');report.checks.push({mode,check:'Save/restore excludes presentation state and next attack works'});
+   await tap('settings-toggle');await tap('animation-toggle');await page.reload();await page.locator('[data-control="new-game"]:not([disabled])').waitFor();
+   assert.equal(await page.evaluate(()=>__rogueBrowserTest.diagnostics.animationEnabled),false,'Animation preference survives reload');
+   report.checks.push({mode,check:'Animation preference persists across reload'});
   }
  }
- await open('pixels',true);await pose(0,'idle');await tap('touch-h',true);await idle();await pose(0,'move',null,true);await shot('mobile-move');
- report.checks.push({mode:'pixels',check:'Mobile touch movement reaches C and animates the player'});
+ await open('pixels',true);await tap('touch-h',true);await idle();await moving(0,9,10,true);await shot('mobile-continuous-move');await settingsSwitch('mobile-pixels',true);
+ report.checks.push({mode:'mobile',check:'Real touch movement interpolates and the settings switch is usable'});
+ await open('pixels',false,'animation-held');await key('j');const held=(await state()).frame.map_actors.find(a=>a.glyph===75);assert.ok(held?.stopped);
+ const frozen=(await state()).animation.find(a=>a.id===held.id);await page.waitForTimeout(450);assert.deepEqual((await state()).animation.find(a=>a.id===held.id),frozen);await shot('held-still');
+ await key('j');await key('l');
+ await page.waitForFunction(id=>__rogueBrowserTest.frame.map_actors.some(a=>a.id===id&&!a.stopped),held.id);
+ await pose(held.id,'attack');report.checks.push({mode:'pixels',check:'The original held state freezes the actor and runto releases it after a real attack'});
  await open('pixels',false,'animation-hallucination');
- const hallucination=await state();const cells=hallucination.frame.map_cells,w=hallucination.frame.width;
- assert.ok(hallucination.frame.map_actors.every(a=>cells.charCodeAt(a.y*w+a.x)===a.glyph),'Hallucination actors use only public glyphs');
- assert.ok(hallucination.frame.map_actors.every(a=>!(a.x===12&&a.y===12)&&!(a.x===13&&a.y===12)),'Hidden and disguised actors remain private during hallucination');
- await pose(0,'idle');report.checks.push({mode:'pixels',check:'Hallucination uses displayed glyphs and preserves hidden/disguised actors'});
+ const hallucination=await state(),cells=hallucination.frame.map_cells,w=hallucination.frame.width;
+ assert.ok(hallucination.frame.map_actors.every(a=>cells.charCodeAt(a.y*w+a.x)===a.glyph));
+ assert.ok(hallucination.frame.map_actors.every(a=>!(a.x===12&&a.y===12)&&!(a.x===13&&a.y===12)));
+ report.checks.push({mode:'pixels',check:'Hallucination keeps only public glyphs and actors'});
+ }
+ await multiStageThrow();
  assert.deepEqual(report.errors,[]);report.result='pass';
 }catch(error){report.result='fail';report.failure=error.stack;if(page)report.last=await state().catch(()=>null);throw error;}
 finally{await writeFile(path.join(output,'browser-evidence.json'),JSON.stringify(report,null,2)+'\n');await context?.close();await browser?.close();await runtime?.dispose();await new Promise(resolve=>server.close(resolve));}

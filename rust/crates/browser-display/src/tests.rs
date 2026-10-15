@@ -79,7 +79,7 @@ fn preference_corruption_and_shared_continuous_zoom() {
     ] {
         assert_eq!(
             preference(raw),
-            json!({"version":1,"mode":"tiles","zoom":32})
+            json!({"version":1,"mode":"tiles","zoom":32,"animation":true})
         );
     }
     assert_eq!(
@@ -338,4 +338,19 @@ fn failed_write_releases_its_candidate_and_preserves_the_previous_save() {
     let r = c.request(json!({"type":"api","operation":"save-write","ok":true,"generation":1,"request":request,"length":100}));
     assert_eq!(r["accepted"], false);
     assert_eq!(r["state"]["savedLength"], bytes.len());
+}
+
+#[test]
+fn animation_switch_persists_without_game_input_and_old_preferences_default_on() {
+    let mut c=boot();start(&mut c);
+    let r=event(&mut c,json!({"type":"invoke","id":"animation-toggle"}));
+    assert_eq!(r["state"]["animationEnabled"],false);
+    assert!(!r["effects"].as_array().unwrap().iter().any(|e|e["kind"]=="queue"));
+    let stored=r["effects"].as_array().unwrap().iter().find(|e|e["kind"]=="storage-write").unwrap();
+    let preference_value:Value=serde_json::from_str(stored["value"].as_str().unwrap()).unwrap();
+    assert_eq!(preference_value["animation"],false);
+    let mut restored=Controller::new(measure);
+    let r=restored.request(json!({"type":"boot","environment":{"isolated":true,"parameters":{}},"preference":stored["value"]}));
+    assert_eq!(r["state"]["animationEnabled"],false);
+    assert_eq!(preference(r#"{"version":1,"mode":"tiles","zoom":32}"#)["animation"],true);
 }

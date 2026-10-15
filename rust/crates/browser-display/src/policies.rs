@@ -32,9 +32,9 @@ pub fn mode(value: &str) -> bool {
 pub fn preference(raw: &str) -> Value {
     let v = serde_json::from_str::<Value>(raw).unwrap_or(Value::Null);
     if v["version"] == 1 && mode(text(&v["mode"])) && valid_zoom(&v["zoom"]) {
-        json!({"version":1,"mode":v["mode"],"zoom":v["zoom"]})
+        json!({"version":1,"mode":v["mode"],"zoom":v["zoom"],"animation":v["animation"].as_bool().unwrap_or(true)})
     } else {
-        json!({"version":1,"mode":"tiles","zoom":32})
+        json!({"version":1,"mode":"tiles","zoom":32,"animation":true})
     }
 }
 pub struct Catalog {

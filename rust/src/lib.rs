@@ -464,7 +464,8 @@ pub extern "C" fn rg_host_map_actor_reset(epoch: u32) {
 /// Window text is not a map observation. C retains public IDs while Rust
 /// composites the cached map beneath its existing game window.
 #[unsafe(no_mangle)]
-pub extern "C" fn rg_host_map_actors_begin() -> i32 {
+pub extern "C" fn rg_host_map_actors_begin(step: u32) -> i32 {
+    engine::map_actor(rogue_display::map::ActorObservation::Step(step));
     if engine::render_ui()["mode"] != "game" {
         return 0;
     }
@@ -473,8 +474,9 @@ pub extern "C" fn rg_host_map_actors_begin() -> i32 {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn rg_host_map_actor(id: u32, x: i32, y: i32, glyph: i32) {
-    engine::map_actor(rogue_display::map::ActorObservation::Actor { id, x, y, glyph });
+pub extern "C" fn rg_host_map_actor(id: u32, x: i32, y: i32, glyph: i32, facing: i32, stopped: i32) {
+    if !matches!(stopped, 0 | 1) { return; }
+    engine::map_actor(rogue_display::map::ActorObservation::Actor { id, x, y, glyph, facing, stopped: stopped == 1 });
 }
 
 #[unsafe(no_mangle)]

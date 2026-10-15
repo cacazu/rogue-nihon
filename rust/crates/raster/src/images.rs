@@ -88,7 +88,8 @@ impl Image {
     pub fn crop(&self, x: u32, y: u32, width: u32, height: u32) -> Result<Self, String> {
         let bytes = byte_count(width, height)?;
         if x.checked_add(width).is_none_or(|right| right > self.width)
-            || y.checked_add(height).is_none_or(|bottom| bottom > self.height)
+            || y.checked_add(height)
+                .is_none_or(|bottom| bottom > self.height)
         {
             return Err("Sprite crop is outside its image".into());
         }
@@ -238,7 +239,7 @@ pub(crate) fn draw_image(
     let degrees = if pixel_art { 0. } else { rotation };
     let (cos, sin) = (degrees.to_radians().cos(), degrees.to_radians().sin());
     let (sx, sy) = (
-        w / image.width as f64 * ratio,
+        w / image.width as f64 * ratio * if command["flipX"] == true { -1. } else { 1. },
         h / image.height as f64 * ratio,
     );
     let (a, b, c, d) = (cos * sx, sin * sx, -sin * sy, cos * sy);
@@ -263,15 +264,37 @@ mod tests {
     use super::*;
 
     #[test]
+    fn sprite_flip_mirrors_native_pixels_without_changing_alpha() {
+        let pixels = vec![255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 0, 0];
+        let image = Image::from_rgba(3, 1, pixels).unwrap();
+        let mut set = ImageSet::new(BTreeMap::from([("actor.png".into(), image)]));
+        let mut command = serde_json::json!({"image":"actor.png","rect":{"x":0,"y":0,"w":3,"h":1},"pixelArt":true});
+        let original = set.rasterize(&command, 3, 1).unwrap();
+        command["flipX"] = true.into();
+        let mirrored = set.rasterize(&command, 3, 1).unwrap();
+        assert_eq!(
+            mirrored,
+            original
+                .chunks_exact(4)
+                .rev()
+                .flatten()
+                .copied()
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
     fn sprite_crop_preserves_pixels_and_alpha_across_rows() {
         let pixels = vec![
-            1, 2, 3, 255, 4, 5, 6, 0, 7, 8, 9, 128,
-            10, 11, 12, 64, 13, 14, 15, 255, 16, 17, 18, 0,
+            1, 2, 3, 255, 4, 5, 6, 0, 7, 8, 9, 128, 10, 11, 12, 64, 13, 14, 15, 255, 16, 17, 18, 0,
         ];
         let sheet = Image::from_rgba(3, 2, pixels.clone()).unwrap();
         let cell = sheet.crop(1, 0, 2, 2).unwrap();
         assert_eq!((cell.width(), cell.height()), (2, 2));
-        assert_eq!(cell.rgba(), &[4, 5, 6, 0, 7, 8, 9, 128, 13, 14, 15, 255, 16, 17, 18, 0]);
+        assert_eq!(
+            cell.rgba(),
+            &[4, 5, 6, 0, 7, 8, 9, 128, 13, 14, 15, 255, 16, 17, 18, 0]
+        );
         assert_eq!(sheet.rgba(), pixels);
         assert_eq!(sheet.crop(2, 1, 1, 1).unwrap().rgba(), &[16, 17, 18, 0]);
     }
@@ -279,8 +302,17 @@ mod tests {
     #[test]
     fn sprite_crop_rejects_empty_outside_and_overflowing_bounds() {
         let sheet = Image::from_rgba(3, 2, vec![0; 24]).unwrap();
-        for (x, y, w, h) in [(3, 0, 1, 1), (0, 2, 1, 1), (2, 1, 2, 1), (u32::MAX, 0, 2, 1), (0, u32::MAX, 1, 2)] {
-            assert_eq!(sheet.crop(x, y, w, h).err().as_deref(), Some("Sprite crop is outside its image"));
+        for (x, y, w, h) in [
+            (3, 0, 1, 1),
+            (0, 2, 1, 1),
+            (2, 1, 2, 1),
+            (u32::MAX, 0, 2, 1),
+            (0, u32::MAX, 1, 2),
+        ] {
+            assert_eq!(
+                sheet.crop(x, y, w, h).err().as_deref(),
+                Some("Sprite crop is outside its image")
+            );
         }
         assert_eq!(sheet.crop(0, 0, 0, 1).err().as_deref(), Some("Empty image"));
     }

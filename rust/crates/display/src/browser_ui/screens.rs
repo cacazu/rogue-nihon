@@ -118,17 +118,20 @@ impl BrowserUi {
             n(&self.model["tileSize"])
         };
         let cell_h = size;
+        let visual_player = array(&f["map_animation"]).iter().find(|actor| actor["id"] == 0);
+        let player_x = visual_player.and_then(|actor| actor["displayX"].as_f64()).unwrap_or(n(&f["player"]["x"]));
+        let player_y = visual_player.and_then(|actor| actor["displayY"].as_f64()).unwrap_or(n(&f["player"]["y"]));
         let key = format!(
             "{}:{}:{}:{size}:{}:{}",
-            self.model["generation"], f["player"]["x"], f["player"]["y"], map.w, map.h
+            self.model["generation"], player_x, player_y, map.w, map.h
         );
         if self.center_key != key {
             self.center_key = key;
             self.camera = Some(Camera {
                 size,
                 cell_h,
-                left: n(&f["player"]["x"]) * size + size / 2. - map.w / 2.,
-                top: (n(&f["player"]["y"]) - 1.) * cell_h + cell_h / 2. - map.h / 2.,
+                left: player_x * size + size / 2. - map.w / 2.,
+                top: (player_y - 1.) * cell_h + cell_h / 2. - map.h / 2.,
                 width: map.w,
                 height: map.h,
             });

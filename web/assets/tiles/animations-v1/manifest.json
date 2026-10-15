@@ -71,7 +71,8 @@
       "generated_source": {
         "image": "sources/actor.player.generated.png",
         "sha256": "eb1c6d8cbd0c24feb4874265ad2ccde59b1099b2ea6e260b3406905610ec9cd3"
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.aquator",
@@ -204,7 +205,8 @@
         ],
         "uniform_scale": 0.22702702702702704,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.bat",
@@ -337,7 +339,8 @@
         ],
         "uniform_scale": 0.2346368715083799,
         "padding_pixels": 6
-      }
+      },
+      "facing": "front"
     },
     {
       "id": "monster.centaur",
@@ -470,7 +473,8 @@
         ],
         "uniform_scale": 0.24705882352941178,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.dragon",
@@ -603,7 +607,8 @@
         ],
         "uniform_scale": 0.224,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.emu",
@@ -736,7 +741,8 @@
         ],
         "uniform_scale": 0.23076923076923078,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.venus_flytrap",
@@ -869,7 +875,8 @@
         ],
         "uniform_scale": 0.2553191489361702,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.griffin",
@@ -1002,7 +1009,8 @@
         ],
         "uniform_scale": 0.24277456647398843,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.hobgoblin",
@@ -1135,7 +1143,8 @@
         ],
         "uniform_scale": 0.20240963855421687,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.ice_monster",
@@ -1273,7 +1282,8 @@
         ],
         "uniform_scale": 0.24561403508771928,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.jabberwock",
@@ -1406,7 +1416,8 @@
         ],
         "uniform_scale": 0.21818181818181817,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.kestrel",
@@ -1539,7 +1550,8 @@
         ],
         "uniform_scale": 0.2507462686567164,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.leprechaun",
@@ -1672,7 +1684,8 @@
         ],
         "uniform_scale": 0.24347826086956523,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.medusa",
@@ -1805,7 +1818,8 @@
         ],
         "uniform_scale": 0.24347826086956523,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.nymph",
@@ -1938,7 +1952,8 @@
         ],
         "uniform_scale": 0.23595505617977527,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.orc",
@@ -2071,7 +2086,8 @@
         ],
         "uniform_scale": 0.23595505617977527,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.phantom",
@@ -2204,7 +2220,8 @@
         ],
         "uniform_scale": 0.2346368715083799,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.quagga",
@@ -2337,7 +2354,8 @@
         ],
         "uniform_scale": 0.24778761061946902,
         "padding_pixels": 6
-      }
+      },
+      "facing": "left"
     },
     {
       "id": "monster.rattlesnake",
@@ -2470,7 +2488,8 @@
         ],
         "uniform_scale": 0.23204419889502761,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.snake",
@@ -2603,7 +2622,8 @@
         ],
         "uniform_scale": 0.23796033994334279,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.troll",
@@ -2736,7 +2756,8 @@
         ],
         "uniform_scale": 0.233983286908078,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.black_unicorn",
@@ -2869,7 +2890,8 @@
         ],
         "uniform_scale": 0.21374045801526717,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.vampire",
@@ -3002,7 +3024,8 @@
         ],
         "uniform_scale": 0.2222222222222222,
         "padding_pixels": 6
-      }
+      },
+      "facing": "front"
     },
     {
       "id": "monster.wraith",
@@ -3135,7 +3158,8 @@
         ],
         "uniform_scale": 0.23204419889502761,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.xeroc",
@@ -3268,7 +3292,8 @@
         ],
         "uniform_scale": 0.24347826086956523,
         "padding_pixels": 6
-      }
+      },
+      "facing": "front"
     },
     {
       "id": "monster.yeti",
@@ -3401,7 +3426,8 @@
         ],
         "uniform_scale": 0.21705426356589147,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     },
     {
       "id": "monster.zombie",
@@ -3534,7 +3560,8 @@
         ],
         "uniform_scale": 0.233983286908078,
         "padding_pixels": 6
-      }
+      },
+      "facing": "right"
     }
   ]
 }

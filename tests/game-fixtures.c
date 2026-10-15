@@ -328,7 +328,8 @@ void rg_test_apply_fixture(void)
             strcpy(object->o_damage, "0x0"); strcpy(object->o_hurldmg, "0x0");
             add_pack(object, TRUE);
         }
-    } else if (!strcmp(name, "animation") || !strcmp(name, "animation-hallucination")) {
+    } else if (!strcmp(name, "animation") || !strcmp(name, "animation-hallucination") ||
+               !strcmp(name, "animation-held") || !strcmp(name, "animation-sleep")) {
         /* Real original-rule movement and combat, with enough HP to observe
          * the complete attack/hurt clips. Private actors test publication:
          * invisible enemies and item-disguised xerocs remain unreported. */
@@ -342,6 +343,10 @@ void rg_test_apply_fixture(void)
         monster = monster_at('K', 11, 12);
         monster->t_flags |= ISHELD;
         monster->t_flags &= ~ISRUN;
+        if (!strcmp(name,"animation-held")) {
+            monster->t_stats.s_hpt=monster->t_stats.s_maxhp=200;
+            monster->t_stats.s_arm=20;
+        }
         monster = monster_at('E', 12, 12);
         monster->t_flags |= ISINVIS | ISHELD;
         monster->t_flags &= ~ISRUN;
@@ -353,6 +358,10 @@ void rg_test_apply_fixture(void)
             player.t_flags |= ISHALU;
             start_daemon(visuals, 0, BEFORE);
             fuse(come_down, 0, 50, AFTER);
+        }
+        if (!strcmp(name,"animation-sleep")) {
+            no_command=3;
+            player.t_flags &= ~ISRUN;
         }
     } else if (!strcmp(name, "wall")) {
         chat(hero.y, hero.x - 1) = '|';

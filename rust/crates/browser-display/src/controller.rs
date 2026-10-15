@@ -38,7 +38,7 @@ impl Controller {
             ui: BrowserUi::new(measure),
             animations: Animator::new(tiles::animation_manifest("tiles"), tiles::animation_manifest("pixels"))
                 .expect("Character animation manifests"),
-            model: json!({"language":"ja","topOpen":true,"settingsOpen":false,"starting":false,"running":false,"ready":false,"saved":false,"downloadAvailable":false,"savePending":false,"returnAfterEnd":false,"itemHistoryOpen":false,"returnToInventory":false,"generation":0,"displayMode":"tiles","tileSize":32,"frame":null,"topNotice":null}),
+            model: json!({"language":"ja","topOpen":true,"settingsOpen":false,"starting":false,"running":false,"ready":false,"saved":false,"downloadAvailable":false,"savePending":false,"returnAfterEnd":false,"itemHistoryOpen":false,"returnToInventory":false,"generation":0,"displayMode":"tiles","tileSize":32,"animationEnabled":true,"frame":null,"topNotice":null}),
             state: json!({"exitCode":null,"outcome":null,"runtimeError":null,"frameCount":0,"inputRequestCount":0,"trace":null,"traces":[],"messages":[],"logs":[],"translationFallbacks":[],"savedLength":0}),
             inputs: json!({}),
             environment: Value::Null,
@@ -381,7 +381,7 @@ impl Controller {
             "trace":self.environment["parameters"]["trace"]=="1","message_paging":"log"}));
     }
     fn persist_view(&mut self) {
-        self.effects.push(json!({"kind":"storage-write","key":"rogue-map-display-v1","value":json!({"version":1,"mode":self.model["displayMode"],"zoom":self.model["tileSize"]}).to_string()}));
+        self.effects.push(json!({"kind":"storage-write","key":"rogue-map-display-v1","value":json!({"version":1,"mode":self.model["displayMode"],"zoom":self.model["tileSize"],"animation":self.model["animationEnabled"]}).to_string()}));
     }
     fn select(&mut self, id: &str, value: &str) {
         match id {
@@ -446,6 +446,12 @@ impl Controller {
     }
     fn invoke(&mut self, id: &str) {
         match id {
+            "animation-toggle" if !flag(&self.model["starting"]) && !flag(&self.model["savePending"]) => {
+                let enabled=!flag(&self.model["animationEnabled"]);
+                self.model["animationEnabled"]=json!(enabled);
+                self.animations.set_enabled(enabled);
+                self.persist_view();
+            },
             "import-save" if !flag(&self.model["starting"]) && !flag(&self.model["savePending"]) && !flag(&self.model["returnAfterEnd"]) => {
                 self.model["starting"]=json!(true);
                 let pending = self.save_operation(SaveOperation::Import);
@@ -652,6 +658,7 @@ impl Controller {
                     self.notice("error.queue_full", json!({}), true);
                     return false;
                 }
+                self.animations.interrupt();
                 match text(&r["after"]) {
                     "save" => {
                         self.draft_dirty = false;
@@ -877,6 +884,8 @@ impl Controller {
                 let mode = if mode(view) { view } else { text(&p["mode"]) };
                 self.model["displayMode"] = json!(mode);
                 self.model["tileSize"] = p["zoom"].clone();
+                self.model["animationEnabled"] = p["animation"].clone();
+                self.animations.set_enabled(flag(&p["animation"]));
                 self.document();
                 self.field("name", json!({"value":"Player"}));
                 self.field("seed", json!({"value":"12345"}));

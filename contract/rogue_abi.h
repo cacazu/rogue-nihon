@@ -88,8 +88,10 @@ void rg_host_map_actor_reset(uint32_t epoch);
 /* Return 0 when Rust keeps a cached map under a game window; then the C
  * observer preserves its previous public identities without reading overlay
  * text as characters. Return 1 when the current public map may be replaced. */
-int32_t rg_host_map_actors_begin(void);
-void rg_host_map_actor(uint32_t id, int32_t x, int32_t y, int32_t glyph);
+int32_t rg_host_map_actors_begin(uint32_t step);
+/* facing is -1/1; stopped is a public presentation boolean, never raw flags. */
+void rg_host_map_actor(uint32_t id, int32_t x, int32_t y, int32_t glyph,
+                       int32_t facing, int32_t stopped);
 /* The C owner reports an actual action/damage at its source. Rust owns the
  * bounded transient queue and sequence; each event is consumed once by the
  * next frame. Events never enter game saves, RNG, or command processing. */

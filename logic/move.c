@@ -196,9 +196,14 @@ move_stuff:
 		mvaddch(hero.y, hero.x, floor_at());
 		if ((fl & F_PASS) && chat(oldpos.y, oldpos.x) == DOOR)
 		    leave_room(&nh);
-		hero = nh;
 #ifdef ROGUE_LAYERED
-		rg_semantic_actor_event(&player,RG_ACTOR_MOVE);
+                {
+                    int visual_x=hero.x,visual_y=hero.y;
+                    hero=nh;
+                    rg_semantic_actor_moved(&player,visual_x,visual_y);
+                }
+#else
+		hero = nh;
 #endif
 	    }
     }

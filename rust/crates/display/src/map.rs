@@ -11,9 +11,20 @@ const MAX_ACTOR_EVENTS: usize = 4096;
 #[derive(Clone, Copy)]
 pub enum ActorObservation {
     Reset(u32),
+    Step(u32),
     Begin,
-    Actor { id: u32, x: i32, y: i32, glyph: i32 },
-    Event { id: u32, kind: u32 },
+    Actor {
+        id: u32,
+        x: i32,
+        y: i32,
+        glyph: i32,
+        facing: i32,
+        stopped: bool,
+    },
+    Event {
+        id: u32,
+        kind: u32,
+    },
     Replay(bool),
 }
 
@@ -32,6 +43,7 @@ pub struct ObservedMap {
     actors: Vec<Value>,
     actor_events: Vec<(u64, u32, &'static str)>,
     actor_epoch: u32,
+    actor_step: u32,
     actor_sequence: u64,
     accepting_actors: bool,
     replaying_actors: bool,
@@ -67,6 +79,7 @@ impl ObservedMap {
                 self.actors.clear();
                 self.actor_events.clear();
                 self.actor_epoch = epoch;
+                self.actor_step = 0;
                 self.actor_sequence = 0;
                 self.accepting_actors = false;
                 // A retained window must not carry actors from an old level
@@ -77,17 +90,26 @@ impl ObservedMap {
                     frame["map_actor_epoch"] = json!(epoch);
                 }
             }
+            ActorObservation::Step(step) => self.actor_step = step,
             ActorObservation::Begin => {
                 self.actors.clear();
                 self.accepting_actors = true;
             }
-            ActorObservation::Actor { id, x, y, glyph } => {
+            ActorObservation::Actor {
+                id,
+                x,
+                y,
+                glyph,
+                facing,
+                stopped,
+            } => {
                 let (Ok(x), Ok(y), Ok(glyph)) =
                     (u32::try_from(x), u32::try_from(y), u8::try_from(glyph))
                 else {
                     return;
                 };
                 if !self.accepting_actors
+                    || !matches!(facing, -1 | 1)
                     || x >= COLUMNS
                     || y == 0
                     || y >= ROWS - 1
@@ -101,7 +123,9 @@ impl ObservedMap {
                 {
                     return;
                 }
-                self.actors.push(json!({"id":id,"x":x,"y":y,"glyph":glyph}));
+                self.actors.push(
+                    json!({"id":id,"x":x,"y":y,"glyph":glyph,"facing":facing,"stopped":stopped}),
+                );
             }
             ActorObservation::Event { id, kind } => {
                 let kind = match kind {
@@ -276,6 +300,7 @@ impl ObservedMap {
                 .collect::<Vec<_>>()
         );
         self.accepting_actors = false;
+        frame["map_actor_step"] = json!(self.actor_step);
         frame["ui"] = ui.clone();
         frame["ui"]["can_drop"] = json!(can_drop_on(&frame));
         frame["ui"]["map_controls"] =
@@ -310,12 +335,16 @@ mod tests {
             x: player_x,
             y: 2,
             glyph: i32::from(b'@'),
+            facing: 1,
+            stopped: false,
         });
         map.observe_actor(ActorObservation::Actor {
             id: 7,
             x: monster_x,
             y: 2,
             glyph: i32::from(b'Z'),
+            facing: 1,
+            stopped: false,
         });
     }
 
@@ -340,7 +369,7 @@ mod tests {
         assert_eq!(
             published["map_actors"],
             json!([
-            {"id":0,"x":3,"y":2,"glyph":64},{"id":7,"x":4,"y":2,"glyph":90}])
+            {"id":0,"x":3,"y":2,"glyph":64,"facing":1,"stopped":false},{"id":7,"x":4,"y":2,"glyph":90,"facing":1,"stopped":false}])
         );
         assert_eq!(
             published["map_actor_events"],
@@ -387,12 +416,16 @@ mod tests {
             x: 6,
             y: 2,
             glyph: i32::from(b'!'),
+            facing: 1,
+            stopped: false,
         });
         map.observe_actor(ActorObservation::Actor {
             id: 9,
             x: 7,
             y: 2,
             glyph: i32::from(b'E'),
+            facing: 1,
+            stopped: false,
         });
         for id in [8, 9, 10] {
             map.observe_actor(ActorObservation::Event {

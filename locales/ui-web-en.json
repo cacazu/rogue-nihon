@@ -211,6 +211,9 @@
     "log.parameter.protection": "Protection",
     "log.parameter.strength": "Strength",
     "log.parameter.bonus": "Bonus",
-    "log.parameter.charges": "Charges"
+    "log.parameter.charges": "Charges",
+    "settings.animation": "Animation",
+    "settings.on": "On",
+    "settings.off": "Off"
   }
 }

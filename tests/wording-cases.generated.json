@@ -145,89 +145,80 @@
       ]
     },
     {
-      "case": "clear:command.c:84",
+      "case": "clear:command.c:87",
       "id": "message.clear",
       "negative": false,
       "site": [
         "command.c",
-        84
+        87
       ]
     },
     {
-      "case": "site:command.c:94:command.command.you_can_move_again:7",
+      "case": "site:command.c:101:command.command.you_can_move_again:7",
       "id": "command.command.you_can_move_again",
       "negative": false,
       "site": [
         "command.c",
-        94
+        101
       ]
     },
     {
-      "case": "site:command.c:175:command.command.there_is:7",
+      "case": "site:command.c:182:command.command.there_is:7",
       "id": "command.command.there_is",
       "negative": false,
       "site": [
         "command.c",
-        175
+        182
       ]
     },
     {
-      "case": "site:command.c:176:command.command.nothing_here:7",
+      "case": "site:command.c:183:command.command.nothing_here:7",
       "id": "command.command.nothing_here",
       "negative": false,
       "site": [
         "command.c",
-        176
+        183
       ]
     },
     {
-      "case": "site:command.c:178:command.command.to_pick_up:7",
+      "case": "site:command.c:185:command.command.to_pick_up:7",
       "id": "command.command.to_pick_up",
       "negative": false,
       "site": [
         "command.c",
-        178
+        185
       ]
     },
     {
-      "case": "site:command.c:231:command.command.i_see:7",
+      "case": "site:command.c:238:command.command.i_see:7",
       "id": "command.command.i_see",
       "negative": false,
       "site": [
         "command.c",
-        231
+        238
       ]
     },
     {
-      "case": "site:command.c:232:command.command.no_monster_there:7",
+      "case": "site:command.c:239:command.command.no_monster_there:7",
       "id": "command.command.no_monster_there",
       "negative": false,
       "site": [
         "command.c",
-        232
+        239
       ]
     },
     {
-      "case": "site:command.c:257:command.command.you_havent_typed_a_command_yet:7",
+      "case": "site:command.c:264:command.command.you_havent_typed_a_command_yet:7",
       "id": "command.command.you_havent_typed_a_command_yet",
       "negative": false,
       "site": [
         "command.c",
-        257
+        264
       ]
     },
     {
-      "case": "site:command.c:300:command.command.string:7",
+      "case": "site:command.c:307:command.command.string:7",
       "id": "command.command.string",
-      "negative": false,
-      "site": [
-        "command.c",
-        300
-      ]
-    },
-    {
-      "case": "site:command.c:307:command.command.version_mctesq_was_here:7",
-      "id": "command.command.version_mctesq_was_here",
       "negative": false,
       "site": [
         "command.c",
@@ -235,125 +226,107 @@
       ]
     },
     {
-      "case": "site:command.c:320:command.command.you_have_found:7",
+      "case": "site:command.c:314:command.command.version_mctesq_was_here:7",
+      "id": "command.command.version_mctesq_was_here",
+      "negative": false,
+      "site": [
+        "command.c",
+        314
+      ]
+    },
+    {
+      "case": "site:command.c:327:command.command.you_have_found:7",
       "id": "command.command.you_have_found",
       "negative": false,
       "site": [
         "command.c",
-        320
+        327
       ]
     },
     {
-      "case": "site:command.c:322:command.command.no_trap_there:7",
+      "case": "site:command.c:329:command.command.no_trap_there:7",
       "id": "command.command.no_trap_there",
       "negative": false,
       "site": [
         "command.c",
-        322
+        329
       ]
     },
     {
-      "case": "site:command.c:337:command.command.not_wizard_any_more:7",
+      "case": "site:command.c:344:command.command.not_wizard_any_more:7",
       "id": "command.command.not_wizard_any_more",
       "negative": false,
       "site": [
         "command.c",
-        337
+        344
       ]
     },
     {
-      "case": "site:command.c:346:command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon:-7",
+      "case": "site:command.c:353:command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon:-7",
       "id": "command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon",
       "negative": false,
       "site": [
         "command.c",
-        346
+        353
       ]
     },
     {
-      "case": "site:command.c:346:command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon:0",
+      "case": "site:command.c:353:command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon:0",
       "id": "command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon",
       "negative": false,
       "site": [
         "command.c",
-        346
+        353
       ]
     },
     {
-      "case": "site:command.c:346:command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon:7",
+      "case": "site:command.c:353:command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon:7",
       "id": "command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon",
       "negative": false,
       "site": [
         "command.c",
-        346
+        353
       ]
     },
     {
-      "case": "site:command.c:349:command.command.sorry:7",
+      "case": "site:command.c:356:command.command.sorry:7",
       "id": "command.command.sorry",
       "negative": false,
       "site": [
         "command.c",
-        349
+        356
       ]
     },
     {
-      "case": "site:command.c:384:command.command.number_number:-7",
+      "case": "site:command.c:391:command.command.number_number:-7",
       "id": "command.command.number_number",
       "negative": false,
       "site": [
         "command.c",
-        384
+        391
       ]
     },
     {
-      "case": "site:command.c:384:command.command.number_number:0",
+      "case": "site:command.c:391:command.command.number_number:0",
       "id": "command.command.number_number",
       "negative": false,
       "site": [
         "command.c",
-        384
+        391
       ]
     },
     {
-      "case": "site:command.c:384:command.command.number_number:7",
+      "case": "site:command.c:391:command.command.number_number:7",
       "id": "command.command.number_number",
       "negative": false,
       "site": [
         "command.c",
-        384
+        391
       ]
     },
     {
-      "case": "site:command.c:386:command.command.inpack:-7",
+      "case": "site:command.c:393:command.command.inpack:-7",
       "id": "command.command.inpack",
-      "negative": false,
-      "site": [
-        "command.c",
-        386
-      ]
-    },
-    {
-      "case": "site:command.c:386:command.command.inpack:0",
-      "id": "command.command.inpack",
-      "negative": false,
-      "site": [
-        "command.c",
-        386
-      ]
-    },
-    {
-      "case": "site:command.c:386:command.command.inpack:7",
-      "id": "command.command.inpack",
-      "negative": false,
-      "site": [
-        "command.c",
-        386
-      ]
-    },
-    {
-      "case": "site:command.c:393:command.command.food_left:-7",
-      "id": "command.command.food_left",
       "negative": false,
       "site": [
         "command.c",
@@ -361,8 +334,8 @@
       ]
     },
     {
-      "case": "site:command.c:393:command.command.food_left:0",
-      "id": "command.command.food_left",
+      "case": "site:command.c:393:command.command.inpack:0",
+      "id": "command.command.inpack",
       "negative": false,
       "site": [
         "command.c",
@@ -370,8 +343,8 @@
       ]
     },
     {
-      "case": "site:command.c:393:command.command.food_left:7",
-      "id": "command.command.food_left",
+      "case": "site:command.c:393:command.command.inpack:7",
+      "id": "command.command.inpack",
       "negative": false,
       "site": [
         "command.c",
@@ -379,170 +352,179 @@
       ]
     },
     {
-      "case": "site:command.c:490:command.illcom.illegal_command:7",
+      "case": "site:command.c:400:command.command.food_left:-7",
+      "id": "command.command.food_left",
+      "negative": false,
+      "site": [
+        "command.c",
+        400
+      ]
+    },
+    {
+      "case": "site:command.c:400:command.command.food_left:0",
+      "id": "command.command.food_left",
+      "negative": false,
+      "site": [
+        "command.c",
+        400
+      ]
+    },
+    {
+      "case": "site:command.c:400:command.command.food_left:7",
+      "id": "command.command.food_left",
+      "negative": false,
+      "site": [
+        "command.c",
+        400
+      ]
+    },
+    {
+      "case": "site:command.c:497:command.illcom.illegal_command:7",
       "id": "command.illcom.illegal_command",
       "negative": false,
       "site": [
         "command.c",
-        490
+        497
       ]
     },
     {
-      "case": "site:command.c:526:command.search.a_secret_door:7",
+      "case": "site:command.c:533:command.search.a_secret_door:7",
       "id": "command.search.a_secret_door",
       "negative": false,
       "site": [
         "command.c",
-        526
+        533
       ]
     },
     {
-      "case": "site:command.c:538:command.search.you_found:7",
+      "case": "site:command.c:545:command.search.you_found:7",
       "id": "command.search.you_found",
       "negative": false,
       "site": [
         "command.c",
-        538
+        545
       ]
     },
     {
-      "case": "site:command.c:593:command.help.character_you_want_help_for_for_all:7",
+      "case": "site:command.c:600:command.help.character_you_want_help_for_for_all:7",
       "id": "command.help.character_you_want_help_for_for_all",
       "negative": false,
       "site": [
         "command.c",
-        593
+        600
       ]
     },
     {
-      "case": "site:command.c:616:command.help.string_string:7",
+      "case": "site:command.c:623:command.help.string_string:7",
       "id": "command.help.string_string",
       "negative": false,
       "site": [
         "command.c",
-        616
+        623
       ]
     },
     {
-      "case": "site:command.c:620:command.help.unknown_character:7",
+      "case": "site:command.c:627:command.help.unknown_character:7",
       "id": "command.help.unknown_character",
       "negative": false,
       "site": [
         "command.c",
-        620
+        627
       ]
     },
     {
-      "case": "clear:command.c:678",
+      "case": "clear:command.c:685",
       "id": "message.clear",
       "negative": false,
       "site": [
         "command.c",
-        678
+        685
       ]
     },
     {
-      "case": "site:command.c:715:command.identify.what_do_you_want_identified:7",
+      "case": "site:command.c:722:command.identify.what_do_you_want_identified:7",
       "id": "command.identify.what_do_you_want_identified",
       "negative": false,
       "site": [
         "command.c",
-        715
+        722
       ]
     },
     {
-      "case": "clear:command.c:726",
+      "case": "clear:command.c:733",
       "id": "message.clear",
       "negative": false,
       "site": [
         "command.c",
-        726
+        733
       ]
     },
     {
-      "case": "site:command.c:755:command.identify.string_string:7",
+      "case": "site:command.c:762:command.identify.string_string:7",
       "id": "command.identify.string_string",
       "negative": false,
       "site": [
         "command.c",
-        755
+        762
       ]
     },
     {
-      "case": "site:command.c:768:command.d_level.i_see_no_way_down:7",
+      "case": "site:command.c:775:command.d_level.i_see_no_way_down:7",
       "id": "command.d_level.i_see_no_way_down",
       "negative": false,
       "site": [
         "command.c",
-        768
+        775
       ]
     },
     {
-      "case": "site:command.c:793:command.u_level.you_feel_a_wrenching_sensation_in_your_gut:7",
+      "case": "site:command.c:800:command.u_level.you_feel_a_wrenching_sensation_in_your_gut:7",
       "id": "command.u_level.you_feel_a_wrenching_sensation_in_your_gut",
       "negative": false,
       "site": [
         "command.c",
-        793
+        800
       ]
     },
     {
-      "case": "site:command.c:796:command.u_level.your_way_is_magically_blocked:7",
+      "case": "site:command.c:803:command.u_level.your_way_is_magically_blocked:7",
       "id": "command.u_level.your_way_is_magically_blocked",
       "negative": false,
       "site": [
         "command.c",
-        796
+        803
       ]
     },
     {
-      "case": "site:command.c:798:command.u_level.i_see_no_way_up:7",
+      "case": "site:command.c:805:command.u_level.i_see_no_way_up:7",
       "id": "command.u_level.i_see_no_way_up",
       "negative": false,
       "site": [
         "command.c",
-        798
+        805
       ]
     },
     {
-      "case": "site:command.c:811:command.levit_check.you_cant_youre_floating_off_the_ground:7",
+      "case": "site:command.c:818:command.levit_check.you_cant_youre_floating_off_the_ground:7",
       "id": "command.levit_check.you_cant_youre_floating_off_the_ground",
       "negative": false,
       "site": [
         "command.c",
-        811
+        818
       ]
     },
     {
-      "case": "site:command.c:856:command.call.you_cant_call_that_anything:7",
+      "case": "site:command.c:863:command.call.you_cant_call_that_anything:7",
       "id": "command.call.you_cant_call_that_anything",
       "negative": false,
       "site": [
         "command.c",
-        856
+        863
       ]
     },
     {
-      "case": "site:command.c:865:command.call.that_has_already_been_identified:7",
+      "case": "site:command.c:872:command.call.that_has_already_been_identified:7",
       "id": "command.call.that_has_already_been_identified",
-      "negative": false,
-      "site": [
-        "command.c",
-        865
-      ]
-    },
-    {
-      "case": "site:command.c:871:command.call.was:7",
-      "id": "command.call.was",
-      "negative": false,
-      "site": [
-        "command.c",
-        871
-      ]
-    },
-    {
-      "case": "site:command.c:872:command.call.called:7",
-      "id": "command.call.called",
       "negative": false,
       "site": [
         "command.c",
@@ -550,62 +532,62 @@
       ]
     },
     {
-      "case": "site:command.c:875:command.call.call_it:7",
+      "case": "site:command.c:878:command.call.was:7",
+      "id": "command.call.was",
+      "negative": false,
+      "site": [
+        "command.c",
+        878
+      ]
+    },
+    {
+      "case": "site:command.c:879:command.call.called:7",
+      "id": "command.call.called",
+      "negative": false,
+      "site": [
+        "command.c",
+        879
+      ]
+    },
+    {
+      "case": "site:command.c:882:command.call.call_it:7",
       "id": "command.call.call_it",
       "negative": false,
       "site": [
         "command.c",
-        875
+        882
       ]
     },
     {
-      "case": "site:command.c:877:command.call.what_do_you_want_to_call_it:7",
+      "case": "site:command.c:884:command.call.what_do_you_want_to_call_it:7",
       "id": "command.call.what_do_you_want_to_call_it",
       "negative": false,
       "site": [
         "command.c",
-        877
+        884
       ]
     },
     {
-      "case": "site:command.c:909:command.current.you_are:7",
+      "case": "site:command.c:916:command.current.you_are:7",
       "id": "command.current.you_are",
       "negative": false,
       "site": [
         "command.c",
-        909
+        916
       ]
     },
     {
-      "case": "site:command.c:911:command.current.character_string:7",
+      "case": "site:command.c:918:command.current.character_string:7",
       "id": "command.current.character_string",
       "negative": false,
       "site": [
         "command.c",
-        911
+        918
       ]
     },
     {
-      "case": "site:command.c:914:command.current.string:7",
+      "case": "site:command.c:921:command.current.string:7",
       "id": "command.current.string",
-      "negative": false,
-      "site": [
-        "command.c",
-        914
-      ]
-    },
-    {
-      "case": "site:command.c:920:command.current.you_are_trailing_space:7",
-      "id": "command.current.you_are_trailing_space",
-      "negative": false,
-      "site": [
-        "command.c",
-        920
-      ]
-    },
-    {
-      "case": "site:command.c:921:command.current.nothing:7",
-      "id": "command.current.nothing",
       "negative": false,
       "site": [
         "command.c",
@@ -613,12 +595,30 @@
       ]
     },
     {
-      "case": "site:command.c:923:command.current.string:7",
+      "case": "site:command.c:927:command.current.you_are_trailing_space:7",
+      "id": "command.current.you_are_trailing_space",
+      "negative": false,
+      "site": [
+        "command.c",
+        927
+      ]
+    },
+    {
+      "case": "site:command.c:928:command.current.nothing:7",
+      "id": "command.current.nothing",
+      "negative": false,
+      "site": [
+        "command.c",
+        928
+      ]
+    },
+    {
+      "case": "site:command.c:930:command.current.string:7",
       "id": "command.current.string",
       "negative": false,
       "site": [
         "command.c",
-        923
+        930
       ]
     },
     {
@@ -1315,35 +1315,17 @@
       ]
     },
     {
-      "case": "site:move.c:286:move.be_trapped.you_fell_into_a_trap:7",
+      "case": "site:move.c:291:move.be_trapped.you_fell_into_a_trap:7",
       "id": "move.be_trapped.you_fell_into_a_trap",
       "negative": false,
       "site": [
         "move.c",
-        286
+        291
       ]
     },
     {
-      "case": "site:move.c:289:move.be_trapped.you_are_caught_in_a_bear_trap:7",
+      "case": "site:move.c:294:move.be_trapped.you_are_caught_in_a_bear_trap:7",
       "id": "move.be_trapped.you_are_caught_in_a_bear_trap",
-      "negative": false,
-      "site": [
-        "move.c",
-        289
-      ]
-    },
-    {
-      "case": "site:move.c:293:move.be_trapped.you_are_suddenly_in_a_parallel_dimension:7",
-      "id": "move.be_trapped.you_are_suddenly_in_a_parallel_dimension",
-      "negative": false,
-      "site": [
-        "move.c",
-        293
-      ]
-    },
-    {
-      "case": "site:move.c:294:move.be_trapped.the_light_in_here_suddenly_seems:7",
-      "id": "move.be_trapped.the_light_in_here_suddenly_seems",
       "negative": false,
       "site": [
         "move.c",
@@ -1351,35 +1333,8 @@
       ]
     },
     {
-      "case": "site:move.c:295:move.be_trapped.you_feel_a_sting_in_the_side_of_your_neck:7",
-      "id": "move.be_trapped.you_feel_a_sting_in_the_side_of_your_neck",
-      "negative": false,
-      "site": [
-        "move.c",
-        295
-      ]
-    },
-    {
-      "case": "site:move.c:296:move.be_trapped.multi_colored_lines_swirl_around_you_then_fade:7",
-      "id": "move.be_trapped.multi_colored_lines_swirl_around_you_then_fade",
-      "negative": false,
-      "site": [
-        "move.c",
-        296
-      ]
-    },
-    {
-      "case": "site:move.c:297:move.be_trapped.a_light_flashes_in_your_eyes:7",
-      "id": "move.be_trapped.a_light_flashes_in_your_eyes",
-      "negative": false,
-      "site": [
-        "move.c",
-        297
-      ]
-    },
-    {
-      "case": "site:move.c:298:move.be_trapped.a_spike_shoots_past_your_ear:7",
-      "id": "move.be_trapped.a_spike_shoots_past_your_ear",
+      "case": "site:move.c:298:move.be_trapped.you_are_suddenly_in_a_parallel_dimension:7",
+      "id": "move.be_trapped.you_are_suddenly_in_a_parallel_dimension",
       "negative": false,
       "site": [
         "move.c",
@@ -1387,8 +1342,8 @@
       ]
     },
     {
-      "case": "site:move.c:299:move.be_trapped.sparks_dance_across_your_armor:7",
-      "id": "move.be_trapped.sparks_dance_across_your_armor",
+      "case": "site:move.c:299:move.be_trapped.the_light_in_here_suddenly_seems:7",
+      "id": "move.be_trapped.the_light_in_here_suddenly_seems",
       "negative": false,
       "site": [
         "move.c",
@@ -1396,8 +1351,8 @@
       ]
     },
     {
-      "case": "site:move.c:300:move.be_trapped.you_suddenly_feel_very_thirsty:7",
-      "id": "move.be_trapped.you_suddenly_feel_very_thirsty",
+      "case": "site:move.c:300:move.be_trapped.you_feel_a_sting_in_the_side_of_your_neck:7",
+      "id": "move.be_trapped.you_feel_a_sting_in_the_side_of_your_neck",
       "negative": false,
       "site": [
         "move.c",
@@ -1405,8 +1360,8 @@
       ]
     },
     {
-      "case": "site:move.c:301:move.be_trapped.you_feel_time_speed_up_suddenly:7",
-      "id": "move.be_trapped.you_feel_time_speed_up_suddenly",
+      "case": "site:move.c:301:move.be_trapped.multi_colored_lines_swirl_around_you_then_fade:7",
+      "id": "move.be_trapped.multi_colored_lines_swirl_around_you_then_fade",
       "negative": false,
       "site": [
         "move.c",
@@ -1414,8 +1369,8 @@
       ]
     },
     {
-      "case": "site:move.c:302:move.be_trapped.time_now_seems_to_be_going_slower:7",
-      "id": "move.be_trapped.time_now_seems_to_be_going_slower",
+      "case": "site:move.c:302:move.be_trapped.a_light_flashes_in_your_eyes:7",
+      "id": "move.be_trapped.a_light_flashes_in_your_eyes",
       "negative": false,
       "site": [
         "move.c",
@@ -1423,8 +1378,8 @@
       ]
     },
     {
-      "case": "site:move.c:303:move.be_trapped.you_pack_turns:7",
-      "id": "move.be_trapped.you_pack_turns",
+      "case": "site:move.c:303:move.be_trapped.a_spike_shoots_past_your_ear:7",
+      "id": "move.be_trapped.a_spike_shoots_past_your_ear",
       "negative": false,
       "site": [
         "move.c",
@@ -1432,8 +1387,44 @@
       ]
     },
     {
-      "case": "site:move.c:308:move.be_trapped.a_strange_white_mist_envelops_you_and_you_fall_asleep:7",
-      "id": "move.be_trapped.a_strange_white_mist_envelops_you_and_you_fall_asleep",
+      "case": "site:move.c:304:move.be_trapped.sparks_dance_across_your_armor:7",
+      "id": "move.be_trapped.sparks_dance_across_your_armor",
+      "negative": false,
+      "site": [
+        "move.c",
+        304
+      ]
+    },
+    {
+      "case": "site:move.c:305:move.be_trapped.you_suddenly_feel_very_thirsty:7",
+      "id": "move.be_trapped.you_suddenly_feel_very_thirsty",
+      "negative": false,
+      "site": [
+        "move.c",
+        305
+      ]
+    },
+    {
+      "case": "site:move.c:306:move.be_trapped.you_feel_time_speed_up_suddenly:7",
+      "id": "move.be_trapped.you_feel_time_speed_up_suddenly",
+      "negative": false,
+      "site": [
+        "move.c",
+        306
+      ]
+    },
+    {
+      "case": "site:move.c:307:move.be_trapped.time_now_seems_to_be_going_slower:7",
+      "id": "move.be_trapped.time_now_seems_to_be_going_slower",
+      "negative": false,
+      "site": [
+        "move.c",
+        307
+      ]
+    },
+    {
+      "case": "site:move.c:308:move.be_trapped.you_pack_turns:7",
+      "id": "move.be_trapped.you_pack_turns",
       "negative": false,
       "site": [
         "move.c",
@@ -1441,53 +1432,53 @@
       ]
     },
     {
-      "case": "site:move.c:319:move.be_trapped.an_arrow_killed_you:7",
+      "case": "site:move.c:313:move.be_trapped.a_strange_white_mist_envelops_you_and_you_fall_asleep:7",
+      "id": "move.be_trapped.a_strange_white_mist_envelops_you_and_you_fall_asleep",
+      "negative": false,
+      "site": [
+        "move.c",
+        313
+      ]
+    },
+    {
+      "case": "site:move.c:324:move.be_trapped.an_arrow_killed_you:7",
       "id": "move.be_trapped.an_arrow_killed_you",
       "negative": false,
       "site": [
         "move.c",
-        319
+        324
       ]
     },
     {
-      "case": "site:move.c:323:move.be_trapped.oh_no_an_arrow_shot_you:7",
+      "case": "site:move.c:328:move.be_trapped.oh_no_an_arrow_shot_you:7",
       "id": "move.be_trapped.oh_no_an_arrow_shot_you",
       "negative": false,
       "site": [
         "move.c",
-        323
+        328
       ]
     },
     {
-      "case": "site:move.c:332:move.be_trapped.an_arrow_shoots_past_you:7",
+      "case": "site:move.c:337:move.be_trapped.an_arrow_shoots_past_you:7",
       "id": "move.be_trapped.an_arrow_shoots_past_you",
       "negative": false,
       "site": [
         "move.c",
-        332
+        337
       ]
     },
     {
-      "case": "site:move.c:343:move.be_trapped.a_small_dart_whizzes_by_your_ear_and_vanishes:7",
+      "case": "site:move.c:348:move.be_trapped.a_small_dart_whizzes_by_your_ear_and_vanishes:7",
       "id": "move.be_trapped.a_small_dart_whizzes_by_your_ear_and_vanishes",
       "negative": false,
       "site": [
         "move.c",
-        343
+        348
       ]
     },
     {
-      "case": "site:move.c:353:move.be_trapped.a_poisoned_dart_killed_you:7",
+      "case": "site:move.c:358:move.be_trapped.a_poisoned_dart_killed_you:7",
       "id": "move.be_trapped.a_poisoned_dart_killed_you",
-      "negative": false,
-      "site": [
-        "move.c",
-        353
-      ]
-    },
-    {
-      "case": "site:move.c:358:move.be_trapped.a_small_dart_just_hit_you_in_the_shoulder:7",
-      "id": "move.be_trapped.a_small_dart_just_hit_you_in_the_shoulder",
       "negative": false,
       "site": [
         "move.c",
@@ -1495,39 +1486,48 @@
       ]
     },
     {
-      "case": "site:move.c:361:move.be_trapped.a_gush_of_water_hits_you_on_the_head:7",
+      "case": "site:move.c:363:move.be_trapped.a_small_dart_just_hit_you_in_the_shoulder:7",
+      "id": "move.be_trapped.a_small_dart_just_hit_you_in_the_shoulder",
+      "negative": false,
+      "site": [
+        "move.c",
+        363
+      ]
+    },
+    {
+      "case": "site:move.c:366:move.be_trapped.a_gush_of_water_hits_you_on_the_head:7",
       "id": "move.be_trapped.a_gush_of_water_hits_you_on_the_head",
       "negative": false,
       "site": [
         "move.c",
-        361
+        366
       ]
     },
     {
-      "case": "site:move.c:427:move.rust_armor.the_rust_vanishes_instantly:7",
+      "case": "site:move.c:432:move.rust_armor.the_rust_vanishes_instantly:7",
       "id": "move.rust_armor.the_rust_vanishes_instantly",
       "negative": false,
       "site": [
         "move.c",
-        427
+        432
       ]
     },
     {
-      "case": "site:move.c:433:move.rust_armor.your_armor_appears_to_be_weaker_now_oh_my:7",
+      "case": "site:move.c:438:move.rust_armor.your_armor_appears_to_be_weaker_now_oh_my:7",
       "id": "move.rust_armor.your_armor_appears_to_be_weaker_now_oh_my",
       "negative": false,
       "site": [
         "move.c",
-        433
+        438
       ]
     },
     {
-      "case": "site:move.c:435:move.rust_armor.your_armor_weakens:7",
+      "case": "site:move.c:440:move.rust_armor.your_armor_weakens:7",
       "id": "move.rust_armor.your_armor_weakens",
       "negative": false,
       "site": [
         "move.c",
-        435
+        440
       ]
     },
     {
@@ -8133,39 +8133,39 @@
       "negative": false
     },
     {
-      "case": "dynamic:command.c:324:tr_name[rnd(NTRAPS)]",
+      "case": "dynamic:command.c:331:tr_name[rnd(NTRAPS)]",
       "id": "message.entity",
       "negative": false,
       "site": [
         "command.c",
-        324
+        331
       ]
     },
     {
-      "case": "dynamic:command.c:326:tr_name[*fp&F_TMASK]",
+      "case": "dynamic:command.c:333:tr_name[*fp&F_TMASK]",
       "id": "message.entity",
       "negative": false,
       "site": [
         "command.c",
-        326
+        333
       ]
     },
     {
-      "case": "dynamic:command.c:540:tr_name[rnd(NTRAPS)]",
+      "case": "dynamic:command.c:547:tr_name[rnd(NTRAPS)]",
       "id": "message.entity",
       "negative": false,
       "site": [
         "command.c",
-        540
+        547
       ]
     },
     {
-      "case": "dynamic:command.c:542:tr_name[*fp&F_TMASK]",
+      "case": "dynamic:command.c:549:tr_name[*fp&F_TMASK]",
       "id": "message.entity",
       "negative": false,
       "site": [
         "command.c",
-        542
+        549
       ]
     },
     {

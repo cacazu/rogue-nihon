@@ -46,7 +46,7 @@ impl Browser {
         let mut active = BTreeSet::new();
         for control in scene["controls"].as_array().into_iter().flatten() {
             let r = &control["rect"];
-            if text(&control["type"]) != "button" || number(&r["w"]) <= 0. || number(&r["h"]) <= 0.
+            if !matches!(text(&control["type"]), "button" | "switch") || number(&r["w"]) <= 0. || number(&r["h"]) <= 0.
             {
                 continue;
             }
@@ -62,6 +62,10 @@ impl Browser {
                 buttons.insert(id.clone(), button);
             }
             let button = &buttons[&id];
+            if control["type"] == "switch" {
+                button.set_attribute("role", "switch")?;
+                button.set_attribute("aria-checked", if control["key"] == true {"true"} else {"false"})?;
+            }
             button.set_attribute("aria-label", text(&control["label"]))?;
             button.set_disabled(control["disabled"].as_bool().unwrap_or(false));
             button.style().set_css_text(&format!("position:absolute;left:{}px;top:{}px;width:{}px;height:{}px;opacity:0;padding:0;border:0;pointer-events:auto;touch-action:none",number(&r["x"]),number(&r["y"]),number(&r["w"]),number(&r["h"])));

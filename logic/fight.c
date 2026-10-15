@@ -467,7 +467,7 @@ roll_em(THING *thatt, THING *thdef, THING *weap, bool hurl)
 #ifdef ROGUE_LAYERED
     /* Thrown weapons and bolts report their real launch source separately.
      * Original bolt damage calls use player stats even for a dragon's flame. */
-    if (!hurl) rg_semantic_actor_event(thatt,RG_ACTOR_ATTACK);
+    if (!hurl) rg_semantic_actor_attack(thatt,thdef->t_pos.x);
 #endif
     def_arm = def->s_arm;
     if (def == &pstats)
