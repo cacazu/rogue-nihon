@@ -316,7 +316,8 @@ pub fn policy_request(input: &str) -> Result<String, JsValue> {
 #[cfg(feature = "browser-test")]
 #[wasm_bindgen]
 pub fn browser_request(input: &str) -> Result<String, JsValue> {
-    let request = serde_json::from_str(input).map_err(|e| JsValue::from_str(&e.to_string()))?;
+    let mut request: Value = serde_json::from_str(input).map_err(|e| JsValue::from_str(&e.to_string()))?;
+    request["inspect"] = json!(true);
     let host = HOST
         .with(|slot| slot.borrow().clone())
         .ok_or_else(|| JsValue::from_str("Browser not started"))?;
@@ -335,7 +336,7 @@ pub fn browser_snapshot() -> Result<String, JsValue> {
         .map(|slot| slot.queue.pending())
         .transpose()?
         .unwrap_or(0);
-    Ok(json!({"diagnostics":*host.scene.borrow(),"state":*host.state.borrow(),"commands":*host.commands.borrow(),"queuePending":pending,"drawCount":host.draw_count.get()}).to_string())
+    Ok(json!({"diagnostics":*host.scene.borrow(),"state":super::snapshot(),"commands":*host.commands.borrow(),"queuePending":pending,"drawCount":host.draw_count.get()}).to_string())
 }
 pub fn measure(text: &str, size: f64, bold: bool, mono: bool) -> TextSize {
     let host = HOST.with(|slot| slot.borrow().clone());
@@ -597,6 +598,9 @@ impl Browser {
             for (key, value) in object {
                 observed[key] = value.clone();
             }
+        }
+        if observed.get("inspect").is_none() {
+            observed["inspect"] = json!(observed["type"] == "render");
         }
         let response = super::request(observed);
         if !response["diagnostics"].is_null() {

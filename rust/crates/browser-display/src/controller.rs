@@ -812,7 +812,7 @@ impl Controller {
             }
         }
     }
-    fn snapshot(&mut self) -> Value {
+    fn sync_model(&mut self) -> Value {
         let entries = self.history.entries.clone();
         self.model["entries"] = json!(
             entries
@@ -842,6 +842,11 @@ impl Controller {
                     .unwrap_or(""))
                 .collect::<Vec<_>>()
         );
+        m
+    }
+    pub(crate) fn snapshot(&mut self) -> Value {
+        let m = self.sync_model();
+        let entries = self.history.entries.clone();
         let notice = entries
             .iter()
             .rfind(|e| e["source"] == "system")
@@ -958,7 +963,7 @@ impl Controller {
                                 flag(&e["hasCapture"])
                             });
                         }
-                        self.snapshot();
+                        self.sync_model();
                         self.ui.set_context(self.model.clone());
                         let response = self.ui.event(e);
                         consumed = flag(&response["consumed"]);
@@ -996,7 +1001,7 @@ impl Controller {
                 }
             }
             "render" => {
-                self.snapshot();
+                self.sync_model();
                 let mut view = r["view"].clone();
                 view["inputs"] = self.inputs.clone();
                 let ratio = view["ratio"].as_f64().unwrap_or(1.).clamp(1., 2.);
@@ -1008,8 +1013,8 @@ impl Controller {
                     self.model["frame"]["map_animation"] = animation.frames;
                 }
                 let visible = view["visible"].as_bool() != Some(false);
-                let result = self.ui.render(self.model.clone(), view);
-                commands = result["commands"].clone();
+                let mut result = self.ui.render(self.model.clone(), view);
+                commands = result["commands"].take();
                 let animated_map = commands.as_array().into_iter().flatten().any(|command| {
                     command["op"] == "image" && text(&command["image"]).starts_with("animations-v1/")
                 });
@@ -1068,14 +1073,20 @@ impl Controller {
         if r["type"] != "render" {
             self.controls();
         }
-        let state = self.snapshot();
+        let inspect = r["inspect"].as_bool().unwrap_or(true);
+        let state = if inspect { self.snapshot() } else { Value::Null };
         let inventory_preference = self.ui.inventory_preference().to_string();
         if inventory_preference != self.inventory_preference_cache {
             self.inventory_preference_cache.clone_from(&inventory_preference);
             self.effects.push(json!({"kind":"storage-write","key":"rogue-inventory-view-v1","value":inventory_preference}));
         }
-        self.ui.set_context(self.model.clone());
-        json!({"commands":commands,"surface":surface,"effects":self.effects,"consumed":consumed,"stopPropagation":consumed && r["event"]["type"]=="key","accepted":accepted,"redraw":redraw,"raw":raw,"state":state,"diagnostics":self.ui.diagnostics()})
+        let mut response = json!({"consumed":consumed,"stopPropagation":consumed && r["event"]["type"]=="key","accepted":accepted,"redraw":redraw,"raw":raw});
+        response["diagnostics"] = if inspect { self.ui.diagnostics() } else { Value::Null };
+        response["commands"] = commands;
+        response["surface"] = surface;
+        response["effects"] = Value::Array(std::mem::take(&mut self.effects));
+        response["state"] = state;
+        response
     }
 }
 fn push(values: &mut Value, value: Value, limit: usize) {

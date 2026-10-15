@@ -358,7 +358,9 @@ impl BrowserUi {
         }
         self.draw_dropdown();
         self.paint_count += 1;
-        json!({"commands":self.widgets.commands,"diagnostics":self.diagnostics(),"animate":self.zoom_animating()})
+        let mut result = json!({"diagnostics":self.diagnostics(),"animate":self.zoom_animating()});
+        result["commands"] = Value::Array(std::mem::take(&mut self.widgets.commands));
+        result
     }
     pub fn diagnostics(&self) -> Value {
         json!({"renderer":"canvas2d","uiOwner":"rust","paintCount":self.paint_count,"fullscreen":self.fullscreen,

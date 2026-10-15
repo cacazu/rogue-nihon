@@ -11,6 +11,7 @@ pub struct Image {
     width: u32,
     height: u32,
     rgba: Vec<u8>,
+    opaque: bool,
     pub(crate) pixmap: Pixmap,
 }
 impl Image {
@@ -68,10 +69,12 @@ impl Image {
             }
         }
         let pixmap = Pixmap::from_vec(premultiplied, size).ok_or("Invalid image storage")?;
+        let opaque = rgba.chunks_exact(4).all(|pixel| pixel[3] == 255);
         Ok(Self {
             width,
             height,
             rgba,
+            opaque,
             pixmap,
         })
     }
@@ -237,9 +240,22 @@ pub(crate) fn draw_image(
     let pixel_art = command["pixelArt"].as_bool().unwrap_or(false);
     let image = set.image(super::text(&command["image"]), rotation, pixel_art)?;
     let degrees = if pixel_art { 0. } else { rotation };
+    let flip = command["flipX"] == true;
+    if degrees == 0.
+        && alpha == 1.
+        && blit_opaque(
+            frame,
+            image,
+            [x * ratio, y * ratio, w * ratio, h * ratio],
+            flip,
+            clip,
+        )
+    {
+        return Ok(());
+    }
     let (cos, sin) = (degrees.to_radians().cos(), degrees.to_radians().sin());
     let (sx, sy) = (
-        w / image.width as f64 * ratio * if command["flipX"] == true { -1. } else { 1. },
+        w / image.width as f64 * ratio * if flip { -1. } else { 1. },
         h / image.height as f64 * ratio,
     );
     let (a, b, c, d) = (cos * sx, sin * sx, -sin * sy, cos * sy);
@@ -259,9 +275,161 @@ pub(crate) fn draw_image(
     Ok(())
 }
 
+/// Opaque, axis-aligned map tiles need only nearest sampling and byte copies.
+/// Keep fractional positions, transparent sprites and rotations on the general
+/// compositor. Sending every floor pixel through its floating-point shader
+/// pipeline stalls the same thread that receives browser input.
+fn blit_opaque(
+    frame: &mut Pixmap,
+    image: &Image,
+    rect: [f64; 4],
+    flip: bool,
+    clip: Option<&Mask>,
+) -> bool {
+    let [x, y, width, height] = rect;
+    if !image.opaque
+        || rect
+            .iter()
+            .any(|v| !v.is_finite() || v.fract() != 0. || v.abs() > i32::MAX as f64 / 2.)
+        || width <= 0.
+        || height <= 0.
+        || width > f64::from(MAX_IMAGE_DIMENSION)
+        || height > f64::from(MAX_IMAGE_DIMENSION)
+    {
+        return false;
+    }
+    let (x, y, width, height) = (x as i32, y as i32, width as u32, height as u32);
+    let fw = frame.width() as usize;
+    let left = x.max(0) as usize;
+    let right = (x + width as i32).max(0).min(frame.width() as i32) as usize;
+    let top = y.max(0) as usize;
+    let bottom = (y + height as i32).max(0).min(frame.height() as i32) as usize;
+    if left >= right || top >= bottom {
+        return true;
+    }
+    let xs = (left..right)
+        .map(|dx| {
+            let offset = (2 * (dx as i64 - i64::from(x)) + 1) as u64;
+            let offset = if flip {
+                2 * u64::from(width) - offset
+            } else {
+                offset
+            };
+            (offset * u64::from(image.width) / (2 * u64::from(width))) as usize
+        })
+        .collect::<Vec<_>>();
+    let target = frame.data_mut();
+    for dy in top..bottom {
+        let sy = ((2 * (dy as i64 - i64::from(y)) + 1) as u64 * u64::from(image.height)
+            / (2 * u64::from(height))) as usize;
+        let row = &image.rgba[sy * image.width as usize * 4..(sy + 1) * image.width as usize * 4];
+        let coverage = clip.map(|mask| &mask.data()[dy * fw + left..dy * fw + right]);
+        let target = &mut target[(dy * fw + left) * 4..(dy * fw + right) * 4];
+        if !flip && width == image.width && coverage.is_none_or(|row| row.iter().all(|v| *v == 255))
+        {
+            let start = xs[0] * 4;
+            target.copy_from_slice(&row[start..start + target.len()]);
+            continue;
+        }
+        for (i, pixel) in target.chunks_exact_mut(4).enumerate() {
+            let coverage = coverage.map_or(255, |row| row[i]);
+            let source = &row[xs[i] * 4..xs[i] * 4 + 4];
+            match coverage {
+                0 => {}
+                255 => pixel.copy_from_slice(source),
+                coverage => {
+                    for channel in 0..4 {
+                        pixel[channel] = ((u32::from(source[channel]) * u32::from(coverage)
+                            + u32::from(pixel[channel]) * (255 - u32::from(coverage))
+                            + 127)
+                            / 255) as u8;
+                    }
+                }
+            }
+        }
+    }
+    true
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn opaque_tile_blits_preserve_sampling_flip_clipping_and_alpha() {
+        let image = Image::from_rgba(
+            4,
+            3,
+            (0..12)
+                .flat_map(|i| [i * 20, 255 - i * 10, 30, 255])
+                .collect(),
+        )
+        .unwrap();
+        for (x, y, width, height, ratio) in [
+            (0., 0., 4., 3., 1.),
+            (-2., -1., 12., 6., 1.),
+            (1., 2., 6., 5., 1.),
+            (0.5, 1.5, 8., 6., 2.),
+        ] {
+            for flip in [false, true] {
+                let mut expected = Pixmap::new(24, 20).unwrap();
+                expected.fill(tiny_skia::Color::from_rgba8(25, 50, 75, 128));
+                let mut actual = expected.clone();
+                let mut mask = Mask::new(24, 20).unwrap();
+                for (i, v) in mask.data_mut().iter_mut().enumerate() {
+                    *v = [0, 64, 128, 255][i % 4];
+                }
+                let sx = width * ratio / 4.;
+                let sy = height * ratio / 3.;
+                expected.draw_pixmap(
+                    0,
+                    0,
+                    image.pixmap.as_ref(),
+                    &PixmapPaint::default(),
+                    Transform::from_row(
+                        if flip { -sx as f32 } else { sx as f32 },
+                        0.,
+                        0.,
+                        sy as f32,
+                        ((x + if flip { width } else { 0. }) * ratio) as f32,
+                        (y * ratio) as f32,
+                    ),
+                    Some(&mask),
+                );
+                assert!(blit_opaque(
+                    &mut actual,
+                    &image,
+                    [x * ratio, y * ratio, width * ratio, height * ratio],
+                    flip,
+                    Some(&mask)
+                ));
+                assert!(
+                    actual
+                        .data()
+                        .iter()
+                        .zip(expected.data())
+                        .all(|(a, b)| a.abs_diff(*b) <= 1),
+                    "Tile pixels differ at {x},{y} {width}x{height} flip={flip}"
+                );
+            }
+        }
+        let mut target = Pixmap::new(4, 3).unwrap();
+        assert!(!blit_opaque(
+            &mut target,
+            &image,
+            [0.25, 0., 4., 3.],
+            false,
+            None
+        ));
+        let transparent = Image::from_rgba(1, 1, vec![0; 4]).unwrap();
+        assert!(!blit_opaque(
+            &mut target,
+            &transparent,
+            [0., 0., 1., 1.],
+            false,
+            None
+        ));
+    }
 
     #[test]
     fn sprite_flip_mirrors_native_pixels_without_changing_alpha() {

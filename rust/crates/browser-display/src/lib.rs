@@ -37,6 +37,14 @@ fn request(request: Value) -> Value {
             .request(request)
     })
 }
+#[cfg(feature = "browser-test")]
+fn snapshot() -> Value {
+    UI.with(|ui| {
+        ui.borrow_mut()
+            .get_or_insert_with(|| Controller::new(measure))
+            .snapshot()
+    })
+}
 // Both initializers are already const; the toolchain also reports this lint on
 // the thread_local macro's expansion, where that source block is not visible.
 thread_local! {

@@ -89,6 +89,13 @@ impl Renderer {
                 }
                 "clip" => {
                     stack.push(state.clone());
+                    if let Some(rect) = rectangle(x, y, w, h)
+                        && let Some(mask) =
+                            integer_clip(width, height, ratio, rect, state.clip.as_deref())
+                    {
+                        state.clip = Some(Rc::new(mask));
+                        continue;
+                    }
                     let mut mask = match state.clip.as_deref() {
                         Some(previous) => previous.clone(),
                         None => {
@@ -284,6 +291,40 @@ impl Renderer {
     }
 }
 
+fn integer_clip(
+    width: u32,
+    height: u32,
+    ratio: f64,
+    rect: Rect,
+    previous: Option<&Mask>,
+) -> Option<Mask> {
+    let edges = [
+        f64::from(rect.left()) * ratio,
+        f64::from(rect.top()) * ratio,
+        f64::from(rect.right()) * ratio,
+        f64::from(rect.bottom()) * ratio,
+    ];
+    if edges.iter().any(|v| !v.is_finite() || v.fract() != 0.) {
+        return None;
+    }
+    let [left, top, right, bottom] = edges;
+    let left = left.clamp(0., f64::from(width)) as usize;
+    let right = right.clamp(0., f64::from(width)) as usize;
+    let top = top.clamp(0., f64::from(height)) as usize;
+    let bottom = bottom.clamp(0., f64::from(height)) as usize;
+    let mut mask = Mask::new(width, height)?;
+    for y in top..bottom {
+        let start = y * width as usize + left;
+        let end = y * width as usize + right;
+        if let Some(previous) = previous {
+            mask.data_mut()[start..end].copy_from_slice(&previous.data()[start..end]);
+        } else {
+            mask.data_mut()[start..end].fill(255);
+        }
+    }
+    Some(mask)
+}
+
 fn blit_glyph(
     frame: &mut Pixmap,
     image: &swash::scale::image::Image,
@@ -467,6 +508,39 @@ mod tests {
     }
     fn pixel(frame: &[u8], width: usize, x: usize, y: usize) -> &[u8] {
         &frame[(y * width + x) * 4..(y * width + x + 1) * 4]
+    }
+    #[test]
+    fn integer_clips_match_path_coverage_and_preserve_previous_masks() {
+        for rect in [
+            Rect::from_xywh(2., 3., 5., 4.).unwrap(),
+            Rect::from_xywh(-2., -3., 8., 8.).unwrap(),
+            Rect::from_xywh(50., 50., 5., 5.).unwrap(),
+        ] {
+            for ratio in [1., 2.] {
+                let mut previous = Mask::new(24, 24).unwrap();
+                for (i, value) in previous.data_mut().iter_mut().enumerate() {
+                    *value = (i % 256) as u8;
+                }
+                for previous in [None, Some(&previous)] {
+                    let actual = integer_clip(24, 24, ratio, rect, previous).unwrap();
+                    let mut expected = previous.cloned().unwrap_or_else(|| {
+                        let mut mask = Mask::new(24, 24).unwrap();
+                        mask.data_mut().fill(255);
+                        mask
+                    });
+                    expected.intersect_path(
+                        &PathBuilder::from_rect(rect),
+                        FillRule::Winding,
+                        true,
+                        Transform::from_scale(ratio as f32, ratio as f32),
+                    );
+                    assert_eq!(actual.data(), expected.data());
+                }
+            }
+        }
+        assert!(
+            integer_clip(24, 24, 1., Rect::from_xywh(0.25, 0., 4., 4.).unwrap(), None).is_none()
+        );
     }
     #[test]
     fn nested_clips_opacity_and_vector_icons_render_inside_rust() {

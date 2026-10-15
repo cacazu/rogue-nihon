@@ -54,5 +54,15 @@ panic = "abort"
 opt-level = 1
 panic = "abort"
 
+# These crates run on the browser input thread, including per-pixel loops.
+[profile.release.package.rogue-raster]
+opt-level = 3
+
+[profile.release.package.rogue-browser-display]
+opt-level = 3
+
+[profile.release.package.rogue-display]
+opt-level = 3
+
 [lints.clippy]
 undocumented_unsafe_blocks = "deny"
