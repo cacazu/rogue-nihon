@@ -23,7 +23,7 @@ test("Every static interface label and direct notice ID has an entry", async () 
 test("Version footer links only to GitHub and README leads to license guidance", async () => {
   const app = await readFile(new URL("../../rust/crates/browser-display/src/controller.rs", import.meta.url), "utf8");
   const links = Array.from(app.matchAll(/"url"\s*:\s*"(https:[^"]+)"/g), match => match[1]);
-  assert.deepEqual(links, ["https://github.com/cacazu/jrogue/tree/main/rogue-nihon"]);
+  assert.deepEqual(links, ["https://github.com/cacazu/roguelike-nihon/tree/main/rogue-nihon"]);
   for (const catalog of Object.values(catalogs)) {
     const text = Object.entries(catalog.messages).filter(([id]) => id.startsWith("credits.")).map(([, value]) => value).join(" ");
     assert.doesNotMatch(text, /\b(?:Rust|Worker|Wasm|ABI|C)\b|表示・入力・プラットフォーム/);
@@ -31,7 +31,7 @@ test("Version footer links only to GitHub and README leads to license guidance",
   const readme = await readFile(new URL("../../README.md", import.meta.url), "utf8");
   assert.match(readme, /\[ライセンス案内\]\(docs\/LICENSES-ja\.md\)/);
   const guide = await readFile(new URL("../../docs/LICENSES-ja.md", import.meta.url), "utf8");
-  assert.match(guide, /https:\/\/raw\.githubusercontent\.com\/cacazu\/jrogue\/main\/rogue-nihon\/distribution\/rogue-5\.4\.4-licenses\.zip/);
+  assert.match(guide, /https:\/\/raw\.githubusercontent\.com\/cacazu\/roguelike-nihon\/main\/rogue-nihon\/distribution\/rogue-5\.4\.4-licenses\.zip/);
 });
 
 test("Selection guidance describes only the user's action", () => {

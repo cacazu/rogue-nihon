@@ -94,7 +94,7 @@ try{
   });
   await check("Hiding the HTML heading and Canvas leaves a uniform screenshot",onlyCanvas);
   await check("Canvas title screen opens GitHub after Load without HTML anchors",async()=>{
-    const url="https://github.com/cacazu/jrogue/tree/main/rogue-nihon";
+    const url="https://github.com/cacazu/roguelike-nihon/tree/main/rogue-nihon";
     await context.route(url,r=>r.fulfill({body:"Canvas link target",contentType:"text/plain"}));
     const opened=page.waitForEvent("popup");await click("credits-repository");const popup=await opened;await popup.waitForURL(url);assert.equal(popup.url(),url);await popup.close();
     assert.equal(await page.locator("a,button:not([data-control]),form,select").count(),0);

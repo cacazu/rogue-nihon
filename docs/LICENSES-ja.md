@@ -2,7 +2,7 @@
 
 原作と関連ソフトの著作権表示・ライセンスを確認できます。
 
-[ライセンス文書をまとめてダウンロード（ZIP）](https://raw.githubusercontent.com/cacazu/jrogue/main/rogue-nihon/distribution/rogue-5.4.4-licenses.zip)
+[ライセンス文書をまとめてダウンロード（ZIP）](https://raw.githubusercontent.com/cacazu/roguelike-nihon/main/rogue-nihon/distribution/rogue-5.4.4-licenses.zip)
 
 ZIP には原作のライセンス、関連ソフト・字体の通知本文と対応表を収録しています。ゲーム本体は含みません。
 

@@ -9,7 +9,7 @@ import pathlib
 import re
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-ORIGINAL = pathlib.Path(r'C:\Users\kit\gameme\jnethack\jrouge\investigation-20261002-original-rogue\sources\rogue5.4.4')
+ORIGINAL = (pathlib.Path(__file__).resolve().parents[2] / 'investigation-20261002-original-rogue/sources/rogue5.4.4')
 
 
 def source_table(file, symbol, structured=False, directory=None):

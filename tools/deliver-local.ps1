@@ -1,12 +1,13 @@
 param(
-    [string]$Destination = 'C:\Users\kit\gameme\jnethack\jrouge\rogue-four-layer'
+    [Parameter(Mandatory)][string]$Destination
 )
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $sourceDirectory = [System.IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $destinationDirectory = [System.IO.Path]::GetFullPath($Destination)
 $projectDirectory = [System.IO.Path]::GetFullPath((Split-Path -Parent $destinationDirectory))
-if ($destinationDirectory -ne 'C:\Users\kit\gameme\jnethack\jrouge\rogue-four-layer') { throw 'Unexpected delivery destination' }
+if ([IO.Path]::GetFileName($destinationDirectory) -ne 'rogue-nihon' -or -not (Test-Path -LiteralPath (Join-Path $projectDirectory '.git'))) { throw 'Destination must be rogue-nihon inside the selected repository' }
+if ($sourceDirectory -eq $destinationDirectory) { throw 'Source and destination must be different folders; this checkout is already the delivered project.' }
 if (-not (Test-Path -LiteralPath $destinationDirectory -PathType Container)) { throw 'Previous delivery is required' }
 if ((Get-Item -LiteralPath $destinationDirectory).Attributes -band [System.IO.FileAttributes]::ReparsePoint) { throw 'Destination is a reparse point' }
 

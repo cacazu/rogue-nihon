@@ -1,5 +1,5 @@
 param(
-    [string]$SdkRoot = 'C:\Users\kit\emsdk',
+    [string]$SdkRoot = $(if ($env:EMSDK) { $env:EMSDK } else { Join-Path ([Environment]::GetFolderPath('UserProfile')) 'emsdk' }),
     [ValidateSet('layer-check','entity-check','engine-check')][string]$Binary = 'layer-check',
     [switch]$KeepArtifacts
 )

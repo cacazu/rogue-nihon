@@ -520,7 +520,7 @@ impl Controller {
                 let pending = self.save_operation(SaveOperation::Import);
                 self.effects.push(json!({"kind":"save-import","request":pending.request,"generation":pending.generation}));
             },
-            "credits-repository"=>self.effects.push(json!({"kind":"open","url":"https://github.com/cacazu/jrogue/tree/main/rogue-nihon"})),
+            "credits-repository"=>self.effects.push(json!({"kind":"open","url":"https://github.com/cacazu/roguelike-nihon/tree/main/rogue-nihon"})),
             "new-game" if flag(&self.model["topOpen"]) && !flag(&self.model["starting"]) && !self.composing && flag(&self.model["ready"]) =>self.start(false),
             "load" if flag(&self.model["topOpen"]) && !flag(&self.model["starting"]) => {
                 self.model["starting"]=json!(true);self.read_save(SaveOperation::Load);

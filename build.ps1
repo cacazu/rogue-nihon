@@ -1,5 +1,5 @@
 param(
-    [string]$SdkRoot = 'C:\Users\kit\emsdk',
+    [string]$SdkRoot = $(if ($env:EMSDK) { $env:EMSDK } else { Join-Path ([Environment]::GetFolderPath('UserProfile')) 'emsdk' }),
     [switch]$SkipRust,
     [string]$OutputName = 'game',
     [string]$LogicDirectory,
@@ -96,8 +96,16 @@ try {
 $files = @((Join-Path $buildPath ($OutputName+'.wasm')),(Join-Path $buildPath 'browser-ui.wasm'),(Join-Path $buildPath 'browser-ui.js'))
 Remove-Item -LiteralPath (Join-Path $buildPath ($OutputName + '.js')) -Force -ErrorAction SilentlyContinue
 $records = foreach ($file in $files) { [ordered]@{file=[System.IO.Path]::GetFileName($file);bytes=(Get-Item -LiteralPath $file).Length;sha256=(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()} }
+function Get-BuildManifestPath([string]$Path) {
+    $resolved = [IO.Path]::GetFullPath($Path)
+    $prefix = [IO.Path]::GetFullPath($project).TrimEnd('\') + [IO.Path]::DirectorySeparatorChar
+    if ($resolved.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
+        return $resolved.Substring($prefix.Length).Replace('\', '/')
+    }
+    return $resolved
+}
 $manifestName = if ($OutputName -eq 'game') { 'build-manifest.json' } else { 'build-manifest-'+$OutputName+'.json' }
-$manifestRecord = [ordered]@{built_at_utc=(Get-Date).ToUniversalTime().ToString('o');logic_source_directory=$logicPath;c_source_files=$sources.Count;rust_library=$rustLibrary;rust_engine='Bevy 0.19.1';sdk_root=$SdkRoot;rust_version=((& rustc --version) -join '');test_hooks=[bool]$includeTestHooks;test_fixtures=[bool]$TestFixtures;c_flags=@('-DROGUE_LAYERED','-std=gnu11','-fwrapv','-fno-strict-aliasing','-O1');wasm_flags=@('STANDALONE_WASM','FILESYSTEM=0','Wasm EH longjmp','ALLOW_MEMORY_GROWTH','STACK_SIZE=4194304','ASSERTIONS=1','Worker+SAB input; no Asyncify');outputs=$records}
+$manifestRecord = [ordered]@{built_at_utc=(Get-Date).ToUniversalTime().ToString('o');logic_source_directory=(Get-BuildManifestPath $logicPath);c_source_files=$sources.Count;rust_library=(Get-BuildManifestPath $rustLibrary);rust_engine='Bevy 0.19.1';sdk_root=$SdkRoot;rust_version=((& rustc --version) -join '');test_hooks=[bool]$includeTestHooks;test_fixtures=[bool]$TestFixtures;c_flags=@('-DROGUE_LAYERED','-std=gnu11','-fwrapv','-fno-strict-aliasing','-O1');wasm_flags=@('STANDALONE_WASM','FILESYSTEM=0','Wasm EH longjmp','ALLOW_MEMORY_GROWTH','STACK_SIZE=4194304','ASSERTIONS=1','Worker+SAB input; no Asyncify');outputs=$records}
 $manifestJson = ($manifestRecord | ConvertTo-Json -Depth 8).Replace("`r`n", "`n") + "`n"
 [System.IO.File]::WriteAllText((Join-Path $buildPath $manifestName), $manifestJson, [System.Text.UTF8Encoding]::new($false))
 if ($OutputName -eq 'game' -or $artifactScope.Keep) {

@@ -144,7 +144,7 @@ try {
   await page.locator("#language").selectOption("ja");
   assert.equal(await page.evaluate(() => __rogueBrowserTest.language), "ja");
   assert.equal(await page.evaluate(() => __rogueBrowserTest.generation), 0);
-  const repo = page.locator('a[href="https://github.com/cacazu/jrogue/tree/main/rogue-nihon"]');
+  const repo = page.locator('a[href="https://github.com/cacazu/roguelike-nihon/tree/main/rogue-nihon"]');
   assert.ok(await repo.count() > 0, "distribution repository is linked");
   evidence.checks.push("Title, unified map/UI/HUD game screen and GitHub footer are present; pre-start language selection creates no Worker");
   await page.locator("#seed").fill("12345");

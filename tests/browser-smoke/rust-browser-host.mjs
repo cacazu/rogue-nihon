@@ -82,8 +82,8 @@ try{
   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await idle();const released=await state();
   await page.waitForTimeout(200);assert.deepEqual(await state(),released);
   assert.deepEqual(await page.evaluate(()=>__rogueBrowserTest.canvas.pointer.capturedIds),[]);await shot('mobile-pixels');
-  const saved=released.words;await tap('settings-toggle',true);await tap('save',true);await page.waitForFunction(()=>__rogueBrowserTest.savedLength>0&&!__rogueBrowserTest.savePending);
-  await tap('settings-top',true);await tap('load',true);await idle();assert.deepEqual((await state()).words,saved);
+  const saved=released.words;await tap('settings-toggle',true);await tap('settings-top',true);await page.waitForFunction(()=>__rogueBrowserTest.topOpen&&__rogueBrowserTest.savedLength>0&&!__rogueBrowserTest.savePending);
+  await tap('load',true);await idle();assert.deepEqual((await state()).words,saved);
  });
  await check('Worker bootstrap reports Wasm load failure and permits another start',async()=>{
   await open();let requests=0;await context.route('**/build/browser-test.wasm',async route=>{if(++requests===1)await route.fulfill({status:503,body:'injected Worker startup failure'});else await route.fulfill({path:path.join(root,'build/browser-test.wasm'),contentType:'application/wasm',headers:{'Cross-Origin-Resource-Policy':'same-origin'}});});
@@ -95,9 +95,9 @@ try{
   const response=await context.request.get(base+'distribution/rogue-5.4.4-licenses.zip');assert.equal(response.status(),200);
   assert.deepEqual(await response.body(),await readFile(path.join(root,'distribution/rogue-5.4.4-licenses.zip')));
   await tap('settings-toggle');await tap('settings-top');
-  await context.route('https://github.com/cacazu/jrogue/**',route=>route.fulfill({body:'<!doctype html><title>Repository link target</title>',contentType:'text/html'}));
+  await context.route('https://github.com/cacazu/roguelike-nihon/**',route=>route.fulfill({body:'<!doctype html><title>Repository link target</title>',contentType:'text/html'}));
   const popup=page.waitForEvent('popup');await tap('credits-repository');const repository=await popup;
-  await repository.waitForURL('https://github.com/cacazu/jrogue/tree/main/rogue-nihon');await repository.close();
+  await repository.waitForURL('https://github.com/cacazu/roguelike-nihon/tree/main/rogue-nihon');await repository.close();
   assert.match(await readFile(path.join(root,'README.md'),'utf8'),/docs\/LICENSES-ja\.md/);
   assert.match(await readFile(path.join(root,'docs/LICENSES-ja.md'),'utf8'),/rogue-5\.4\.4-licenses\.zip/);
  });

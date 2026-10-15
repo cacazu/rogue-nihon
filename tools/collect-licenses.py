@@ -77,7 +77,7 @@ def std_attribution(sysroot):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--sdk-root", type=Path, default=Path(r"C:\Users\kit\emsdk"))
+    parser.add_argument("--sdk-root", type=Path, default=Path(os.environ.get('EMSDK', Path.home() / 'emsdk')))
     parser.add_argument("--asset-notice", type=Path, help="Replace the Lucide notice when its source changes")
     parser.add_argument("--check", action="store_true", help="Compare regenerated files without writing")
     args = parser.parse_args()

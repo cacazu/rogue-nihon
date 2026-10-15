@@ -45,6 +45,11 @@ def sdk_environment(sdk_root=None):
     return command, env
 
 
+def manifest_path(path):
+    resolved = Path(path).resolve()
+    return resolved.relative_to(ROOT).as_posix() if resolved.is_relative_to(ROOT) else str(resolved)
+
+
 def generate_abi():
     header = (ROOT / 'contract/rogue_abi.h').read_text(encoding='utf-8')
     values = re.findall(r'^#define (RG_[A-Z0-9_]+) (0x[0-9a-fA-F]+|[0-9]+)\s*$', header, re.M)
@@ -100,7 +105,7 @@ def build(options):
         outputs = [options.output_name + '.wasm', 'browser-ui.wasm', 'browser-ui.js']
         records = [{'file': name, 'bytes': (build_dir / name).stat().st_size, 'sha256': hashlib.sha256((build_dir / name).read_bytes()).hexdigest()} for name in outputs]
         manifest_name = 'build-manifest.json' if options.output_name == 'game' else 'build-manifest-' + options.output_name + '.json'
-        manifest = {'built_at_utc': datetime.now(timezone.utc).isoformat(), 'logic_source_directory': str(logic), 'c_source_files': len(SOURCES), 'rust_library': str(library), 'rust_engine': 'Bevy 0.19.1', 'sdk_root': options.sdk_root or env.get('EMSDK'), 'rust_version': subprocess.check_output(['rustc', '--version'], text=True).strip(), 'test_hooks': bool(hooks), 'test_fixtures': bool(options.test_fixtures), 'c_flags': ['-DROGUE_LAYERED', '-std=gnu11', '-fwrapv', '-fno-strict-aliasing', '-O1'], 'wasm_flags': ['STANDALONE_WASM', 'FILESYSTEM=0', 'Wasm EH longjmp', 'ALLOW_MEMORY_GROWTH', 'STACK_SIZE=4194304', 'ASSERTIONS=1', 'Worker+SAB input; no Asyncify'], 'outputs': records}
+        manifest = {'built_at_utc': datetime.now(timezone.utc).isoformat(), 'logic_source_directory': manifest_path(logic), 'c_source_files': len(SOURCES), 'rust_library': manifest_path(library), 'rust_engine': 'Bevy 0.19.1', 'sdk_root': options.sdk_root or env.get('EMSDK'), 'rust_version': subprocess.check_output(['rustc', '--version'], text=True).strip(), 'test_hooks': bool(hooks), 'test_fixtures': bool(options.test_fixtures), 'c_flags': ['-DROGUE_LAYERED', '-std=gnu11', '-fwrapv', '-fno-strict-aliasing', '-O1'], 'wasm_flags': ['STANDALONE_WASM', 'FILESYSTEM=0', 'Wasm EH longjmp', 'ALLOW_MEMORY_GROWTH', 'STACK_SIZE=4194304', 'ASSERTIONS=1', 'Worker+SAB input; no Asyncify'], 'outputs': records}
         (build_dir / manifest_name).write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8', newline='\n')
         if options.output_name == 'game' or scope.keep:
             (ROOT / 'build').mkdir(exist_ok=True)

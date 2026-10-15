@@ -6,7 +6,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 if ($Port -lt 1 -or $Port -gt 65535) { throw 'Port must be 1..65535' }
-if (-not (Test-Path -LiteralPath $PreviewServer -PathType Leaf)) { throw 'Local preview tool missing: use start.ps1 from the jrouge checkout.' }
+if (-not (Test-Path -LiteralPath $PreviewServer -PathType Leaf)) { throw 'Local preview tool missing: use start.ps1 from the repository checkout.' }
 $serverArguments = @($PreviewServer, '--root', $PSScriptRoot, $Port)
 if ($Lan) {
     if (-not $Address) {

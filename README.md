@@ -42,7 +42,7 @@ LANのスマホでは `.\start.ps1 -Lan` を実行し、同じLANから表示さ
 ```powershell
 cargo fetch --locked --manifest-path rust/Cargo.toml
 cargo install wasm-bindgen-cli --version 0.2.128 --locked
-.\build.ps1 -SdkRoot C:\Users\kit\emsdk
+.\build.ps1
 # UI・画像manifestだけの変更
 .\build-ui.ps1
 ```
