@@ -7,7 +7,7 @@ fn action_columns(width: f64) -> usize {
 fn action_width(width: f64) -> f64 { (width - 200.).min(880.) }
 
 pub(super) fn dock_height(width: f64) -> f64 {
-    let rows = 14_usize.div_ceil(action_columns(action_width(width)));
+    let rows = 13_usize.div_ceil(action_columns(action_width(width)));
     16. + rows as f64 * 48. + (rows - 1) as f64 * 6. + 58.
 }
 
@@ -54,13 +54,10 @@ impl BrowserUi {
         let columns = action_columns(action_width);
         let width = (action_width - (columns-1) as f64*8.) / columns as f64;
         let top = dock.y + 66.;
-        let cell = |index:usize,span:usize| {
-            let column = if right { columns - span - index % columns } else { index % columns };
-            Rect::new(left + column as f64*(width+8.), top + (index/columns) as f64*54.,width*span as f64+8.*(span-1) as f64,48.)
+        let rect = |index:usize| {
+            let column = if right { columns - 1 - index % columns } else { index % columns };
+            Rect::new(left + column as f64*(width+8.), top + (index/columns) as f64*54.,width,48.)
         };
-        let rect = |index| cell(index,1);
-        // Reserve two columns for the repeat count and its keyboard shortcut.
-        let repeat_index = if 7 % columns == columns-1 { 8 } else { 7 };
         let disabled = !self.command_ready();
         self.mobile_movement_control(rect(0));
         self.desktop_command("pc-inventory",105,&self.t("action.inventory"),rect(1),disabled);
@@ -69,12 +66,12 @@ impl BrowserUi {
         self.desktop_command("pc-throw",116,&self.t("mobile.throw"),rect(4),disabled);
         self.desktop_command("pc-zap",122,&self.mobile_help("inventory.zap"),rect(5),disabled);
         self.web_control(WebAction::FullMap,"mobile-full-map",&self.t("mobile.full_map"),rect(6),ControlStyle {size:17.,disabled,..Default::default()});
-        self.draw_repeat_button(cell(repeat_index,2));
-        self.desktop_command("pc-armor",87,&self.t("inventory.tab.armor"),rect(repeat_index+2),disabled);
-        self.desktop_command("pc-quaff",113,&self.mobile_help("action.quaff"),rect(repeat_index+3),disabled);
-        self.desktop_command("pc-ring",80,&self.t("inventory.tab.ring"),rect(repeat_index+4),disabled);
-        self.desktop_command("pc-read",114,&self.t("mobile.read"),rect(repeat_index+5),disabled);
-        self.desktop_command("pc-eat",101,&self.mobile_help("action.eat"),rect(repeat_index+6),disabled);
+        self.draw_repeat_button(rect(7));
+        self.desktop_command("pc-armor",87,&self.t("inventory.tab.armor"),rect(8),disabled);
+        self.desktop_command("pc-quaff",113,&self.mobile_help("action.quaff"),rect(9),disabled);
+        self.desktop_command("pc-ring",80,&self.t("inventory.tab.ring"),rect(10),disabled);
+        self.desktop_command("pc-read",114,&self.t("mobile.read"),rect(11),disabled);
+        self.desktop_command("pc-eat",101,&self.mobile_help("action.eat"),rect(12),disabled);
 
         if direction {
             self.desktop_command("pc-cancel",27,&self.t("action.cancel_short"),

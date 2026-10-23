@@ -1018,6 +1018,12 @@ fn handed_docks_mirror_action_columns_and_keep_natural_directions_and_live_hitbo
         assert_eq!(game_effects(click(&mut right,search)),json!([{"kind":"send","key":115}]));
         assert_eq!(game_effects(click(&mut left,search)),json!([{"kind":"send","key":115}]));
         if !coarse {
+            let cell=get(&right,"pc-inventory").rect;
+            for id in ["mobile-movement","pc-search","pc-wield","pc-throw","pc-zap","mobile-full-map","touch-again","pc-armor","pc-quaff","pc-ring","pc-read","pc-eat"] {
+                for ui in [&right,&left] {
+                    let button=get(ui,id).rect;assert_eq!((button.w,button.h),(cell.w,cell.h),"{id} uses one cell at {width}");
+                }
+            }
             for (id,key) in [("pc-armor",87),("pc-quaff",113),("pc-ring",80),("pc-read",114),("pc-eat",101)] {
                 assert_eq!(get(&left,id).shortcut,Some(char::from_u32(key).unwrap().to_string()));
                 assert_eq!(game_effects(click(&mut left,id)),json!([{"kind":"send","key":key}]));
