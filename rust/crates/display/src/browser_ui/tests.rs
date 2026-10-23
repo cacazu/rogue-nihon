@@ -937,18 +937,27 @@ fn physical_directions_follow_selected_mode_without_changing_other_inputs() {
 }
 
 #[test]
-fn repeat_button_displays_default_and_configured_count_on_both_pointer_modes() {
+fn repeat_button_displays_phone_hold_hint_until_configured_and_keeps_pc_count() {
     for (coarse, prefix) in [(false,"A) 繰り返し回数"),(true,"回数")] {
         let mut ui=BrowserUi::new(measure);
         let m=shortcut_model();let mut v=view(1400.,1000.);v["coarse"]=json!(coarse);
-        let output=ui.render(m.clone(),v.clone());
-        assert!(array(&output["commands"]).iter().any(|c| c["text"]==format!("{prefix}1")));
+        ui.render(m.clone(),v.clone());
+        let initial = if coarse { "繰返し\n長押し" } else { "E) E) 繰返し\nA) 繰り返し回数1" };
+        assert_eq!(ui.widgets.controls.iter().find(|c| c.id=="touch-again").unwrap().label, initial);
+        let mut effects=Vec::new();ui.open_repeat_count(&mut effects);
+        ui.event(json!({"type":"key","key":"Escape"}));
+        ui.render(m.clone(),v.clone());
+        assert_eq!(ui.widgets.controls.iter().find(|c| c.id=="touch-again").unwrap().label, initial);
         assert_eq!(json!(array(&click(&mut ui,"touch-again")["effects"]).iter().filter(|e| e["kind"]=="send").collect::<Vec<_>>()),json!([{"kind":"send","keys":[97]}]));
         let mut effects=Vec::new();ui.open_repeat_count(&mut effects);
         assert!(ui.confirm_repeat_count("12"));
-        let output=ui.render(m,v);
+        let output=ui.render(m.clone(),v.clone());
         assert!(array(&output["commands"]).iter().any(|c| c["text"]==format!("{prefix}12")));
         assert_eq!(json!(array(&click(&mut ui,"touch-again")["effects"]).iter().filter(|e| e["kind"]=="send").collect::<Vec<_>>()),json!([{"kind":"send","keys":[49,50,97]}]));
+        let mut effects=Vec::new();ui.open_repeat_count(&mut effects);
+        assert!(ui.confirm_repeat_count("1"));
+        let output=ui.render(m,v);
+        assert!(array(&output["commands"]).iter().any(|c| c["text"]==format!("{prefix}1")));
     }
 }
 
@@ -1068,8 +1077,22 @@ fn hidden_pad_direction_dialog_moves_only_for_right_handed_desktop() {
 }
 
 #[test]
+fn narrow_phone_repeat_hint_and_count_two_stay_on_two_lines() {
+    let mut ui=BrowserUi::new(measure);let m=shortcut_model();
+    let mut v=view(320.,740.);v["coarse"]=json!(true);
+    for (configured,expected) in [(false,vec!["繰返し","長押し"]),(true,vec!["繰返し","回数2"])] {
+        ui.mobile_repeat_configured=configured;ui.mobile_repeat_count=2;
+        let output=ui.render(m.clone(),v.clone());
+        let rect=ui.widgets.controls.iter().find(|c|c.id=="touch-again").unwrap().rect;
+        let lines:Vec<_>=array(&output["commands"]).iter().filter(|c| c["op"]=="text" && rect.contains(n(&c["x"]),n(&c["y"]))).collect();
+        assert_eq!(lines.iter().map(|c|s(&c["text"])).collect::<Vec<_>>(),expected);
+        assert!(lines.iter().all(|c|c["size"]==17.));
+    }
+}
+
+#[test]
 fn narrow_phone_repeat_keeps_every_label_and_digit_at_seventeen_pixels() {
-    for (language,expected) in [("ja","繰り返し回数255"),("en","RepeatCount255")] {
+    for (language,expected) in [("ja","繰返し回数255"),("en","RepeatCount255")] {
         let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();m["language"]=json!(language);
         let mut v=view(320.,740.);v["coarse"]=json!(true);
         ui.render(m.clone(),v.clone());

@@ -34,7 +34,11 @@ impl BrowserUi {
             Widgets::shortcut_label(&self.t("mobile.repeat"),self.pc_shortcut(web_command(WebAction::Repeat).key).as_deref())
         };
         let subtitle = if coarse {
-            self.t("mobile.repeat_count_short").replace("{count}", &self.mobile_repeat_count.to_string())
+            if self.mobile_repeat_configured {
+                self.t("mobile.repeat_count_short").replace("{count}", &self.mobile_repeat_count.to_string())
+            } else {
+                self.t("mobile.long_press")
+            }
         } else {
             format!("{}{}", Widgets::shortcut_label(&self.t("mobile.repeat_count"),
                 self.pc_shortcut(web_command(WebAction::RepeatCount).key).as_deref()), self.mobile_repeat_count)
@@ -43,11 +47,11 @@ impl BrowserUi {
             ControlStyle { custom:true, key:Some(json!(97)), ..Default::default() });
         self.widgets.begin_control_content(!self.web_available(WebAction::Repeat));
         if coarse {
-            let mut lines = self.wrap(&title, rect.w - 4., 17.);
-            lines.extend(self.wrap(&subtitle, rect.w - 4., 17.));
+            let mut lines = self.wrap(&title, rect.w - 2., 17.);
+            lines.extend(self.wrap(&subtitle, rect.w - 2., 17.));
             let line_height = rect.h / lines.len().max(1) as f64;
             for (index, text) in lines.iter().enumerate() {
-                self.widgets.single_line(text, Rect::new(rect.x + 2., rect.y + index as f64 * line_height, rect.w - 4., line_height),
+                self.widgets.single_line(text, Rect::new(rect.x + 1., rect.y + index as f64 * line_height, rect.w - 2., line_height),
                     LineStyle { text:TextStyle::new(17., TEXT, false), center:true, ellipsis:false }, self.measure);
             }
         } else {
