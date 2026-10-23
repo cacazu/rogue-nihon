@@ -1,5 +1,5 @@
 {
-  "built_at_utc": "2026-10-23T14:41:43.225197+00:00",
+  "built_at_utc": "2026-10-23T23:41:43.225197+09:00",
   "logic_source_directory": "logic",
   "c_source_files": 38,
   "rust_library": ".local/tasks/python-p70ktfuh/cargo-target/wasm32-unknown-emscripten/release/librogue_layers.a",
@@ -32,13 +32,18 @@
     },
     {
       "file": "browser-ui.wasm",
-      "bytes": 5222458,
-      "sha256": "89a1251e941521b3718dfd8ed6c8128a4819e0c597a728df3339afc9e03433c6"
+      "bytes": 5230094,
+      "sha256": "ec655bfddfb9b7a11a34f66fd624e335015bc0d7867a88a91c782d10af16070e"
     },
     {
       "file": "browser-ui.js",
       "bytes": 68515,
-      "sha256": "535739cb25859cd055888e2acd3b6f0371c67d8c912c94f8b2fb42fc30f07f84"
+      "sha256": "b679911aeb201f158b9fe782a73b14cd320c8b899622b230a39c80f325225659"
     }
-  ]
+  ],
+  "browser_ui": {
+    "built_at_utc": "2026-10-23T15:42:10.1676131Z",
+    "crate": "rogue-browser-display",
+    "target": "wasm32-unknown-unknown"
+  }
 }

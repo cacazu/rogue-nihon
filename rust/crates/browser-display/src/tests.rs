@@ -107,7 +107,7 @@ fn preference_corruption_and_shared_continuous_zoom() {
     ] {
         assert_eq!(
             preference(raw),
-            json!({"version":1,"mode":"tiles","zoom":32,"animation":true,"theme":"default"})
+            json!({"version":1,"mode":"tiles","zoom":32,"animation":true,"handedness":"right","theme":"default"})
         );
     }
     assert_eq!(
@@ -700,4 +700,24 @@ fn retired_autowalk_timer_is_ignored_while_new_target_waits_for_manual_input() {
     assert!(late["effects"].as_array().unwrap().iter().all(|e|e["kind"]!="queue"));
     let ready=c.request(json!({"type":"worker","generation":1,"data":{"type":"input-request"}}));
     assert!(ready["state"]["autowalk"]["scheduled"]["token"].is_u64());
+}
+
+#[test]
+fn handedness_switch_persists_defaults_and_never_sends_game_input() {
+    for raw in [r#"{"version":1,"mode":"tiles","zoom":32}"#,
+        r#"{"version":1,"mode":"tiles","zoom":32,"handedness":"unknown"}"#,
+        r#"{"version":1,"mode":"tiles","zoom":32,"handedness":false}"#] {
+        assert_eq!(preference(raw)["handedness"], "right");
+    }
+    let mut c=boot();start(&mut c);
+    assert_eq!(c.snapshot()["handedness"], "right");
+    let r=event(&mut c,json!({"type":"invoke","id":"handedness-toggle"}));
+    assert_eq!(r["state"]["handedness"], "left");
+    assert!(!r["effects"].as_array().unwrap().iter().any(|e|e["kind"]=="queue"));
+    let stored=r["effects"].as_array().unwrap().iter().find(|e|e["kind"]=="storage-write").unwrap();
+    assert_eq!(stored["key"], "rogue-map-display-v1");
+    let mut restored=Controller::new(measure);
+    let r=restored.request(json!({"type":"boot","environment":{"isolated":true,"parameters":{}},"preference":stored["value"]}));
+    assert_eq!(r["state"]["handedness"], "left");
+    assert_eq!(event(&mut c,json!({"type":"invoke","id":"handedness-toggle"}))["state"]["handedness"], "right");
 }

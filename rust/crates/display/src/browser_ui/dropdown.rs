@@ -46,7 +46,7 @@ impl BrowserUi {
 
     pub(super) fn dropdown_control(&mut self, id: &str, rect: Rect, disabled: bool) {
         let label = self.dropdown_label(id);
-        let shortcut = if self.widgets.shortcut_context == json!("settings") { self.choice_shortcut(if id == "theme" { 3 } else { 4 }) } else { None };
+        let shortcut = if self.widgets.shortcut_context == json!("settings") { self.choice_shortcut(if id == "theme" { 4 } else { 5 }) } else { None };
         let visible_label = Widgets::shortcut_label(&label, shortcut.as_deref());
         self.control(
             &format!("select-{id}"),

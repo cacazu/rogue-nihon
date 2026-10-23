@@ -10,6 +10,7 @@ import {createPreviewServer} from '../../tools/server.mjs';
 
 // docs/IMPLEMENTATION-ja.md: real production game and onscreen desktop actions.
 const root=fileURLToPath(new URL('../../',import.meta.url));
+const beforeOnly=process.argv.includes('--before');
 const output=process.env.ROGUE_PC_DOCK_OUTPUT||artifactDirectory(path.join(root,'tests/browser-smoke/output/desktop-dock'));
 await mkdir(output,{recursive:true});
 const runtime=await prepareBrowserRuntime(root),server=createPreviewServer();
@@ -38,7 +39,7 @@ async function tap(id){
 async function key(value){const before=(await snap()).state.inputRequestCount;await page.keyboard.press(value);await page.waitForFunction(before=>__rogueBrowserTest.inputRequestCount>before&&__rogueBrowserTest.queuePending===0,before);await paint();}
 async function shot(label){await page.screenshot({path:path.join(output,label+'.png')});report.screenshots.push(label+'.png');}
 async function open(config,before=false){
- await context?.close();context=await browser.newContext({viewport:{width:config.width,height:config.height}});
+ await context?.close();context=await browser.newContext({viewport:{width:config.width,height:config.height},hasTouch:config.width<700,isMobile:config.width<700});
  page=await context.newPage();page.setDefaultTimeout(12000);await installBrowserTestAdapter(page);
  if(before&&process.env.ROGUE_PC_DOCK_BEFORE){
   const build=path.join(process.env.ROGUE_PC_DOCK_BEFORE,'build');
@@ -47,6 +48,7 @@ async function open(config,before=false){
  }
  page.on('pageerror',error=>report.errors.push(error.message));
  await page.goto('http://127.0.0.1:'+server.address().port+'/?trace=1&lang='+config.language+'&view='+config.mode);
+ if(config.hand){await page.evaluate(hand=>localStorage.setItem('rogue-map-display-v1',JSON.stringify({version:1,mode:'tiles',zoom:32,handedness:hand})),config.hand);await page.reload();}
  await page.locator('#name').fill('PCDock');await page.locator('#seed').fill('17');await tap('new-game');await wait();
 }
 function layout(scene){
@@ -70,13 +72,17 @@ async function reference(config){
  await wait();return {initial,expected:await state()};
 }
 try{
+ if(beforeOnly){
+  for(const config of [{width:1400,height:900,label:'pc-ja-1400',language:'ja',mode:'pixels'},{width:700,height:500,label:'pc-ja-700',language:'ja',mode:'tiles'},{width:390,height:844,label:'phone-390',language:'ja',mode:'pixels'},{width:320,height:568,label:'phone-320',language:'ja',mode:'pixels'}]){await open(config);await shot(config.label+'-before');}
+  report.checks.push('Unmodified published UI captured at desktop and phone sizes');
+ }else{
  for(const config of [
   {width:1400,height:900,language:'ja',mode:'pixels',label:'pc-ja-1400'},
   {width:900,height:700,language:'en',mode:'ascii',label:'pc-en-900'},
   {width:700,height:500,language:'ja',mode:'tiles',label:'pc-ja-700'},
  ]){
   const {initial,expected}=await reference(config);await open(config);let s=await snap();layout(s.scene);
-  if(process.env.ROGUE_PC_DOCK_BEFORE)assert.equal(initial.mapRect.h-s.scene.mapRect.h,172,'Dedicated dock height');
+  if(process.env.ROGUE_PC_DOCK_BEFORE)assert.ok(initial.mapRect.h>s.scene.mapRect.h,'Expanded dedicated dock height');
   await shot(config.label+'-after');const clean=await state();
   const shortcut=async value=>{await page.locator('#rogue-canvas').focus();await page.keyboard.press(value);await paint();};
   for(const [id,key]of [['mobile-movement','g'],['mobile-full-map','p'],['touch-again','E'],['commands-open','C'],['settings-toggle','O'],['header-fullscreen','G'],['history-open','M']])assert.equal((await snap()).scene.controls.find(c=>c.id===id).shortcut,key,id+' displays its actual shortcut');
@@ -93,16 +99,16 @@ try{
   await tap('history-open');assert.ok(!(await snap()).scene.controls.some(c=>c.id==='pc-inventory'));await page.keyboard.press('Escape');await paint();assert.deepEqual(await state(),clean);
   await tap('commands-open');assert.ok(!(await snap()).scene.controls.some(c=>c.id==='pc-inventory'));await page.keyboard.press('Escape');await paint();assert.deepEqual(await state(),clean);
   await tap('header-fullscreen');await paint();layout((await snap()).scene);assert.deepEqual(await state(),clean);await tap('header-fullscreen');await paint();
-  await tap('pc-context');await wait();await tap('touch-.');await wait();
+  await tap('pc-search');await wait();await tap('touch-.');await wait();
   await tap('pc-inventory');await wait('space');assert.ok(!(await snap()).scene.controls.some(c=>c.id==='pc-inventory'));await key('Escape');await wait();
   await tap('pc-wield');await wait('item');await tap('item-d');await wait();
-  s=await snap();assert.ok(s.scene.controls.some(c=>c.id==='pc-fire'&&!c.disabled));assert.ok(!s.scene.controls.some(c=>c.id==='pc-throw'));await shot(config.label+'-bow');
+  s=await snap();assert.ok(s.scene.controls.some(c=>c.id==='pc-fire'&&!c.disabled));assert.ok(s.scene.controls.some(c=>c.id==='pc-throw'));await shot(config.label+'-bow');
   await shortcut('x');await wait('direction');assert.ok((await snap()).scene.controls.some(c=>c.id==='pc-cancel'));assert.ok(!(await snap()).scene.controls.some(c=>c.id==='touch-.'));await shot(config.label+'-direction');await tap('pc-cancel');await wait();
   await tap('pc-fire');await wait('direction');await tap('touch-l');await wait();
   await tap('pc-zap');await wait('direction');await tap('pc-cancel');await wait();
   await tap('pc-wield');await wait('item');await tap('item-c');await wait();assert.ok((await snap()).scene.controls.some(c=>c.id==='pc-throw'));
   await tap('pc-throw');await wait('direction');await tap('touch-h');await wait('item');await tap('item-e');await wait();
-  await tap('pc-context');await wait();const beforeRepeat=await state();
+  await tap('pc-search');await wait();const beforeRepeat=await state();
   s=await snap();const repeat=s.scene.controls.find(c=>c.id==='touch-again'),box=await page.locator('#rogue-canvas').boundingBox();
   await page.mouse.move(box.x+repeat.rect.x+repeat.rect.w/2,box.y+repeat.rect.y+repeat.rect.h/2);await page.mouse.down();await page.waitForTimeout(600);await page.mouse.up();await paint();
   assert.equal((await snap()).scene.scope,'repeat-count');assert.deepEqual(await state(),beforeRepeat);
@@ -117,7 +123,7 @@ try{
  }
  await open({width:1400,height:900,language:'ja',mode:'pixels'});const beforeHide=await state(),mapHeight=(await snap()).scene.mapRect.h;
  await tap('settings-toggle');await tap('mobile-controls');assert.ok(!(await snap()).scene.controls.some(c=>c.id==='pc-inventory'));
- assert.equal((await snap()).scene.mapRect.h,mapHeight+172);assert.deepEqual(await state(),beforeHide);
+ assert.ok((await snap()).scene.mapRect.h>mapHeight);assert.deepEqual(await state(),beforeHide);
  await key('t');await wait('direction');assert.ok((await snap()).scene.controls.some(c=>c.id==='window-27'),'Hidden dock uses ordinary direction dialog');await tap('window-27');await wait();
  const beforeShow=await state();await tap('settings-toggle');await tap('mobile-controls');layout((await snap()).scene);assert.deepEqual(await state(),beforeShow);
  report.checks.push('Settings hides and restores the dock; hidden direction prompt stays operable');
@@ -134,6 +140,7 @@ try{
  await page.locator('[data-control="pc-fire"]').click();await page.locator('[data-control="touch-l"]').click();
  await page.locator('[data-control="pc-fire"]').waitFor({state:'visible'});await paint();await shot('production-pc-bow');
  report.checks.push('Published UI and normal game fire an arrow through native desktop controls');assert.deepEqual(report.errors,[]);
+ }
 }finally{
  await writeFile(path.join(output,'report.json'),JSON.stringify(report,null,2));
  await context?.close();await browser.close();await runtime.dispose();await new Promise(resolve=>server.close(resolve));console.log('Evidence: '+output);

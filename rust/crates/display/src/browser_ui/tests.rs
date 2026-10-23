@@ -935,3 +935,200 @@ fn physical_directions_follow_selected_mode_without_changing_other_inputs() {
     ui.render(m,view(1400.,1000.));ui.mobile_movement=2;
     assert_eq!(ui.event(json!({"type":"key","key":"ArrowRight"}))["effects"],send(RG_KEY_RIGHT));
 }
+
+#[test]
+fn repeat_button_displays_default_and_configured_count_on_both_pointer_modes() {
+    for (coarse, prefix) in [(false,"A) 繰り返し回数"),(true,"回数")] {
+        let mut ui=BrowserUi::new(measure);
+        let m=shortcut_model();let mut v=view(1400.,1000.);v["coarse"]=json!(coarse);
+        let output=ui.render(m.clone(),v.clone());
+        assert!(array(&output["commands"]).iter().any(|c| c["text"]==format!("{prefix}1")));
+        assert_eq!(json!(array(&click(&mut ui,"touch-again")["effects"]).iter().filter(|e| e["kind"]=="send").collect::<Vec<_>>()),json!([{"kind":"send","keys":[97]}]));
+        let mut effects=Vec::new();ui.open_repeat_count(&mut effects);
+        assert!(ui.confirm_repeat_count("12"));
+        let output=ui.render(m,v);
+        assert!(array(&output["commands"]).iter().any(|c| c["text"]==format!("{prefix}12")));
+        assert_eq!(json!(array(&click(&mut ui,"touch-again")["effects"]).iter().filter(|e| e["kind"]=="send").collect::<Vec<_>>()),json!([{"kind":"send","keys":[49,50,97]}]));
+    }
+}
+
+#[test]
+fn settings_handedness_switch_has_localized_state_and_unique_shortcuts() {
+    for (width,height,coarse) in [(1400.,1000.,false),(390.,844.,true)] {
+        let mut ui=BrowserUi::new(measure);let mut m=model();m["settingsOpen"]=json!(true);
+        let mut v=view(width,height);v["coarse"]=json!(coarse);
+        for (handedness,label) in [("right","右"),("left","左")] {
+            m["handedness"]=json!(handedness);let output=ui.render(m.clone(),v.clone());
+            assert!(array(&output["commands"]).iter().any(|c| c["text"]==label));
+            let toggle=ui.widgets.controls.iter().find(|c|c.id=="handedness-toggle").unwrap();
+            assert_eq!(toggle.key,Some(json!(handedness=="right")));
+            assert_eq!(json!(array(&click(&mut ui,"handedness-toggle")["effects"]).iter().filter(|e| e["kind"]=="invoke").collect::<Vec<_>>()),json!([{"kind":"invoke","id":"handedness-toggle"}]));
+            let shortcuts:Vec<_>=ui.widgets.controls.iter().filter_map(|c|c.shortcut.clone()).collect();
+            let mut unique=shortcuts.clone();unique.sort();unique.dedup();assert_eq!(shortcuts.len(),unique.len());
+        }
+    }
+}
+
+
+fn game_effects(result: Value) -> Value {
+    json!(array(&result["effects"]).iter().filter(|v|v["kind"]=="send").cloned().collect::<Vec<_>>())
+}
+
+#[test]
+fn handed_docks_mirror_action_columns_and_keep_natural_directions_and_live_hitboxes() {
+    for (width,height,coarse) in [(1400.,900.,false),(900.,700.,false),(700.,500.,false),(390.,844.,true),(320.,568.,true)] {
+        let mut right = BrowserUi::new(measure);
+        let mut left = BrowserUi::new(measure);
+        let mut m = shortcut_model();
+        let mut v = view(width,height);v["coarse"] = json!(coarse);
+        m["handedness"] = json!("right");right.render(m.clone(),v.clone());
+        m["handedness"] = json!("left");left.render(m.clone(),v.clone());
+        let get = |ui: &BrowserUi,id: &str| ui.widgets.controls.iter().find(|c|c.id==id).unwrap().clone();
+        for ui in [&right,&left] {
+            let h=get(ui,"touch-h").rect;let k=get(ui,"touch-k").rect;let l=get(ui,"touch-l").rect;
+            assert!(h.x < k.x && k.x < l.x,"directions keep their natural positions");
+            assert_eq!(h.w,h.h);assert_eq!(l.w,l.h);
+            let dock:Vec<_> = ui.widgets.controls.iter().filter(|c|c.id.starts_with("pc-")||c.id.starts_with("touch-")||matches!(c.id.as_str(),"mobile-movement"|"mobile-full-map"|"mobile-operations")).collect();
+            for (index,a) in dock.iter().enumerate() {
+                assert_eq!(a.rect,a.full_rect,"{} fully visible at {width}",a.id);
+                assert!(a.rect.w>=48.&&a.rect.h>=48.,"{} target at {width}",a.id);
+                assert!(a.rect.x>=0.&&a.rect.y>=0.&&a.rect.x+a.rect.w<=width&&a.rect.y+a.rect.h<=height,"{} fits at {width}",a.id);
+                for b in &dock[index+1..] {assert!(!a.rect.overlaps(b.rect),"{} avoids {} at {width}",a.id,b.id);}
+            }
+        }
+        let right_pad=get(&right,"touch-h").rect;let left_pad=get(&left,"touch-h").rect;
+        if coarse {assert!(right_pad.x<left_pad.x);} else {assert!(right_pad.x>left_pad.x);}
+        let ids = if coarse {vec!["mobile-movement","touch-action-action.inventory","touch-search","mobile-full-map","mobile-operations","touch-again"]}
+            else {vec!["mobile-movement","pc-inventory","pc-search","pc-wield","pc-throw","pc-zap","mobile-full-map","touch-again","pc-armor","pc-quaff","pc-ring","pc-read","pc-eat"]};
+        for id in ids {
+            let a=get(&right,id);let b=get(&left,id);
+            assert!((a.rect.x+b.rect.x+a.rect.w-width).abs()<0.001,"{id} reflected at {width}");
+            assert_eq!(a.action,b.action);assert_eq!(a.shortcut,b.shortcut);
+        }
+        let search=if coarse {"touch-search"} else {"pc-search"};
+        assert_eq!(game_effects(click(&mut right,search)),json!([{"kind":"send","key":115}]));
+        assert_eq!(game_effects(click(&mut left,search)),json!([{"kind":"send","key":115}]));
+        if !coarse {
+            for (id,key) in [("pc-armor",87),("pc-quaff",113),("pc-ring",80),("pc-read",114),("pc-eat",101)] {
+                assert_eq!(get(&left,id).shortcut,Some(char::from_u32(key).unwrap().to_string()));
+                assert_eq!(game_effects(click(&mut left,id)),json!([{"kind":"send","key":key}]));
+            }
+        }
+    }
+}
+
+#[test]
+fn context_candidates_are_additive_on_desktop_and_highlight_the_phone_replacement() {
+    let mut m=shortcut_model();
+    m["frame"]["map_player_surface"]=json!({"tile":17});
+    m["frame"]["map_tiles"]=json!([0,0,0,0,0,0,0,0,0,0,0,0,7]);
+    m["frame"]["width"]=json!(4);m["frame"]["height"]=json!(6);
+    m["frame"]["player"]=json!({"x":1,"y":3});
+    m["frame"]["ui"]["player_state"]=json!({"amulet":true,"levitating":false});
+    m["frame"]["ui"]["map_controls"]=crate::game_window::map_controls(&m["frame"]["ui"],true);
+    let mut pc=BrowserUi::new(measure);pc.render(m.clone(),view(1400.,900.));
+    let search=pc.widgets.controls.iter().find(|c|c.id=="pc-search").unwrap().clone();
+    for id in ["pc-ascend","pc-descend","pc-trap","pc-pickup","pc-fire"] {
+        let c=pc.widgets.controls.iter().find(|c|c.id==id).unwrap();
+        assert!(c.rect.y+c.rect.h<search.rect.y,"{id} stays on the separate row");
+    }
+    assert!(pc.widgets.controls.iter().any(|c|c.id=="pc-throw"));
+    assert_eq!(game_effects(click(&mut pc,"pc-search")),json!([{"kind":"send","key":115}]));
+    let mut phone=BrowserUi::new(measure);let mut v=view(390.,844.);v["coarse"]=json!(true);
+    let output=phone.render(m.clone(),v.clone());
+    let c=phone.widgets.controls.iter().find(|c|c.id=="touch-search").unwrap();
+    assert_eq!(c.action,json!({"kind":"send","key":60}));
+    let painted=|output:&Value,c:&Control| array(&output["commands"]).iter().find(|v|v["op"]=="box"&&v["rect"]==json!(c.full_rect)).unwrap()["fill"].clone();
+    assert_eq!(painted(&output,c),phone.widgets.theme.color("@accent"));
+    m["frame"]["map_player_surface"]=json!({"tile":1});m["frame"]["map_tiles"]=json!([]);
+    m["frame"]["ui"]["map_controls"]=crate::game_window::map_controls(&m["frame"]["ui"],false);
+    let output=phone.render(m,v);
+    let c=phone.widgets.controls.iter().find(|c|c.id=="touch-search").unwrap();
+    assert_eq!(c.action,json!({"kind":"send","key":115}));
+    assert_eq!(painted(&output,c),phone.widgets.theme.color("@button.background"));
+}
+
+#[test]
+fn hidden_pad_direction_dialog_moves_only_for_right_handed_desktop() {
+    for (width,coarse) in [(1400.,false),(390.,true)] {
+        let mut positions=Vec::new();
+        for hand in ["left","right"] {
+            let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();
+            m["handedness"]=json!(hand);m["input"]=json!({"kind":"direction"});
+            m["frame"]["ui"]["input"]=m["input"].clone();m["frame"]["ui"]["movement_direction"]=json!(true);
+            let mut v=view(width,900.);v["coarse"]=json!(coarse);
+            ui.render(m.clone(),v.clone());ui.mobile_controls=false;ui.render(m,v);
+            let left=ui.widgets.controls.iter().find(|c|c.id=="window-104").unwrap();
+            let right=ui.widgets.controls.iter().find(|c|c.id=="window-108").unwrap();
+            assert!(left.rect.x<right.rect.x);positions.push(left.rect.x);
+            assert_eq!(game_effects(click(&mut ui,"window-108")),json!([{"kind":"send","key":108}]));
+        }
+        if coarse {assert_eq!(positions[0],positions[1]);} else {assert!(positions[1]>positions[0]);}
+    }
+}
+
+#[test]
+fn narrow_phone_repeat_keeps_every_label_and_digit_at_seventeen_pixels() {
+    for (language,expected) in [("ja","繰り返し回数255"),("en","RepeatCount255")] {
+        let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();m["language"]=json!(language);
+        let mut v=view(320.,740.);v["coarse"]=json!(true);
+        ui.render(m.clone(),v.clone());
+        let mut effects=Vec::new();ui.open_repeat_count(&mut effects);assert!(ui.confirm_repeat_count("255"));
+        let output=ui.render(m,v);
+        let rect=ui.widgets.controls.iter().find(|c|c.id=="touch-again").unwrap().rect;
+        let lines:Vec<_>=array(&output["commands"]).iter().filter(|c| c["op"]=="text" && rect.contains(n(&c["x"]),n(&c["y"]))).collect();
+        assert_eq!(lines.iter().map(|c|s(&c["text"])).collect::<String>(),expected);
+        assert!(lines.iter().all(|c|c["size"]==17.));
+    }
+}
+
+
+#[test]
+fn desktop_direction_keeps_all_constant_controls_disabled_in_place() {
+    for width in [700.,900.,1400.] {
+        let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();
+        ui.render(m.clone(),view(width,900.));
+        let ids=["mobile-movement","pc-inventory","pc-search","pc-wield","pc-throw","pc-zap","mobile-full-map","touch-again","pc-armor","pc-quaff","pc-ring","pc-read","pc-eat"];
+        let controls:Vec<_>=ids.iter().map(|id|ui.widgets.controls.iter().find(|c|c.id==*id).unwrap().clone()).collect();
+        m["input"]=json!({"kind":"direction"});m["frame"]["ui"]["input"]=m["input"].clone();
+        m["frame"]["ui"]["movement_direction"]=json!(true);m["frame"]["ui"]["map_controls"]=crate::game_window::map_controls(&m["frame"]["ui"],false);
+        ui.render(m,view(width,900.));
+        for control in controls {
+            let c=ui.widgets.controls.iter().find(|c|c.id==control.id).unwrap();
+            assert_eq!(c.rect,control.rect);assert!(c.disabled,"{} disabled while choosing direction",c.id);
+            assert_eq!(game_effects(click(&mut ui,&control.id)),json!([]));
+        }
+        assert!(ui.widgets.controls.iter().any(|c|c.id=="pc-cancel"&&!c.disabled));
+        assert!(!ui.widgets.controls.iter().any(|c|c.id=="pc-fire"));
+        assert!(ui.widgets.controls.iter().filter(|c|c.id.starts_with("touch-")&&c.id!="touch-again").all(|c|!c.disabled));
+    }
+}
+
+
+#[test]
+fn desktop_direction_custom_captions_share_standard_disabled_opacity() {
+    fn alpha_for(output: &Value, prefix: &str) -> f64 {
+        let mut stack=vec![1.];
+        for command in array(&output["commands"]) {
+            match s(&command["op"]) {
+                "save" | "clip" => stack.push(stack.last().unwrap()*command["alpha"].as_f64().unwrap_or(1.)),
+                "restore" => {stack.pop();},
+                "text" if s(&command["text"]).starts_with(prefix) => return *stack.last().unwrap(),
+                _ => {},
+            }
+        }
+        panic!("Missing caption {prefix}");
+    }
+    for width in [700.,1400.] {
+        let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();
+        let normal=ui.render(m.clone(),view(width,900.));
+        for prefix in ["g)","E)","A)"] {assert_eq!(alpha_for(&normal,prefix),1.);}
+        m["input"]=json!({"kind":"direction"});m["frame"]["ui"]["input"]=m["input"].clone();
+        m["frame"]["ui"]["movement_direction"]=json!(true);m["frame"]["ui"]["map_controls"]=crate::game_window::map_controls(&m["frame"]["ui"],false);
+        let direction=ui.render(m,view(width,900.));
+        for prefix in ["g)","E)","A)","s)"] {assert_eq!(alpha_for(&direction,prefix),0.45,"{prefix}");}
+    }
+    let mut phone=BrowserUi::new(measure);let mut v=view(320.,568.);v["coarse"]=json!(true);
+    let normal=phone.render(shortcut_model(),v);
+    assert_eq!(alpha_for(&normal,"歩く"),1.);assert_eq!(alpha_for(&normal,"回数1"),1.);
+}

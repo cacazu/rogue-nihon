@@ -111,6 +111,7 @@ pub struct ControlStyle<'a> {
     pub role: ControlRole,
     pub left: bool,
     pub throw_direction: bool,
+    pub highlight: bool,
     pub size: f64,
     pub icon: Option<&'a str>,
     pub icon_size: f64,
@@ -323,6 +324,13 @@ impl Widgets {
         self.icons.push(json!({"name":name,"glyph":glyph,"rect":r}));
         r
     }
+    /// Custom control captions share the standard disabled opacity.
+    pub fn begin_control_content(&mut self, disabled: bool) {
+        self.push(json!({"op":"save","alpha":if disabled {0.45} else {1.}}));
+    }
+    pub fn end_control_content(&mut self) {
+        self.push(json!({"op":"restore"}));
+    }
     pub fn control(
         &mut self,
         id: &str,
@@ -353,9 +361,9 @@ impl Widgets {
             shortcut: style.shortcut.clone(),
             action,
         });
-        self.push(json!({"op":"save","alpha":if style.disabled{0.45}else{1.}}));
+        self.begin_control_content(style.disabled);
         let selected = self.focus == id || self.hover == id || self.pressed == id;
-        if style.throw_direction && !style.disabled {
+        if (style.throw_direction || style.highlight) && !style.disabled {
             self.box_rect(r, "@accent", Some("@button.border"), 0.);
             if selected {
                 self.box_rect(Rect::new(r.x + 3., r.y + 3., r.w - 6., r.h - 6.), "transparent", Some("@background"), 0.);
@@ -370,7 +378,7 @@ impl Widgets {
                 self.box_rect(Rect::new(r.x + 3., r.y + 3., r.w - 6., r.h - 6.), "transparent", Some(LINE), 0.);
             }
         }
-        let color = if style.throw_direction && !style.disabled { "@background" } else { "@button.text" };
+        let color = if (style.throw_direction || style.highlight) && !style.disabled { "@background" } else { "@button.text" };
         if let Some(icon) = style.icon {
             let size = if style.icon_size > 0. {
                 style.icon_size
@@ -413,7 +421,7 @@ impl Widgets {
                 );
             }
         }
-        self.push(json!({"op":"restore"}));
+        self.end_control_content();
     }
     pub fn shortcut_hint(key: &str) -> &str {
         match key { "Escape" => "Esc", "Enter" => "Enter", " " => "Space", _ => key }

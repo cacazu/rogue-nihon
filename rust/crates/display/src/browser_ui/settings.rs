@@ -13,8 +13,8 @@ impl BrowserUi {
         let half = (inner - 8.) / 2.;
         let top_label = self.t("action.top");
         let quit_label = self.t("mobile.quit_score");
-        let visible_top = Widgets::shortcut_label(&top_label, self.choice_shortcut(5).as_deref());
-        let visible_quit = Widgets::shortcut_label(&quit_label, self.choice_shortcut(6).as_deref());
+        let visible_top = Widgets::shortcut_label(&top_label, self.choice_shortcut(6).as_deref());
+        let visible_quit = Widgets::shortcut_label(&quit_label, self.choice_shortcut(7).as_deref());
         let top_width = visible_top.split('\n')
             .map(|line| (self.measure)(line, 17., false, false).width + 12.)
             .fold(half, f64::max)
@@ -26,7 +26,7 @@ impl BrowserUi {
             .map(|e| s(&e["text"]).to_string());
         let notice_height = notice.as_ref().map_or(0., |text|
             12. + self.wrap(text, inner, 17.).len() as f64 * 17. * 1.6);
-        let total = 48. + 12. + 48. + 12. + 48. + 12. + 48. + 12. + return_height + notice_height;
+        let total = 48. + 12. + 48. + 12. + 48. + 12. + 48. + 12. + 48. + 12. + return_height + notice_height;
         let (panel, viewport) = self.sheet_layout(w, total);
         let max = (total - viewport.h).max(0.);
         let scroll = clamp(self.scrolls["settings"], 0., max);
@@ -110,11 +110,24 @@ impl BrowserUi {
             self.measure,
         );
         row += 60.;
+        let left_handed = self.model["handedness"] == "left";
+        self.widgets.switch(
+            "handedness-toggle",
+            &self.t("settings.handedness"),
+            &self.t(if left_handed { "settings.left" } else { "settings.right" }),
+            Rect::new(viewport.x, row, viewport.w, 48.),
+            json!({"kind":"invoke","id":"handedness-toggle"}),
+            !left_handed,
+            busy,
+            self.choice_shortcut(3),
+            self.measure,
+        );
+        row += 60.;
         self.settings_dropdown("theme", "settings.theme", Rect::new(viewport.x, row, viewport.w, 48.), busy);
         row += 60.;
         self.settings_dropdown("display-mode", "settings.display_mode", Rect::new(viewport.x, row, viewport.w, 48.), busy);
         row += 60.;
-        let shortcuts: Vec<_> = (0..7).map(|index| self.choice_shortcut(index)).collect();
+        let shortcuts: Vec<_> = (0..8).map(|index| self.choice_shortcut(index)).collect();
         let style = |disabled, index: usize| ControlStyle {
             size: 17.,
             role: ControlRole::Command,
@@ -127,14 +140,14 @@ impl BrowserUi {
             "settings-top",
             &top_label,
             Rect::new(viewport.x, row, top_width, return_height),
-            style(busy, 5),
+            style(busy, 6),
         );
         self.control(
             "mobile-system-81",
             &quit_label,
             Rect::new(viewport.x + top_width + 8., row, viewport.w - top_width - 8., return_height),
             json!({"kind":"send","key":81}),
-            style(stopped, 6),
+            style(stopped, 7),
         );
         row += return_height;
         if let Some(notice) = notice {

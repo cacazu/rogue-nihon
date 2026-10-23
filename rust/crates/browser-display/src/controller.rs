@@ -48,7 +48,7 @@ impl Controller {
             autowalk: crate::autowalk::AutoWalk::default(),
             animations: Animator::new(tiles::animation_manifest("tiles"), tiles::animation_manifest("pixels"))
                 .expect("Character animation manifests"),
-            model: json!({"language":"ja","topOpen":true,"settingsOpen":false,"starting":false,"running":false,"ready":false,"saved":false,"downloadAvailable":false,"savePending":false,"returnAfterEnd":false,"itemHistoryOpen":false,"returnToInventory":false,"generation":0,"displayMode":"tiles","tileSize":32,"animationEnabled":true,"theme":rogue_display::theme::Theme::default().id(),"frame":null,"topNotice":null,"fieldErrors":{}}),
+            model: json!({"language":"ja","topOpen":true,"settingsOpen":false,"starting":false,"running":false,"ready":false,"saved":false,"downloadAvailable":false,"savePending":false,"returnAfterEnd":false,"itemHistoryOpen":false,"returnToInventory":false,"generation":0,"displayMode":"tiles","tileSize":32,"animationEnabled":true,"handedness":"right","theme":rogue_display::theme::Theme::default().id(),"frame":null,"topNotice":null,"fieldErrors":{}}),
             state: json!({"exitCode":null,"outcome":null,"runtimeError":null,"frameCount":0,"inputRequestCount":0,"trace":null,"traces":[],"playerEvents":[],"messages":[],"logs":[],"translationFallbacks":[],"savedLength":0}),
             inputs: json!({}),
             environment: Value::Null,
@@ -527,7 +527,7 @@ impl Controller {
             "trace":self.environment["parameters"]["trace"]=="1","message_paging":"log"}));
     }
     fn persist_view(&mut self) {
-        self.effects.push(json!({"kind":"storage-write","key":"rogue-map-display-v1","value":json!({"version":1,"mode":self.model["displayMode"],"zoom":self.model["tileSize"],"animation":self.model["animationEnabled"],"theme":self.model["theme"]}).to_string()}));
+        self.effects.push(json!({"kind":"storage-write","key":"rogue-map-display-v1","value":json!({"version":1,"mode":self.model["displayMode"],"zoom":self.model["tileSize"],"animation":self.model["animationEnabled"],"handedness":self.model["handedness"],"theme":self.model["theme"]}).to_string()}));
     }
     fn select(&mut self, id: &str, value: &str) {
         match id {
@@ -605,6 +605,10 @@ impl Controller {
     }
     fn invoke(&mut self, id: &str) {
         match id {
+            "handedness-toggle" if !flag(&self.model["starting"]) && !flag(&self.model["savePending"]) && !flag(&self.model["returnAfterEnd"]) => {
+                self.model["handedness"] = json!(if self.model["handedness"] == "left" { "right" } else { "left" });
+                self.persist_view();
+            },
             "animation-toggle" if !flag(&self.model["starting"]) && !flag(&self.model["savePending"]) => {
                 let enabled=!flag(&self.model["animationEnabled"]);
                 self.model["animationEnabled"]=json!(enabled);
@@ -1130,6 +1134,7 @@ impl Controller {
                 self.model["displayMode"] = json!(mode);
                 self.model["tileSize"] = p["zoom"].clone();
                 self.model["animationEnabled"] = p["animation"].clone();
+                self.model["handedness"] = p["handedness"].clone();
                 self.model["theme"] = p["theme"].clone();
                 self.animations.set_enabled(flag(&p["animation"]));
                 self.document();

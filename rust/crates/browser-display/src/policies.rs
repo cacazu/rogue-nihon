@@ -32,9 +32,9 @@ pub fn mode(value: &str) -> bool {
 pub fn preference(raw: &str) -> Value {
     let v = serde_json::from_str::<Value>(raw).unwrap_or(Value::Null);
     if v["version"] == 1 && mode(text(&v["mode"])) && valid_zoom(&v["zoom"]) {
-        json!({"version":1,"mode":v["mode"],"zoom":v["zoom"],"animation":v["animation"].as_bool().unwrap_or(true),"theme":rogue_display::theme::Theme::named(text(&v["theme"])).id()})
+        json!({"version":1,"mode":v["mode"],"zoom":v["zoom"],"animation":v["animation"].as_bool().unwrap_or(true),"handedness":if v["handedness"] == "left" { "left" } else { "right" },"theme":rogue_display::theme::Theme::named(text(&v["theme"])).id()})
     } else {
-        json!({"version":1,"mode":"tiles","zoom":32,"animation":true,"theme":rogue_display::theme::Theme::default().id()})
+        json!({"version":1,"mode":"tiles","zoom":32,"animation":true,"handedness":"right","theme":rogue_display::theme::Theme::default().id()})
     }
 }
 pub struct Catalog {

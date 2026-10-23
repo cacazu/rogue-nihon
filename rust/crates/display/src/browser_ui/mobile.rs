@@ -6,18 +6,25 @@ const TARGET: f64 = 48.;
 const FONT: f64 = 17.;
 
 impl BrowserUi {
-    pub(super) fn mobile_context_command(&self) -> (u32, &'static str) {
+    pub(super) fn left_handed(&self) -> bool {
+        self.model["handedness"] == "left"
+    }
+
+    /// All candidates come from the current public frame. The phone uses the
+    /// first; desktop can show every applicable operation without replacing Search.
+    pub(super) fn map_context_commands(&self) -> Vec<(u32, &'static str)> {
         let frame = &self.model["frame"];
         let ui = &frame["ui"];
+        let mut commands = Vec::new();
         if b(&ui["map_controls"]["stairs"]["ascend"]) {
-            return (60, "mobile.ascend");
+            commands.push((60, "mobile.ascend"));
         }
         if b(&ui["map_controls"]["stairs"]["descend"]) {
-            return (62, "action.descend_short");
+            commands.push((62, "action.descend_short"));
         }
         if frame["map_player_surface"]["tile"].as_u64().is_some_and(|tile| (14..=22).contains(&tile))
             && !b(&ui["player_state"]["levitating"]) {
-            return (44, "mobile.pickup");
+            commands.push((44, "mobile.pickup"));
         }
         let x = frame["player"]["x"].as_i64().unwrap_or(-10);
         let y = frame["player"]["y"].as_i64().unwrap_or(-10);
@@ -29,9 +36,13 @@ impl BrowserUi {
             tile == 7 && py > 0 && py < height - 1 && (px-x).abs() <= 1 && (py-y).abs() <= 1
         });
         if frame["map_player_surface"]["tile"] == 7 || nearby_trap {
-            return (94, "mobile.trap");
+            commands.push((94, "mobile.trap"));
         }
-        (115, "mobile.search")
+        commands
+    }
+
+    pub(super) fn mobile_context_command(&self) -> (u32, &'static str) {
+        self.map_context_commands().into_iter().next().unwrap_or((115, "mobile.search"))
     }
 
     pub(super) fn mobile_activate(&mut self, control: &Control, effects: &mut Vec<Value>) -> bool {
@@ -81,7 +92,7 @@ impl BrowserUi {
         let dock = self.mobile_controls
             && b(&self.model["running"])
             && !self.model["frame"]["ui"]["window"].is_object();
-        let dock_height = if dock { 184. } else { 0. };
+        let dock_height = if dock { if self.width < 360. { 256. } else { 184. } } else { 0. };
         let bow = dock && b(&self.model["frame"]["ui"]["ranged"]["bow"]);
         let fire_height = if bow { 58. } else { 0. };
         let map = Rect::new(
@@ -201,6 +212,7 @@ impl BrowserUi {
             ControlStyle {
                 size: FONT,
                 role: ControlRole::Command,
+                highlight: id == "touch-search" && key != 115,
                 left: self.mobile_operations,
                 shortcut: if self.mobile_operations { self.pc_shortcut(&char::from_u32(key).unwrap().to_string()) } else { None },
                 keep_offscreen: self.mobile_operations,
@@ -227,6 +239,7 @@ impl BrowserUi {
                 ..Default::default()
             },
         );
+        self.widgets.begin_control_content(!self.web_available(WebAction::Movement));
         let caption = Widgets::shortcut_label(&label, self.pc_shortcut(web_command(WebAction::Movement).key).as_deref());
         self.widgets.single_line(
             &caption,
@@ -238,6 +251,7 @@ impl BrowserUi {
             },
             self.measure,
         );
+        self.widgets.end_control_content();
     }
 
     fn mobile_dock(&mut self, y: f64) {
@@ -245,6 +259,11 @@ impl BrowserUi {
             .rect(Rect::new(0., y, self.width, self.height - y), BG);
         let ui = self.model["frame"]["ui"].clone();
         let direction = b(&ui["movement_direction"]);
+        let mirrored = self.left_handed();
+        let pad_x = if mirrored { self.width - 180. } else { 12. };
+        let pad_y = y + (self.height - y - 168.)/2.;
+        let row_height = if self.width < 360. { 76. } else { 52. };
+        let row_step = row_height + 6.;
         for a in array(&ui["map_controls"]["directions"]) {
             let key = n(&a["key"]) as u32;
             let emitted = self.movement_key(key);
@@ -257,8 +276,8 @@ impl BrowserUi {
                 &format!("touch-{}", char::from_u32(key).unwrap_or(' ')),
                 &label,
                 Rect::new(
-                    12. + n(&a["column"]) * 58.,
-                    y + 8. + n(&a["row"]) * 58.,
+                    pad_x + n(&a["column"]) * 58.,
+                    pad_y + n(&a["row"]) * 58.,
                     52.,
                     52.,
                 ),
@@ -273,25 +292,27 @@ impl BrowserUi {
         }
         let x = if self.width >= 320. { 192. } else { 176. };
         let w = self.width - x - 12.;
+        let screen_width = self.width;
+        let place = |rect: Rect| if mirrored { Rect::new(screen_width - rect.x - rect.w,rect.y,rect.w,rect.h) } else { rect };
         if direction {
             for action in array(&ui["map_controls"]["actions"]) {
                 self.mobile_command(
                     &format!("touch-action-{}", s(&action["id"])),
                     n(&action["key"]) as u32,
                     &self.t("action.cancel_short"),
-                    Rect::new(x, y + 8., w, 52.),
+                    place(Rect::new(x, y + 8., w, row_height)),
                     false,
                 );
             }
             return;
         }
         let cell_width = (w - 8.) / 2.;
-        self.mobile_movement_control(Rect::new(x, y + 8., cell_width, 52.));
+        self.mobile_movement_control(place(Rect::new(x, y + 8., cell_width, row_height)));
         self.mobile_command(
             "touch-action-action.inventory",
             105,
             &self.t("action.inventory"),
-            Rect::new(x + cell_width + 8., y + 8., cell_width, 52.),
+            place(Rect::new(x + cell_width + 8., y + 8., cell_width, row_height)),
             false,
         );
         let (context_key, context_label) = self.mobile_context_command();
@@ -299,22 +320,22 @@ impl BrowserUi {
             "touch-search",
             context_key,
             &self.t(context_label),
-            Rect::new(x, y + 66., cell_width, 52.),
+            place(Rect::new(x, y + 8. + row_step, cell_width, row_height)),
             false,
         );
         self.web_control(
             WebAction::FullMap, "mobile-full-map",
             &self.t("mobile.full_map"),
-            Rect::new(x + cell_width + 8., y + 66., cell_width, 52.),
+            place(Rect::new(x + cell_width + 8., y + 8. + row_step, cell_width, row_height)),
             ControlStyle {size:FONT,..Default::default()},
         );
         self.web_control(
             WebAction::Commands, "mobile-operations",
             &self.t("action.help"),
-            Rect::new(x, y + 124., cell_width, 52.),
+            place(Rect::new(x, y + 8. + row_step*2., cell_width, row_height)),
             ControlStyle {size:FONT,..Default::default()},
         );
-        self.draw_repeat_button(Rect::new(x + cell_width + 8., y + 124., cell_width, 52.));
+        self.draw_repeat_button(place(Rect::new(x + cell_width + 8., y + 8. + row_step*2., cell_width, row_height)));
     }
     fn mobile_operations_sheet(&mut self, game: Rect) {
         self.begin_choices("mobile-operations");

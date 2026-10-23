@@ -29,21 +29,34 @@ impl BrowserUi {
     }
 
     pub(super) fn draw_repeat_button(&mut self, rect: Rect) {
-        let title = Widgets::shortcut_label(&self.t("mobile.repeat"),self.pc_shortcut(web_command(WebAction::Repeat).key).as_deref());
-        let subtitle = if self.mobile_repeat_configured {
-            self.mobile_repeat_count.to_string()
-        } else { self.t("mobile.long_press") };
-        let subtitle = if b(&self.view["coarse"]) { subtitle } else {
-            format!("{}{}", Widgets::shortcut_label(&self.t("mobile.repeat_count"),
-                self.pc_shortcut(web_command(WebAction::RepeatCount).key).as_deref()),
-                if self.mobile_repeat_configured {format!(": {}",self.mobile_repeat_count)} else {String::new()})
+        let coarse = b(&self.view["coarse"]);
+        let title = if coarse { self.t("mobile.repeat_title") } else {
+            Widgets::shortcut_label(&self.t("mobile.repeat"),self.pc_shortcut(web_command(WebAction::Repeat).key).as_deref())
         };
-        self.web_control(WebAction::Repeat,"touch-again", &format!("{}\n{subtitle}",self.t("mobile.repeat")), rect,
+        let subtitle = if coarse {
+            self.t("mobile.repeat_count_short").replace("{count}", &self.mobile_repeat_count.to_string())
+        } else {
+            format!("{}{}", Widgets::shortcut_label(&self.t("mobile.repeat_count"),
+                self.pc_shortcut(web_command(WebAction::RepeatCount).key).as_deref()), self.mobile_repeat_count)
+        };
+        self.web_control(WebAction::Repeat,"touch-again", &format!("{title}\n{subtitle}"), rect,
             ControlStyle { custom:true, key:Some(json!(97)), ..Default::default() });
-        for (index, text) in [&title, &subtitle].into_iter().enumerate() {
-            self.widgets.single_line(text, Rect::new(rect.x + 1., rect.y + index as f64 * rect.h / 2., rect.w - 2., rect.h / 2.),
-                LineStyle { text:TextStyle::new(17_f64.min(17. * (rect.w - 8.) / (self.measure)(text,17.,false,false).width.max(1.)), TEXT, false), center:true, ellipsis:false }, self.measure);
+        self.widgets.begin_control_content(!self.web_available(WebAction::Repeat));
+        if coarse {
+            let mut lines = self.wrap(&title, rect.w - 4., 17.);
+            lines.extend(self.wrap(&subtitle, rect.w - 4., 17.));
+            let line_height = rect.h / lines.len().max(1) as f64;
+            for (index, text) in lines.iter().enumerate() {
+                self.widgets.single_line(text, Rect::new(rect.x + 2., rect.y + index as f64 * line_height, rect.w - 4., line_height),
+                    LineStyle { text:TextStyle::new(17., TEXT, false), center:true, ellipsis:false }, self.measure);
+            }
+        } else {
+            for (index, text) in [&title, &subtitle].into_iter().enumerate() {
+                self.widgets.single_line(text, Rect::new(rect.x + 1., rect.y + index as f64 * rect.h / 2., rect.w - 2., rect.h / 2.),
+                    LineStyle { text:TextStyle::new(17., TEXT, false), center:true, ellipsis:false }, self.measure);
+            }
         }
+        self.widgets.end_control_content();
     }
 
     pub(super) fn draw_repeat_count(&mut self) {

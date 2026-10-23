@@ -66,7 +66,7 @@ impl BrowserUi {
         let game = Rect::new(0., 0., self.width, self.height);
         let dock = self.mobile_controls && b(&self.model["running"])
             && !self.model["frame"]["ui"]["window"].is_object();
-        let dock_height = if dock { super::desktop::DOCK_HEIGHT } else { 0. };
+        let dock_height = if dock { super::desktop::dock_height(self.width) } else { 0. };
         let map = Rect::new(
             0.,
             game.y,
@@ -333,7 +333,9 @@ impl BrowserUi {
         let mobile = self.width < 700. || b(&self.view["coarse"]);
         let touch = b(&self.view["coarse"]);
         let w = if b(&d["map_view"]) { 920_f64 } else { 600_f64 }.min(self.width - 28.);
-        let x = (self.width - w) / 2.;
+        let x = if !mobile && ui["input"]["kind"] == "direction" && !self.left_handed() {
+            self.width - w - 14.
+        } else { (self.width - w) / 2. };
         let font = 18.;
         let line_h = (font * 1.65_f64).ceil();
         let inner = w - 32.;
