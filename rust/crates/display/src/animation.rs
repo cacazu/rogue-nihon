@@ -171,6 +171,7 @@ pub struct Animator {
     visibility: Option<Visibility>,
     clock: Option<f64>,
     enabled: bool,
+    player_paused: bool,
 }
 impl Animator {
     pub fn new(tiles_manifest: Value, pixels_manifest: Value) -> Result<Self, String> {
@@ -196,10 +197,12 @@ impl Animator {
             visibility: None,
             clock: None,
             enabled: true,
+            player_paused: false,
         })
     }
     pub fn reset(&mut self) {
         self.actors.clear();
+        self.player_paused = false;
         self.flights.reset();
         self.epoch = None;
         self.step = None;
@@ -216,6 +219,17 @@ impl Animator {
             actor.finish_action();
         }
         changed
+    }
+    /// Freeze the last painted player pose during a local wait hold.
+    /// Public enemy actors and projectile clocks continue independently.
+    pub fn set_player_paused(&mut self, paused: bool) -> bool {
+        if self.player_paused == paused { return false; }
+        self.player_paused = paused;
+        if let Some(player) = self.actors.get_mut(&0) {
+            player.motion = None;
+            if !paused { player.finish(); }
+        }
+        true
     }
     pub fn set_enabled(&mut self, enabled: bool) {
         if self.enabled != enabled {
@@ -326,12 +340,15 @@ impl Animator {
         let mut frames = Vec::with_capacity(self.actors.len());
         let mut next_delay_ms = None;
         for (id, actor) in &mut self.actors {
-            let (state, index, delay) = if self.enabled {
+            let paused = *id == 0 && self.player_paused;
+            let (state, index, delay) = if self.enabled && paused {
+                (actor.last_pose.0, actor.last_pose.1, None)
+            } else if self.enabled {
                 actor.advance(now, &clips[&actor.tile])
             } else {
                 (State::Idle, 0, None)
             };
-            let (x, y, moving) = if self.enabled {
+            let (x, y, moving) = if self.enabled && !paused {
                 actor.position(now)
             } else {
                 (f64::from(actor.x), f64::from(actor.y), false)
@@ -339,7 +356,7 @@ impl Animator {
             if graphical {
                 frames.push(
                     json!({"id":id,"x":actor.x,"y":actor.y,"displayX":x,"displayY":y,
-                    "facing":actor.facing,"stopped":actor.stopped,"animated":self.enabled,
+                    "facing":actor.facing,"stopped":actor.stopped || paused,"animated":self.enabled,
                     "state":STATES[state.index()],"frame":index}),
                 );
                 let delay = if moving {
@@ -831,6 +848,34 @@ mod tests {
         assert_eq!(static_pose.next_delay_ms, None);
         a.set_enabled(true);
         assert_eq!(pose(&a.sample(9030., "tiles")), ("idle", 0));
+    }
+    #[test]
+    fn local_wait_hold_freezes_only_player_across_original_turns() {
+        let mut a = animator();
+        let mut f = frame(1, 0, false, json!([]));
+        f["map_cells"] = json!("@B    ");
+        f["map_tiles"][1] = json!(crate::map_tiles::glyph(b'B').unwrap());
+        f["map_actors"].as_array_mut().unwrap().push(json!({"id":1,"x":1,"y":0,"glyph":66}));
+        a.observe(&f, 0.).unwrap();
+        a.sample(0., "tiles");
+        let before = a.sample(200., "tiles");
+        assert!(a.set_player_paused(true));
+        for step in 2..6 {
+            f["map_actor_step"] = json!(step);
+            f["map_actor_events"] = json!([event(step, "hurt")]);
+            a.interrupt();
+            a.observe(&f, f64::from(step * 200)).unwrap();
+            let frozen = a.sample(f64::from(step * 200), "tiles");
+            assert_eq!(pose(&frozen), pose(&before));
+            assert_eq!(frozen.frames[0]["stopped"], true);
+            assert_eq!(frozen.frames[1]["stopped"], false);
+            assert!(frozen.next_delay_ms.is_some(), "Enemy clocks keep waking");
+        }
+        let first = a.sample(1000., "tiles").frames[1]["frame"].clone();
+        assert_ne!(a.sample(1200., "tiles").frames[1]["frame"], first);
+        assert!(a.set_player_paused(false));
+        assert_eq!(pose(&a.sample(1200., "tiles")), ("idle", 0));
+        assert_ne!(pose(&a.sample(1400., "tiles")), ("idle", 0));
     }
     #[test]
     fn animation_redraw_mode_change_epoch_and_invalid_frame_are_safe() {

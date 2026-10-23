@@ -10,6 +10,8 @@ pub(super) struct Gestures {
     anchor: Option<(f64, f64, f64, f64)>,
     hold: Option<(i64, u64)>,
     repeat_setting_hold: Option<i64>,
+    wait_hold: bool,
+    pub(super) wait_key: String,
 }
 
 struct ZoomMotion {
@@ -214,7 +216,7 @@ impl BrowserUi {
             effects.push(json!({"kind":"hold-timer","id":id,"delay":500}));
             return;
         }
-        if (self.width < 700. || b(&self.view["coarse"]))
+        if (self.width < 700. || b(&self.view["coarse"]) || control.id == "touch-.")
             && control.id.starts_with("touch-")
             && control.id.len() == 7
             && !control.disabled
@@ -227,12 +229,28 @@ impl BrowserUi {
         }
     }
 
+    /// Local wait holds pause only the player presentation, never C turns.
+    pub fn wait_held(&self) -> bool {
+        (self.gestures.wait_hold || !self.gestures.wait_key.is_empty()) && self.wait_available()
+    }
+    pub(super) fn wait_available(&self) -> bool {
+        b(&self.model["running"])
+            && !b(&self.model["topOpen"])
+            && !b(&self.model["settingsOpen"])
+            && !b(&self.model["returnAfterEnd"])
+            && self.model["input"]["kind"] == "command"
+            && !self.model["frame"]["ui"]["window"].is_object()
+            && !self.commands_open && !self.history_open && !self.status_open
+            && !self.mobile_operations && !self.mobile_repeat_open
+    }
+
     pub(super) fn holding(&self, id: i64) -> bool {
         self.gestures.hold.is_some_and(|h| h.0 == id)
     }
     pub(super) fn stop_hold(&mut self) {
         self.gestures.hold = None;
         self.gestures.repeat_setting_hold = None;
+        self.gestures.wait_hold = false;
     }
 
     pub(super) fn repeat_hold(&mut self, event: &Value, effects: &mut Vec<Value>) {
@@ -279,6 +297,7 @@ impl BrowserUi {
             self.stop_hold();
             return;
         }
+        self.gestures.wait_hold = drag.hit.as_ref().is_some_and(|c| c.id == "touch-.");
         let request = n(&self.model["inputRequests"]) as u64;
         if request != last
             && let Some(control) = drag.hit

@@ -199,6 +199,7 @@ impl BrowserUi {
             "raw-key" => return json!({"raw":raw_key(&event),"diagnostics":self.diagnostics()}),
             "center" => self.center_key.clear(),
             "cancel" => {
+                self.gestures.wait_key.clear();
                 if event["id"].is_null() || self.drag.as_ref().is_some_and(|d| d.id == id) {
                     self.cancel_pointer(true, &mut effects);
                 }
@@ -208,6 +209,7 @@ impl BrowserUi {
             }
             "leave" => self.widgets.hover.clear(),
             "down" => {
+                self.gestures.wait_key.clear();
                 if self.drag.is_some() && !b(&event["captured"]) {
                     self.cancel_pointer(true, &mut effects);
                 }
@@ -335,6 +337,9 @@ impl BrowserUi {
                                     self.scroll_by(&drag.region, -dy);
                                 }
                             }
+                            if drag.moved || !drag.hit.as_ref().is_some_and(|c| c.rect.contains(x, y)) {
+                                self.stop_hold();
+                            }
                             self.drag = Some(drag);
                         }
                     } else if !b(&self.model["settingsOpen"])
@@ -413,7 +418,23 @@ impl BrowserUi {
                 }
             }
             "key" => {
+                self.stop_hold();
+                self.gestures.wait_key.clear();
                 consumed = self.key_event(&event, &mut effects);
+                if b(&event["repeat"]) && self.model["input"]["kind"] == "command"
+                    && effects.iter().any(|effect| effect["kind"] == "send"
+                        && effect["key"].as_u64().is_some_and(|key|
+                            key as u32 & !RG_EVENT_REPEAT == u32::from(b'.'))) {
+                    self.gestures.wait_key = if s(&event["code"]).is_empty() {
+                        s(&event["key"]).into()
+                    } else { s(&event["code"]).into() };
+                }
+            }
+            "keyup" => {
+                if self.gestures.wait_key == s(&event["code"])
+                    || self.gestures.wait_key == s(&event["key"]) {
+                    self.gestures.wait_key.clear();
+                }
             }
             _ => {}
         }

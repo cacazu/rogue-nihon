@@ -483,6 +483,11 @@ impl Browser {
             let k: KeyboardEvent = e.clone().dyn_into()?;
             host.event(json!({"type":"key","key":k.key(),"code":k.code(),"location":k.location(),"shift":k.shift_key(),"shiftKey":k.shift_key(),"ctrlKey":k.ctrl_key(),"altKey":k.alt_key(),"metaKey":k.meta_key(),"repeat":k.repeat(),"native":host.document.active_element().map(|e| e.id()),"composing":k.is_composing(),"keyCode":k.key_code()}), Some(e))?; Ok(())
         })?;
+        self.listen(self.document.as_ref(), "keyup", true, |host, e| {
+            let k: KeyboardEvent = e.dyn_into()?;
+            host.event(json!({"type":"keyup","key":k.key(),"code":k.code()}), None)?;
+            Ok(())
+        })?;
         for name in ["blur", "pagehide"] {
             self.listen(self.window.as_ref(), name, false, move |host, _| {
                 host.event(json!({"type":name}), None)?;

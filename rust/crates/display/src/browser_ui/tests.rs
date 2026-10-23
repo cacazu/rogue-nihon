@@ -612,3 +612,24 @@ fn death_tombstone_wraps_public_content_and_does_not_restyle_rankings() {
         assert!(!array(&output["commands"]).iter().any(|c| c["op"] == "text" && b(&c["mono"]) && s(&c["text"]).contains("___________________")));
     }
 }
+
+#[test]
+fn repeated_wait_keys_pause_until_release_cancellation_or_another_action() {
+    let mut m = model(); m["input"] = json!({"kind":"command"});
+    let mut ui = BrowserUi::new(measure); ui.render(m.clone(), view(1240.,900.));
+    for (key,code) in [(".","Period"),("5","Numpad5"),("Clear","Numpad5")] {
+        ui.event(json!({"type":"key","key":key,"code":code}));
+        assert!(!ui.wait_held(), "Single wait keeps its usual animation");
+        let r = ui.event(json!({"type":"key","key":key,"code":code,"repeat":true}));
+        assert!(r["effects"].as_array().unwrap().iter().any(|e|e["key"] == (46 | rogue_contract::RG_EVENT_REPEAT)));
+        assert!(ui.wait_held());
+        ui.event(json!({"type":"keyup","key":"Shift","code":"ShiftLeft"}));
+        assert!(ui.wait_held());
+        ui.event(json!({"type":"keyup","key":key,"code":code}));
+        assert!(!ui.wait_held());
+        for cancel in [json!({"type":"cancel"}),json!({"type":"key","key":"l"})] {
+            ui.event(json!({"type":"key","key":key,"code":code,"repeat":true}));
+            assert!(ui.wait_held()); ui.event(cancel); assert!(!ui.wait_held());
+        }
+    }
+}

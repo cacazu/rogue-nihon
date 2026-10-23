@@ -118,8 +118,13 @@ impl BrowserUi {
     /// Synchronize host lifecycle observations before an input event, even when
     /// its requested repaint has not run yet. Interaction rules stay in Rust.
     pub fn set_context(&mut self, model: Value) {
+        let generation_changed = self.model["generation"] != model["generation"];
         self.model = model;
         self.sync_direction_window();
+        if generation_changed || !self.wait_available() {
+            self.stop_hold();
+            self.gestures.wait_key.clear();
+        }
     }
     fn sync_direction_window(&mut self) {
         if !self.mobile_controls && b(&self.model["frame"]["ui"]["movement_direction"])

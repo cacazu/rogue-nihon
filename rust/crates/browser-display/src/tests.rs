@@ -654,3 +654,18 @@ fn save_help_is_removed_from_single_answers_lists_and_recall_without_touching_li
     assert_eq!(state["presentation"]["message"], Value::Null);
     assert_eq!(state["presentation"]["window"]["message"], Value::Null);
 }
+
+#[test]
+fn initial_map_mode_uses_tiles_then_saved_selection_then_explicit_url() {
+    for saved in [None, Some("ascii"), Some("pixels"), Some("tiles")] {
+        for url in [None, Some("ascii"), Some("pixels"), Some("tiles"), Some("invalid")] {
+            let mut c = Controller::new(measure);
+            let r = c.request(json!({"type":"boot",
+                "preference":saved.map(|mode|json!({"version":1,"mode":mode,"zoom":47.5}).to_string()),
+                "environment":{"isolated":true,"parameters":{"view":url}}}));
+            let expected = url.filter(|value| mode(value)).or(saved).unwrap_or("tiles");
+            assert_eq!(r["state"]["displayMode"], expected);
+            assert_eq!(r["state"]["tileSize"], if saved.is_some() { 47.5 } else { 32. });
+        }
+    }
+}

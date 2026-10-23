@@ -1167,6 +1167,8 @@ impl Controller {
                 let ratio = view["ratio"].as_f64().unwrap_or(1.).clamp(1., 2.);
                 view["ratio"] = json!(ratio);
                 view["blink"] = json!((number(&view["now"]) / 500).is_multiple_of(2));
+                self.ui.set_context(self.model.clone());
+                self.animations.set_player_paused(self.ui.wait_held());
                 let animation = self.animations.sample(view["now"].as_f64().unwrap_or(0.), text(&self.model["displayMode"]));
                 self.state["animation"] = animation.frames.clone();
                 self.state["projectiles"] = animation.projectiles.clone();
@@ -1233,6 +1235,9 @@ impl Controller {
             _ => {}
         }
         if r["type"] != "render" {
+            self.sync_model();
+            self.ui.set_context(self.model.clone());
+            if self.animations.set_player_paused(self.ui.wait_held()) { redraw = true; }
             self.controls();
         }
         let inspect = r["inspect"].as_bool().unwrap_or(true);

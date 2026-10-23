@@ -355,17 +355,22 @@ impl Widgets {
         });
         self.push(json!({"op":"save","alpha":if style.disabled{0.45}else{1.}}));
         let selected = self.focus == id || self.hover == id || self.pressed == id;
-        if !style.role.framed() {
+        if style.throw_direction && !style.disabled {
+            self.box_rect(r, "@accent", Some("@button.border"), 0.);
+            if selected {
+                self.box_rect(Rect::new(r.x + 3., r.y + 3., r.w - 6., r.h - 6.), "transparent", Some("@background"), 0.);
+            }
+        } else if !style.role.framed() {
             if selected || style.primary {
                 self.rect(Rect::new(r.x + 4., r.y + r.h - 2., r.w - 8., 1.), LINE);
             }
         } else {
             self.box_rect(r, "@button.background", Some("@button.border"), 0.);
-            if selected || style.throw_direction {
+            if selected {
                 self.box_rect(Rect::new(r.x + 3., r.y + 3., r.w - 6., r.h - 6.), "transparent", Some(LINE), 0.);
             }
         }
-        let color = "@button.text";
+        let color = if style.throw_direction && !style.disabled { "@background" } else { "@button.text" };
         if let Some(icon) = style.icon {
             let size = if style.icon_size > 0. {
                 style.icon_size
@@ -379,7 +384,7 @@ impl Widgets {
             );
             if let Some(hint) = hint {
                 self.single_line(hint, Rect::new(r.x, r.y + r.h - 15., r.w, 12.),
-                    LineStyle { text: TextStyle::new(11., TEXT, false), center: true, ellipsis: false }, measure);
+                    LineStyle { text: TextStyle::new(11., color, false), center: true, ellipsis: false }, measure);
             }
         } else if !style.custom {
             let size = if style.size > 0. { style.size } else { 16. };

@@ -666,6 +666,7 @@ impl BrowserUi {
                 ControlStyle {
                     disabled: !b(&self.model["running"]) || b(&self.model["returnAfterEnd"]) || b(&self.model["windowClosing"]),
                     role,
+                    throw_direction: direction_choices && a.key != 27,
                     left: matches!(role, ControlRole::ListItem),
                     size: if mobile { 17. } else { 16. },
                     key: Some(json!(a.key)),
