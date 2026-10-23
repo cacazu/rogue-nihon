@@ -30,7 +30,7 @@ node tests/run.mjs --playwright /path/to/playwright --browser /path/to/browser -
 | `mobile-window-layout.mjs` | 390px・320pxのタッチ表示で持ち物の全タブ・操作・詳細・履歴、設定・選択肢・ステータス・ログ・操作一覧・回数入力、各使用後の識別対象・命名・左右の手・方向・検出結果・終了画面を実際に開き、重複案内・空白・枠内配置と次コマンドまでのC/RNGを確認。`item-use-flows.mjs` と同じ専用Wasmを使用 |
 | `mobile-log-hints.mjs` | PC・スマホのログ・全履歴から一時的な質問を除外し、スマホではキー専用案内も除外、実Cの発見一覧・アイテム選択・指輪の手・終了確認、合成文と再表示、ゲーム文・名前・エラーの維持、PC・英語 |
 | `parameter-icons.mjs` | 持ち物の数値ラベルのアイコン化、詳細のアイコンと項目名、武器・防具・指輪・杖、未鑑定の非表示、スマホ320px・PC・日英・配布Wasm |
-| `equipment-style.mjs` | 装備中の名前前アイコン、半角括弧・半角空白の数値書式、未鑑定情報の非表示、武器・防具・左右の指輪の装備変更、320pxスマホ・PC・日英・配布Wasm |
+| `equipment-style.mjs` | 右端の装備部位名、半角括弧・半角空白の数値書式、未鑑定情報の非表示、武器・防具・左右の指輪の装備変更、320pxスマホ・PC・日英・配布Wasm |
 | `inventory-tabs.mjs` | 所持品だけの種類・装備中タブ、横スクロール、タイトル高の履歴ボタン、タブごとの位置復元・再読み込みと保存復元、使用後の空タブ除去、PCのキー操作 |
 | `discovery-direct.mjs` | アイテム履歴の直接全件表示、変更前の手動D*と20-word/入力位置/表示順を比較、一覧中の保存復元・複数ページ・次ターン。ROGUE_DISCOVERY_BASELINEに変更前のfixture moduleを指定 |
 | `autowalk.mjs` / `autowalk-production.mjs` | PCクリック・スマホタップと3表示方式の到達、100msごとの実入力、命中/miss/不可視攻撃・罠・敵衝突・進行不可・物理操作での停止、取消済みtimer・手入力直後tap、pan/pinchと未知地形のC/RNG不変。前者は `game-fixtures.wasm`、後者は配布用binding・Wasmだけで通常seedのPC/スマホ到達を確認。`ROGUE_AUTOWALK_OUTPUT` で証拠出力先を指定 |
