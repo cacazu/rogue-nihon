@@ -2,6 +2,12 @@
 use super::*;
 use super::inventory_item::parameter_icon;
 
+pub(super) struct LogRow {
+    pub lines: Vec<Vec<LogUnit>>,
+    pub height: f64,
+    pub top: f64,
+}
+
 #[derive(Clone)]
 pub(super) struct LogUnit {
     text: String,
@@ -57,7 +63,7 @@ impl BrowserUi {
             counter += 1;
         };
         let mut atoms: Vec<(String, Vec<Value>)> = Vec::new();
-        let mut changed = false;
+        let mut changed = self.rewrite_dialog_message(&mut message, 0);
         self.log_rewrite_message(&mut message,mobile,&prefix,&mut atoms,&mut changed,0);
         if !changed { return vec![json!({"text":entry["text"]})]; }
         let rendered = crate::display::message_language(s(&message["id"]),&message["args"],"",s(&self.model["language"]));

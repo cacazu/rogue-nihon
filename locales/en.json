@@ -892,37 +892,37 @@
     },
     "pack.get_item.for_list": {
       "template": "? (* for list): ",
-      "source": "pack.c:499",
+      "source": "pack.c:500",
       "function": "get_item",
       "note": "original English printf format"
     },
     "pack.get_item.is_not_a_valid_item": {
       "template": "'%s' is not a valid item",
-      "source": "pack.c:533",
+      "source": "pack.c:540",
       "function": "get_item",
       "note": "original English printf format"
     },
     "pack.get_item.what": {
       "template": " what",
-      "source": "pack.c:498",
+      "source": "pack.c:499",
       "function": "get_item",
       "note": "original English printf format"
     },
     "pack.get_item.which_object_do_you_want_to": {
       "template": "which object do you want to ",
-      "source": "pack.c:495",
+      "source": "pack.c:496",
       "function": "get_item",
       "note": "original English printf format"
     },
     "pack.get_item.you_arent_carrying_anything": {
       "template": "you aren't carrying anything",
-      "source": "pack.c:478",
+      "source": "pack.c:479",
       "function": "get_item",
       "note": "original English printf format"
     },
     "pack.get_item.you_ran_out": {
       "template": "you ran out",
-      "source": "pack.c:483",
+      "source": "pack.c:484",
       "function": "get_item",
       "note": "original English printf format"
     },
@@ -952,13 +952,13 @@
     },
     "pack.money.gold_pieces": {
       "template": "%d gold pieces",
-      "source": "pack.c:558",
+      "source": "pack.c:565",
       "function": "money",
       "note": "original English printf format"
     },
     "pack.money.you_found": {
       "template": "you found ",
-      "source": "pack.c:557",
+      "source": "pack.c:564",
       "function": "money",
       "note": "original English printf format"
     },
@@ -1384,7 +1384,7 @@
     },
     "sticks.do_zap.missle_vanishes": {
       "template": "missle vanishes",
-      "source": "sticks.c:198",
+      "source": "sticks.c:216",
       "function": "do_zap",
       "note": "original English printf format"
     },
@@ -1402,7 +1402,7 @@
     },
     "sticks.do_zap.the_missle_vanishes_with_a_puff_of_smoke": {
       "template": "the missle vanishes with a puff of smoke",
-      "source": "sticks.c:200",
+      "source": "sticks.c:218",
       "function": "do_zap",
       "note": "original English printf format"
     },
@@ -1414,7 +1414,7 @@
     },
     "sticks.do_zap.what_a_bizarre_schtick": {
       "template": "what a bizarre schtick!",
-      "source": "sticks.c:246",
+      "source": "sticks.c:276",
       "function": "do_zap",
       "note": "original English printf format"
     },
@@ -1432,55 +1432,55 @@
     },
     "sticks.drain.you_have_a_tingling_feeling": {
       "template": "you have a tingling feeling",
-      "source": "sticks.c:284",
+      "source": "sticks.c:320",
       "function": "drain",
       "note": "original English printf format"
     },
     "sticks.fire_bolt.misses": {
       "template": "%s misses",
-      "source": "sticks.c:405",
+      "source": "sticks.c:447",
       "function": "fire_bolt",
       "note": "original English printf format"
     },
     "sticks.fire_bolt.off_the_dragon": {
       "template": " off the dragon",
-      "source": "sticks.c:394",
+      "source": "sticks.c:436",
       "function": "fire_bolt",
       "note": "original English printf format"
     },
     "sticks.fire_bolt.the_bounces": {
       "template": "the %s bounces",
-      "source": "sticks.c:377",
+      "source": "sticks.c:416",
       "function": "fire_bolt",
       "note": "original English printf format"
     },
     "sticks.fire_bolt.the_flame_bounces": {
       "template": "the flame bounces",
-      "source": "sticks.c:392",
+      "source": "sticks.c:434",
       "function": "fire_bolt",
       "note": "original English printf format"
     },
     "sticks.fire_bolt.the_hits": {
       "template": "the %s hits",
-      "source": "sticks.c:430",
+      "source": "sticks.c:475",
       "function": "fire_bolt",
       "note": "original English printf format"
     },
     "sticks.fire_bolt.the_whizzes_by_you": {
       "template": "the %s whizzes by you",
-      "source": "sticks.c:435",
+      "source": "sticks.c:480",
       "function": "fire_bolt",
       "note": "original English printf format"
     },
     "sticks.fire_bolt.the_whizzes_past": {
       "template": "the %s whizzes past %s",
-      "source": "sticks.c:407",
+      "source": "sticks.c:449",
       "function": "fire_bolt",
       "note": "original English printf format"
     },
     "sticks.fire_bolt.you_are_hit_by_the": {
       "template": "you are hit by the %s",
-      "source": "sticks.c:432",
+      "source": "sticks.c:477",
       "function": "fire_bolt",
       "note": "original English printf format"
     },
@@ -1588,25 +1588,25 @@
     },
     "weapons.fall.the_vanishes_as_it_hits_the_ground": {
       "template": "the %s vanishes as it hits the ground",
-      "source": "weapons.c:153",
+      "source": "weapons.c:166",
       "function": "fall",
       "note": "original English printf format"
     },
     "weapons.wield.wielding": {
       "template": "wielding %s (%c)",
-      "source": "weapons.c:261",
+      "source": "weapons.c:274",
       "function": "wield",
       "note": "original English printf format"
     },
     "weapons.wield.you_are_now": {
       "template": "you are now ",
-      "source": "weapons.c:260",
+      "source": "weapons.c:273",
       "function": "wield",
       "note": "original English printf format"
     },
     "weapons.wield.you_cant_wield_armor": {
       "template": "you can't wield armor",
-      "source": "weapons.c:251",
+      "source": "weapons.c:264",
       "function": "wield",
       "note": "original English printf format"
     },

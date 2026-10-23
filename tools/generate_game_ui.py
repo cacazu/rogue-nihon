@@ -124,7 +124,6 @@ entry('window.hand', 'Choose a hand', '指輪を着ける手')
 entry('window.left_hand', 'Left hand (L)', '左手（L）')
 entry('window.right_hand', 'Right hand (R)', '右手（R）')
 
-entry('save.browser', 'The game saves automatically when changing dungeon levels or returning to the title from Settings.', '階層移動時と、設定からトップ画面へ戻る時に自動保存します。')
 entry('inventory.title', 'Inventory', '持ち物')
 entry('inventory.empty', 'You are not carrying anything.', '何も持っていません。')
 entry('inventory.choose', 'Select an item. Space / Enter / Esc: Close', 'アイテムを選択。Space / Enter / Esc：閉じる')

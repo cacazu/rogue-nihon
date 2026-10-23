@@ -43,7 +43,7 @@ impl Presentation {
                 | "input.finish_game"
                 | "input.results_enter"
                 | "input.show_score" => "enter",
-                "input.choose_item" => "item",
+                "input.choose_item" | "input.choose_item_list" => "item",
                 "input.choose_direction" | "input.throw_direction" => "direction",
                 "input.option_bool" => "option_bool",
                 "input.option_inventory" => "option_inventory",
@@ -138,6 +138,7 @@ impl Presentation {
         let mut lines = Vec::new();
         let mut status = Value::Null;
         let mut more = Value::Null;
+        let mut ranged = json!({"bow":false,"arrow_key":0});
         let mut missing = Vec::new();
         let mut mode = "game";
         let inventory = self.lines.iter().any(|line| line["scope"] == "browse");
@@ -147,6 +148,11 @@ impl Presentation {
             .find(|line| line["scope"] == "item_action")
             .and_then(|line| line["id"].as_str());
         for line in &self.lines {
+            if line["scope"] == "ranged" {
+                ranged = json!({"bow":line["args"][0]["value"] == true,
+                    "arrow_key":line["args"][1]["value"].as_u64().filter(|key| (97..=122).contains(key)).unwrap_or(0)});
+                continue;
+            }
             if matches!(
                 line["scope"].as_str(),
                 Some("browse" | "status_message" | "throw_direction" | "item_action")
@@ -204,6 +210,9 @@ impl Presentation {
             )
         });
         let mut input = self.input.clone();
+        if input["kind"] == "item" {
+            input["action"] = json!(item_action);
+        }
         let movement_direction = self.movement_direction();
         if movement_direction && self.lines.iter().any(|line| line["scope"] == "throw_direction") {
             input["id"] = json!("input.throw_direction");
@@ -238,7 +247,7 @@ impl Presentation {
         if inventory {
             mode = "menu";
         }
-        let mut ui = json!({"mode":mode,"inventory":inventory,"movement_direction":movement_direction,"lines":lines,"status":status,"more":more,"name":name,"input":input,"message":message,
+        let mut ui = json!({"mode":mode,"inventory":inventory,"movement_direction":movement_direction,"ranged":ranged,"lines":lines,"status":status,"more":more,"name":name,"input":input,"message":message,
             "fallback_used":!missing.is_empty(),"missing_ids":missing});
         ui["window"] = crate::game_window::render(&ui, language);
         ui

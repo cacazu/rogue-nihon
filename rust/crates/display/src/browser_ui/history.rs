@@ -12,18 +12,20 @@ impl BrowserUi {
     }
 
     pub(super) fn draw_history(&mut self) {
-        self.widgets.controls.clear();
+        self.begin_choices("history");
         self.regions.clear();
         self.map_rect = None;
         self.widgets
-            .rect(Rect::new(0., 0., self.width, self.height), "#0009");
+            .rect(Rect::new(0., 0., self.width, self.height), "@overlay.strong");
         let width = (self.width - 16.).min(720.);
-        let x = (self.width - width) / 2.;
+        let (_, total) = self.log_rows(width - 36.);
+        let (panel, viewport) = self.sheet_layout(width, total + 60.);
+        let x = panel.x;
         self.widgets.box_rect(
-            Rect::new(x, 8., width, self.height - 16.),
+            panel,
             PANEL,
             Some(LINE),
-            12.,
+            0.,
         );
         self.text(
             &self.t("mobile.log"),
@@ -42,9 +44,10 @@ impl BrowserUi {
             ControlStyle {
                 icon: Some("close"),
                 icon_size: 24.,
+                shortcut: self.pc_shortcut("Escape"),
                 ..Default::default()
             },
         );
-        self.draw_log(Rect::new(x + 8., 76., width - 16., self.height - 92.));
+        self.draw_log(Rect::new(x + 8., viewport.y, width - 16., viewport.h));
     }
 }

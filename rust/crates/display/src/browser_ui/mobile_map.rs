@@ -25,13 +25,13 @@ impl BrowserUi {
                 continue;
             }
             let color = match glyph {
-                b'@' => "#9ef0c3",
-                b'%' => "#dca9ff",
-                b'A'..=b'Z' => "#ff8b87",
-                b'-' | b'|' => "#677c85",
-                b'+' | b'#' => "#a5c1ca",
-                b'.' => "#243b42",
-                _ => "#ebcf91",
+                b'@' => "@map.overview.player",
+                b'%' => "@map.overview.stairs",
+                b'A'..=b'Z' => "@map.overview.enemy",
+                b'-' | b'|' => "@map.overview.wall",
+                b'+' | b'#' => "@map.overview.passage",
+                b'.' => "@map.overview.floor",
+                _ => "@map.overview.item",
             };
             self.widgets.rect(
                 Rect::new(
@@ -50,16 +50,16 @@ impl BrowserUi {
         self.widgets.box_rect(
             Rect::new(px - 5., py - 5., 10., 10.),
             "transparent",
-            Some("#9ef0c3"),
+            Some("@map.overview.player"),
             0.,
         );
         let legend_y = map.y + map.h / 2. + height * size / 2. + 20.;
         let mut legend_x = map.x + 12.;
         for (id, color) in [
-            ("mobile.map_player", "#9ef0c3"),
-            ("mobile.map_stairs", "#dca9ff"),
-            ("mobile.map_enemy", "#ff8b87"),
-            ("mobile.map_item", "#ebcf91"),
+            ("mobile.map_player", "@map.overview.player"),
+            ("mobile.map_stairs", "@map.overview.stairs"),
+            ("mobile.map_enemy", "@map.overview.enemy"),
+            ("mobile.map_item", "@map.overview.item"),
         ]
         .iter()
         {
@@ -67,12 +67,9 @@ impl BrowserUi {
             let width = (self.measure)(&label, 17., false, false).width;
             self.widgets
                 .rect(Rect::new(legend_x, legend_y + 8., 10., 10.), color);
-            self.widgets.raw_text(
-                &label,
-                legend_x + 15.,
-                legend_y + 4.,
-                TextStyle::new(17., TEXT, false),
-            );
+            self.widgets.text_line(&label,
+                Rect::new(legend_x + 15., legend_y, width, 26.),
+                TextStyle::new(17., TEXT, false), false, self.measure);
             legend_x += width + 26.;
         }
         self.widgets.end_clip();

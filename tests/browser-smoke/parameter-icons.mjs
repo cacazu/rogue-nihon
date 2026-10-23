@@ -31,6 +31,14 @@ const state=()=>page.evaluate(()=>({input:__rogueBrowserTest.inputRequestCount,w
 async function idle(){await page.waitForFunction(()=>__rogueBrowserTest.frame?.ui.input.kind==='command'&&__rogueBrowserTest.queuePending===0);await paint();}
 async function tap(id){const c=(await scene()).controls.find(c=>c.id===id);assert.ok(c&&!c.disabled,id);assert.ok(Math.abs(c.rect.h-c.fullRect.h)<.01,id+' full height');assert.ok(Math.abs(c.rect.w-c.fullRect.w)<.01,id+' full width');const b=await page.locator('#rogue-canvas').boundingBox();const x=b.x+c.rect.x+c.rect.w/2,y=b.y+c.rect.y+c.rect.h/2;if(mobile)await page.touchscreen.tap(x,y);else await page.mouse.click(x,y);await paint();}
 async function key(key){await page.keyboard.press(key);await paint();}
+async function hudColors(){
+ const s=await scene(),commands=await page.evaluate(()=>__rogueBrowserTest.commands);
+ const colors={stairs:'#b9cee8',coins:'#efd18e',heart:'#f5a6aa',strength:'#d0bbef',shield:'#9dcbe9',level:'#a6d0be',experience:'#a6d0be',food:'#a6d0be'};
+ for(const icon of s.icons.filter(i=>colors[i.name])){
+  const paint=commands.find(c=>icon.glyph?(c.op==='text'&&c.text===icon.glyph&&c.x>=icon.rect.x-4&&c.x<=icon.rect.x+icon.rect.w&&c.y>=icon.rect.y&&c.y<=icon.rect.y+icon.rect.h+6):(c.op==='path'&&c.rect.x===icon.rect.x&&c.rect.y===icon.rect.y));
+  assert.equal(paint?.color,colors[icon.name],'Original status color '+icon.name);
+ }
+}
 async function inventory(){await key('i');await page.waitForFunction(()=>__rogueBrowserTest.frame.ui.inventory===true);await paint();}
 async function shot(name){await page.screenshot({path:path.join(output,name+'.png')});report.screenshots.push(name+'.png');}
 async function check(name,fn){if(!resumed){if(!name.includes(process.env.ROGUE_PARAMETER_FROM))return;resumed=true;}await fn();report.checks.push(name);console.log('PASS '+name);}
@@ -39,7 +47,7 @@ async function start(phone=true,lang='ja',fixture='inventory-all'){
  context=await browser.newContext({viewport:phone?{width:390,height:844}:{width:1240,height:900},isMobile:phone,hasTouch:phone,deviceScaleFactor:phone?2:1});
  if(fixture){await context.route('**/web/worker.js',r=>r.fulfill({body:fixtureWorker(worker,fixture),contentType:'text/javascript',headers}));await context.route('**/build/game.wasm',r=>r.fulfill({path:path.join(root,'build/game-fixtures.wasm'),contentType:'application/wasm',headers}));}
  page=await context.newPage();page.setDefaultTimeout(10000);page.on('pageerror',e=>report.errors.push(e.message));await installBrowserTestAdapter(page);cdp=await context.newCDPSession(page);
- await page.goto('http://127.0.0.1:'+server.address().port+'/?trace=1&lang='+lang);await page.waitForFunction(()=>__rogueBrowserTest.canvas?.controls.some(c=>c.id==='new-game'&&!c.disabled));await tap('new-game');await idle();await inventory();
+ await page.goto('http://127.0.0.1:'+server.address().port+'/?trace=1&lang='+lang);await page.waitForFunction(()=>__rogueBrowserTest.canvas?.controls?.some(c=>c.id==='new-game'&&!c.disabled));await tap('new-game');await idle();await hudColors();await inventory();
 }
 async function scroll(region,distance){const r=(await scene()).regions[region].rect,b=await page.locator('#rogue-canvas').boundingBox(),x=b.x+r.x+r.w/2,y=b.y+r.y+r.h/2;
  if(mobile){await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y,id:1}]});for(let i=1;i<=3;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x-(region==='inventory-tabs'?distance*i/3:0),y:y-(region==='inventory-tabs'?0:distance*i/3),id:1}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
@@ -51,18 +59,38 @@ function descriptor(f,key){return f.ui.lines.find(row=>row.key===key).args[1].va
 async function badgeRows(expected){
  const s=await scene(),f=await frame();assert.equal(s.icons.filter(i=>i.name==='equipped').length,0);
  const en=await page.evaluate(()=>__rogueBrowserTest.language)==='en';
- for(const key of expected){const c=s.controls.find(c=>c.id==='item-'+key);assert.ok(c);const slot=descriptor(f,key).equipped;assert.ok(c.label.endsWith(en?{weapon:'Hand',armor:'Body',left_ring:'Left hand',right_ring:'Right hand'}[slot]:{weapon:'手',armor:'胴体',left_ring:'左手',right_ring:'右手'}[slot]));}
+ for(const key of expected){const c=s.controls.find(c=>c.id==='item-'+key);assert.ok(c);const slot=descriptor(f,key).equipped;const textCommands=await page.evaluate(()=>__rogueBrowserTest.commands);assert.ok(textCommands.some(t=>t.op==='text'&&t.color==='#a6d0be'&&t.y>=c.fullRect.y&&t.y<c.fullRect.y+c.fullRect.h),'Original equipped slot color');assert.ok(c.label.endsWith(en?{weapon:'Hand',armor:'Body',left_ring:'Left hand',right_ring:'Right hand'}[slot]:{weapon:'手',armor:'胴体',left_ring:'左手',right_ring:'右手'}[slot]));}
 }
 const ringKnown=d=>d.category==='ring'&&d.known===true&&d.type_known!==false;
 const ringIcon=d=>ringKnown(d)?({0:'shield',1:'strength',7:'item-hit',8:'item-damage'}[d.which]||'item-modifier'):'item-modifier';
+const parameterColors={'item-hit':'#efd18e','item-damage':'#f5a6aa','item-enchantment':'#d0bbef',shield:'#9dcbe9',strength:'#d0bbef','item-modifier':'#f1b27a','item-charges':'#a6d0be'};
 const fields={hplus:'item-hit',dplus:'item-damage',enchantment:'item-enchantment',protection:'shield',bonus:'item-modifier',strength:'strength',charges:'item-charges'};
+async function assertPaintedInlineText(value,icon,commands){
+ // A Canvas text command uses the em origin. Check painted ink, not size/2.
+ const next=commands.filter(t=>t.x>value.x+.1&&Math.abs(t.y-value.y)<1).sort((a,b)=>a.x-b.x)[0];
+ const ink=await page.evaluate(({value,end,icon})=>{
+   const canvas=document.querySelector('#rogue-canvas'),ratio=canvas.width/canvas.clientWidth;
+   const x=Math.floor(value.x*ratio),y=Math.floor((icon.y-4)*ratio),w=Math.max(1,Math.floor(end*ratio)-x),h=Math.ceil((icon.h+8)*ratio);
+   const pixels=canvas.getContext('2d').getImageData(x,y,w,h).data;let top=h,bottom=-1;
+   for(let iy=0;iy<h;iy++)for(let ix=0;ix<w;ix++){const i=(iy*w+ix)*4;if(pixels[i]>180&&pixels[i+1]>180&&pixels[i+2]>180){top=Math.min(top,iy);bottom=Math.max(bottom,iy);}}
+   return {present:bottom>=top,center:(y+(top+bottom+1)/2)/ratio};
+  },{value,end:next?.x??value.x+value.size*value.text.length,icon:icon.rect});
+ assert.ok(ink.present,'Value has painted pixels');assert.ok(Math.abs(ink.center-icon.rect.y-icon.rect.h/2)<=1.5,'Painted value vertically centered next to '+icon.name);
+}
 async function rowPaint(key,expected){
  const s=await scene(),c=s.controls.find(c=>c.id==='item-'+key);assert.ok(c,'Item '+key);
  const within=r=>r.y>=c.fullRect.y&&r.y+r.h<=c.fullRect.y+c.fullRect.h;
  const icons=s.icons.filter(i=>within(i.rect)&&Object.values(fields).includes(i.name));
  assert.deepEqual(icons.map(i=>i.name),expected.map(([name])=>name),'Parameter icons '+key);
  const commands=(await page.evaluate(()=>__rogueBrowserTest.commands)).filter(t=>t.op==='text'&&t.y>=c.fullRect.y&&t.y<c.fullRect.y+c.fullRect.h);
- for(const icon of icons){assert.ok(icon.rect.x>=c.fullRect.x);assert.ok(icon.rect.x+icon.rect.w<=c.fullRect.x+c.fullRect.w,'Icon fits');const value=commands.find(t=>t.x>=icon.rect.x+icon.rect.w&&t.x<icon.rect.x+icon.rect.w+4&&Math.abs((t.y+t.size/2)-(icon.rect.y+icon.rect.h/2))<.1);assert.ok(value,'Value next to '+icon.name);assert.equal(value.text,expected.find(([name])=>name===icon.name)[1]);}
+ for(const icon of icons){
+  const paint=(await page.evaluate(()=>__rogueBrowserTest.commands)).find(c=>(c.op==='path'&&c.rect.x===icon.rect.x&&c.rect.y===icon.rect.y)||(icon.name==='strength'&&c.op==='text'&&c.text==='💪'&&c.y>=icon.rect.y&&c.y<=icon.rect.y+icon.rect.h+6&&c.x>=icon.rect.x-4&&c.x<=icon.rect.x+icon.rect.w));
+  assert.equal(paint?.color,parameterColors[icon.name],'Original parameter color '+icon.name);
+  assert.ok(icon.rect.x>=c.fullRect.x);assert.ok(icon.rect.x+icon.rect.w<=c.fullRect.x+c.fullRect.w,'Icon fits');
+  const value=commands.find(t=>t.x>=icon.rect.x+icon.rect.w&&t.x<icon.rect.x+icon.rect.w+4&&Math.abs(t.y-icon.rect.y)<10);
+  assert.ok(value,'Value next to '+icon.name);assert.equal(value.text,expected.find(([name])=>name===icon.name)[1]);
+  await assertPaintedInlineText(value,icon,commands);
+ }
  const painted=commands.map(t=>t.text).join('');assert.doesNotMatch(painted,/命中|威力|強化|防御力|補正|残り|hit |damage |enchantment |protection |bonus |charges/,'No visible parameter labels');
  return {c,painted,icons};
 }
@@ -70,7 +98,7 @@ async function details(item,expected,screenshot){
  await tap('item-'+item);await page.waitForFunction(()=>__rogueBrowserTest.frame.ui.window.kind==='inventory_actions');await paint();await tap('window-118');await page.waitForFunction(()=>__rogueBrowserTest.frame.ui.window.kind==='inventory_details');await paint();
  const f=await frame(),s=await scene(),commands=await page.evaluate(()=>__rogueBrowserTest.commands);
  assert.deepEqual(f.ui.lines.filter(r=>r.parameter).map(r=>r.parameter),expected);
- for(const row of f.ui.lines.filter(r=>r.parameter)){const item=f.ui.lines[0].args[1].value,kindIcon=row.parameter==='bonus'?ringIcon(item):fields[row.parameter];const en=await page.evaluate(()=>__rogueBrowserTest.language)==='en';const names=en?{0:'Protection',1:'Strength',7:'Hit',8:'Damage'}:{0:'防御力',1:'腕力',7:'命中',8:'威力'};const detailText=row.parameter==='bonus'&&ringKnown(item)&&names[item.which]?names[item.which]+'：'+item.bonus:row.text;const text=commands.find(c=>c.op==='text'&&c.text===detailText);assert.ok(text,'Detail label '+row.text);const icon=s.icons.find(i=>i.name===kindIcon&&Math.abs(text.x-(i.rect.x+i.rect.w+2))<.1&&Math.abs((text.y+text.size/2)-(i.rect.y+i.rect.h/2))<.1);assert.ok(icon,'Detail icon + label '+row.parameter);}
+ for(const row of f.ui.lines.filter(r=>r.parameter)){const item=f.ui.lines[0].args[1].value,kindIcon=row.parameter==='bonus'?ringIcon(item):fields[row.parameter];const en=await page.evaluate(()=>__rogueBrowserTest.language)==='en';const names=en?{0:'Protection',1:'Strength',7:'Hit',8:'Damage'}:{0:'防御力',1:'腕力',7:'命中',8:'威力'};const detailText=row.parameter==='bonus'&&ringKnown(item)&&names[item.which]?names[item.which]+'：'+item.bonus:row.text;const text=commands.find(c=>c.op==='text'&&c.text===detailText);assert.ok(text,'Detail label '+row.text);const icon=s.icons.find(i=>i.name===kindIcon&&Math.abs(text.x-(i.rect.x+i.rect.w+2))<.1&&Math.abs(text.y-i.rect.y)<10);assert.ok(icon,'Detail icon + label '+row.parameter);await assertPaintedInlineText(text,icon,commands.filter(c=>c.op==='text'));}
  if(screenshot)await shot(screenshot);
  await tap('window-27');await paint();await tap('window-27');await paint();
 }
@@ -82,7 +110,7 @@ try {
  await check('ring and staff use matching icons in inventory and labeled details',async()=>{const before=await state();await tab('ring');await rowPaint('h',[['shield','+1']]);await rowPaint('i',[['strength','+1']]);await shot('phone-ring-parameters');await details('h',['bonus']);await tab('stick');await rowPaint('j',[['item-charges','5']]);await shot('phone-staff-parameters');await details('j',['charges'],'phone-staff-details');assert.deepEqual((await state()).words,before.words);assert.equal((await state()).pending,0);});
  await check('unidentified weapon continues to hide numeric parameters and their icons',async()=>{await tab('weapon');await collectItems();const r=await rowPaint('m',[]);assert.equal(r.painted,'短剣');assert.doesNotMatch(r.painted,/7|-3/);});
  await start(false);
- await check('PC inventory and details show the same parameter icons with keyboard prefixes',async()=>{await tab('equipped');const r=await rowPaint('c',[['item-hit','+1'],['item-damage','+1']]);assert.ok(r.painted.startsWith('c) メイス'));await rowPaint('b',[['item-enchantment','+1'],['shield','4']]);await shot('pc-parameters');await details('b',['enchantment','protection'],'pc-armor-details');});
+ await check('PC inventory and details show the same parameter icons with keyboard prefixes',async()=>{await tab('equipped');const r=await rowPaint('c',[['item-hit','+1'],['item-damage','+1']]);assert.ok(r.painted.includes('c) メイス'));await rowPaint('b',[['item-enchantment','+1'],['shield','4']]);await shot('pc-parameters');await details('b',['enchantment','protection'],'pc-armor-details');});
  await start(false,'en');
  await check('English inventory and details retain the same semantic icons and numeric values',async()=>{await tab('equipped');await rowPaint('c',[['item-hit','+1'],['item-damage','+1']]);await rowPaint('b',[['item-enchantment','+1'],['shield','4']]);await shot('pc-en-parameters');await details('c',['hplus','dplus'],'pc-en-weapon-details');});
  await start(true,'ja',null);

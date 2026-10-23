@@ -1,4 +1,4 @@
-//! Compact phone status and a complete window share the public HUD data.
+//! Desktop and phone share the compact status bar and the full status window.
 use super::*;
 include!(concat!(env!("OUT_DIR"), "/experience_levels.rs"));
 
@@ -36,7 +36,7 @@ impl BrowserUi {
         self.scrolls.insert("status".into(), 0.);
     }
 
-    pub(super) fn draw_mobile_status(&mut self, rect: Rect) {
+    pub(super) fn draw_status_bar(&mut self, rect: Rect) {
         let metrics = self.status_metrics();
         let metric = |id: &str| metrics.iter().find(|m| m.id == id).expect("status metric");
         let depth = metric("depth");
@@ -145,7 +145,7 @@ impl BrowserUi {
         );
         for command in &mut self.widgets.commands[content_start..] {
             if matches!(s(&command["op"]), "text" | "path") {
-                command["outline"] = json!({"color":"#000","width":2.});
+                command["outline"] = json!({"color":"@hud.outline","width":2.});
             }
         }
         self.widgets.end_clip();
@@ -191,7 +191,7 @@ impl BrowserUi {
     }
 
     fn draw_status_gauge(&mut self, rect: Rect, progress: f64, color: &str) {
-        self.widgets.box_rect(rect, "#0008", Some("#000"), 3.);
+        self.widgets.box_rect(rect, "@hud.gauge.background", Some("@hud.gauge.border"), 0.);
         if progress > 0. {
             self.widgets.box_rect(
                 Rect::new(
@@ -202,23 +202,25 @@ impl BrowserUi {
                 ),
                 color,
                 None,
-                2.,
+                0.,
             );
         }
     }
     pub(super) fn draw_status(&mut self) {
-        self.widgets.controls.clear();
+        self.begin_choices("status");
         self.regions.clear();
         self.map_rect = None;
         self.widgets
-            .rect(Rect::new(0., 0., self.width, self.height), "#0009");
+            .rect(Rect::new(0., 0., self.width, self.height), "@overlay.strong");
         let width = (self.width - 16.).min(540.);
-        let x = (self.width - width) / 2.;
+        let total = (self.status_metrics().len() + 1) as f64 * 50.;
+        let (panel, viewport) = self.sheet_layout(width, total);
+        let x = panel.x;
         self.widgets.box_rect(
-            Rect::new(x, 8., width, self.height - 16.),
+            panel,
             PANEL,
             Some(LINE),
-            12.,
+            0.,
         );
         self.text(
             &self.t("status.title"),
@@ -237,11 +239,12 @@ impl BrowserUi {
             ControlStyle {
                 icon: Some("close"),
                 icon_size: 24.,
+                shortcut: self.pc_shortcut("Escape"),
                 ..Default::default()
             },
         );
-        let viewport = Rect::new(x + 16., 76., width - 32., self.height - 100.);
-        let offset = *self.scrolls.get("status").unwrap_or(&0.);
+        let max = (total - viewport.h).max(0.);
+        let offset = clamp(*self.scrolls.get("status").unwrap_or(&0.), 0., max);
         let mut row = viewport.y - offset;
         self.widgets.begin_clip(viewport);
         let name = s(&self.model["frame"]["ui"]["name"]).to_string();
@@ -260,8 +263,7 @@ impl BrowserUi {
             row += 50.;
         }
         self.widgets.end_clip();
-        let total = row - viewport.y + offset;
-        let max = (total - viewport.h).max(0.);
+
         self.regions.insert(
             "status".into(),
             Region {

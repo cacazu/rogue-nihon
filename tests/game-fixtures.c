@@ -127,7 +127,110 @@ void rg_test_apply_fixture(void)
     name_length = rg_host_fixture_id(name, sizeof(name));
     if (name_length <= 0) return;
     clean_world();
-    if (!strcmp(name,"parameter-rings") || !strcmp(name,"parameter-rings-unknown")) {
+    if (!strncmp(name, "item-use-", 9)) {
+        char category[16], scenario[16] = "base";
+        int kind, limit = 1, n;
+        struct obj_info *info = NULL;
+        if (sscanf(name, "item-use-%15[^-]-%d-%15s", category, &kind, scenario) < 2) abort();
+        object = new_item(); object->o_count = 2; object->o_charges = 3;
+        strcpy(object->o_damage, "1x2"); strcpy(object->o_hurldmg, "1x2");
+        if (!strcmp(category,"potion")) { object->o_type=POTION; limit=MAXPOTIONS; info=pot_info; }
+        else if (!strcmp(category,"scroll")) { object->o_type=SCROLL; limit=MAXSCROLLS; info=scr_info; }
+        else if (!strcmp(category,"stick")) { object->o_type=STICK; limit=MAXSTICKS; info=ws_info; }
+        else if (!strcmp(category,"ring")) { object->o_type=RING; limit=MAXRINGS; info=ring_info; object->o_arm=2; }
+        else if (!strcmp(category,"food")) { object->o_type=FOOD; limit=2; }
+        else if (!strcmp(category,"weapon")) { limit=MAXWEAPONS; init_weapon(object,kind); object->o_count=2; }
+        else if (!strcmp(category,"armor")) { object->o_type=ARMOR; limit=MAXARMORS; object->o_arm=a_class[kind]; }
+        else if (!strcmp(category,"amulet")) { object->o_type=AMULET; object->o_count=1; }
+        else abort();
+        if (kind < 0 || kind >= limit) abort();
+        object->o_which=kind;
+        if (info) { info[kind].oi_know=!strcmp(scenario,"known"); free(info[kind].oi_guess); info[kind].oi_guess=NULL; }
+        if (!strcmp(scenario,"empty")) object->o_charges=0;
+        if (!strcmp(scenario,"weak")) pstats.s_hpt=1;
+        if (!strcmp(scenario,"cursed")) object->o_flags|=ISCURSED;
+        /* f is the usable item. Free the armor slot for W, leave other
+         * original starting equipment available to enchant/protect scrolls. */
+        if (object->o_type==ARMOR) cur_armor=NULL;
+        if (object->o_type==FOOD) {
+            THING *food;
+            for(food=pack;food;food=next(food)) if(food->o_type==FOOD) food->o_which=1-kind;
+        }
+        add_pack(object,TRUE);
+        /* Targets for every identification scroll, including ring-or-stick. */
+        for(n=0;n<4;n++) {
+            object=new_item(); object->o_count=1; object->o_charges=3;
+            strcpy(object->o_damage,"1x2"); strcpy(object->o_hurldmg,"1x2");
+            object->o_type=n==0?POTION:n==1?SCROLL:n==2?RING:STICK;
+            object->o_which=n==0?P_HEALING:n==1?S_REMOVE:n==2?R_PROTECT:WS_LIGHT;
+            object->o_arm=1;
+            add_pack(object,TRUE);
+        }
+        if (strcmp(scenario,"alone")) {
+            monster=monster_at('Z',12,10); monster->t_flags|=ISHELD;
+            monster->t_flags&=~ISRUN; monster->t_stats.s_hpt=monster->t_stats.s_maxhp=200;
+        }
+        object=new_item(); object->o_type=FOOD; object->o_count=1;
+        object->o_pos.x=13; object->o_pos.y=11; attach(lvl_obj,object);
+        chat(11,13)=FOOD; mvaddch(11,13,FOOD);
+        object=new_item(); object->o_type=POTION; object->o_which=P_HEALING; object->o_count=1;
+        object->o_pos.x=14; object->o_pos.y=11; attach(lvl_obj,object);
+        chat(11,14)=POTION; mvaddch(11,14,POTION);
+    } else if (!strncmp(name, "naming-", 7)) {
+        char category[16], knowledge[16], scenario[16] = "";
+        int kind, count;
+        struct obj_info *info;
+        if (sscanf(name, "naming-%15[^-]-%d-%15[^-]-%15s", category, &kind, knowledge, scenario) < 3) abort();
+        object = new_item();
+        object->o_count = 2;
+        object->o_charges = 3;
+        strcpy(object->o_damage, "0x0");
+        strcpy(object->o_hurldmg, "0x0");
+        if (!strcmp(category, "potion")) {
+            count = MAXPOTIONS; object->o_type = POTION; info = pot_info;
+        } else if (!strcmp(category, "scroll")) {
+            count = MAXSCROLLS; object->o_type = SCROLL; info = scr_info;
+        } else if (!strcmp(category, "stick")) {
+            count = MAXSTICKS; object->o_type = STICK; info = ws_info;
+        } else abort();
+        if (kind < 0 || kind >= count) abort();
+        object->o_which = kind;
+        if (strcmp(knowledge, "unknown") && strcmp(knowledge, "known") &&
+            strcmp(knowledge, "called") && strcmp(knowledge, "knowncalled")) abort();
+        info[kind].oi_know = !strcmp(knowledge, "known") || !strcmp(knowledge, "knowncalled");
+        free(info[kind].oi_guess);
+        info[kind].oi_guess = NULL;
+        if (!strcmp(knowledge, "called") || !strcmp(knowledge, "knowncalled")) {
+            info[kind].oi_guess = malloc(11);
+            strcpy(info[kind].oi_guess, "prior-name");
+        }
+        if (!strcmp(scenario, "single")) object->o_count = 1;
+        add_pack(object, TRUE); /* f: the same controlled stack in every display mode */
+        if (!strcmp(scenario, "trip")) {
+            player.t_flags |= ISHALU;
+            start_daemon(visuals, 0, BEFORE);
+            fuse(come_down, 0, 50, AFTER);
+        } else if (!strcmp(scenario, "target")) {
+            if (object->o_type == SCROLL && kind == S_HOLD) {
+                monster = monster_at('B', 11, 10);
+                monster->t_flags |= ISRUN;
+            } else {
+                object = new_item();
+                object->o_type = kind == S_FDET ? FOOD : POTION;
+                object->o_which = object->o_type == FOOD ? 0 : P_HEALING;
+                object->o_count = 1;
+                object->o_pos.x = 12; object->o_pos.y = 10;
+                attach(lvl_obj, object);
+                chat(10, 12) = object->o_type;
+                mvaddch(10, 12, object->o_type);
+            }
+        } else if (!strcmp(scenario, "rooms")) {
+            rooms[1].r_pos.x = 32; rooms[1].r_pos.y = 2;
+            rooms[1].r_max.x = 25; rooms[1].r_max.y = 20;
+            rooms[1].r_flags = 0;
+            draw_room(&rooms[1]);
+        } else if (*scenario && strcmp(scenario, "single")) abort();
+    } else if (!strcmp(name,"parameter-rings") || !strcmp(name,"parameter-rings-unknown")) {
         int type;
         if (!strcmp(name,"parameter-rings")) {
             for (type = 0; type < MAXRINGS; type++) {
@@ -328,6 +431,18 @@ void rg_test_apply_fixture(void)
             strcpy(object->o_damage, "0x0"); strcpy(object->o_hurldmg, "0x0");
             add_pack(object, TRUE);
         }
+    } else if (!strcmp(name, "animation-dark")) {
+        /* Remembered walls surround an otherwise unlit room, as in play.
+         * Original look() alone publishes the moving pool of visible floor. */
+        int x, y;
+        struct room *room = &rooms[0];
+        room->r_flags |= ISDARK;
+        clear();
+        for (y = room->r_pos.y; y < room->r_pos.y + room->r_max.y; y++)
+            for (x = room->r_pos.x; x < room->r_pos.x + room->r_max.x; x++)
+                if (chat(y, x) == '|' || chat(y, x) == '-')
+                    mvaddch(y, x, chat(y, x));
+        enter_room(&hero);
     } else if (!strcmp(name, "animation") || !strcmp(name, "animation-hallucination") ||
                !strcmp(name, "animation-held") || !strcmp(name, "animation-sleep")) {
         /* Real original-rule movement and combat, with enough HP to observe

@@ -427,6 +427,11 @@ impl Browser {
             "document" => {
                 if let Some(root) = self.document.document_element() {
                     root.set_attribute("lang", text(&effect["language"]))?;
+                    root.set_attribute("data-theme", text(&effect["theme"]))?;
+                    if let Some(element) = root.dyn_ref::<web_sys::HtmlElement>() {
+                        element.style().set_property("--ui-background", text(&effect["background"]))?;
+                        element.style().set_property("--ui-text", text(&effect["foreground"]))?;
+                    }
                 }
                 self.document.set_title(text(&effect["title"]));
                 if let Some(heading) = self.document.get_element_by_id("app-heading") {

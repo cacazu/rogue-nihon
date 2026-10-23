@@ -9,18 +9,24 @@ impl BrowserUi {
         let viewport = Rect::new(0., 64., self.width, (self.height - 72.).max(1.));
         let busy = b(&self.model["starting"]) || b(&self.model["savePending"]);
         let section_gap = 24.;
-        let content_height = 350. + section_gap;
+        let errors: Vec<_> = ["name", "seed"].iter().map(|id| self.field_error_text(id)).collect();
+        let error_heights: Vec<_> = errors.iter().map(|text| if text.is_empty() { 0. } else {
+            self.wrap(text, total, 17.).len() as f64 * 26. + 6.
+        }).collect();
+        let content_height = 350. + section_gap + error_heights.iter().sum::<f64>();
         let notice = if b(&self.model["topNotice"]["error"]) {
             self.model["topNotice"].clone()
         } else {
             Value::Null
         };
-        let notice_text = if notice.is_object() {
+        let notice_text = if b(&self.model["loading"]) {
+            self.t("notice.loading")
+        } else if notice.is_object() {
             self.label(s(&notice["id"]), &notice["args"])
         } else {
             String::new()
         };
-        let notice_height = if notice.is_object() {
+        let notice_height = if !notice_text.is_empty() {
             self.wrap(&notice_text, total, 17.).len() as f64 * 26. + 12.
         } else {
             0.
@@ -50,16 +56,10 @@ impl BrowserUi {
             self.measure,
         );
         let mut y = y0 + 40.;
-        for id in ["name", "seed"] {
-            self.text(
-                &self.t(&format!("mobile.form.{id}")),
-                x,
-                y,
-                width,
-                17.,
-                MUTED,
-                false,
-            );
+        for (index, id) in ["name", "seed"].iter().enumerate() {
+            let label = self.t(&format!("mobile.form.{id}"));
+            self.widgets.single_line(&label, Rect::new(x, y, width, 22.),
+                LineStyle { text:TextStyle::new(17., MUTED, false), center:false, ellipsis:true }, self.measure);
             y += 22.;
             self.field(id, Rect::new(x, y, width - 104., 48.), busy);
             self.button(
@@ -73,6 +73,10 @@ impl BrowserUi {
                 },
             );
             y += 54.;
+            if error_heights[index] > 0. {
+                self.text(&errors[index], x, y, total, 17., ERROR, false);
+                y += error_heights[index];
+            }
         }
         self.button(
             "new-game",
@@ -97,14 +101,14 @@ impl BrowserUi {
                 ..Default::default()
             },
         );
-        if notice.is_object() {
+        if !notice_text.is_empty() {
             self.text(
                 &notice_text,
                 x,
                 y0 + content_height,
                 total,
                 17.,
-                ERROR,
+                if notice.is_object() { ERROR } else { MUTED },
                 false,
             );
         }

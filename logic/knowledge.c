@@ -195,6 +195,7 @@ int mvcur(int oy,int ox,int y,int x) {(void)oy;(void)ox;return wmove(curscr,y,x)
 int getch(void) {
     int key;
     rg_core_pending(1);
+    rg_semantic_ranged_controls();
     key=rg_host_read_key();
     rg_core_pending(0);
     /* The Rust input callback has returned before the C lifetime jump. */

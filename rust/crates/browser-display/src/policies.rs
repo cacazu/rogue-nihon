@@ -13,7 +13,7 @@ pub fn number(v: &Value) -> u64 {
 pub fn valid_text(value: &str, limit: usize, empty: bool) -> bool {
     (empty || !value.is_empty())
         && value.len() <= limit
-        && !value.chars().any(|c| c <= '\u{1f}' || c == '\u{7f}')
+        && !value.chars().any(char::is_control)
 }
 pub fn seed(value: &str) -> Option<u32> {
     let n: f64 = value.trim().parse().ok()?;
@@ -32,9 +32,9 @@ pub fn mode(value: &str) -> bool {
 pub fn preference(raw: &str) -> Value {
     let v = serde_json::from_str::<Value>(raw).unwrap_or(Value::Null);
     if v["version"] == 1 && mode(text(&v["mode"])) && valid_zoom(&v["zoom"]) {
-        json!({"version":1,"mode":v["mode"],"zoom":v["zoom"],"animation":v["animation"].as_bool().unwrap_or(true)})
+        json!({"version":1,"mode":v["mode"],"zoom":v["zoom"],"animation":v["animation"].as_bool().unwrap_or(true),"theme":rogue_display::theme::Theme::named(text(&v["theme"])).id()})
     } else {
-        json!({"version":1,"mode":"tiles","zoom":32,"animation":true})
+        json!({"version":1,"mode":"tiles","zoom":32,"animation":true,"theme":rogue_display::theme::Theme::default().id()})
     }
 }
 pub struct Catalog {
@@ -59,7 +59,7 @@ impl Catalog {
         let Some(value) = self.catalogs[usize::from(locale == "en")]["messages"][id].as_str()
         else {
             self.missing.push(json!({"locale":locale,"id":id}));
-            return format!("Missing UI catalog entry: {locale}:{id}");
+            return if locale == "en" { "Could not display the screen." } else { "画面を表示できませんでした。" }.into();
         };
         let mut out = value.to_string();
         if let Some(args) = args.as_object() {
@@ -89,11 +89,11 @@ impl History {
         }
     }
     pub fn message(&mut self, value: Value) {
-        if !value.is_object() || value["id"] == "message.clear" || text(&value["text"]).is_empty() {
+        if !value.is_object() || value["id"] == "message.clear" || crate::log_visibility::removed_guidance(&value) || text(&value["text"]).is_empty() {
             return;
         }
         let error = text(&value["id"]).starts_with("platform.");
-        self.append(json!({"source":if error || value["id"]=="save.browser" {"system"} else {"game"},"error":error,"message":value}));
+        self.append(json!({"source":if error {"system"} else {"game"},"error":error,"message":value}));
     }
     pub fn notice(&mut self, id: &str, args: Value, error: bool) {
         self.append(json!({"source":"system","id":id,"args":args,"error":error}));
@@ -124,7 +124,7 @@ mod all_catalog {
         }
         catalog.catalogs[0]["messages"].as_object_mut().unwrap().remove("action.inventory");
         let rendered=catalog.label("ja","action.inventory",&json!({}));
-        assert!(rendered.starts_with("Missing UI catalog entry"));
+        assert_eq!(rendered, "画面を表示できませんでした。");
         assert_eq!(catalog.missing.len(),1);
     }
 }

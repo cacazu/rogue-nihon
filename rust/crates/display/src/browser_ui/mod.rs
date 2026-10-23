@@ -1,4 +1,6 @@
 //! Browser surface composition and interaction, independent of DOM/Canvas APIs.
+mod commands;
+mod desktop;
 mod dropdown;
 mod gestures;
 mod history;
@@ -11,11 +13,13 @@ mod mobile;
 mod mobile_dialog;
 mod mobile_map;
 mod mobile_top;
+mod projectiles;
 mod repeat_count;
 mod resume;
 mod screens;
 mod settings;
 mod status;
+mod tombstone;
 #[cfg(test)]
 mod tests;
 pub mod tiles;
@@ -95,6 +99,7 @@ pub struct BrowserUi {
     active_row: Value,
     hud: hud::HudWidget,
     mobile_controls: bool,
+    commands_open: bool,
     history_open: bool,
     status_open: bool,
     dropdown: String,
@@ -114,46 +119,18 @@ impl BrowserUi {
     /// its requested repaint has not run yet. Interaction rules stay in Rust.
     pub fn set_context(&mut self, model: Value) {
         self.model = model;
+        self.sync_direction_window();
     }
-    fn draw_hud(&mut self, map: Rect) {
-        self.draw_hud_area(Rect::new(map.x, map.y, map.w - 104., map.h));
-    }
-    fn draw_hud_area(&mut self, map: Rect) {
-        let catalog =
-            self.catalogs[usize::from(self.model["language"] == "en")]["messages"].clone();
-        let label = |id: &str| {
-            catalog[id]
-                .as_str()
-                .unwrap_or_else(|| panic!("Missing HUD label: {id}"))
-                .to_string()
-        };
-        self.hud.draw(
-            &mut self.widgets,
-            hud::HudData {
-                map,
-                name: s(&self.model["frame"]["ui"]["name"]),
-                status: &self.model["frame"]["ui"]["status"],
-                offset: self.scrolls["hud"],
-                label: &label,
-            },
-            self.measure,
-        );
-        let row = serde_json::from_value(self.hud.layout["row"].clone()).expect("HUD row");
-        self.regions.insert(
-            "hud".into(),
-            Region {
-                rect: row,
-                max: n(&self.hud.layout["maxScroll"]),
-            },
-        );
-        self.scrolls
-            .insert("hud".into(), n(&self.hud.layout["offset"]));
-    }
-    fn draw_hud_details(&mut self, map: Rect) {
-        let enabled =
-            !b(&self.model["settingsOpen"]) && !self.model["frame"]["ui"]["window"].is_object();
-        self.hud
-            .draw_details(&mut self.widgets, map, enabled, self.measure);
+    fn sync_direction_window(&mut self) {
+        if !self.mobile_controls && b(&self.model["frame"]["ui"]["movement_direction"])
+            && self.model["frame"]["ui"]["window"].is_null()
+        {
+            // The map pad is optional, but every C direction wait needs a
+            // visible selector. Reuse the ordinary dialog actions/shortcuts.
+            let mut ui = self.model["frame"]["ui"].clone();
+            ui["movement_direction"] = json!(false);
+            self.model["frame"]["ui"]["window"] = crate::game_window::render(&ui, s(&self.model["language"]));
+        }
     }
     pub fn new(measure: MeasureText) -> Self {
         Self {
@@ -188,6 +165,7 @@ impl BrowserUi {
             active_row: Value::Null,
             hud: hud::HudWidget::default(),
             mobile_controls: true,
+            commands_open: false,
             history_open: false,
             status_open: false,
             dropdown: String::new(),
@@ -226,6 +204,15 @@ impl BrowserUi {
         }
         text
     }
+    // A scrollable sheet follows its measured content until the viewport is full.
+    // Keep its header and edge padding identical across settings, status and history.
+    fn sheet_layout(&self, width: f64, content_height: f64) -> (Rect, Rect) {
+        let x = (self.width - width) / 2.;
+        let height = (68. + content_height + 16.).ceil().min(self.height - 16.);
+        let panel = Rect::new(x, 8., width, height);
+        let viewport = Rect::new(x + 16., 76., width - 32., (height - 84.).max(1.));
+        (panel, viewport)
+    }
     // Screen composition shorthand; the public widget API uses Rect/TextStyle.
     #[allow(clippy::too_many_arguments)]
     fn text(
@@ -247,12 +234,35 @@ impl BrowserUi {
             self.measure,
         )
     }
+    /// A choice owns the same shortcut in its visible label and activation.
+    fn pc_shortcut(&self, key: &str) -> Option<String> {
+        (!b(&self.view["coarse"])).then(|| key.to_string())
+    }
+    fn choice_shortcut(&self, index: usize) -> Option<String> {
+        u8::try_from(index).ok().filter(|index| *index < 26)
+            .and_then(|index| self.pc_shortcut(&((b'a' + index) as char).to_string()))
+    }
+    fn shortcut_context(&self, scope: &str) -> Value {
+        match scope {
+            "dialog" => json!([scope, self.model["generation"], self.model["input"], self.model["frame"]["ui"]["window"]]),
+            "dropdown" => json!([scope, self.dropdown]),
+            _ => json!(scope),
+        }
+    }
+    fn begin_choices(&mut self, scope: &str) {
+        self.widgets.controls.clear();
+        self.widgets.shortcut_context = self.shortcut_context(scope);
+    }
     fn control(&mut self, id: &str, label: &str, r: Rect, action: Value, style: ControlStyle<'_>) {
         self.widgets
             .control(id, label, r, action, style, self.measure);
     }
     fn button(&mut self, id: &str, label: &str, r: Rect, style: ControlStyle<'_>) {
         self.control(id, label, r, json!({"kind":"invoke","id":id}), style);
+    }
+    fn field_error_text(&self, id: &str) -> String {
+        let error = &self.model["fieldErrors"][id];
+        if error["id"].is_string() { self.label(s(&error["id"]), &error["args"]) } else { String::new() }
     }
     fn field(&mut self, id: &str, r: Rect, disabled: bool) {
         self.widgets.field(
@@ -269,19 +279,22 @@ impl BrowserUi {
     }
     pub fn render(&mut self, model: Value, view: Value) -> Value {
         self.model = model;
+        self.widgets.theme = crate::theme::Theme::named(s(&self.model["theme"]));
         self.view = view;
         self.width = n(&self.view["width"]).max(240.);
         self.height = n(&self.view["height"]).max(240.);
         let mobile = self.width < 700. || b(&self.view["coarse"]);
         let generation = n(&self.model["generation"]) as u64;
         if b(&self.model["running"]) && generation != self.mobile_generation {
-            self.mobile_controls = mobile;
+            self.mobile_controls = true;
             self.mobile_generation = generation;
             self.mobile_repeat_count = 1;
             self.mobile_repeat_configured = false;
             self.mobile_repeat_open = false;
         }
+        self.sync_direction_window();
         if b(&self.model["topOpen"]) || b(&self.model["settingsOpen"]) {
+            self.commands_open = false;
             self.history_open = false;
             self.status_open = false;
         }
@@ -290,6 +303,8 @@ impl BrowserUi {
         }
         if !mobile || b(&self.model["topOpen"]) || !b(&self.model["running"]) {
             self.mobile_operations = false;
+        }
+        if b(&self.model["topOpen"]) || !b(&self.model["running"]) {
             self.mobile_repeat_open = false;
         }
         if b(&self.model["settingsOpen"]) || self.model["frame"]["ui"]["window"].is_object()
@@ -298,6 +313,8 @@ impl BrowserUi {
         }
         let scope = if self.mobile_repeat_open {
             "repeat-count".into()
+        } else if self.commands_open {
+            "commands".into()
         } else if self.status_open {
             "status".into()
         } else if self.history_open {
@@ -356,7 +373,12 @@ impl BrowserUi {
         if self.mobile_repeat_open {
             self.draw_repeat_count();
         }
+        if self.commands_open {
+            self.draw_commands();
+        }
         self.draw_dropdown();
+        // Resolve color annotations attached after a widget was painted.
+        for command in &mut self.widgets.commands { self.widgets.theme.paint(command); }
         self.paint_count += 1;
         let mut result = json!({"diagnostics":self.diagnostics(),"animate":self.zoom_animating()});
         result["commands"] = Value::Array(std::mem::take(&mut self.widgets.commands));

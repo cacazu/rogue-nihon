@@ -73,23 +73,23 @@
       "notation_only": true
     },
     "platform.save_error": {
-      "template": "Save unavailable",
+      "template": "Could not save.",
       "conversions": []
     },
     "platform.restore_error": {
-      "template": "Restore unavailable",
+      "template": "Could not load.",
       "conversions": []
     },
     "platform.input_limit": {
-      "template": "Input journal limit reached",
+      "template": "The game cannot continue.",
       "conversions": []
     },
     "platform.name_error": {
-      "template": "Invalid player name",
+      "template": "This name cannot be used.",
       "conversions": []
     },
     "platform.error": {
-      "template": "Game system error",
+      "template": "An error occurred.",
       "conversions": []
     },
     "outcome.ended": {

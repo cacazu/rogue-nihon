@@ -63,13 +63,13 @@ impl HudWidget {
         };
         let mut metrics = Vec::new();
         for (id, icon, indexes, color) in [
-            ("depth", "stairs", &[0][..], "#b9cee8"),
-            ("gold", "coins", &[1][..], "#efd18e"),
-            ("hp", "heart", &[2, 3][..], "#f5a6aa"),
-            ("strength", "strength", &[4, 5][..], "#d0bbef"),
-            ("armor", "shield", &[6][..], "#9dcbe9"),
-            ("level", "level", &[7][..], "#a6d0be"),
-            ("experience", "experience", &[8][..], "#a6d0be"),
+            ("depth", "stairs", &[0][..], "@hud.depth"),
+            ("gold", "coins", &[1][..], "@hud.gold"),
+            ("hp", "heart", &[2, 3][..], "@hud.hp"),
+            ("strength", "strength", &[4, 5][..], "@hud.strength"),
+            ("armor", "shield", &[6][..], "@hud.armor"),
+            ("level", "level", &[7][..], "@hud.level"),
+            ("experience", "experience", &[8][..], "@hud.experience"),
         ] {
             metrics.push(Metric {
                 id: id.into(),
@@ -114,11 +114,11 @@ impl HudWidget {
             values: vec![label(&format!("hud.hunger.{hunger}"))],
             detail: label(&format!("hud.hunger.{hunger}")),
             color: if hunger == "0" {
-                ACCENT
+                "@hud.hunger.ok"
             } else if hunger == "1" {
-                "#efd18e"
+                "@hud.hunger.warn"
             } else {
-                ERROR
+                "@hud.hunger.danger"
             },
             warning: hunger != "0",
         });
@@ -217,14 +217,14 @@ impl HudWidget {
         let max_scroll = (content_width - row.w).max(0.);
         let offset = offset.clamp(0., max_scroll);
         let name_rect = Rect::new(row.x - offset, row.y, name_width, row.h);
-        widgets.box_rect(panel, "#101b20ef", Some(LINE), 9.);
+        widgets.box_rect(panel, PANEL, Some(LINE), 0.);
         widgets.begin_clip(row);
         let content_start = widgets.commands.len();
         let name_value = widgets.single_line(
             name,
             name_rect,
             LineStyle {
-                text: TextStyle::new(size, ACCENT, true),
+                text: TextStyle::new(size, "@hud.name", true),
                 center: false,
                 ellipsis: true,
             },
@@ -246,7 +246,7 @@ impl HudWidget {
                 r,
                 json!({"kind":"hud","id":metric.id}),
                 ControlStyle {
-                    flat: true,
+                    role: ControlRole::Indicator,
                     custom: true,
                     keep_offscreen: true,
                     ..Default::default()
@@ -306,7 +306,7 @@ impl HudWidget {
         }
         for command in &mut widgets.commands[content_start..] {
             if matches!(s(&command["op"]), "text" | "path") {
-                command["outline"] = json!({"color":"#000","width":2.});
+                command["outline"] = json!({"color":"@hud.outline","width":2.});
             }
         }
         widgets.end_clip();
@@ -321,7 +321,7 @@ impl HudWidget {
                     width,
                     track.h,
                 ),
-                ACCENT,
+                "@hud.level",
             );
         }
         self.layout = json!({"panel":panel,"row":row,"nameRect":name_rect,"nameValueRect":name_value,"items":items,"contentWidth":content_width,"offset":offset,"maxScroll":max_scroll,"compact":layout.compact>0,"tooltip":null});
@@ -391,7 +391,7 @@ impl HudWidget {
             .find(|r| obstacles.iter().all(|&o| !r.overlaps(o)))
             .copied()
             .unwrap_or(candidates[0]);
-        widgets.box_rect(r, PANEL, Some(active.color), 9.);
+        widgets.box_rect(r, PANEL, Some(LINE), 0.);
         widgets.text(
             &text,
             Rect::new(r.x + 12., r.y + 10., w - 24., 0.),

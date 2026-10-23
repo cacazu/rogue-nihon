@@ -77,23 +77,23 @@
       "grammar_reason": "未登録の英語原文引数は診断記録に保持し、画面には日本語の未登録通知だけを表示する。"
     },
     "platform.save_error": {
-      "template": "保存できませんでした。保存データと空き容量を確認してください。",
+      "template": "セーブできませんでした。",
       "conversions": []
     },
     "platform.restore_error": {
-      "template": "保存を読み込めませんでした。形式や整合性を確認してください。",
+      "template": "ロードできませんでした。",
       "conversions": []
     },
     "platform.input_limit": {
-      "template": "操作記録の上限に達しました。最後の保存から再開してください。",
+      "template": "ゲームを続けられません。",
       "conversions": []
     },
     "platform.name_error": {
-      "template": "名前に使用できない文字があるか、長さの上限を超えています。",
+      "template": "この名前は使えません。",
       "conversions": []
     },
     "platform.error": {
-      "template": "ゲームの処理でエラーが発生しました。",
+      "template": "エラーが発生しました。",
       "conversions": []
     },
     "outcome.ended": {

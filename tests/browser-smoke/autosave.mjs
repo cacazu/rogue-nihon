@@ -77,11 +77,14 @@ async function production(){
   await context.addInitScript(()=>{const Base=window.Worker;window.__publishedFrame=null;window.Worker=class extends Base{constructor(...args){super(...args);this.addEventListener('message',e=>{if(e.data.type==='frame')window.__publishedFrame=e.data;});}};});
   page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));
   const label=(phone?'phone':'desktop')+' production';
-  await check(label+' uses published artifacts for hidden controls, guidance, automatic top save and one-use load',async()=>{
+  await check(label+' uses published artifacts for hidden controls, silent S command, automatic top save and one-use load',async()=>{
    await page.goto(base.replace('trace=1','trace=0'));await page.locator('[data-control="new-game"]:not([disabled])').waitFor();
    for(const id of ['save','download-save','import-save'])assert.equal(await page.locator('[data-control="'+id+'"]').count(),0);
    await page.locator('#seed').fill('17');await tap('new-game');await page.waitForFunction(()=>__publishedFrame?.ui.input.kind==='command');
-   await page.keyboard.press('S');await page.waitForFunction(()=>document.getElementById('rogue-observation').textContent.includes('階層移動時と、設定からトップ画面へ戻る時に自動保存します。'));
+   await page.keyboard.press('S');
+   await page.waitForTimeout(150);
+   assert.ok(!await page.locator('#rogue-observation').textContent().then(text=>text.includes('save.browser')||text.includes('階層移動時と')));
+   assert.equal(await stored(),null,'S preserves its existing no-save behavior');
    const before=await page.evaluate(()=>({player:__publishedFrame.player,stats:__publishedFrame.stats}));
    await tap('settings-toggle');for(const id of ['save','download-save','import-save'])assert.equal(await page.locator('[data-control="'+id+'"]').count(),0);
    await shot((phone?'phone':'desktop')+'-production-settings');await tap('settings-top');

@@ -45,7 +45,7 @@ async function fill(gauge,progress){
  if(progress===0)assert.equal(active,undefined);else{assert.ok(active);assert.ok(Math.abs(active.rect.w-(r.w-2)*progress)<.001);}
 }
 try{
- await page.goto('http://127.0.0.1:'+server.address().port+'/?trace=1&lang=ja');await page.waitForFunction(()=>__rogueBrowserTest.canvas?.controls.some(c=>c.id==='new-game'&&!c.disabled));await tap('new-game');await page.waitForFunction(()=>__rogueBrowserTest.trace&&__rogueBrowserTest.queuePending===0&&__rogueBrowserTest.frame.ui.input.kind==='command');await paint();
+ await page.goto('http://127.0.0.1:'+server.address().port+'/?trace=1&lang=ja');await page.waitForFunction(()=>__rogueBrowserTest.canvas?.controls?.some(c=>c.id==='new-game'&&!c.disabled));await tap('new-game');await page.waitForFunction(()=>__rogueBrowserTest.trace&&__rogueBrowserTest.queuePending===0&&__rogueBrowserTest.frame.ui.input.kind==='command');await paint();
  const before=await state();
  await check('390px and 320px align both rows, equal gauges and the right columns',async()=>{
   await status({0:1,1:0,2:6,3:12,4:16,5:16,6:4,7:1,8:5,9:'status.hunger.0'});

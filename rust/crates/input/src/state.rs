@@ -78,6 +78,9 @@ impl State {
 
     pub fn decode(&mut self, raw: u32, ui: &Value, window_open: bool) -> Input {
         let scalar = raw & RG_EVENT_SCALAR_MASK;
+        if raw == RG_KEY_FIRE {
+            return self.inventory.fire(ui);
+        }
         if let Input::Key(key) = decode(raw)
             && let Some(decoded) = self.inventory.handle(key, ui)
         {

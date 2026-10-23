@@ -4,11 +4,18 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/* Public equipped bow and available arrow letter; no game mutation or RNG. */
+void rg_semantic_ranged_controls(void);
+
 /* Observe terrain beneath actors already present in the copied screen. */
 void rg_semantic_map_terrain(const uint8_t *cells,uint32_t rows,uint32_t columns);
 void rg_semantic_map_actors(const uint8_t *cells,uint32_t rows,uint32_t columns);
 void rg_semantic_actors_reset(void);
 void rg_semantic_actors_turn(void);
+void rg_semantic_projectile_begin(uint32_t kind,int glyph,int x,int y);
+void rg_semantic_projectile_point(int x,int y,int glyph);
+void rg_semantic_projectile_end(void);
+void rg_semantic_magic_pulse(int dx,int dy);
 
 /* Return 1 for a descriptor, 0 for an ordinary literal, -1 for insufficient
  * space. The result is a JSON value object, not an English reverse translation.

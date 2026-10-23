@@ -484,6 +484,12 @@ pub extern "C" fn rg_host_map_actor_event(id: u32, kind: u32) {
     engine::map_actor(rogue_display::map::ActorObservation::Event { id, kind });
 }
 
+/// Observe only public projectile metadata, never a rule or input operation.
+#[unsafe(no_mangle)]
+pub extern "C" fn rg_host_map_projectile(phase: u32, kind: u32, glyph: i32, x: i32, y: i32) {
+    engine::map_projectile(rogue_display::projectile::Observation { phase, kind, glyph, x, y });
+}
+
 /// Observes terrain beneath currently perceived actors without changing C state.
 ///
 /// # Safety

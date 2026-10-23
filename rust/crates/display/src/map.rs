@@ -26,6 +26,7 @@ pub enum ActorObservation {
         kind: u32,
     },
     Replay(bool),
+    Projectile(crate::projectile::Observation),
 }
 
 fn can_drop_on(frame: &Value) -> bool {
@@ -39,6 +40,7 @@ pub struct ObservedMap {
     last_frame: Option<Value>,
     map_frame: Option<Value>,
     effects: Vec<(u32, u32, u8)>,
+    projectiles: crate::projectile::ObservedFlights,
     terrain: Vec<u8>,
     actors: Vec<Value>,
     actor_events: Vec<(u64, u32, &'static str)>,
@@ -73,9 +75,14 @@ impl ObservedMap {
     pub fn terrain(&mut self, glyphs: Vec<u8>) {
         self.terrain = glyphs;
     }
+    pub fn observe_projectile(&mut self, observation: crate::projectile::Observation) {
+        if !self.replaying_actors { self.projectiles.observe(observation, self.map_frame.as_ref()); }
+    }
     pub fn observe_actor(&mut self, observation: ActorObservation) {
         match observation {
+            ActorObservation::Projectile(observation) => self.observe_projectile(observation),
             ActorObservation::Reset(epoch) => {
+                self.projectiles.reset();
                 self.actors.clear();
                 self.actor_events.clear();
                 self.actor_epoch = epoch;
@@ -145,6 +152,7 @@ impl ObservedMap {
             ActorObservation::Replay(replaying) => {
                 if self.replaying_actors != replaying {
                     self.actor_events.clear();
+                    self.projectiles.reset();
                 }
                 self.replaying_actors = replaying;
             }
@@ -215,6 +223,7 @@ impl ObservedMap {
                 let start = row as usize * columns as usize;
                 cells[start..start + columns as usize].fill(b' ');
             }
+            self.projectiles.mask(&mut cells);
             // C owns the public player pose independently of the curses
             // foreground. Keep its transient pickup/effect erasures in `cells`
             // for original-screen comparisons, and compose the player only in
@@ -314,6 +323,7 @@ impl ObservedMap {
                 })
                 .collect::<Vec<_>>()
         );
+        frame["map_projectile_events"] = self.projectiles.take_events();
         self.accepting_actors = false;
         frame["map_actor_step"] = json!(self.actor_step);
         frame["ui"] = ui.clone();

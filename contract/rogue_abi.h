@@ -21,6 +21,7 @@
 #define RG_KEY_PAGE_DOWN 0x00110008
 #define RG_KEY_SAVE 0x00120001
 #define RG_KEY_END_INPUT 0x00120002
+#define RG_KEY_FIRE 0x00120003
 
 #define RG_SNAPSHOT_WORDS 20
 #define RG_SNAPSHOT_ABI 0
@@ -53,6 +54,13 @@
 #define RG_ACTOR_MOVE 1
 #define RG_ACTOR_ATTACK 2
 #define RG_ACTOR_HURT 3
+#define RG_PROJECTILE_ITEM 1
+#define RG_PROJECTILE_ARROW 2
+#define RG_PROJECTILE_MAGIC 3
+#define RG_FLIGHT_BEGIN 1
+#define RG_FLIGHT_POINT 2
+#define RG_FLIGHT_GAP 3
+#define RG_FLIGHT_END 4
 
 #ifdef __cplusplus
 extern "C" {
@@ -96,6 +104,11 @@ void rg_host_map_actor(uint32_t id, int32_t x, int32_t y, int32_t glyph,
  * bounded transient queue and sequence; each event is consumed once by the
  * next frame. Events never enter game saves, RNG, or command processing. */
 void rg_host_map_actor_event(uint32_t id, uint32_t kind);
+/* Presentation-only visible projectile observations. GAP carries no hidden
+ * coordinate; BEGIN/POINT are checked against the last public map in Rust.
+ * No item subtype, target identity, rules, RNG, or save data is transferred. */
+void rg_host_map_projectile(uint32_t phase, uint32_t kind, int32_t glyph,
+                            int32_t x, int32_t y);
 void rg_host_message(const char *message_id, const char *arguments_json,
                      const char *legacy_english);
 /* UTF-8 semantic UI is presentation data only. row=-1 clears a scope;

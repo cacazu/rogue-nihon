@@ -19,7 +19,7 @@ impl BrowserUi {
         );
     }
 
-    fn mobile_context_command(&self) -> (u32, &'static str) {
+    pub(super) fn mobile_context_command(&self) -> (u32, &'static str) {
         let frame = &self.model["frame"];
         let ui = &frame["ui"];
         if b(&ui["map_controls"]["stairs"]["ascend"]) {
@@ -121,11 +121,13 @@ impl BrowserUi {
             && b(&self.model["running"])
             && !self.model["frame"]["ui"]["window"].is_object();
         let dock_height = if dock { 184. } else { 0. };
+        let bow = dock && b(&self.model["frame"]["ui"]["ranged"]["bow"]);
+        let fire_height = if bow { 58. } else { 0. };
         let map = Rect::new(
             0.,
             0.,
             self.width,
-            (self.height - 64. - dock_height).max(1.),
+            (self.height - 64. - dock_height - fire_height).max(1.),
         );
         self.map_rect = Some(map);
         self.regions
@@ -133,7 +135,7 @@ impl BrowserUi {
         self.widgets.rect(map, MAP);
         if self.model["frame"].is_object() {
             self.draw_map(map);
-            self.draw_mobile_status(Rect::new(0., 8., self.width - 64., 48.));
+            self.draw_status_bar(Rect::new(0., 8., self.width - 64., 48.));
             if !self.model["frame"]["ui"]["window"].is_object()
                 && !b(&self.model["settingsOpen"])
             {
@@ -145,9 +147,21 @@ impl BrowserUi {
             self.draw_dialog(game);
         }
         if dock && !b(&self.model["settingsOpen"]) {
+            if bow {
+                let y = self.height - dock_height - fire_height;
+                self.widgets.rect(Rect::new(0., y, self.width, fire_height), BG);
+                let ready = self.model["input"]["kind"] == "command"
+                    && self.model["frame"]["ui"]["ranged"]["arrow_key"].as_u64().is_some_and(|key| (97..=122).contains(&key));
+                self.control(
+                    "touch-fire", &self.t("mobile.fire"),
+                    Rect::new(12., y + 3., self.width - 24., 52.),
+                    json!({"kind":"send","key":rogue_contract::RG_KEY_FIRE}),
+                    ControlStyle { size: FONT, role: ControlRole::Command, disabled: !ready, ..Default::default() },
+                );
+            }
             self.mobile_dock(self.height - dock_height);
         }
-        if !self.model["frame"].is_object() {
+        if b(&self.model["loading"]) {
             self.text(
                 &self.t("notice.loading"),
                 24.,
@@ -186,7 +200,7 @@ impl BrowserUi {
         for entry in array(&self.model["entries"])
             .iter()
             .rev()
-            .filter(|e| e["source"] == "game" && !b(&e["mobile_keyboard_hint"]) && !s(&e["text"]).trim().is_empty())
+            .filter(|e| matches!(s(&e["source"]), "game" | "system") && !b(&e["transient_prompt"]) && !b(&e["mobile_keyboard_hint"]) && !s(&e["text"]).trim().is_empty())
         {
             for line in self.log_lines(&self.log_runs(entry,true),width,FONT).into_iter().rev() {
                 if !line.is_empty() {
@@ -226,6 +240,10 @@ impl BrowserUi {
             json!({"kind":"send","key":key}),
             ControlStyle {
                 size: FONT,
+                role: ControlRole::Command,
+                left: self.mobile_operations,
+                shortcut: if self.mobile_operations { self.pc_shortcut(&char::from_u32(key).unwrap().to_string()) } else { None },
+                keep_offscreen: self.mobile_operations,
                 key: Some(json!(key)),
                 disabled,
                 ..Default::default()
@@ -233,7 +251,7 @@ impl BrowserUi {
         );
     }
 
-    fn mobile_movement_control(&mut self, rect: Rect) {
+    pub(super) fn mobile_movement_control(&mut self, rect: Rect) {
         let label = self.t(match self.mobile_movement {
             1 => "mobile.run",
             2 => "mobile.run_adjacent",
@@ -347,15 +365,33 @@ impl BrowserUi {
         self.draw_repeat_button(Rect::new(x + cell_width + 8., y + 124., cell_width, 52.));
     }
     fn mobile_operations_sheet(&mut self, game: Rect) {
-        self.widgets.controls.clear();
+        self.begin_choices("mobile-operations");
         self.regions.clear();
         self.map_rect = None;
-        self.widgets.rect(game, "#0009");
+        self.widgets.rect(game, "@overlay.strong");
+        let context_key = self.mobile_context_command().0;
+        let groups: Vec<_> = [
+            ("mobile.group.movement", &[
+                (109, "help.move_without_pickup"), (44, "help.pickup"),
+                (115, "help.search"), (94, "help.trap"),
+                (62, "help.downstairs"), (60, "help.upstairs"),
+            ][..]),
+            ("mobile.group.combat", &[
+                (102, "help.fight_carefully"), (70, "help.fight_to_death"),
+            ][..]),
+        ].into_iter().map(|(title, operations)| {
+            let operations: Vec<_> = operations.iter().copied().filter(|(key, _)|
+                *key != context_key && (*key != 60 || b(&self.model["frame"]["ui"]["player_state"]["amulet"]))).collect();
+            (title, operations)
+        }).collect();
+        let total = groups.iter().map(|(_, operations)| 36. + operations.len() as f64 * 60. + 12.).sum::<f64>() - 24.;
+        let (panel, viewport) = self.sheet_layout(self.width - 16., total);
+
         self.widgets.box_rect(
-            Rect::new(8., 8., self.width - 16., self.height - 16.),
+            panel,
             PANEL,
             Some(LINE),
-            12.,
+            0.,
         );
         self.text(
             &self.t("action.help"),
@@ -373,31 +409,19 @@ impl BrowserUi {
             ControlStyle {
                 icon: Some("close"),
                 icon_size: 24.,
+                shortcut: self.pc_shortcut("Escape"),
                 ..Default::default()
             },
         );
-        let viewport = Rect::new(24., 76., self.width - 48., self.height - 104.);
-        let scroll = *self.scrolls.get("mobile-operations").unwrap_or(&0.);
+        let max = (total - viewport.h).max(0.);
+        let scroll = clamp(*self.scrolls.get("mobile-operations").unwrap_or(&0.), 0., max);
         let mut row = viewport.y - scroll;
         self.widgets.begin_clip(viewport);
-        let context_key = self.mobile_context_command().0;
-        for (title, operations) in [
-            ("mobile.group.movement", &[
-                (109, "help.move_without_pickup"), (44, "help.pickup"),
-                (115, "help.search"), (94, "help.trap"),
-                (62, "help.downstairs"), (60, "help.upstairs"),
-            ][..]),
-            ("mobile.group.combat", &[
-                (102, "help.fight_carefully"), (70, "help.fight_to_death"),
-            ][..]),
-        ] {
+        for (title, operations) in &groups {
             self.text(&self.t(title), viewport.x, row + 6., viewport.w, FONT, ACCENT, true);
             row += 36.;
             for (key, label) in operations {
                 let ui = &self.model["frame"]["ui"];
-                if *key == context_key || (*key == 60 && !b(&ui["player_state"]["amulet"])) {
-                    continue;
-                }
                 let stair_disabled = match key {
                     60 => !b(&ui["map_controls"]["stairs"]["ascend"]),
                     62 => !b(&ui["map_controls"]["stairs"]["descend"]),
@@ -413,8 +437,7 @@ impl BrowserUi {
             row += 12.;
         }
         self.widgets.end_clip();
-        let total = row - viewport.y + scroll;
-        let max = (total - viewport.h).max(0.);
+
         self.regions.insert(
             "mobile-operations".into(),
             Region {

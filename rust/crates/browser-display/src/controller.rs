@@ -26,6 +26,7 @@ pub struct Controller {
     draft_dirty: bool,
     window_open: bool,
     restore_pending: bool,
+    terminal_error: bool,
     last_level: Option<u64>,
     autosave_due: bool,
     return_after_save: bool,
@@ -33,6 +34,7 @@ pub struct Controller {
     ending_ack: i64,
     window_close_ack: String,
     assets_ready: BTreeSet<String>,
+    assets_error: bool,
     saves: SaveOperations,
     inventory_preference_cache: String,
 }
@@ -42,7 +44,7 @@ impl Controller {
             ui: BrowserUi::new(measure),
             animations: Animator::new(tiles::animation_manifest("tiles"), tiles::animation_manifest("pixels"))
                 .expect("Character animation manifests"),
-            model: json!({"language":"ja","topOpen":true,"settingsOpen":false,"starting":false,"running":false,"ready":false,"saved":false,"downloadAvailable":false,"savePending":false,"returnAfterEnd":false,"itemHistoryOpen":false,"returnToInventory":false,"generation":0,"displayMode":"tiles","tileSize":32,"animationEnabled":true,"frame":null,"topNotice":null}),
+            model: json!({"language":"ja","topOpen":true,"settingsOpen":false,"starting":false,"running":false,"ready":false,"saved":false,"downloadAvailable":false,"savePending":false,"returnAfterEnd":false,"itemHistoryOpen":false,"returnToInventory":false,"generation":0,"displayMode":"tiles","tileSize":32,"animationEnabled":true,"theme":rogue_display::theme::Theme::default().id(),"frame":null,"topNotice":null,"fieldErrors":{}}),
             state: json!({"exitCode":null,"outcome":null,"runtimeError":null,"frameCount":0,"inputRequestCount":0,"trace":null,"traces":[],"messages":[],"logs":[],"translationFallbacks":[],"savedLength":0}),
             inputs: json!({}),
             environment: Value::Null,
@@ -55,6 +57,7 @@ impl Controller {
             draft_dirty: false,
             window_open: false,
             restore_pending: false,
+            terminal_error: false,
             last_level: None,
             autosave_due: false,
             return_after_save: false,
@@ -62,6 +65,7 @@ impl Controller {
             ending_ack: -1,
             window_close_ack: String::new(),
             assets_ready: BTreeSet::new(),
+            assets_error: false,
             saves: SaveOperations::default(),
             inventory_preference_cache: String::new(),
         }
@@ -71,6 +75,10 @@ impl Controller {
         if flag(&self.model["topOpen"]) {
             self.model["topNotice"] = json!({"id":id,"args":args,"error":error});
         }
+    }
+    fn field_error(&mut self, field: &str, id: &str) {
+        self.model["fieldErrors"][field] = json!({"id":id});
+        self.focus(field);
     }
     fn log(&mut self, value: Value) {
         push(&mut self.state["logs"], value, 128);
@@ -114,6 +122,7 @@ impl Controller {
     fn restore_failed(&mut self) {
         self.return_top();
         self.notice("error.load", json!({}), true);
+        self.terminal_error = true;
     }
     fn request_save(&mut self, return_after: bool) {
         if !flag(&self.model["running"]) || self.session_ended || self.ending() {
@@ -126,7 +135,8 @@ impl Controller {
             return;
         }
         if self.composing {
-            self.notice("error.text_composing", json!({}), true);
+            self.field_error("prompt-text", "error.text_composing");
+            self.settings(false);
             return;
         }
         let events = if self.text_mode && self.draft_dirty {
@@ -223,7 +233,8 @@ impl Controller {
         self.window_open = false;
         self.ending_ack = -1;
         self.history = History::default();
-        self.notice("notice.top", json!({}), false);
+        self.model["topNotice"] = Value::Null;
+        self.model["fieldErrors"] = json!({});
         self.focus("canvas");
         if flag(&self.environment["fullscreen"]) {
             self.effects
@@ -306,7 +317,13 @@ impl Controller {
         }
     }
     fn presentation(&mut self) {
-        let p = self.model["frame"]["ui"].clone();
+        let mut p = self.model["frame"]["ui"].clone();
+        if crate::log_visibility::removed_guidance(&p["message"]) { p["message"] = Value::Null; }
+        if crate::log_visibility::removed_guidance(&p["window"]["message"]) { p["window"]["message"] = Value::Null; }
+        if let Some(lines) = p["lines"].as_array_mut() {
+            lines.retain(|line| !crate::log_visibility::removed_guidance(line));
+        }
+        self.model["frame"]["ui"] = p.clone();
         let was_open = self.window_open;
         self.window_open = p["window"].is_object();
         if p.is_object() {
@@ -359,6 +376,7 @@ impl Controller {
                 .unwrap_or("");
             self.field("prompt-text", json!({"value":value}));
         }
+        if !next { self.model["fieldErrors"]["prompt-text"] = Value::Null; }
         self.text_mode = next;
         if input["kind"] == "discovery" { self.model["itemHistoryOpen"] = json!(true); }
         self.input = input;
@@ -371,6 +389,11 @@ impl Controller {
         }
     }
     fn start(&mut self, restore: bool) {
+        if !restore && self.composing {
+            let field = if flag(&self.inputs["seed"]["active"]) { "seed" } else { "name" };
+            self.field_error(field, "error.text_composing");
+            return;
+        }
         if !flag(&self.environment["isolated"]) {
             self.model["starting"] = json!(false);
             self.notice("error.isolation", json!({}), true);
@@ -386,12 +409,12 @@ impl Controller {
         let valid_name = valid_text(name, 49, false);
         if !restore && entered_seed.is_none() {
             self.model["starting"] = json!(false);
-            self.notice("error.seed", json!({}), true);
+            self.field_error("seed", "error.seed");
             return;
         }
         if !restore && !valid_name {
             self.model["starting"] = json!(false);
-            self.notice("error.name", json!({}), true);
+            self.field_error("name", if name.len() > 49 { "error.name" } else { "error.name_characters" });
             return;
         }
         let name = if valid_name {
@@ -428,6 +451,8 @@ impl Controller {
         self.state["frameCount"] = json!(0);
         self.state["inputRequestCount"] = json!(0);
         self.restore_pending = restore;
+        self.terminal_error = false;
+        self.model["fieldErrors"] = json!({});
         self.last_level = None;
         self.autosave_due = false;
         self.return_after_save = false;
@@ -438,18 +463,23 @@ impl Controller {
         self.window_open = false;
         self.ending_ack = -1;
         self.history = History::default();
-        self.notice("notice.loading", json!({}), false);
         self.effects.push(json!({"kind":"worker-start","generation":self.model["generation"],"capacity":4096,
             "seed":entered_seed.unwrap_or(0),"name":name,"restore":restore,"locale":self.model["language"],
             "trace":self.environment["parameters"]["trace"]=="1","message_paging":"log"}));
     }
     fn persist_view(&mut self) {
-        self.effects.push(json!({"kind":"storage-write","key":"rogue-map-display-v1","value":json!({"version":1,"mode":self.model["displayMode"],"zoom":self.model["tileSize"],"animation":self.model["animationEnabled"]}).to_string()}));
+        self.effects.push(json!({"kind":"storage-write","key":"rogue-map-display-v1","value":json!({"version":1,"mode":self.model["displayMode"],"zoom":self.model["tileSize"],"animation":self.model["animationEnabled"],"theme":self.model["theme"]}).to_string()}));
     }
     fn select(&mut self, id: &str, value: &str) {
         match id {
             "language" if flag(&self.model["topOpen"]) && !flag(&self.model["starting"]) => {
                 self.model["language"] = json!(if value == "en" { "en" } else { "ja" });
+                self.document();
+            }
+            "theme" if rogue_display::theme::Theme::known(value)
+                && !flag(&self.model["starting"]) && !flag(&self.model["savePending"]) => {
+                self.model["theme"] = json!(value);
+                self.persist_view();
                 self.document();
             }
             "display-mode" if mode(value) => {
@@ -462,8 +492,10 @@ impl Controller {
     fn document(&mut self) {
         let title = self.label("app.title", &json!({}));
         let heading = self.label("app.heading", &json!({}));
+        let theme = rogue_display::theme::Theme::named(text(&self.model["theme"]));
         self.effects
-            .push(json!({"kind":"document","language":self.model["language"],"title":title,"heading":heading}));
+            .push(json!({"kind":"document","language":self.model["language"],"title":title,"heading":heading,
+                "theme":theme.id(),"background":theme.color("@background"),"foreground":theme.color("@text.primary")}));
     }
     fn text_batch(&mut self, ending: u32) -> Option<Value> {
         let value = text(&self.inputs["prompt-text"]["value"]);
@@ -472,16 +504,21 @@ impl Controller {
             .filter(|n| *n > 0)
             .unwrap_or(50) as usize;
         if !valid_text(value, limit, true) {
-            self.notice("error.prompt_text", json!({"limit":limit}), true);
+            let id = if value.len() > limit { "error.prompt_text" } else { "error.prompt_text_characters" };
+            self.settings(false);
+            self.field_error("prompt-text", id);
             return None;
         }
+        self.model["fieldErrors"]["prompt-text"] = Value::Null;
         let mut events = vec![21];
         events.extend(value.chars().map(|c| c as u32));
         events.push(ending);
         Some(json!(events))
     }
     fn submit(&mut self, id: &str) {
-        if self.composing || flag(&self.model["settingsOpen"]) {
+        if flag(&self.model["settingsOpen"]) { return; }
+        if self.composing {
+            self.field_error(id, "error.text_composing");
             return;
         }
         match id {
@@ -521,7 +558,7 @@ impl Controller {
                 self.effects.push(json!({"kind":"save-import","request":pending.request,"generation":pending.generation}));
             },
             "credits-repository"=>self.effects.push(json!({"kind":"open","url":"https://github.com/cacazu/roguelike-nihon/tree/main/rogue-nihon"})),
-            "new-game" if flag(&self.model["topOpen"]) && !flag(&self.model["starting"]) && !self.composing && flag(&self.model["ready"]) =>self.start(false),
+            "new-game" if flag(&self.model["topOpen"]) && !flag(&self.model["starting"]) && flag(&self.model["ready"]) =>self.start(false),
             "load" if flag(&self.model["topOpen"]) && !flag(&self.model["starting"]) => {
                 self.model["starting"]=json!(true);self.read_save(SaveOperation::Load);
             },
@@ -556,15 +593,7 @@ impl Controller {
             "ready" => {
                 self.model["starting"] = json!(false);
                 self.model["running"] = json!(true);
-                self.notice(
-                    if self.restore_pending {
-                        "notice.restoring"
-                    } else {
-                        "notice.entered"
-                    },
-                    json!({}),
-                    false,
-                );
+
                 if !flag(&self.model["settingsOpen"]) {
                     self.focus("canvas");
                 }
@@ -598,12 +627,14 @@ impl Controller {
                     self.state["runtimeError"] = json!(error);
                     self.model["running"] = json!(false);
                     self.notice(id, json!({}), true);
+                    self.terminal_error = true;
                     return;
                 }
                 if let Err(error) = self.animations.observe(&data, now) {
                     self.state["runtimeError"] = json!(error);
                     self.model["running"] = json!(false);
                     self.notice("error.frame", json!({}), true);
+                    self.terminal_error = true;
                     return;
                 }
                 self.fallback(&data, "frame");
@@ -634,6 +665,19 @@ impl Controller {
             }
             "input-context" => self.apply_input(data["input"].clone()),
             "message" => {
+                if crate::log_visibility::removed_guidance(&data) { return; }
+                if data["id"] == "platform.restore_error" && self.restore_pending {
+                    self.log(data);
+                    return;
+                }
+                if data["id"] == "platform.name_error" && self.text_mode {
+                    self.log(data);
+                    self.field_error("prompt-text", "platform.name_error");
+                    return;
+                }
+                if matches!(text(&data["id"]), "platform.input_limit" | "platform.error" | "platform.name_error" | "platform.restore_error") {
+                    self.terminal_error = true;
+                }
                 if data["id"] == "platform.save_error" { self.cancel_save(); }
                 push(&mut self.state["messages"], data.clone(), 128);
                 self.history.message(data);
@@ -644,7 +688,6 @@ impl Controller {
                 if self.restore_pending {
                     self.restore_pending = false;
                     self.discard_save();
-                    self.notice("notice.restored", json!({}), false);
                 }
                 if self.autosave_due && !flag(&self.model["savePending"]) {
                     self.request_save(false);
@@ -665,9 +708,7 @@ impl Controller {
                     number(v) & rogue_contract::RG_EVENT_SCALAR_MASK as u64 == RG_KEY_SAVE as u64
                 }) {
                     self.cancel_save();
-                    self.notice("notice.save_cancelled", json!({}), false);
-                } else {
-                    self.notice("notice.input_flush", json!({"count":data["count"]}), false);
+                    self.notice("notice.save_cancelled", json!({}), true);
                 }
             }
             "save" if !self.session_ended => {
@@ -677,7 +718,6 @@ impl Controller {
             "outcome" => {
                 if data["code"].as_i64().is_some_and(|code| code >= 0) { self.end_session(); }
                 self.state["outcome"] = json!({"code":data["code"],"text":data["text"]});
-                self.notice("notice.game_ended", json!({}), false);
             }
             "exit" => {
                 self.cancel_save();
@@ -687,8 +727,9 @@ impl Controller {
                 if data["code"].as_i64().unwrap_or(-1) < 0 {
                     if self.restore_pending {
                         self.restore_failed();
-                    } else {
+                    } else if !self.terminal_error {
                         self.notice("error.runtime", json!({}), true);
+                        self.terminal_error = true;
                     }
                 } else if flag(&self.model["returnAfterEnd"]) {
                     self.return_top();
@@ -705,7 +746,10 @@ impl Controller {
                     self.restore_failed();
                 } else {
                     if starting { self.return_top(); }
-                    self.notice("error.runtime", json!({}), true);
+                    if !self.terminal_error {
+                        self.notice("error.runtime", json!({}), true);
+                        self.terminal_error = true;
+                    }
                 }
                 self.effects
                     .push(json!({"kind":"console","level":"error","text":data["text"]}));
@@ -734,7 +778,14 @@ impl Controller {
                 if !ok {
                     if r["after"] == "save" { self.cancel_save(); }
                     self.model["windowClosing"] = json!(false);
-                    self.notice("error.queue_full", json!({}), true);
+                    if r["after"] == "submit" || (r["after"] == "save" && self.text_mode) {
+                        self.settings(false);
+                        self.field_error("prompt-text", "error.queue_full");
+                    } else if r["after"] == "command" {
+                        self.field_error("command-key", "error.queue_full");
+                    } else {
+                        self.notice("error.queue_full", json!({}), true);
+                    }
                     return false;
                 }
                 let interrupted = self.animations.interrupt();
@@ -803,7 +854,9 @@ impl Controller {
                     self.log(r["error"].clone());
                     self.model["starting"] = json!(false);
                     self.notice(
-                        if operation == "load" {
+                        if text(&r["error"]).contains("Save database blocked") {
+                            "error.storage_blocked"
+                        } else if operation == "load" {
                             "error.load"
                         } else {
                             "error.storage_init"
@@ -828,14 +881,14 @@ impl Controller {
                 } else {
                     self.save_candidate(&r["request"], false);
                     self.log(r["error"].clone());
-                    self.notice("error.save", json!({}), true);
+                    self.notice(if text(&r["error"]).contains("Save database blocked") { "error.storage_blocked" } else { "error.save" }, json!({}), true);
                     self.cancel_save();
                 }
             }
             "save-delete" => {
                 if !ok {
                     self.log(r["error"].clone());
-                    self.notice("error.save", json!({}), true);
+                    self.notice(if text(&r["error"]).contains("Save database blocked") { "error.storage_blocked" } else { "error.save" }, json!({}), true);
                 }
             }
             "assets" => {
@@ -853,10 +906,14 @@ impl Controller {
                 if ok && valid {
                     self.assets_ready.insert(set.to_string());
                     self.model["ready"] = json!(self.assets_ready.contains("tiles") && self.assets_ready.contains("pixels"));
+                    if flag(&self.model["ready"]) { self.assets_error = false; }
                 } else {
                     self.state["runtimeError"] =
                         json!("Invalid tile dimensions or unavailable assets");
-                    self.notice("error.tiles", json!({}), true);
+                    if !self.assets_error {
+                        self.notice("error.tiles", json!({}), true);
+                        self.assets_error = true;
+                    }
                 }
             }
             "fullscreen" => {
@@ -889,6 +946,8 @@ impl Controller {
                     self.field("name", json!({"value":name}));
                 }
                 self.model["topNotice"] = Value::Null;
+                let field = if r["id"] == "random-seed" { "seed" } else { "name" };
+                self.model["fieldErrors"][field] = Value::Null;
             }
             _ => {}
         }
@@ -914,11 +973,13 @@ impl Controller {
                     "id":if e["message"].is_object() { &e["message"]["id"] } else { &e["id"] },
                     "error":e["error"],
                     "mobile_keyboard_hint":crate::log_visibility::keyboard_hint(&e["message"]),
+                    "transient_prompt":crate::log_visibility::interaction_prompt(&e["message"]),
                     "message":e["message"],
                     "text":self.entry_text(e),
                 }))
                 .collect::<Vec<_>>()
         );
+        self.model["loading"] = json!(flag(&self.model["starting"]) || self.restore_pending);
         self.model["input"] = self.input.clone();
         self.model["inputRequests"] = self.state["inputRequestCount"].clone();
         let m = tiles::manifest_ref(text(&self.model["displayMode"]));
@@ -946,7 +1007,7 @@ impl Controller {
             .unwrap_or_default();
         let message = entries
             .iter()
-            .rfind(|e| e["source"] == "game")
+            .rfind(|e| e["source"] == "game" && !crate::log_visibility::interaction_prompt(&e["message"]))
             .map(|e| self.entry_text(e))
             .unwrap_or_default();
         let mut result = self.model.clone();
@@ -986,12 +1047,12 @@ impl Controller {
                 self.model["displayMode"] = json!(mode);
                 self.model["tileSize"] = p["zoom"].clone();
                 self.model["animationEnabled"] = p["animation"].clone();
+                self.model["theme"] = p["theme"].clone();
                 self.animations.set_enabled(flag(&p["animation"]));
                 self.document();
                 self.field("name", json!({"value":"Player"}));
                 self.field("seed", json!({"value":"12345"}));
                 self.field("command-key", json!({"maxLength":1}));
-                self.notice("notice.start", json!({}), false);
                 self.retire_saves();
                 self.read_save(SaveOperation::Init);
                 self.effects.push(tiles::assets("tiles"));
@@ -1022,6 +1083,8 @@ impl Controller {
                     "compositionstart" => self.composing = true,
                     "compositionend" => self.composing = false,
                     "native-input" => {
+                        let id = text(&e["id"]);
+                        self.model["fieldErrors"][id] = Value::Null;
                         if e["id"] == "prompt-text" {
                             self.draft_dirty = true;
                         }
@@ -1077,14 +1140,19 @@ impl Controller {
                                     if effect["redraw"] == false {
                                         redraw = false;
                                     }
-                                    self.queue(
-                                        if effect["keys"].is_array() {
-                                            effect["keys"].clone()
-                                        } else {
-                                            json!([effect["key"]])
-                                        },
-                                        "send",
-                                    );
+                                    let keys = if effect["keys"].is_array() {
+                                        effect["keys"].clone()
+                                    } else {
+                                        json!([effect["key"]])
+                                    };
+                                    if self.ending()
+                                        && self.input["id"] == "input.finish_game"
+                                        && (keys == json!([13]) || keys == json!([27]))
+                                    {
+                                        self.invoke("result-top");
+                                    } else {
+                                        self.queue(keys, "send");
+                                    }
                                 }
                                 _ => self.effects.push(effect.clone()),
                             }
@@ -1101,14 +1169,16 @@ impl Controller {
                 view["blink"] = json!((number(&view["now"]) / 500).is_multiple_of(2));
                 let animation = self.animations.sample(view["now"].as_f64().unwrap_or(0.), text(&self.model["displayMode"]));
                 self.state["animation"] = animation.frames.clone();
+                self.state["projectiles"] = animation.projectiles.clone();
                 if self.model["frame"].is_object() {
                     self.model["frame"]["map_animation"] = animation.frames;
+                    self.model["frame"]["map_projectile_animation"] = animation.projectiles;
                 }
                 let visible = view["visible"].as_bool() != Some(false);
                 let mut result = self.ui.render(self.model.clone(), view);
                 commands = result["commands"].take();
                 let animated_map = commands.as_array().into_iter().flatten().any(|command| {
-                    command["op"] == "image" && text(&command["image"]).starts_with("animations-v1/")
+                    (command["op"] == "image" && text(&command["image"]).starts_with("animations-v1/")) || flag(&command["projectile"])
                 });
                 self.effects.push(json!({"kind":"animation-wake","delay":
                     if visible && animated_map && flag(&self.model["running"]) && !flag(&self.model["topOpen"]) {

@@ -114,7 +114,7 @@ impl Image {
         }
         Self::from_rgba(width, height, rgba)
     }
-    fn native_rotation(&self, degrees: f64) -> Result<Self, String> {
+    fn native_rotation(&self, degrees: f64, fit: bool) -> Result<Self, String> {
         if self.width != 32 || self.height != 32 || !degrees.is_finite() {
             return Err("Invalid native pixel image".into());
         }
@@ -124,8 +124,9 @@ impl Image {
         let sin = degrees.to_radians().sin();
         for y in 0..32 {
             for x in 0..32 {
-                let dx = x as f64 + 0.5 - 16.;
-                let dy = y as f64 + 0.5 - 16.;
+                let scale = if fit { std::f64::consts::SQRT_2 } else { 1. };
+                let dx = (x as f64 + 0.5 - 16.) * scale;
+                let dy = (y as f64 + 0.5 - 16.) * scale;
                 let sx = (dx * cos + dy * sin + 16.).floor() as i32;
                 let sy = (-dx * sin + dy * cos + 16.).floor() as i32;
                 if (0..32).contains(&sx) && (0..32).contains(&sy) {
@@ -160,7 +161,7 @@ fn byte_count(width: u32, height: u32) -> Result<usize, String> {
 
 pub struct ImageSet {
     images: BTreeMap<String, Image>,
-    rotated: BTreeMap<(String, u64), Image>,
+    rotated: BTreeMap<(String, u64, bool), Image>,
 }
 impl ImageSet {
     pub fn new(images: BTreeMap<String, Image>) -> Self {
@@ -208,16 +209,17 @@ impl ImageSet {
         name: &str,
         rotation: f64,
         pixel_art: bool,
+        fit: bool,
     ) -> Result<&Image, String> {
-        if rotation != 0. && pixel_art {
-            let key = (name.to_owned(), rotation.to_bits());
+        if (rotation != 0. || fit) && pixel_art {
+            let key = (name.to_owned(), rotation.to_bits(), fit);
             if !self.rotated.contains_key(&key) {
                 let image = self
                     .images
                     .get(name)
                     .ok_or_else(|| format!("Missing tile image: {name}"))?;
                 self.rotated
-                    .insert(key.clone(), image.native_rotation(rotation)?);
+                    .insert(key.clone(), image.native_rotation(rotation, fit)?);
             }
             Ok(&self.rotated[&key])
         } else {
@@ -237,7 +239,7 @@ pub(crate) fn draw_image(
     clip: Option<&Mask>,
 ) -> Result<(), String> {
     let rect = &command["rect"];
-    let (x, y, w, h) = (
+    let (mut x, mut y, mut w, mut h) = (
         super::number(&rect["x"]),
         super::number(&rect["y"]),
         super::number(&rect["w"]),
@@ -248,7 +250,12 @@ pub(crate) fn draw_image(
     }
     let rotation = super::number(&command["rotation"]);
     let pixel_art = command["pixelArt"].as_bool().unwrap_or(false);
-    let image = set.image(super::text(&command["image"]), rotation, pixel_art)?;
+    let fit = command["fitRotation"] == true;
+    let image = set.image(super::text(&command["image"]), rotation, pixel_art, fit)?;
+    if fit && !pixel_art {
+        let scale = std::f64::consts::FRAC_1_SQRT_2;
+        x += w * (1.-scale)/2.; y += h * (1.-scale)/2.; w *= scale; h *= scale;
+    }
     let degrees = if pixel_art { 0. } else { rotation };
     let flip = command["flipX"] == true;
     if degrees == 0.
@@ -393,6 +400,21 @@ fn blit_opaque(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn fitted_projectiles_keep_all_sprite_corners_and_native_opaque_pixels() {
+        let colors=[[255,0,0,255],[0,255,0,255],[0,0,255,255],[255,255,0,255]];
+        let mut rgba=vec![0;32*32*4];
+        for (index,(x,y)) in [(0,0),(24,0),(0,24),(24,24)].into_iter().enumerate() {
+            for py in y..y+8 { for px in x..x+8 { let i=(py*32+px)*4;rgba[i..i+4].copy_from_slice(&colors[index]); } }
+        }
+        let image=Image::from_rgba(32,32,rgba).unwrap();
+        for angle in (0..360).step_by(15) {
+            let rotated=image.native_rotation(f64::from(angle),true).unwrap();
+            for color in colors { assert!(rotated.rgba.chunks_exact(4).any(|pixel|pixel==color),"corner clipped at {angle}"); }
+            assert!(rotated.rgba.chunks_exact(4).all(|pixel|matches!(pixel[3],0|255)));
+        }
+    }
 
     #[test]
     fn opaque_tile_scaling_cache_preserves_pixels_when_size_and_facing_change() {

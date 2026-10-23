@@ -176,6 +176,9 @@ pub(crate) fn map_actor(observation: rogue_display::map::ActorObservation) {
             .push(observation);
     });
 }
+pub(crate) fn map_projectile(observation: rogue_display::projectile::Observation) {
+    map_actor(rogue_display::map::ActorObservation::Projectile(observation));
+}
 #[cfg(feature = "test-hooks")]
 pub(crate) fn cached_frame() -> Option<Value> {
     RUNTIME.with(|runtime| {

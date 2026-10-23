@@ -1,3 +1,6 @@
+// Death AA layout and original ending transitions; contract: docs/ORIGINAL-SPEC-ja.md.
+import {runGame} from "../run-game.mjs";
+import {prepareBrowserRuntime} from "./browser-runtime.mjs";
 import {fixtureWorker} from "./fixture-worker.mjs";
 import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
@@ -11,47 +14,86 @@ import {createPreviewServer} from '../../../tools/server.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const output=artifactDirectory(path.join(root,'tests/browser-smoke/output/ending-screens'));
 await mkdir(output,{recursive:true});
+const runtime=await prepareBrowserRuntime(root);
 const {chromium} = loadPlaywright();
-const browser=await chromium.launch({executablePath:browserExecutable(),headless:true});
+const browser=await chromium.launch({executablePath:browserExecutable(),headless:true,downloadsPath:runtime.downloadsPath});
 const server=createPreviewServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const worker=await readFile(path.join(root,'web/worker.js'),'utf8');
 const headers={'Cross-Origin-Opener-Policy':'same-origin','Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'};
 const evidence={checks:[],errors:[],video:false};
 let context,page;
 try{
- for(const mobile of [false,true])for(const language of ['ja','en'])for(const fixture of ['ending-victory','ending-death','ending-no-tomb']){
-  await context?.close();context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1400,height:1050},isMobile:mobile,hasTouch:mobile});
+ for(const width of [1400,390,320])for(const language of ['ja','en'])for(const fixture of ['ending-victory','ending-death','ending-no-tomb']){
+  const mobile=width<700,name=mobile?(language==='ja'?'長い名前の冒険者あいうえおか':'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvw'):'EndingCheck';
+  let journal='';
+  await context?.close();context=await browser.newContext({viewport:{width,height:mobile?(width===320?720:844):1050},isMobile:mobile,hasTouch:mobile});
   await context.route('**/web/worker.js',r=>r.fulfill({body:fixtureWorker(worker,fixture),contentType:'text/javascript',headers}));
-  await context.route('**/build/game.wasm',r=>r.fulfill({path:path.join(root,'build/game-fixtures.wasm'),contentType:'application/wasm',headers}));
+  await context.route('**/build/game.wasm',r=>r.fulfill({path:path.join(root,'build/item-use-fixtures.wasm'),contentType:'application/wasm',headers}));
   page=await context.newPage();await installBrowserTestAdapter(page);page.setDefaultTimeout(12000);page.on('pageerror',e=>evidence.errors.push(e.message));
-  const state=()=>page.evaluate(()=>({ui:__rogueBrowserTest.frame?.ui,running:__rogueBrowserTest.running,input:__rogueBrowserTest.inputRequestCount,diagnostics:__rogueBrowserTest.diagnostics}));
+  const state=()=>page.evaluate(()=>({ui:__rogueBrowserTest.frame?.ui,running:__rogueBrowserTest.running,input:__rogueBrowserTest.inputRequestCount,diagnostics:__rogueBrowserTest.diagnostics,trace:__rogueBrowserTest.trace,commands:__rogueBrowserTest.commands,scene:__rogueBrowserTest.canvas}));
   const draw=()=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
-  async function click(id){await draw();const c=await page.evaluate(id=>__rogueBrowserTest.canvas.controls.find(c=>c.id===id&&!c.disabled),id);assert.ok(c,id);const x=c.rect.x+c.rect.w/2,y=c.rect.y+c.rect.h/2;if(mobile)await page.touchscreen.tap(x,y);else await page.mouse.click(x,y);await draw();}
+  async function click(id){await draw();const c=await page.evaluate(id=>__rogueBrowserTest.canvas.controls.find(c=>c.id===id&&!c.disabled),id);assert.ok(c,id);const bounds=await page.locator('#rogue-canvas').boundingBox();const x=bounds.x+c.rect.x+c.rect.w/2,y=bounds.y+c.rect.y+c.rect.h/2;if(mobile)await page.touchscreen.tap(x,y);else await page.mouse.click(x,y);await draw();}
   async function field(id,value){await click(id);await page.keyboard.press('Control+a');await page.keyboard.insertText(value);}
   const actions=[];
-  async function next(id){const n=(await state()).input;await click(id);await page.waitForFunction(n=>!__rogueBrowserTest.queuePending&&(__rogueBrowserTest.inputRequestCount>n||!__rogueBrowserTest.running),n);await draw();const s=await state();actions.push({control:id,input:s.ui.input,scopes:[...new Set(s.ui.lines.map(l=>l.scope))],lines:s.ui.lines.map(l=>l.text)});return s;}
+  async function equivalent(){const expected=await runGame(path.join(root,'build/item-use-fixtures.wasm'),{fixture,name,seed:17,locale:language,messagePaging:'log',text:journal});assert.deepEqual((await state()).trace.words,expected.traces.at(-1).words,'C state and RNG');}
+  async function next(id){journal+=id==='window-32'?' ':String.fromCharCode(13);const n=(await state()).input;if(mobile){await click(id);}else{await page.locator('#rogue-canvas').focus();await page.keyboard.press(id==='window-32'?'Space':'Enter');}await page.waitForFunction(n=>!__rogueBrowserTest.queuePending&&(__rogueBrowserTest.inputRequestCount>n||!__rogueBrowserTest.running),n);await draw();const s=await state();actions.push({control:id,input:s.ui?.input,scopes:[...new Set((s.ui?.lines||[]).map(l=>l.scope))],lines:(s.ui?.lines||[]).map(l=>l.text)});return s;}
   await page.goto('http://127.0.0.1:'+server.address().port+'/?trace=1&view=pixels&lang='+language);
-  await page.waitForFunction(()=>window.__rogueBrowserTest?.canvas.paintCount>0);
-  await field('seed','17');await field('name','EndingCheck');await click('new-game');
+  await page.waitForFunction(()=>window.__rogueBrowserTest?.diagnostics?.ready);await draw();
+  await field('seed','17');await field('name',name);await click('new-game');
   await page.waitForFunction(()=>__rogueBrowserTest.frame?.ui.window&&__rogueBrowserTest.inputRequestCount>0&&!__rogueBrowserTest.queuePending);
-  const label=(mobile?'mobile':'desktop')+'-'+language+'-'+fixture;
+  const label=(mobile?'mobile':'desktop')+'-'+width+'-'+language+'-'+fixture;
+  await draw();const initial=await state();await equivalent();
+  const frames=initial.commands.filter(c=>c.op==='text'&&c.mono&&c.text.includes('___________________'));
+  assert.equal(frames.length,fixture==='ending-death'?1:0,'AA belongs to the tombstone only');
+  if(fixture==='ending-death'){
+   const text=initial.commands.filter(c=>c.op==='text'&&!c.mono).map(c=>c.text).join('');
+   for(const line of initial.ui.lines.filter(l=>l.scope==='tombstone'))assert.ok(text.includes(line.text),'Tomb content preserved: '+line.text);
+   const panel=initial.scene.dialogRect,body=initial.scene.regions.dialog.rect;
+   for(const c of initial.commands.filter(c=>c.op==='text'&&c.mono)){assert.ok(c.x>=body.x&&c.x<body.x+body.w);}
+   for(const c of initial.scene.controls.filter(c=>c.id==='window-13'||c.id==='result-top'))assert.ok(c.rect.y+c.rect.h<=panel.y+panel.h);
+   assert.ok(!text.includes(language==='ja'?'Enterで続ける':'Press return'),'No duplicated instruction');
+  }
   await page.screenshot({path:path.join(output,label+'-initial.png')});
+  if(width===320&&fixture==='ending-death'){
+   const before=(await state()).trace;
+   await page.setViewportSize({width:320,height:360});await page.waitForFunction(()=>__rogueBrowserTest.canvas.height<360);await draw();
+   const short=await state(),region=short.scene.regions.dialog;
+   assert.ok(region.max>0,'Short viewport scrolls the tombstone');
+   const bounds=await page.locator('#rogue-canvas').boundingBox(),cdp=await context.newCDPSession(page);
+   for(let i=0;i<12&&(await state()).scene.scrolls.dialog<region.max;i++){
+    const x=bounds.x+region.rect.x+region.rect.w/2,y=bounds.y+region.rect.y+region.rect.h-8,d=Math.max(16,region.rect.h-16);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y,id:1}]});
+    for(let j=1;j<=6;j++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y-d*j/6,id:1}]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await draw();
+   }
+   assert.equal((await state()).scene.scrolls.dialog,region.max,'The grave base is reachable by touch');
+   await page.screenshot({path:path.join(output,label+'-short-scrolled.png')});
+   assert.deepEqual((await state()).trace,before,'Scrolling does not send game input');
+   await page.setViewportSize({width:320,height:720});await page.waitForFunction(()=>__rogueBrowserTest.canvas.height>600);await draw();
+   assert.equal((await state()).scene.scrolls.dialog,0,'Growing the viewport reveals the complete tomb');
+  }
   if(fixture==='ending-victory'){
    assert.ok((await state()).ui.lines.some(l=>l.id==='ui.ending.victory_title'));
    const loot=await next('window-32');assert.ok(loot.ui.lines.some(l=>l.id==='ui.ending.loot_columns'));
    await page.screenshot({path:path.join(output,label+'-loot.png')});
   }
   const score=await next('window-13');
+  await equivalent();
+  assert.ok(!score.commands.some(c=>c.op==='text'&&c.mono&&c.text.includes('___________________')),'Ranking replaces AA');
   assert.ok(score.ui.lines.some(l=>l.id==='ui.score.heading'));
   assert.ok(score.ui.lines.some(l=>l.id==='ui.score.entry'||l.id==='ui.score.entry_death'));
   assert.ok(score.ui.lines.every(l=>l.scope==='score'||l.scope==='death'&&l.id==='ui.ending.return'),'score replaces old ending/valuation content and retains the final acknowledgement');
   await page.screenshot({path:path.join(output,label+'-score.png')});
-  if(fixture!=='ending-victory')await next('window-13');
+  if(fixture!=='ending-victory'){
+   assert.equal(await page.locator('[data-control="window-13"]').getAttribute('aria-label'),(mobile?'':'Enter) ')+(language==='ja'?'トップ画面に戻る':'Return to title'));
+   await next('window-13');
+   await page.waitForFunction(()=>__rogueBrowserTest.topOpen&&!__rogueBrowserTest.running);
+  }
   const final=await state();assert.equal(final.running,false);assert.equal(final.diagnostics.exitCode,fixture==='ending-victory'?2:1);
   assert.equal(final.diagnostics.runtimeError,null);assert.deepEqual(final.diagnostics.translationFallbacks,[]);assert.deepEqual(final.diagnostics.uiMissing,[]);
-  await click('result-top');assert.equal(await page.evaluate(()=>__rogueBrowserTest.topOpen),true);
+  if(fixture==='ending-victory')await click('result-top');assert.equal(await page.evaluate(()=>__rogueBrowserTest.topOpen),true);
   evidence.checks.push({label,actions,outcome:final.diagnostics.outcome,exit:final.diagnostics.exitCode,returnedToTop:true});console.log('PASS '+label);
  }
  assert.deepEqual(evidence.errors,[]);evidence.result='pass';
 }catch(error){evidence.result='fail';evidence.failure=error.stack;await page?.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});throw error;}
-finally{await writeFile(path.join(output,'evidence.json'),JSON.stringify(evidence,null,2));await context?.close();await browser.close();await new Promise(r=>server.close(r));}
+finally{await writeFile(path.join(output,'evidence.json'),JSON.stringify(evidence,null,2));await context?.close();await browser.close();await new Promise(r=>server.close(r));await runtime.dispose();}

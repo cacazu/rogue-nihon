@@ -33,8 +33,3 @@ test("Version footer links only to GitHub and README leads to license guidance",
   const guide = await readFile(new URL("../../docs/LICENSES-ja.md", import.meta.url), "utf8");
   assert.match(guide, /https:\/\/raw\.githubusercontent\.com\/cacazu\/roguelike-nihon\/main\/rogue-nihon\/distribution\/rogue-5\.4\.4-licenses\.zip/);
 });
-
-test("Selection guidance describes only the user's action", () => {
-  assert.equal(catalogs.ja.messages['instruction.selection'], '表示された持ち物キーで選びます。');
-  assert.equal(catalogs.en.messages['instruction.selection'], 'Choose a displayed item key.');
-});

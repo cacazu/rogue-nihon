@@ -24,7 +24,6 @@ type CanvasObserver = (ResizeObserver, Closure<dyn FnMut()>);
 
 thread_local! {
     static HOST: RefCell<Option<Rc<Browser>>> = const { RefCell::new(None) };
-    static STARTUP_ERROR: RefCell<Option<Listener>> = const { RefCell::new(None) };
     #[cfg(feature = "browser-test")]
     static PAINT_TIMINGS: RefCell<Vec<[f64; 6]>> = const { RefCell::new(Vec::new()) };
 }
@@ -164,40 +163,18 @@ fn startup_error(window: &Window, document: &Document) -> Result<(), JsValue> {
     let panel: HtmlElement = document.create_element("section")?.dyn_into()?;
     panel.set_id("rogue-startup-error");
     panel.set_attribute("role", "alert")?;
-    panel.style().set_css_text("position:fixed;top:80px;left:16px;right:16px;padding:24px;background:#152126;color:#e8ebed;border:1px solid #3b4d53;z-index:10");
+    panel.style().set_css_text("position:fixed;top:80px;left:16px;right:16px;padding:24px;background:#000000;color:#ffffff;border:1px solid #ffffff;z-index:10");
     let message = document.create_element("p")?;
     message.set_text_content(Some(if english {
-        "The screen could not be loaded. Please reload."
+        "Could not display the screen."
     } else {
-        "画面を読み込めませんでした。再読み込みしてください。"
+        "画面を表示できませんでした。"
     }));
     panel.append_child(&message)?;
-    let retry: HtmlButtonElement = document.create_element("button")?.dyn_into()?;
-    retry.set_type("button");
-    retry.set_text_content(Some(if english { "Reload" } else { "再読み込み" }));
-    retry
-        .style()
-        .set_css_text("font:inherit;min-height:48px;padding:8px 24px");
-    let retry_window = window.clone();
-    let callback = Closure::new(move |_: Event| {
-        if let Err(failure) = retry_window.location().reload() {
-            error(failure);
-        }
-    });
-    retry.add_event_listener_with_callback("click", callback.as_ref().unchecked_ref())?;
-    panel.append_child(&retry)?;
     document
         .body()
         .ok_or_else(|| JsValue::from_str("Page body unavailable"))?
         .append_child(&panel)?;
-    STARTUP_ERROR.with(|slot| {
-        *slot.borrow_mut() = Some(Listener {
-            target: retry.into(),
-            name: "click".into(),
-            capture: false,
-            callback,
-        })
-    });
     Ok(())
 }
 async fn start_main(window: Window, document: Document) -> Result<(), JsValue> {
@@ -504,7 +481,7 @@ impl Browser {
         })?;
         self.listen(self.document.as_ref(), "keydown", true, |host, e| {
             let k: KeyboardEvent = e.clone().dyn_into()?;
-            host.event(json!({"type":"key","key":k.key(),"shift":k.shift_key(),"shiftKey":k.shift_key(),"ctrlKey":k.ctrl_key(),"altKey":k.alt_key(),"metaKey":k.meta_key(),"repeat":k.repeat(),"native":host.document.active_element().map(|e| e.id()),"composing":k.is_composing(),"keyCode":k.key_code()}), Some(e))?; Ok(())
+            host.event(json!({"type":"key","key":k.key(),"code":k.code(),"location":k.location(),"shift":k.shift_key(),"shiftKey":k.shift_key(),"ctrlKey":k.ctrl_key(),"altKey":k.alt_key(),"metaKey":k.meta_key(),"repeat":k.repeat(),"native":host.document.active_element().map(|e| e.id()),"composing":k.is_composing(),"keyCode":k.key_code()}), Some(e))?; Ok(())
         })?;
         for name in ["blur", "pagehide"] {
             self.listen(self.window.as_ref(), name, false, move |host, _| {

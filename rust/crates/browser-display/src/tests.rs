@@ -88,6 +88,7 @@ fn utf8_budgets_seed_bounds_and_controls() {
     assert!(valid_text(&"勇者".repeat(8), 49, false));
     assert!(!valid_text(&"勇者".repeat(9), 49, false));
     assert!(!valid_text("勇者\0", 49, false));
+    assert!(!valid_text("勇者\u{85}", 49, false));
     assert!(!valid_text("", 49, false));
     assert!(valid_text("", 50, true));
     for input in ["", "-1", "4294967296", "1.5", "NaN", "inf"] {
@@ -106,7 +107,7 @@ fn preference_corruption_and_shared_continuous_zoom() {
     ] {
         assert_eq!(
             preference(raw),
-            json!({"version":1,"mode":"tiles","zoom":32,"animation":true})
+            json!({"version":1,"mode":"tiles","zoom":32,"animation":true,"theme":"default"})
         );
     }
     assert_eq!(
@@ -125,14 +126,14 @@ fn catalogs_keep_literal_arguments_and_report_missing_without_fallback() {
     assert!(
         c.label(
             "ja",
-            "notice.input_flush",
-            &json!({"count":"<script>1</script>"})
+            "random.name",
+            &json!({"number":"<script>1</script>"})
         )
         .contains("<script>1</script>")
     );
     assert!(
         c.label("ja", "missing.id", &json!({}))
-            .contains("Missing UI catalog entry")
+            .contains("画面を表示できませんでした。")
     );
     assert_eq!(
         c.missing,
@@ -463,4 +464,193 @@ fn animation_switch_persists_without_game_input_and_old_preferences_default_on()
     let r=restored.request(json!({"type":"boot","environment":{"isolated":true,"parameters":{}},"preference":stored["value"]}));
     assert_eq!(r["state"]["animationEnabled"],false);
     assert_eq!(preference(r#"{"version":1,"mode":"tiles","zoom":32}"#)["animation"],true);
+}
+
+#[test]
+fn transient_prompts_do_not_include_gameplay_questions_or_literal_names() {
+    use crate::log_visibility::interaction_prompt;
+    for id in [
+        "misc.get_dir.which_direction", "pack.get_item.for_list",
+        "rings.gethand.left_hand_or_right_hand", "rings.gethand.left_or_right_ring",
+        "command.call.what_do_you_want_to_call_it", "command.call.call_it",
+        "misc.call_it.what_do_you_want_to_call_it", "misc.call_it.call_it",
+        "input.choose_item_list", "input.confirm",
+    ] {
+        let question = json!({"id":id,"args":[],"text":"question"});
+        assert!(interaction_prompt(&question), "{id}");
+        let sequence = json!({"id":"message.sequence","args":[{"kind":"message_part","value":question}],"text":"assembled question"});
+        assert!(interaction_prompt(&sequence), "assembled {id}");
+        assert!(interaction_prompt(&json!({"id":"command.command.string","args":[{"kind":"entity","value":{
+            "type":"message","id":sequence["id"],"args":sequence["args"]}}],"text":"recalled question"})), "recall {id}");
+    }
+    for (id, args, text) in [
+        ("potions.quaff.yuk_why_would_you_want_to_drink_that", json!([]), "Why would you want to drink that?"),
+        ("command.call.called", json!([{"kind":"string","value":"どれを使う？ (* for list)"}]), "どれを使う？ (* for list)という名前"),
+        ("sticks.do_zap.nothing_happens", json!([]), "nothing happens"),
+        ("platform.save_error", json!([]), "save failed"),
+    ] {
+        assert!(!interaction_prompt(&json!({"id":id,"args":args,"text":text})), "{id}");
+    }
+}
+
+
+#[test]
+fn ui_theme_persists_without_game_input_and_old_preferences_keep_the_default() {
+    assert_eq!(preference(r#"{"version":1,"mode":"pixels","zoom":32}"#)["theme"],"default");
+    assert_eq!(preference(r#"{"version":1,"mode":"pixels","zoom":32,"theme":"unknown"}"#)["theme"],"default");
+    let mut c=boot();
+    let r=event(&mut c,json!({"type":"select","id":"theme","value":"green-black"}));
+    assert_eq!(r["state"]["theme"],"green-black");
+    let effects=r["effects"].as_array().unwrap();
+    assert!(!effects.iter().any(|e| e["kind"]=="queue" || e["kind"]=="worker-start"));
+    let saved=effects.iter().find(|e| e["kind"]=="storage-write").unwrap();
+    let saved: Value=serde_json::from_str(text(&saved["value"])).unwrap();assert_eq!(saved["theme"],"green-black");
+    let doc=effects.iter().find(|e| e["kind"]=="document").unwrap();assert_eq!(doc["foreground"],"#00ff66");
+    assert_eq!(event(&mut c,json!({"type":"select","id":"theme","value":"unknown"}))["state"]["theme"],"green-black");
+    let mut restored=Controller::new(measure);
+    let r=restored.request(json!({"type":"boot","preference":saved.to_string(),"environment":{"isolated":true,"parameters":{}}}));
+    assert_eq!(r["state"]["theme"],"green-black");
+}
+
+
+#[test]
+fn system_notifications_keep_only_results_and_failures_in_history() {
+    let mut c = boot();
+    assert_eq!(c.snapshot()["entries"], json!([]));
+    event(&mut c, json!({"type":"invoke","id":"new-game"}));
+    assert_eq!(c.snapshot()["loading"], true);
+    assert_eq!(c.snapshot()["entries"], json!([]));
+    c.request(json!({"type":"worker","generation":1,"data":{"type":"ready"}}));
+    for data in [
+        json!({"type":"message","id":"save.browser","text":"internal save guidance"}),
+        json!({"type":"input-flush","events":[108],"count":1}),
+        json!({"type":"input-request"}),
+        json!({"type":"outcome","code":0}),
+    ] { c.request(json!({"type":"worker","generation":1,"data":data})); }
+    let state = c.snapshot();
+    assert_eq!(state["entries"], json!([]));
+    assert_eq!(state["messages"], json!([]));
+    assert_eq!(state["loading"], false);
+    let mut history = History::default();
+    history.message(json!({"id":"save.browser","text":"restored old guidance"}));
+    assert!(history.entries.is_empty());
+}
+
+#[test]
+fn input_errors_are_specific_local_and_clear_when_edited() {
+    for (name, seed, field, id) in [
+        ("Player".to_string(), "-1", "seed", "error.seed"),
+        ("勇者".repeat(9), "17", "name", "error.name"),
+        ("勇者\0".to_string(), "17", "name", "error.name_characters"),
+        ("勇者\u{85}".to_string(), "17", "name", "error.name_characters"),
+    ] {
+        let mut c = boot();
+        let r = c.request(json!({"type":"event","inputs":{"name":{"value":name},"seed":{"value":seed}},"event":{"type":"invoke","id":"new-game"}}));
+        assert_eq!(r["state"]["fieldErrors"][field]["id"], id);
+        assert_eq!(r["state"]["entries"], json!([]));
+        for width in [320, 390, 1240] {
+            let r = c.request(json!({"type":"render","view":{"width":width,"height":844}}));
+            let mut catalog = Catalog::default();
+            let message = catalog.label("ja", id, &json!({}));
+            let painted = r["commands"].as_array().unwrap().iter().filter(|command| command["op"] == "text")
+                .map(|command| text(&command["text"])).collect::<String>();
+            assert!(painted.contains(&message), "{width}: {message}");
+        }
+        let r = event(&mut c, json!({"type":"native-input","id":field}));
+        assert_eq!(r["state"]["fieldErrors"][field], Value::Null);
+    }
+    let mut c = boot();
+    let r = c.request(json!({"type":"event","inputs":{"name":{"value":""},"seed":{"value":"17"}},"event":{"type":"invoke","id":"new-game"}}));
+    assert!(r["effects"].as_array().unwrap().iter().any(|effect| effect["kind"] == "worker-start" && effect["name"] == "Player"));
+}
+
+#[test]
+fn prompt_errors_do_not_escape_to_history_or_submit_bad_text() {
+    let mut c = boot(); start(&mut c);
+    c.request(json!({"type":"worker","generation":1,"data":{"type":"input-context","input":{"kind":"text","limit_bytes":50}}}));
+    for (value, id) in [("勇".repeat(17), "error.prompt_text"), ("勇\u{7f}".to_string(), "error.prompt_text_characters"), ("勇\u{85}".to_string(), "error.prompt_text_characters")] {
+        let r = c.request(json!({"type":"event","inputs":{"prompt-text":{"value":value}},"event":{"type":"submit","id":"prompt-text"}}));
+        assert_eq!(r["state"]["fieldErrors"]["prompt-text"]["id"], id);
+        assert_eq!(r["state"]["entries"], json!([]));
+        assert!(!r["effects"].as_array().unwrap().iter().any(|effect| effect["kind"] == "queue"));
+    }
+    event(&mut c, json!({"type":"compositionstart"}));
+    let r = event(&mut c, json!({"type":"submit","id":"prompt-text"}));
+    assert_eq!(r["state"]["fieldErrors"]["prompt-text"]["id"], "error.text_composing");
+    let r = c.request(json!({"type":"worker","generation":1,"data":{"type":"message","id":"platform.name_error","text":"この名前は使えません。"}}));
+    assert_eq!(r["state"]["fieldErrors"]["prompt-text"]["id"], "platform.name_error");
+    assert_eq!(r["state"]["entries"], json!([]));
+}
+
+#[test]
+fn terminal_failures_and_repeated_asset_failure_produce_one_notice() {
+    for id in ["platform.input_limit", "platform.name_error", "platform.restore_error", "platform.error"] {
+        let mut c = boot(); start(&mut c);
+        for data in [
+            json!({"type":"message","id":id,"text":"failure"}),
+            json!({"type":"exit","code":-1}),
+            json!({"type":"error","text":"startup or runtime failure"}),
+        ] { c.request(json!({"type":"worker","generation":1,"data":data})); }
+        assert_eq!(c.snapshot()["entries"].as_array().unwrap().len(), 1, "{id}");
+    }
+    let mut c = boot();
+    for set in ["tiles", "pixels"] {
+        c.request(json!({"type":"api","operation":"assets","ok":false,"set":set,"error":"missing assets"}));
+    }
+    assert_eq!(c.snapshot()["entries"].as_array().unwrap().len(), 1);
+}
+
+
+#[test]
+fn text_save_validation_and_transport_errors_reveal_the_input_field() {
+    let mut c = boot(); start(&mut c);
+    c.request(json!({"type":"worker","generation":1,"data":{"type":"input-context","input":{"kind":"text","limit_bytes":50}}}));
+    event(&mut c, json!({"type":"invoke","id":"settings-toggle"}));
+    let r = c.request(json!({"type":"event","inputs":{"prompt-text":{"value":"勇".repeat(17)}},"event":{"type":"native-input","id":"prompt-text"}}));
+    assert_eq!(r["state"]["settingsOpen"], true);
+    let r = event(&mut c, json!({"type":"invoke","id":"settings-top"}));
+    assert_eq!(r["state"]["settingsOpen"], false);
+    assert_eq!(r["state"]["fieldErrors"]["prompt-text"]["id"], "error.prompt_text");
+    assert!(!r["effects"].as_array().unwrap().iter().any(|effect| effect["kind"] == "queue"));
+    for after in ["submit", "save"] {
+        let r = c.request(json!({"type":"api","operation":"queue","ok":false,"after":after}));
+        assert_eq!(r["state"]["fieldErrors"]["prompt-text"]["id"], "error.queue_full");
+        assert_eq!(r["state"]["entries"], json!([]));
+    }
+    c.request(json!({"type":"worker","generation":1,"data":{"type":"input-context","input":{"kind":"command"}}}));
+    let r = c.request(json!({"type":"api","operation":"queue","ok":false,"after":"send"}));
+    assert_eq!(r["state"]["entries"][0]["id"], "error.queue_full");
+}
+
+
+#[test]
+fn separate_failures_can_repeat_after_editing_the_title_form() {
+    let mut c = boot();
+    c.request(json!({"type":"api","operation":"fullscreen","ok":false,"error":"denied"}));
+    c.request(json!({"type":"api","operation":"random","ok":true,"id":"random-seed","value":17}));
+    let r = c.request(json!({"type":"api","operation":"fullscreen","ok":false,"error":"denied"}));
+    assert_eq!(r["state"]["topNotice"]["id"], "error.fullscreen");
+    assert_eq!(r["state"]["entries"].as_array().unwrap().len(), 2);
+}
+
+
+#[test]
+fn save_help_is_removed_from_single_answers_lists_and_recall_without_touching_literal_names() {
+    let answer = json!({"id":"command.help.string_string","args":[{"kind":"string","value":"S"},{"kind":"term","value":"help.save"}],"text":"S: save the game"});
+    let entry = json!({"id":"ui.help.entry","args":[{"kind":"string","value":"S"},{"kind":"term","value":"help.save"}],"text":"S: save the game"});
+    let recall = json!({"id":"command.command.string","args":[{"kind":"entity","value":{"type":"message","id":answer["id"],"args":answer["args"]}}],"text":"S: save the game"});
+    let mut history = History::default();
+    for message in [answer.clone(), entry.clone(), recall] {
+        assert!(crate::log_visibility::removed_guidance(&message));
+        history.message(message);
+    }
+    assert!(history.entries.is_empty());
+    let literal = json!({"id":"command.call.called","args":[{"kind":"string","value":"help.save"}],"text":"called help.save"});
+    assert!(!crate::log_visibility::removed_guidance(&literal));
+    let mut c = boot(); start(&mut c);
+    c.request(json!({"type":"worker","generation":1,"data":{"type":"frame","width":3,"height":3,"cells":"   .@.   ","player":{"x":1,"y":1},"map_cells":"   .@.   ","map_tiles":[0,0,0,1,8,1,0,0,0],"map_tile_ids":&rogue_display::map_tiles::IDS[..],"map_unknown_glyphs":[],"ui":{"mode":"help","input":{"kind":"space"},"message":answer,"window":{"kind":"help","message":answer},"lines":[entry,literal]}}}));
+    let state=c.snapshot();
+    assert_eq!(state["presentation"]["lines"].as_array().unwrap().len(), 1);
+    assert_eq!(state["presentation"]["message"], Value::Null);
+    assert_eq!(state["presentation"]["window"]["message"], Value::Null);
 }

@@ -197,7 +197,7 @@
     {
       "file": "save.c",
       "original_sha256": "67e2fba1684fcf178cb4eeb869f351421bda81909430636366640f4dad38c51a",
-      "split_sha256": "c6afc856976c2706ca8cf529f2a2b4b15765ca8b9120ade46f2ec7e6a95d4ed2",
+      "split_sha256": "96420ac97fb1e35947350ee6ed5f790f1f425955a65b655ed2cefecf20325938",
       "byte_identical": false,
       "review_scope": "Dispatch browser checkpoint serialization instead of native file/process restoration.",
       "diff": "split-diffs/save.c.diff"
@@ -221,9 +221,9 @@
     {
       "file": "sticks.c",
       "original_sha256": "2ae39b1244daa71f4da527875f8e7832f72ebb4bbf149336e87f02d656763d55",
-      "split_sha256": "2ae39b1244daa71f4da527875f8e7832f72ebb4bbf149336e87f02d656763d55",
-      "byte_identical": true,
-      "review_scope": "original bytes unchanged",
+      "split_sha256": "3e7569d3061603ff3234a33284cd5a5eb41c8db74567ac62334e5ad24ef3c0ab",
+      "byte_identical": false,
+      "review_scope": "Observe public actor actions and original projectile traversal for rendering; original movement, hits, bounces, charges, RNG and refresh order retained.",
       "diff": "split-diffs/sticks.c.diff"
     },
     {
@@ -245,9 +245,9 @@
     {
       "file": "weapons.c",
       "original_sha256": "db4bd8337bf8c60fe8042e2142112610fa473babc2321bd9f5cffe8a728d74ed",
-      "split_sha256": "db4bd8337bf8c60fe8042e2142112610fa473babc2321bd9f5cffe8a728d74ed",
-      "byte_identical": true,
-      "review_scope": "original bytes unchanged",
+      "split_sha256": "14a9d2162fed81f7a566b9f05b6bf3eb2abfc86aa3ca2520e36079304b1556f7",
+      "byte_identical": false,
+      "review_scope": "Observe public actor actions and original projectile traversal for rendering; original movement, hits, bounces, charges, RNG and refresh order retained.",
       "diff": "split-diffs/weapons.c.diff"
     },
     {
@@ -286,7 +286,7 @@
     },
     {
       "file": "semantic.c",
-      "sha256": "87ec4f955e3922c285ca75249be44d728bf12495e4e7f12c45f15b5a1d340a81"
+      "sha256": "54b3dbf90073e3e39f4ac2cf3d27dfe77a986e97ba100c9969c8f2ee98a8a12d"
     }
   ],
   "limits": [

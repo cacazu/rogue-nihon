@@ -326,7 +326,7 @@ impl Renderer {
                     );
                 }
             }
-            blit_glyph(&mut self.frame, &image, left, top, ink, state, false);
+            blit_glyph(&mut self.frame, &image, left, top, ink, state, command["monochrome"].as_bool().unwrap_or(false));
         }
         Ok(())
     }
@@ -660,6 +660,46 @@ mod tests {
                 .chunks_exact(4)
                 .any(|p| p[..3] == [255, 255, 255])
         );
+    }
+    #[test]
+    fn centered_text_measurement_matches_painted_ink() {
+        let mut renderer = renderer();
+        for label in ["On", "Off", "オン", "オフ", "Animation", "アニメーション", "落とす", "戻る"] {
+            let m = renderer.measure(label, 17., false, false);
+            for ratio in [1., 2.] {
+                for phase in [0., 0.25, 0.5, 0.75] {
+                    let y = 24. + phase - (m.ascent + m.descent) / 2. + m.ascent;
+                    let width = (256. * ratio) as usize;
+                    let height = (50. * ratio) as usize;
+                    renderer.render(width as u32, height as u32, ratio,
+                        &[json!({"op":"text","text":label,"x":8.,"y":y,"size":17.,"color":"#fff"})],
+                        &mut BTreeMap::new()).unwrap();
+                    let mut top = height;
+                    let mut bottom = 0;
+                    for row in 0..height {
+                        if renderer.rgba()[row * width * 4..(row + 1) * width * 4].chunks_exact(4).any(|p| p[0] > 0) {
+                            top = top.min(row);
+                            bottom = bottom.max(row + 1);
+                        }
+                    }
+                    let center = (top + bottom) as f64 / 2.;
+                    let expected = (24. + phase) * ratio;
+                    assert!((center - expected).abs() <= 1.,
+                        "{label} at ratio {ratio}, phase {phase}: ink center {center}, expected {expected}");
+                }
+            }
+        }
+    }
+    #[test]
+    fn monochrome_ui_glyphs_use_the_requested_ink_including_color_emoji() {
+        let mut renderer=renderer();
+        renderer.render(180,60,1.,&[json!({"op":"text","text":"💪👑文字","x":4,"y":4,"size":28,
+            "color":"#00ff66","monochrome":true})],&mut BTreeMap::new()).unwrap();
+        assert!(renderer.rgba().chunks_exact(4).any(|p| p[1]>100));
+        for pixel in renderer.rgba().chunks_exact(4) {
+            assert_eq!(pixel[0],0,"All UI glyphs use green ink");
+            assert!((i32::from(pixel[2])*255-i32::from(pixel[1])*102).abs()<=255);
+        }
     }
     #[test]
     fn japanese_combining_emoji_and_monospace_share_measurement_and_painting() {

@@ -123,6 +123,9 @@ pub fn render(ui: &Value, language: &str) -> Value {
         "options" => "window.options",
         "score" | "death" | "tombstone" | "victory" => "window.result",
         _ => match kind {
+            "item" if ui["input"]["action"] == "action.identify" && ui["input"]["id"] == "input.choose_item_list" => "window.item_target_list",
+            "item" if ui["input"]["action"] == "action.identify" => "window.item_target",
+            "item" if ui["input"]["id"] == "input.choose_item_list" => "window.item_list",
             "item" => "window.item",
             "direction" => "window.direction",
             "text" => "window.text",
@@ -163,7 +166,12 @@ pub fn render(ui: &Value, language: &str) -> Value {
             action(27, "window.close");
         }
         "enter" => action(13, enter_action),
-        "item" => action(27, "window.cancel"),
+        "item" => {
+            if matches!(input_id, "input.choose_item" | "input.choose_item_list") {
+                action(42, "window.item_list");
+            }
+            action(27, "window.cancel");
+        }
         "direction" => {
             for (key, arrow) in [
                 (121, "↖"),

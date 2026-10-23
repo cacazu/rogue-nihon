@@ -92,6 +92,18 @@ impl Inventory {
         }
     }
 
+    /// Reuse the inventory throw intent, selecting arrows only at C's item wait.
+    pub fn fire(&mut self, ui: &Value) -> Input {
+        let Some(item) = ui["ranged"]["arrow_key"].as_i64().filter(|key| (97..=122).contains(key)) else {
+            return Input::Ignore;
+        };
+        if ui["input"]["kind"] != "command" || ui["ranged"]["bow"] != true || ui["window"].is_object() {
+            return Input::Ignore;
+        }
+        self.pending = Some(Pending { command: 116, item: item as i32, hand: None, started: true });
+        Input::Key(116)
+    }
+
     /// Handle keys before the C acknowledgement adapter, so Escape navigates
     /// back inside Rust instead of inadvertently dismissing the C inventory wait.
     pub fn handle(&mut self, key: i32, ui: &Value) -> Option<Input> {
@@ -207,5 +219,62 @@ impl Inventory {
         if key == 27 {
             self.pending = None;
         }
+    }
+}
+
+#[cfg(test)]
+mod fire_tests {
+    use super::*;
+
+    fn ready() -> Value {
+        json!({"input":{"kind":"command"},"ranged":{"bow":true,"arrow_key":101}})
+    }
+    fn wait(kind: &str) -> Presentation {
+        Presentation { input: json!({"kind":kind}), lines: vec![
+            json!({"scope":"choices","args":[{"value":101}]})
+        ], ..Default::default() }
+    }
+    #[test]
+    fn fire_waits_for_direction_then_uses_the_live_arrow_choice_once() {
+        let mut inventory = Inventory::default();
+        assert_eq!(inventory.fire(&ready()), Input::Key(116));
+        assert_eq!(inventory.next_key(&wait("direction")), None);
+        assert_eq!(inventory.next_key(&wait("item")), Some(101));
+        assert_eq!(inventory.next_key(&wait("command")), None);
+    }
+    #[test]
+    fn cancelled_missing_and_unexpected_choices_cannot_leak_an_arrow_letter() {
+        for kind in ["command", "confirm", "ended"] {
+            let mut inventory = Inventory::default();
+            inventory.fire(&ready());
+            assert_eq!(inventory.next_key(&wait(kind)), None);
+            assert_eq!(inventory.next_key(&wait("item")), None);
+        }
+        let mut inventory = Inventory::default();
+        inventory.fire(&ready());
+        inventory.accepted(27);
+        assert_eq!(inventory.next_key(&wait("item")), None);
+        inventory.fire(&ready());
+        let mut missing = wait("item"); missing.lines.clear();
+        assert_eq!(inventory.next_key(&missing), None);
+        assert_eq!(inventory.next_key(&wait("item")), None);
+        for invalid in [
+            json!({"input":{"kind":"direction"},"ranged":{"bow":true,"arrow_key":101}}),
+            json!({"input":{"kind":"command"},"ranged":{"bow":false,"arrow_key":101}}),
+            json!({"input":{"kind":"command"},"ranged":{"bow":true,"arrow_key":0}}),
+        ] {
+            assert_eq!(inventory.fire(&invalid), Input::Ignore);
+            assert_eq!(inventory.next_key(&wait("item")), None);
+        }
+    }
+    #[test]
+    fn direction_save_restores_the_existing_throw_intent() {
+        let mut inventory = Inventory::default();
+        inventory.fire(&ready());
+        let mut saved = serde_json::to_value(wait("direction")).unwrap();
+        inventory.mark(&mut saved);
+        let mut restored = Inventory::restore(&mut saved, 12);
+        assert_eq!(restored.next_key(&wait("direction")), None);
+        assert_eq!(restored.next_key(&wait("item")), Some(101));
     }
 }

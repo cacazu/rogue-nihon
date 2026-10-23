@@ -3,14 +3,35 @@ use super::*;
 
 impl BrowserUi {
     pub(super) fn draw_settings(&mut self, game: Rect) {
-        self.widgets.controls.clear();
+        self.begin_choices("settings");
         self.regions.clear();
         self.map_rect = None;
-        self.widgets.rect(game, "#0009");
+        self.widgets.rect(game, "@overlay.strong");
         let w = (self.width - 16.).min(540.);
         let x = (self.width - w) / 2.;
-        let panel = Rect::new(x, 8., w, self.height - 16.);
-        self.widgets.box_rect(panel, PANEL, Some(LINE), 12.);
+        let inner = w - 32.;
+        let half = (inner - 8.) / 2.;
+        let top_label = self.t("action.top");
+        let quit_label = self.t("mobile.quit_score");
+        let visible_top = Widgets::shortcut_label(&top_label, self.choice_shortcut(5).as_deref());
+        let visible_quit = Widgets::shortcut_label(&quit_label, self.choice_shortcut(6).as_deref());
+        let top_width = visible_top.split('\n')
+            .map(|line| (self.measure)(line, 17., false, false).width + 12.)
+            .fold(half, f64::max)
+            .min((inner - 8. - (self.measure)(&visible_quit, 17., false, false).width - 12.).max(half));
+        let return_height = (self.wrap(&visible_top, top_width - 12., 17.).len() as f64 * 17. * 1.6 + 8.).max(56.);
+        let notice = array(&self.model["entries"]).iter()
+            .rfind(|e| e["source"] == "system")
+            .filter(|e| b(&e["error"]) || matches!(s(&e["id"]), "notice.saved" | "notice.save_pending" | "notice.save_cancelled"))
+            .map(|e| s(&e["text"]).to_string());
+        let notice_height = notice.as_ref().map_or(0., |text|
+            12. + self.wrap(text, inner, 17.).len() as f64 * 17. * 1.6);
+        let total = 48. + 12. + 48. + 12. + 48. + 12. + 48. + 12. + return_height + notice_height;
+        let (panel, viewport) = self.sheet_layout(w, total);
+        let max = (total - viewport.h).max(0.);
+        let scroll = clamp(self.scrolls["settings"], 0., max);
+
+        self.widgets.box_rect(panel, PANEL, Some(LINE), 0.);
         self.text(
             &self.t("settings.title"),
             x + 16.,
@@ -27,16 +48,15 @@ impl BrowserUi {
             ControlStyle {
                 icon: Some("close"),
                 icon_size: 24.,
+                shortcut: self.pc_shortcut("Escape"),
                 ..Default::default()
             },
         );
-        let viewport = Rect::new(x + 16., 76., w - 32., self.height - 104.);
-        let mut row = viewport.y - self.scrolls["settings"];
+        let mut row = viewport.y - scroll;
         let busy = b(&self.model["starting"])
             || b(&self.model["savePending"])
             || b(&self.model["returnAfterEnd"]);
         let stopped = busy || !b(&self.model["running"]);
-        let half = (viewport.w - 8.) / 2.;
         self.widgets.begin_clip(viewport);
         let fullscreen = b(&self.view["fullscreen"]);
         self.button(
@@ -50,6 +70,7 @@ impl BrowserUi {
             ControlStyle {
                 icon: Some(if fullscreen { "collapse" } else { "expand" }),
                 icon_size: 26.,
+                shortcut: self.choice_shortcut(0),
                 ..Default::default()
             },
         );
@@ -69,109 +90,59 @@ impl BrowserUi {
                 }),
                 icon_size: 26.,
                 disabled: stopped,
+                shortcut: self.choice_shortcut(1),
                 ..Default::default()
             },
-        );
-        self.dropdown_control(
-            "display-mode",
-            Rect::new(viewport.x + 112., row, self.dropdown_width("display-mode").min(viewport.w - 112.), 48.),
-            busy,
         );
         row += 60.;
         let animated = self.model["animationEnabled"].as_bool().unwrap_or(true);
         let label = self.t("settings.animation");
-        self.control(
+        let state_label = self.t(if animated { "settings.on" } else { "settings.off" });
+        self.widgets.switch(
             "animation-toggle",
             &label,
+            &state_label,
             Rect::new(viewport.x, row, viewport.w, 48.),
             json!({"kind":"invoke","id":"animation-toggle"}),
-            ControlStyle {
-                kind: Some("switch"),
-                key: Some(json!(animated)),
-                custom: true,
-                disabled: busy,
-                ..Default::default()
-            },
+            animated,
+            busy,
+            self.choice_shortcut(2),
+            self.measure,
         );
-        self.text(
-            &label,
-            viewport.x + 12.,
-            row + 10.,
-            viewport.w - 144.,
-            17.,
-            TEXT,
-            false,
-        );
-        self.text(
-            &self.t(if animated {
-                "settings.on"
-            } else {
-                "settings.off"
-            }),
-            viewport.x + viewport.w - 112.,
-            row + 10.,
-            40.,
-            17.,
-            TEXT,
-            false,
-        );
-        let track = Rect::new(viewport.x + viewport.w - 60., row + 8., 56., 32.);
-        self.widgets
-            .box_rect(track, if animated { ACCENT } else { LINE }, None, 16.);
-        self.widgets.commands.push(json!({"op":"circle","x":track.x+if animated {40.} else {16.},"y":track.y+16.,"radius":12.,"color":if animated {"#101619"} else {TEXT}}));
-        row += 76.;
-        let style = |disabled| ControlStyle {
+        row += 60.;
+        self.settings_dropdown("theme", "settings.theme", Rect::new(viewport.x, row, viewport.w, 48.), busy);
+        row += 60.;
+        self.settings_dropdown("display-mode", "settings.display_mode", Rect::new(viewport.x, row, viewport.w, 48.), busy);
+        row += 60.;
+        let shortcuts: Vec<_> = (0..7).map(|index| self.choice_shortcut(index)).collect();
+        let style = |disabled, index: usize| ControlStyle {
             size: 17.,
+            role: ControlRole::Command,
             disabled,
+            shortcut: shortcuts[index].clone(),
+            keep_offscreen: true,
             ..Default::default()
         };
-        let top_label = self.t("action.top");
-        let quit_label = self.t("mobile.quit_score");
-        let top_width = top_label.split('\n')
-            .map(|line| (self.measure)(line, 17., false, false).width + 12.)
-            .fold(half, f64::max)
-            .min((viewport.w - 8. - (self.measure)(&quit_label, 17., false, false).width - 12.).max(half));
-        let return_height = (self.wrap(&top_label, top_width - 12., 17.).len() as f64 * 17. * 1.6 + 8.).max(56.);
         self.button(
             "settings-top",
             &top_label,
             Rect::new(viewport.x, row, top_width, return_height),
-            style(busy),
+            style(busy, 5),
         );
         self.control(
             "mobile-system-81",
             &quit_label,
             Rect::new(viewport.x + top_width + 8., row, viewport.w - top_width - 8., return_height),
             json!({"kind":"send","key":81}),
-            style(stopped),
+            style(stopped, 6),
         );
-        row += return_height + 40.;
-        self.control(
-            "mobile-system-111",
-            &self.mobile_help("help.options"),
-            Rect::new(viewport.x, row, viewport.w, 48.),
-            json!({"kind":"send","key":111}),
-            style(stopped),
-        );
-        row += 60.;
-        let mobile = self.width < 700. || b(&self.view["coarse"]);
-        // Phone settings show errors only; desktop keeps save notices too.
-        if let Some(entry) = array(&self.model["entries"])
-            .iter()
-            .rfind(|e| e["source"] == "system")
-            .filter(|e| {
-                b(&e["error"])
-                    || (!mobile
-                        && (s(&e["id"]).starts_with("notice.saved")
-                            || e["message"]["id"] == "save.browser"))
-            })
-        {
-            let notice = s(&entry["text"]).to_string();
-            row += self.text(&notice, viewport.x, row, viewport.w, 17., ACCENT, false) + 12.;
+        row += return_height;
+        if let Some(notice) = notice {
+            row += 12.;
+            self.text(&notice, viewport.x, row, viewport.w, 17., ACCENT, false);
         }
         self.widgets.end_clip();
-        let total = row - viewport.y + self.scrolls["settings"];
-        let max = (total - viewport.h).max(0.);
+
         self.regions.insert(
             "settings".into(),
             Region {
@@ -184,4 +155,13 @@ impl BrowserUi {
         self.widgets
             .scrollbar(viewport, total, self.scrolls["settings"]);
     }
+    fn settings_dropdown(&mut self, id: &str, label_id: &str, row: Rect, disabled: bool) {
+        let label = self.t(label_id);
+        let label_width = (self.measure)(&label, 17., false, false).width;
+        let width = self.dropdown_width(id).min(row.w - label_width - 8.);
+        self.widgets.single_line(&label, Rect::new(row.x, row.y, label_width, row.h),
+            LineStyle { text: TextStyle::new(17., TEXT, false), center: false, ellipsis: false }, self.measure);
+        self.dropdown_control(id, Rect::new(row.x + row.w - width, row.y, width, row.h), disabled);
+    }
+
 }

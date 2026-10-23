@@ -1418,6 +1418,7 @@ name = "rogue-raster"
 version = "0.1.0"
 dependencies = [
  "png",
+ "rogue-display",
  "serde_json",
  "svgtypes",
  "swash",

@@ -257,7 +257,8 @@ impl Fonts {
             .variations([("wght", if bold { 600. } else { 400. })])
             .build();
         let image = Render::new(&[Source::ColorBitmap(StrikeWith::BestFit), Source::Outline])
-            .offset(swash::zeno::Vector::new(x as f32 / 4., y as f32 / 4.))
+            // Glyph offsets use upward Y; Canvas baselines increase downward.
+            .offset(swash::zeno::Vector::new(x as f32 / 4., -(y as f32) / 4.))
             .render(&mut scaler, glyph.id)
             .map(Rc::new);
         self.glyphs.insert(key, image.clone());
@@ -270,6 +271,62 @@ mod tests {
     use super::*;
     use crate::Renderer;
     use serde_json::json;
+
+    // Check glyph IDs, not just nonempty pixels: .notdef itself paints a box+X.
+    #[test]
+    fn bundled_fonts_cover_catalogues_and_actual_widget_shortcuts() {
+        use rogue_display::widgets::Widgets;
+        use std::collections::BTreeSet;
+        fn strings(value: &serde_json::Value, labels: &mut BTreeSet<String>) {
+            match value {
+                serde_json::Value::String(text) => {
+                    for line in text.lines() {
+                        let line: String = line.chars().filter(|ch| !ch.is_control()).collect();
+                        if !line.trim().is_empty() { labels.insert(line); }
+                    }
+                }
+                serde_json::Value::Array(values) => for value in values { strings(value, labels); },
+                serde_json::Value::Object(values) => for value in values.values() { strings(value, labels); },
+                _ => {}
+            }
+        }
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../..");
+        let mut renderer = Renderer::new(
+            std::fs::read(root.join("web/assets/fonts/NotoSansJP.ttf")).unwrap(),
+            std::fs::read(root.join("web/assets/fonts/NotoColorEmoji.ttf")).unwrap(),
+        ).unwrap();
+        let mut labels = BTreeSet::new();
+        for entry in std::fs::read_dir(root.join("locales")).unwrap() {
+            let path = entry.unwrap().path();
+            if path.extension().is_some_and(|ext| ext == "json") && path.file_stem().unwrap() != "coverage" {
+                let source = std::fs::read_to_string(path).unwrap();
+                strings(&serde_json::from_str(&source).unwrap(), &mut labels);
+            }
+        }
+        for key in ["Enter", "Escape", " ", "a", "b", "*", "?"] {
+            for label in ["スコアを見る", "入力を確定", "Return to title", "Submit"] {
+                labels.insert(Widgets::shortcut_label(label, Some(key)));
+            }
+        }
+        labels.insert("←↑→↓↖↗↙↘ⓘ💪👑…×＋−☆".into());
+        labels.insert((32_u8..=126).map(char::from).collect());
+        // Optional corpus comes from real browser draw commands, including
+        // dynamically named items, input fields, logs and ending windows.
+        if let Some(path) = std::env::var_os("ROGUE_FONT_CORPUS") {
+            let source = std::fs::read_to_string(path).unwrap();
+            strings(&serde_json::from_str(&source).unwrap(), &mut labels);
+        }
+        assert!(renderer.fonts.layout("\u{10ffff}", 18., false, false).glyphs.iter().any(|glyph| glyph.id == 0),
+            "The missing-glyph detector must reject a character absent from both fonts");
+        for text in &labels {
+            for bold in [false, true] {
+                let layout = renderer.fonts.layout(text, 18., bold, false);
+                assert!(!layout.glyphs.is_empty(), "No glyphs for {text:?}");
+                assert!(layout.glyphs.iter().all(|glyph| glyph.id != 0), "Missing glyph in {text:?}, bold={bold}");
+            }
+        }
+        println!("Shaped {} distinct catalogue, widget and browser labels without glyph 0", labels.len());
+    }
 
     #[test]
     fn text_arrows_use_japanese_outlines_and_emoji_keep_color() {

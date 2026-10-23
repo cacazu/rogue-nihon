@@ -3,14 +3,14 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
-pub const BG: &str = "#101518";
-pub const MAP: &str = "#080d0f";
-pub const PANEL: &str = "#152126";
-pub const LINE: &str = "#3b4d53";
-pub const TEXT: &str = "#e8ebed";
-pub const MUTED: &str = "#a5b8bf";
-pub const ACCENT: &str = "#a6d0be";
-pub const ERROR: &str = "#ffb4a5";
+pub const BG: &str = "@background";
+pub const MAP: &str = "@map.background";
+pub const PANEL: &str = "@window.background";
+pub const LINE: &str = "@window.border";
+pub const TEXT: &str = "@text.primary";
+pub const MUTED: &str = "@text.muted";
+pub const ACCENT: &str = "@accent";
+pub const ERROR: &str = "@error";
 
 #[derive(Clone, Copy, Default, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Rect {
@@ -82,14 +82,33 @@ pub struct Control {
     pub key: Option<Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub field: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub shortcut: Option<String>,
     #[serde(skip)]
     pub action: Value,
+}
+/// Visual roles are independent of the surrounding window and input action.
+#[derive(Clone, Copy, Default)]
+pub enum ControlRole {
+    #[default]
+    Command,
+    ListItem,
+    Select,
+    Tab,
+    Switch,
+    Indicator,
+    Field,
+}
+impl ControlRole {
+    fn framed(self) -> bool {
+        matches!(self, Self::Command | Self::Field)
+    }
 }
 #[derive(Default)]
 pub struct ControlStyle<'a> {
     pub disabled: bool,
     pub primary: bool,
-    pub flat: bool,
+    pub role: ControlRole,
     pub left: bool,
     pub throw_direction: bool,
     pub size: f64,
@@ -98,11 +117,13 @@ pub struct ControlStyle<'a> {
     pub kind: Option<&'a str>,
     pub key: Option<Value>,
     pub field: Option<&'a str>,
+    pub shortcut: Option<String>,
     pub custom: bool,
     pub keep_offscreen: bool,
 }
 #[derive(Default)]
 pub struct Widgets {
+    pub theme: crate::theme::Theme,
     pub commands: Vec<Value>,
     pub controls: Vec<Control>,
     pub text_runs: Vec<Value>,
@@ -110,10 +131,15 @@ pub struct Widgets {
     pub focus: String,
     pub hover: String,
     pub pressed: String,
+    pub shortcut_context: Value,
     clip: Option<Rect>,
     clips: Vec<Option<Rect>>,
 }
 impl Widgets {
+    fn push(&mut self, mut command: Value) {
+        self.theme.paint(&mut command);
+        self.commands.push(command);
+    }
     pub fn clear(&mut self) {
         self.commands.clear();
         self.controls.clear();
@@ -121,27 +147,25 @@ impl Widgets {
         self.icons.clear();
         self.clip = None;
         self.clips.clear();
+        self.shortcut_context = Value::Null;
     }
     pub fn rect(&mut self, r: Rect, color: &str) {
-        self.commands
-            .push(json!({"op":"rect","rect":r,"color":color}));
+        self.push(json!({"op":"rect","rect":r,"color":color}));
     }
     pub fn box_rect(&mut self, r: Rect, fill: &str, stroke: Option<&str>, radius: f64) {
-        self.commands
-            .push(json!({"op":"box","rect":r,"fill":fill,"stroke":stroke,"radius":radius}));
+        self.push(json!({"op":"box","rect":r,"fill":fill,"stroke":stroke,"radius":radius}));
     }
     pub fn circle(&mut self, x: f64, y: f64, r: f64, color: &str) {
-        self.commands
-            .push(json!({"op":"circle","x":x,"y":y,"radius":r,"color":color}));
+        self.push(json!({"op":"circle","x":x,"y":y,"radius":r,"color":color}));
     }
     pub fn begin_clip(&mut self, r: Rect) {
         self.clips.push(self.clip);
         self.clip = Some(self.clip.map_or(r, |a| a.intersect(r)));
-        self.commands.push(json!({"op":"clip","rect":r}));
+        self.push(json!({"op":"clip","rect":r}));
     }
     pub fn end_clip(&mut self) {
         self.clip = self.clips.pop().unwrap_or(None);
-        self.commands.push(json!({"op":"restore"}));
+        self.push(json!({"op":"restore"}));
     }
     pub fn wrap(text: &str, width: f64, size: f64, measure: MeasureText) -> Vec<String> {
         let mut lines = Vec::new();
@@ -177,7 +201,7 @@ impl Widgets {
             bold,
             mono,
         } = style;
-        self.commands.push(json!({"op":"text","text":text,"x":x,"y":y,"size":size,"color":color,"bold":bold,"mono":mono}));
+        self.push(json!({"op":"text","text":text,"x":x,"y":y,"size":size,"color":color,"bold":bold,"mono":mono}));
         self.text_runs
             .push(json!({"text":text,"x":x,"y":y,"size":size}));
     }
@@ -202,6 +226,27 @@ impl Widgets {
         }
         lines.len() as f64 * height
     }
+    /// The shared vertical alignment for text inside every UI component.
+    pub fn centered_text_y(rect: Rect, ink: TextSize) -> f64 {
+        rect.y + (rect.h - ink.ascent - ink.descent) / 2. + ink.ascent
+    }
+    /// Paint an exact text value in a component, vertically centered by default.
+    /// Input values retain their spaces; label cleanup belongs to single_line.
+    pub fn text_line(
+        &mut self,
+        text: &str,
+        rect: Rect,
+        style: TextStyle<'_>,
+        center: bool,
+        measure: MeasureText,
+    ) -> Rect {
+        let ink = measure(if text.is_empty() { "0" } else { text }, style.size, style.bold, style.mono);
+        let width = if text.is_empty() { 0. } else { ink.width };
+        let x = rect.x + if center { (rect.w - width) / 2. } else { 0. };
+        let y = Self::centered_text_y(rect, ink);
+        self.raw_text(text, x, y, style);
+        Rect::new(x, y - ink.ascent, width, ink.ascent + ink.descent)
+    }
     pub fn single_line(
         &mut self,
         text: &str,
@@ -209,39 +254,17 @@ impl Widgets {
         style: LineStyle<'_>,
         measure: MeasureText,
     ) -> Rect {
-        let LineStyle {
-            text: TextStyle {
-                size, color, bold, ..
-            },
-            center,
-            ellipsis,
-        } = style;
+        let LineStyle { text: style, center, ellipsis } = style;
         let mut value = text.split_whitespace().collect::<Vec<_>>().join(" ");
-        if ellipsis && measure(&value, size, bold, false).width > r.w {
+        if ellipsis && measure(&value, style.size, style.bold, style.mono).width > r.w {
             while !value.is_empty()
-                && measure(&(value.clone() + "…"), size, bold, false).width > r.w
+                && measure(&(value.clone() + "…"), style.size, style.bold, style.mono).width > r.w
             {
                 value.pop();
             }
-            if !value.is_empty() {
-                value.push('…');
-            }
+            if !value.is_empty() { value.push('…'); }
         }
-        let width = measure(&value, size, bold, false).width;
-        let ink = measure(
-            if value.is_empty() { "0" } else { &value },
-            size,
-            bold,
-            false,
-        );
-        let x = if center {
-            r.x + (r.w - width) / 2.
-        } else {
-            r.x
-        };
-        let y = r.y + (r.h - ink.ascent - ink.descent) / 2. + ink.ascent;
-        self.raw_text(&value, x, y, TextStyle::new(size, color, bold));
-        Rect::new(x, y - ink.ascent, width, ink.ascent + ink.descent)
+        self.text_line(&value, r, style, center, measure)
     }
     pub fn icon(&mut self, name: &str, r: Rect, color: &str) -> Rect {
         let size = r.w.min(r.h);
@@ -256,6 +279,7 @@ impl Widgets {
             "shield"=>"M12 3 21 6V12C21 17 16 20 12 22C8 20 3 17 3 12V6ZM12 7V16".into(),
             "experience"=>"M12 2 15 8.5 22 9.5 17 14.5 18 22 12 18.5 6 22 7 14.5 2 9.5 9 8.5Z".into(),
             "food"=>"M3 2V7C3 10 9 10 9 7V2M6 2V22M20 22V2C15 4 14 10 14 13H20".into(),
+            "command-list"=>"M3 4H21V20H3ZM9 4V20M3 9H21M3 14H21".into(),
             "close"=>"M6 6 18 18M18 6 6 18".into(),
             "chevron-down"=>"M6 9L12 15L18 9".into(),
             "equipped"=>"M21 12A9 9 0 1 1 3 12A9 9 0 1 1 21 12ZM7 12L10.5 15.5L17 8.5".into(),
@@ -274,8 +298,7 @@ impl Widgets {
             },
             _=>String::new(),
         };
-        self.commands
-            .push(json!({"op":"path","path":path,"rect":r,"color":color,"fill":name=="heart"}));
+        self.push(json!({"op":"path","path":path,"rect":r,"color":color,"fill":name=="heart"}));
         self.icons.push(json!({"name":name,"rect":r}));
         r
     }
@@ -315,6 +338,9 @@ impl Widgets {
         if (clipped.w <= 0. || clipped.h <= 0.) && !style.keep_offscreen {
             return;
         }
+        let label = Self::shortcut_label(label, style.shortcut.as_deref());
+        let label = label.as_str();
+        let hint = style.shortcut.as_deref().map(Self::shortcut_hint);
         self.controls.push(Control {
             id: id.into(),
             label: label.into(),
@@ -324,37 +350,22 @@ impl Widgets {
             kind: style.kind.unwrap_or("button").into(),
             key: style.key,
             field: style.field.map(str::to_owned),
+            shortcut: style.shortcut.clone(),
             action,
         });
-        self.commands
-            .push(json!({"op":"save","alpha":if style.disabled{0.45}else{1.}}));
+        self.push(json!({"op":"save","alpha":if style.disabled{0.45}else{1.}}));
         let selected = self.focus == id || self.hover == id || self.pressed == id;
-        let fill = if style.throw_direction {
-            if selected { "#8c5122" } else { "#6b3d1b" }
-        } else if style.primary {
-            ACCENT
-        } else if selected {
-            "#23352d"
+        if !style.role.framed() {
+            if selected || style.primary {
+                self.rect(Rect::new(r.x + 4., r.y + r.h - 2., r.w - 8., 1.), LINE);
+            }
         } else {
-            "#1b262b"
-        };
-        let stroke = if style.throw_direction {
-            if selected { "#ffd59b" } else { "#e6a457" }
-        } else if selected {
-            "#94d8b7"
-        } else {
-            LINE
-        };
-        if !style.flat || selected {
-            self.box_rect(r, fill, Some(stroke), 7.);
+            self.box_rect(r, "@button.background", Some("@button.border"), 0.);
+            if selected || style.throw_direction {
+                self.box_rect(Rect::new(r.x + 3., r.y + 3., r.w - 6., r.h - 6.), "transparent", Some(LINE), 0.);
+            }
         }
-        let color = if style.throw_direction {
-            "#fff0d6"
-        } else if style.primary {
-            "#15231c"
-        } else {
-            TEXT
-        };
+        let color = "@button.text";
         if let Some(icon) = style.icon {
             let size = if style.icon_size > 0. {
                 style.icon_size
@@ -363,9 +374,13 @@ impl Widgets {
             };
             self.icon(
                 icon,
-                Rect::new(r.x + (r.w - size) / 2., r.y + (r.h - size) / 2., size, size),
+                Rect::new(r.x + (r.w - size) / 2., r.y + (r.h - size - if hint.is_some() { 14. } else { 0. }) / 2., size, size),
                 color,
             );
+            if let Some(hint) = hint {
+                self.single_line(hint, Rect::new(r.x, r.y + r.h - 15., r.w, 12.),
+                    LineStyle { text: TextStyle::new(11., TEXT, false), center: true, ellipsis: false }, measure);
+            }
         } else if !style.custom {
             let size = if style.size > 0. { style.size } else { 16. };
             let lines = Self::wrap(
@@ -393,7 +408,44 @@ impl Widgets {
                 );
             }
         }
-        self.commands.push(json!({"op":"restore"}));
+        self.push(json!({"op":"restore"}));
+    }
+    pub fn shortcut_hint(key: &str) -> &str {
+        match key { "Escape" => "Esc", "Enter" => "Enter", " " => "Space", _ => key }
+    }
+    pub fn shortcut_label(label: &str, shortcut: Option<&str>) -> String {
+        shortcut.map_or_else(|| label.to_string(), |key| format!("{}) {label}", Self::shortcut_hint(key)))
+    }
+    /// Shared labeled switch. Labels use measured ink, as buttons and selects do.
+    pub fn switch(
+        &mut self,
+        id: &str,
+        label: &str,
+        state_label: &str,
+        rect: Rect,
+        action: Value,
+        checked: bool,
+        disabled: bool,
+        shortcut: Option<String>,
+        measure: MeasureText,
+    ) {
+        self.control(id, label, rect, action, ControlStyle {
+            kind: Some("switch"), role: ControlRole::Switch,
+            key: Some(json!(checked)), custom: true, disabled, shortcut: shortcut.clone(),
+            ..Default::default()
+        }, measure);
+        self.push(json!({"op":"save","alpha":if disabled {0.45} else {1.}}));
+        let track = Rect::new(rect.x + rect.w - 60., rect.y + (rect.h - 32.) / 2., 56., 32.);
+        let state_width = (measure(state_label, 17., false, false).width + 8.).max(48.);
+        let state = Rect::new(track.x - 12. - state_width, rect.y, state_width, rect.h);
+        let label = Self::shortcut_label(label, shortcut.as_deref());
+        self.single_line(&label, Rect::new(rect.x + 12., rect.y, (state.x - rect.x - 24.).max(0.), rect.h),
+            LineStyle { text: TextStyle::new(17., TEXT, false), center: false, ellipsis: true }, measure);
+        self.single_line(state_label, state,
+            LineStyle { text: TextStyle::new(17., TEXT, false), center: true, ellipsis: false }, measure);
+        self.box_rect(track, PANEL, Some(LINE), 0.);
+        self.rect(Rect::new(track.x + if checked {32.} else {4.}, track.y + 4., 20., 24.), TEXT);
+        self.push(json!({"op":"restore"}));
     }
     /// Pointer target over already painted content, without button decoration.
     pub fn hit_target(&mut self, id: &str, label: &str, rect: Rect, action: Value) {
@@ -410,6 +462,7 @@ impl Widgets {
             kind: "button".into(),
             key: None,
             field: None,
+            shortcut: None,
             action,
         });
     }
@@ -430,6 +483,7 @@ impl Widgets {
             ControlStyle {
                 disabled,
                 kind: Some("field"),
+                role: ControlRole::Field,
                 field: Some(id),
                 ..Default::default()
             },
@@ -460,23 +514,24 @@ impl Widgets {
             0.
         };
         let x = r.x + 12. - offset;
-        let y = r.y + (r.h - 29.) / 2.;
+        let edit_y = r.y + (r.h - 28.) / 2.;
         if active && end > start {
             let start_w = measure(&prefix(start), 18., false, false).width;
-            self.rect(Rect::new(x + start_w, y, caret - start_w, 29.), "#375e73");
+            self.rect(Rect::new(x + start_w, edit_y, caret - start_w, 28.), "@input.selection");
         }
-        self.raw_text(
+        self.text_line(
             if value.is_empty() {
                 input["placeholder"].as_str().unwrap_or("")
             } else {
                 value
             },
-            x,
-            y,
+            Rect::new(x, r.y, r.w - 24., r.h),
             TextStyle::new(18., if value.is_empty() { MUTED } else { TEXT }, false),
+            false,
+            measure,
         );
         if active && blink {
-            self.rect(Rect::new(x + caret, y, 1., 28.), ACCENT);
+            self.rect(Rect::new(x + caret, edit_y, 1., 28.), ACCENT);
         }
         self.end_clip();
     }
@@ -484,7 +539,7 @@ impl Widgets {
         if total <= r.h {
             return;
         }
-        self.rect(Rect::new(r.x + r.w - 4., r.y, 3., r.h), "#26383e");
+        self.rect(Rect::new(r.x + r.w - 4., r.y, 3., r.h), "@scrollbar.track");
         let h = (r.h * r.h / total).max(20.);
         self.rect(
             Rect::new(
@@ -493,7 +548,7 @@ impl Widgets {
                 3.,
                 h,
             ),
-            "#66877b",
+            "@scrollbar.thumb",
         );
     }
 }

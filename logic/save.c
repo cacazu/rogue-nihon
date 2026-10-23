@@ -289,8 +289,7 @@ void
 save_game(void)
 {
     after = FALSE;
-    rg_host_message("save.browser", "[]",
-        "The game saves automatically when changing dungeon levels or returning to the title from Settings.");
+
 }
 #endif
 

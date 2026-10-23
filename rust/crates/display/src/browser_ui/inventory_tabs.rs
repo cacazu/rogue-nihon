@@ -65,17 +65,20 @@ impl BrowserUi {
         let tabs = self.inventory_available_tabs(ui);
         let mut sizes = Vec::new();
         let mut total = 0.;
-        for tab in tabs {
+        for (index, tab) in tabs.into_iter().enumerate() {
             let label = self.t(&format!("inventory.tab.{tab}"));
-            let width = ((self.measure)(&label, 17., false, false).width + 20.).max(48.);
-            sizes.push((tab,label,total,width));
+            let shortcut = self.pc_shortcut(&"1234567890-".chars().nth(index).unwrap().to_string());
+            let visible_label = Widgets::shortcut_label(&label, shortcut.as_deref());
+            let width = ((self.measure)(&visible_label, 17., false, false).width + 20.).max(48.);
+            sizes.push((tab,label,shortcut,total,width));
             total += width + 6.;
         }
         total = (total - 6.).max(0.);
         let max = (total - rect.w).max(0.);
         let mut scroll = clamp(self.inventory_tabs.horizontal,0.,max);
         if self.inventory_tabs.reveal {
-            if let Some((_,_,left,width)) = sizes.iter().find(|(tab,_,_,_)| *tab == self.inventory_tabs.tab) {
+            let reveal = self.widgets.focus.strip_prefix("inventory-tab-").unwrap_or(&self.inventory_tabs.tab);
+            if let Some((_,_,_,left,width)) = sizes.iter().find(|(tab,_,_,_,_)| *tab == reveal) {
                 if *left < scroll { scroll = *left; }
                 else if left + width > scroll + rect.w { scroll = left + width - rect.w; }
                 scroll = clamp(scroll,0.,max);
@@ -86,12 +89,13 @@ impl BrowserUi {
         self.scrolls.insert("inventory-tabs".into(),scroll);
         self.regions.insert("inventory-tabs".into(),Region { rect,max });
         self.widgets.begin_clip(rect);
-        for (tab,label,left,width) in sizes {
+        for (tab,label,shortcut,left,width) in sizes {
+            let visible_label = Widgets::shortcut_label(&label, shortcut.as_deref());
             let active = tab == self.inventory_tabs.tab;
             let r = Rect::new(rect.x+left-scroll,rect.y,width,rect.h);
             self.control(&format!("inventory-tab-{tab}"),&label,r,json!({"kind":"inventory-tab","tab":tab}),
-                ControlStyle { flat:true,custom:true,..Default::default() });
-            self.widgets.single_line(&label,Rect::new(r.x,r.y+4.,r.w,32.),
+                ControlStyle { role:ControlRole::Tab,custom:true,shortcut,keep_offscreen:true,..Default::default() });
+            self.widgets.single_line(&visible_label,r,
                 LineStyle { text:TextStyle::new(17.,if active { ACCENT } else { TEXT },active),center:true,ellipsis:false },self.measure);
             if active { self.widgets.rect(Rect::new(r.x+6.,r.y+40.,r.w-12.,3.),ACCENT); }
         }

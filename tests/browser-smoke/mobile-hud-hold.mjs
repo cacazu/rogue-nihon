@@ -44,11 +44,11 @@ try{
   page=await context.newPage();page.setDefaultTimeout(10000);page.on('pageerror',e=>report.errors.push(e.message));await installBrowserTestAdapter(page);cdp=await context.newCDPSession(page);
   // Change only the published presentation to exercise XP boundaries, never C state.
   await page.addInitScript(()=>{const NativeWorker=Worker;window.Worker=class extends NativeWorker{set onmessage(handler){super.onmessage=handler;window.__hudPresentation=ui=>handler({data:{type:'presentation',ui}});}};});
-  await page.goto('http://127.0.0.1:'+server.address().port+'/?trace=1&lang=ja');await page.waitForFunction(()=>__rogueBrowserTest.canvas?.controls.some(c=>c.id==='new-game'&&!c.disabled));await tap('new-game');await idle();
+  await page.goto('http://127.0.0.1:'+server.address().port+'/?trace=1&lang=ja');await page.waitForFunction(()=>__rogueBrowserTest.canvas?.controls?.some(c=>c.id==='new-game'&&!c.disabled));await tap('new-game');await idle();
   await check((mobile?'phone':'pc')+' hunger wording is 満腹',async()=>{
    if(mobile){assert.ok((await scene()).text.includes('満腹'));assert.equal((await scene()).controls.find(c=>c.id==='touch-.').label,'待機');}assert.ok(!(await scene()).text.some(t=>t.includes('空腹なし')));
-   await tap(mobile?'status-open':'hud-hunger');
-   assert.ok((await scene()).text.some(t=>t.includes('満腹')));if(mobile)await tap('status-close');else{await shot('pc-hunger');await page.keyboard.press('Escape');}await paint();
+   await tap('status-open');
+   assert.ok((await scene()).text.some(t=>t.includes('満腹')));if(!mobile)await shot('pc-hunger');await tap('status-close');await paint();
   });
   if(mobile){
    await check('phone two rows match settings height at 390px and 320px',async()=>{

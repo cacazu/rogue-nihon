@@ -156,6 +156,7 @@ impl Actor {
 pub struct Sample {
     pub frames: Value,
     pub next_delay_ms: Option<u32>,
+    pub projectiles: Value,
 }
 
 /// One prioritized pose per original action, never a queue of past turns.
@@ -163,9 +164,11 @@ pub struct Animator {
     tiles: Clips,
     pixels: Clips,
     actors: BTreeMap<u32, Actor>,
+    flights: crate::projectile::FlightAnimator,
     epoch: Option<u32>,
     step: Option<u32>,
     sequence: u64,
+    visibility: Option<Visibility>,
     clock: Option<f64>,
     enabled: bool,
 }
@@ -186,24 +189,28 @@ impl Animator {
             tiles,
             pixels,
             actors: BTreeMap::new(),
+            flights: crate::projectile::FlightAnimator::default(),
             epoch: None,
             step: None,
             sequence: 0,
+            visibility: None,
             clock: None,
             enabled: true,
         })
     }
     pub fn reset(&mut self) {
         self.actors.clear();
+        self.flights.reset();
         self.epoch = None;
         self.step = None;
         self.sequence = 0;
+        self.visibility = None;
         self.clock = None;
     }
     /// Interrupt the old action, preserving movement and the idle clock.
     /// This only changes presentation; no game input waits on it.
     pub fn interrupt(&mut self) -> bool {
-        let mut changed = false;
+        let mut changed = self.flights.interrupt();
         for actor in self.actors.values_mut() {
             changed |= actor.chosen != State::Idle;
             actor.finish_action();
@@ -212,6 +219,7 @@ impl Animator {
     }
     pub fn set_enabled(&mut self, enabled: bool) {
         if self.enabled != enabled {
+            self.flights.interrupt();
             for actor in self.actors.values_mut() {
                 actor.finish();
             }
@@ -227,9 +235,16 @@ impl Animator {
             self.actors.clear();
             self.sequence = 0;
             self.step = None;
+            self.visibility = None;
             self.epoch = Some(observation.epoch);
         }
+        let visibility_changed = self
+            .visibility
+            .as_ref()
+            .is_some_and(|old| old != &observation.visibility);
+        self.visibility = Some(observation.visibility);
         let now = self.time(now);
+        self.flights.observe(frame, now, self.enabled)?;
         if self.step != Some(observation.step) {
             for actor in self.actors.values_mut() {
                 actor.finish_action();
@@ -271,6 +286,12 @@ impl Animator {
             actor.y = data.y;
             actor.facing = data.facing;
             actor.stopped = data.stopped;
+            // Terrain is the latest public C screen, not an animation snapshot.
+            // Its revealed/unlit boundary must share the player's position.
+            // A later look()/refresh can change it without another actor move.
+            if id == 0 && visibility_changed {
+                actor.motion = None;
+            }
         }
         for (sequence, id, state) in observation.events {
             if sequence <= self.sequence {
@@ -331,7 +352,10 @@ impl Animator {
                 }
             }
         }
+        let (projectiles, delay) = self.flights.sample(now, graphical);
+        if let Some(delay) = delay { next_delay_ms = Some(next_delay_ms.map_or(delay, |old| old.min(delay))); }
         Sample {
+            projectiles,
             frames: Value::Array(frames),
             next_delay_ms,
         }
@@ -436,7 +460,14 @@ struct ActorData {
     facing: i32,
     stopped: bool,
 }
+#[derive(PartialEq, Eq)]
+struct Visibility {
+    width: u32,
+    height: u32,
+    known: Vec<bool>,
+}
 struct Observation {
+    visibility: Visibility,
     epoch: u32,
     step: u32,
     actors: BTreeMap<u32, ActorData>,
@@ -482,6 +513,28 @@ fn parse_observation(frame: &Value) -> Result<Option<Observation>, String> {
         .any(|(id, expected)| id.as_str() != Some(expected))
     {
         return Err("Animation map tile vocabulary differs".into());
+    }
+    // Use the same public ground as the renderer. Actor/item glyphs may cover
+    // an unlit cell (e.g. monster detection); their motion is not new terrain.
+    let mut known: Vec<bool> = tiles
+        .iter()
+        .map(|tile| tile.as_u64().is_some_and(|id| id != 0))
+        .collect();
+    if let Some(underlays) = frame["map_underlays"].as_array() {
+        for underlay in underlays {
+            if let (Some(x), Some(y), Some(tile)) = (
+                underlay["x"].as_u64(),
+                underlay["y"].as_u64(),
+                underlay["tile"].as_u64(),
+            ) {
+                if x < u64::from(width) && y < u64::from(height) && tile <= 7 {
+                    let index = (y * u64::from(width) + x) as usize;
+                    if tiles[index].as_u64().is_some_and(|id| id > 7) {
+                        known[index] = tile != 0;
+                    }
+                }
+            }
+        }
     }
     let raw_actors = frame["map_actors"]
         .as_array()
@@ -543,6 +596,11 @@ fn parse_observation(frame: &Value) -> Result<Option<Observation>, String> {
         events.push((sequence, id, state));
     }
     Ok(Some(Observation {
+        visibility: Visibility {
+            width,
+            height,
+            known,
+        },
         epoch,
         step: frame.get("map_actor_step").map_or(Ok(0), integer)?,
         actors,
@@ -650,6 +708,65 @@ mod tests {
             previous = position;
         }
         assert_eq!(a.sample(340., "tiles").frames[0]["displayX"], 5.);
+    }
+    fn dark_frame(step: u32, x: u32) -> Value {
+        let mut f = frame(step, x, false, json!([]));
+        let mut tiles = vec![0; 6];
+        for cell in x.saturating_sub(1)..=(x + 1).min(5) {
+            tiles[cell as usize] = 1;
+        }
+        tiles[x as usize] = 8;
+        f["map_tiles"] = json!(tiles);
+        f["map_underlays"] = json!([{"x":x,"y":0,"tile":1}]);
+        f
+    }
+    #[test]
+    fn animation_player_stays_with_moving_visibility_during_bursts_and_reversal() {
+        for mode in ["tiles", "pixels"] {
+            let mut a = animator();
+            a.observe(&dark_frame(1, 1), 0.).unwrap();
+            for (step, x) in [(2, 2), (3, 3), (4, 4), (5, 3), (6, 2)] {
+                a.interrupt();
+                a.observe(&dark_frame(step, x), 20.).unwrap();
+                for now in [20., 36., 80.] {
+                    let sample = a.sample(now, mode);
+                    assert_eq!(sample.frames[0]["displayX"], f64::from(x));
+                    assert_eq!(sample.frames[0]["state"], "idle");
+                }
+            }
+            // Alignment must not restart the idle clip every move.
+            assert_eq!(pose(&a.sample(220., mode)), ("idle", 1));
+        }
+    }
+    #[test]
+    fn animation_late_visibility_refresh_aligns_an_already_moving_player() {
+        let mut a = animator();
+        let first = dark_frame(1, 1);
+        a.observe(&first, 0.).unwrap();
+        let mut early = dark_frame(2, 2);
+        early["map_tiles"] = first["map_tiles"].clone();
+        early["map_tiles"][1] = json!(1);
+        early["map_tiles"][2] = json!(8);
+        a.observe(&early, 10.).unwrap();
+        assert_eq!(a.sample(70., "pixels").frames[0]["displayX"], 1.5);
+        // Original look updates the floor after the actor was already published.
+        a.observe(&dark_frame(2, 2), 70.).unwrap();
+        assert_eq!(a.sample(70., "pixels").frames[0]["displayX"], 2.);
+    }
+    #[test]
+    fn animation_foreground_motion_over_unknown_ground_does_not_change_visibility() {
+        let mut a = animator();
+        let mut first = frame(1, 1, false, json!([]));
+        first["map_tiles"][4] = json!(9);
+        first["map_tiles"][5] = json!(0);
+        first["map_underlays"] = json!([{"x":1,"y":0,"tile":1},{"x":4,"y":0,"tile":0}]);
+        a.observe(&first, 0.).unwrap();
+        let mut next = frame(2, 2, false, json!([]));
+        next["map_tiles"][4] = json!(0);
+        next["map_tiles"][5] = json!(9);
+        next["map_underlays"] = json!([{"x":2,"y":0,"tile":1},{"x":5,"y":0,"tile":0}]);
+        a.observe(&next, 10.).unwrap();
+        assert_eq!(a.sample(70., "tiles").frames[0]["displayX"], 1.5);
     }
     #[test]
     fn animation_repeated_idle_inputs_keep_the_idle_clock() {

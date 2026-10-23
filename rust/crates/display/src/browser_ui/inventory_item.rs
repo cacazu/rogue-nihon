@@ -16,13 +16,13 @@ pub(super) fn parameter_icon(field: &str) -> &'static str {
 
 pub(super) fn parameter_color(icon: &str) -> &'static str {
     match icon {
-        "item-hit" => "#efd18e",
-        "item-damage" => "#f5a6aa",
-        "item-enchantment" => "#d0bbef",
-        "shield" => "#9dcbe9",
-        "strength" => "#d0bbef",
-        "item-modifier" => "#f1b27a",
-        "item-charges" => ACCENT,
+        "item-hit" => "@parameter.hit",
+        "item-damage" => "@parameter.damage",
+        "item-enchantment" => "@parameter.enchantment",
+        "shield" => "@parameter.armor",
+        "strength" => "@parameter.strength",
+        "item-modifier" => "@parameter.modifier",
+        "item-charges" => "@parameter.charges",
         _ => TEXT,
     }
 }
@@ -160,20 +160,30 @@ impl BrowserUi {
         let right = if selectable { 10. } else { 8. };
         let slot_width = self.inventory_slot_width(row, font);
         let text_width = rect.w - left - right - slot_width;
-        let icon_top = (font-20.)/2.;
         let (layout, height) = self.inventory_item_layout(row, text_width, font);
-        let top = if selectable { ((rect.h-height)/2.).max(4.) } else { 4. };
+        let line_height = (font * 1.65).ceil();
+        let top = ((rect.h - height) / 2.).max(0.);
+        // Inline runs share one baseline; their complete line uses the common alignment.
+        let mut lines: BTreeMap<usize, String> = BTreeMap::new();
+        for run in &layout { lines.entry(run.y as usize).or_default().push_str(&run.text); }
+        let origins: BTreeMap<usize, f64> = lines.into_iter().map(|(offset, text)| {
+            let line = Rect::new(rect.x, rect.y + top + offset as f64, rect.w, line_height);
+            (offset, Widgets::centered_text_y(line, (self.measure)(&text, font, false, false)))
+        }).collect();
         if slot_width > 0. {
-            self.widgets.raw_text(s(&row["equipped_slot"]),rect.x+rect.w-right-slot_width+12.,rect.y+top,TextStyle::new(font,ACCENT,true));
+            self.widgets.text_line(s(&row["equipped_slot"]),
+                Rect::new(rect.x + rect.w - right - slot_width + 12., rect.y, slot_width - 12., rect.h),
+                TextStyle::new(font, "@equipment.equipped", true), false, self.measure);
         }
         for run in layout {
             let x = rect.x + left + run.x;
-            let y = rect.y + top + run.y;
+            let y = origins[&(run.y as usize)];
             let inset = if run.icon.is_empty() { 0. } else {
-                self.draw_parameter_icon(&run.icon, Rect::new(x, y+icon_top,20.,20.));
+                let icon_y = rect.y + top + run.y + (line_height - 20.) / 2.;
+                self.draw_parameter_icon(&run.icon, Rect::new(x, icon_y, 20., 20.));
                 22.
             };
-            self.widgets.raw_text(&run.text,x+inset,y,TextStyle::new(font,TEXT,false));
+            self.widgets.raw_text(&run.text, x + inset, y, TextStyle::new(font, TEXT, false));
         }
     }
 }

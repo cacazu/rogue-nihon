@@ -10,7 +10,9 @@ pub mod map;
 pub mod map_tiles;
 pub mod player_state;
 pub mod presentation;
+pub mod projectile;
 pub mod widgets;
+pub mod theme;
 
 mod bevy_plugin;
 pub use bevy_plugin::{

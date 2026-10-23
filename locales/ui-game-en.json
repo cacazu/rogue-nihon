@@ -446,6 +446,18 @@
     "window.result": {
       "template": "Game result"
     },
+    "window.item_target_list": {
+      "template": "Items available to identify"
+    },
+    "window.item_target": {
+      "template": "Choose an item to identify"
+    },
+    "window.item_list": {
+      "template": "Item list"
+    },
+    "input.choose_item_list": {
+      "template": "Choose an item from the list. Esc: cancel"
+    },
     "window.item": {
       "template": "Choose an item"
     },
@@ -550,9 +562,6 @@
     },
     "window.right_hand": {
       "template": "Right hand (R)"
-    },
-    "save.browser": {
-      "template": "The game saves automatically when changing dungeon levels or returning to the title from Settings."
     },
     "inventory.title": {
       "template": "Inventory"

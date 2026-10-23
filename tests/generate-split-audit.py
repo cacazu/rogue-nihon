@@ -30,6 +30,8 @@ notes = {
     'save.c': 'Dispatch browser checkpoint serialization instead of native file/process restoration.',
     'state.c': 'Fixed-width portable serializer, bounded counts/IDs, atomic load and graph ownership cleanup.',
     'things.c': 'Observe item descriptors, discovery/menu rows and waits; persist pagination state.',
+    'sticks.c': 'Observe public actor actions and original magic projectile traversal; preserve hits, bounces, charges, RNG and refresh order.',
+    'weapons.c': 'Observe public actor actions and original thrown item/arrow traversal; preserve hit, fall, RNG and refresh order.',
 }
 records = []
 for source in sorted(original.glob('*.c')):

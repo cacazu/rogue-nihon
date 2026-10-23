@@ -108,11 +108,23 @@ do_zap()
 	case WS_CANCEL:
 	    y = hero.y;
 	    x = hero.x;
+#ifdef ROGUE_LAYERED
+            rg_semantic_projectile_begin(RG_PROJECTILE_MAGIC,'*',x,y);
+            rg_semantic_actor_attack(&player,hero.x+delta.x);
+#endif
 	    while (step_ok(winat(y, x)))
 	    {
 		y += delta.y;
 		x += delta.x;
+#ifdef ROGUE_LAYERED
+                { int seen=winat(y,x);
+                  if(seen!=' ' && seen!='-' && seen!='|' && seen!=DOOR)
+                      rg_semantic_projectile_point(x,y,'*'); }
+#endif
 	    }
+#ifdef ROGUE_LAYERED
+            rg_semantic_projectile_end();
+#endif
 	    if ((tp = moat(y, x)) != NULL)
 	    {
 		monster = tp->t_type;
@@ -190,7 +202,13 @@ do_zap()
 #ifdef ROGUE_LAYERED
 	    rg_semantic_actor_attack(&player,hero.x+delta.x);
 #endif
+#ifdef ROGUE_LAYERED
+            rg_semantic_projectile_begin(RG_PROJECTILE_MAGIC,'*',hero.x,hero.y);
+#endif
 	    do_motion(&bolt, delta.y, delta.x);
+#ifdef ROGUE_LAYERED
+            rg_semantic_projectile_end();
+#endif
 	    if ((tp = moat(bolt.o_pos.y, bolt.o_pos.x)) != NULL
 		&& !save_throw(VS_MAGIC, tp))
 		    hit_monster(unc(bolt.o_pos), &bolt);
@@ -202,11 +220,23 @@ do_zap()
 	case WS_SLOW_M:
 	    y = hero.y;
 	    x = hero.x;
+#ifdef ROGUE_LAYERED
+            rg_semantic_projectile_begin(RG_PROJECTILE_MAGIC,'*',x,y);
+            rg_semantic_actor_attack(&player,hero.x+delta.x);
+#endif
 	    while (step_ok(winat(y, x)))
 	    {
 		y += delta.y;
 		x += delta.x;
+#ifdef ROGUE_LAYERED
+                { int seen=winat(y,x);
+                  if(seen!=' ' && seen!='-' && seen!='|' && seen!=DOOR)
+                      rg_semantic_projectile_point(x,y,'*'); }
+#endif
 	    }
+#ifdef ROGUE_LAYERED
+            rg_semantic_projectile_end();
+#endif
 	    if ((tp = moat(y, x)) != NULL)
 	    {
 		if (obj->o_which == WS_HASTE_M)
@@ -246,6 +276,12 @@ do_zap()
 	    msg("what a bizarre schtick!");
 #endif
     }
+#ifdef ROGUE_LAYERED
+    if(obj->o_which==WS_LIGHT || obj->o_which==WS_DRAIN || obj->o_which==WS_NOP) {
+        rg_semantic_actor_attack(&player,hero.x+delta.x);
+        rg_semantic_magic_pulse(delta.x,delta.y);
+    }
+#endif
     obj->o_charges--;
 }
 
@@ -344,6 +380,9 @@ fire_bolt(coord *start, coord *dir, char *name)
 	when 1: case -1: dirch = (dir->y == 0 ? '-' : '|');
 	when 2: case -2: dirch = '\\';
     }
+#ifdef ROGUE_LAYERED
+    rg_semantic_projectile_begin(RG_PROJECTILE_MAGIC,'*',start->x,start->y);
+#endif
     pos = *start;
     hit_hero = (bool)(start != &hero);
     used = FALSE;
@@ -378,6 +417,9 @@ fire_bolt(coord *start, coord *dir, char *name)
 		break;
 	    default:
 def:
+#ifdef ROGUE_LAYERED
+                rg_semantic_projectile_point(pos.x,pos.y,dirch);
+#endif
 		if (!hit_hero && (tp = moat(pos.y, pos.x)) != NULL)
 		{
 		    hit_hero = TRUE;
@@ -420,6 +462,9 @@ def:
 #endif
 			if (pstats.s_hpt <= 0)
 			{
+#ifdef ROGUE_LAYERED
+                            rg_semantic_projectile_end();
+#endif
 			    if (start == &hero)
 				death('b');
 			    else
@@ -445,6 +490,7 @@ def:
 	mvaddch(c2->y, c2->x, chat(c2->y, c2->x));
 #ifdef ROGUE_LAYERED
     rg_host_map_effect(0, 0, 0, 0);
+    rg_semantic_projectile_end();
 #endif
 }
 

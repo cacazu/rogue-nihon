@@ -262,6 +262,13 @@ pub fn plan(frame: &Value, camera: &Value, rect: Rect, ratio: f64, mode: &str) -
             if !actor && (x < start_x || x >= end_x || y < start_y || y >= end_y) {
                 continue;
             }
+            // Unexplored and unlit cells use the map background, independent
+            // of the source artwork's tint or texture.
+            if tile == 0 {
+                commands.push(json!({"op":"rect","color":crate::widgets::MAP,
+                    "rect":Rect::new(rect.x+px/ratio,rect.y+py/ratio,w/ratio,h/ratio)}));
+                continue;
+            }
             let mut image = entries[tile]["image"].clone();
             let mut draw_x = px / ratio;
             let mut draw_y = py / ratio;

@@ -58,7 +58,14 @@ missile(int ydelta, int xdelta)
 #ifdef ROGUE_LAYERED
     rg_semantic_actor_attack(&player,hero.x+xdelta);
 #endif
+#ifdef ROGUE_LAYERED
+    rg_semantic_projectile_begin(obj->o_type==WEAPON && obj->o_which==ARROW
+        ?RG_PROJECTILE_ARROW:RG_PROJECTILE_ITEM,obj->o_type,hero.x,hero.y);
+#endif
     do_motion(obj, ydelta, xdelta);
+#ifdef ROGUE_LAYERED
+    rg_semantic_projectile_end();
+#endif
     /*
      * AHA! Here it has hit something.  If it is a wall or a door,
      * or if it misses (combat) the monster, put it on the floor
@@ -100,6 +107,12 @@ do_motion(THING *obj, int ydelta, int xdelta)
 	 */
 	obj->o_pos.y += ydelta;
 	obj->o_pos.x += xdelta;
+#ifdef ROGUE_LAYERED
+        /* Report the same traversed cells, excluding solid impact surfaces. */
+        ch=winat(obj->o_pos.y,obj->o_pos.x);
+        if(ch!=' ' && ch!='-' && ch!='|' && ch!=DOOR)
+            rg_semantic_projectile_point(obj->o_pos.x,obj->o_pos.y,obj->o_type);
+#endif
 	if (step_ok(ch = winat(obj->o_pos.y, obj->o_pos.x)) && ch != DOOR)
 	{
 	    /*

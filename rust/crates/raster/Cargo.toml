@@ -12,5 +12,8 @@ swash = "=0.2.10"
 png = "=0.18.1"
 svgtypes = "=0.16.1"
 
+[dev-dependencies]
+rogue-display.workspace = true
+
 [lints.clippy]
 undocumented_unsafe_blocks = "deny"

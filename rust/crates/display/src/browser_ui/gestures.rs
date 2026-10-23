@@ -267,6 +267,7 @@ impl BrowserUi {
             return;
         };
         if b(&self.model["settingsOpen"])
+            || self.commands_open
             || self.history_open
             || self.status_open
             || self.mobile_operations

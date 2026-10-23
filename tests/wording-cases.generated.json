@@ -1720,44 +1720,35 @@
       ]
     },
     {
-      "case": "site:pack.c:478:pack.get_item.you_arent_carrying_anything:7",
+      "case": "site:pack.c:479:pack.get_item.you_arent_carrying_anything:7",
       "id": "pack.get_item.you_arent_carrying_anything",
       "negative": false,
       "site": [
         "pack.c",
-        478
+        479
       ]
     },
     {
-      "case": "site:pack.c:483:pack.get_item.you_ran_out:7",
+      "case": "site:pack.c:484:pack.get_item.you_ran_out:7",
       "id": "pack.get_item.you_ran_out",
       "negative": false,
       "site": [
         "pack.c",
-        483
+        484
       ]
     },
     {
-      "case": "site:pack.c:495:pack.get_item.which_object_do_you_want_to:7",
+      "case": "site:pack.c:496:pack.get_item.which_object_do_you_want_to:7",
       "id": "pack.get_item.which_object_do_you_want_to",
       "negative": false,
       "site": [
         "pack.c",
-        495
+        496
       ]
     },
     {
-      "case": "site:pack.c:498:pack.get_item.what:7",
+      "case": "site:pack.c:499:pack.get_item.what:7",
       "id": "pack.get_item.what",
-      "negative": false,
-      "site": [
-        "pack.c",
-        498
-      ]
-    },
-    {
-      "case": "site:pack.c:499:pack.get_item.for_list:7",
-      "id": "pack.get_item.for_list",
       "negative": false,
       "site": [
         "pack.c",
@@ -1765,57 +1756,66 @@
       ]
     },
     {
-      "case": "clear:pack.c:514",
+      "case": "site:pack.c:500:pack.get_item.for_list:7",
+      "id": "pack.get_item.for_list",
+      "negative": false,
+      "site": [
+        "pack.c",
+        500
+      ]
+    },
+    {
+      "case": "clear:pack.c:515",
       "id": "message.clear",
       "negative": false,
       "site": [
         "pack.c",
-        514
+        515
       ]
     },
     {
-      "case": "site:pack.c:533:pack.get_item.is_not_a_valid_item:7",
+      "case": "site:pack.c:540:pack.get_item.is_not_a_valid_item:7",
       "id": "pack.get_item.is_not_a_valid_item",
       "negative": false,
       "site": [
         "pack.c",
-        533
+        540
       ]
     },
     {
-      "case": "site:pack.c:557:pack.money.you_found:7",
+      "case": "site:pack.c:564:pack.money.you_found:7",
       "id": "pack.money.you_found",
       "negative": false,
       "site": [
         "pack.c",
-        557
+        564
       ]
     },
     {
-      "case": "site:pack.c:558:pack.money.gold_pieces:-7",
+      "case": "site:pack.c:565:pack.money.gold_pieces:-7",
       "id": "pack.money.gold_pieces",
       "negative": false,
       "site": [
         "pack.c",
-        558
+        565
       ]
     },
     {
-      "case": "site:pack.c:558:pack.money.gold_pieces:0",
+      "case": "site:pack.c:565:pack.money.gold_pieces:0",
       "id": "pack.money.gold_pieces",
       "negative": false,
       "site": [
         "pack.c",
-        558
+        565
       ]
     },
     {
-      "case": "site:pack.c:558:pack.money.gold_pieces:7",
+      "case": "site:pack.c:565:pack.money.gold_pieces:7",
       "id": "pack.money.gold_pieces",
       "negative": false,
       "site": [
         "pack.c",
-        558
+        565
       ]
     },
     {
@@ -2431,111 +2431,111 @@
       ]
     },
     {
-      "case": "site:sticks.c:198:sticks.do_zap.missle_vanishes:7",
+      "case": "site:sticks.c:216:sticks.do_zap.missle_vanishes:7",
       "id": "sticks.do_zap.missle_vanishes",
       "negative": false,
       "site": [
         "sticks.c",
-        198
+        216
       ]
     },
     {
-      "case": "site:sticks.c:200:sticks.do_zap.the_missle_vanishes_with_a_puff_of_smoke:7",
+      "case": "site:sticks.c:218:sticks.do_zap.the_missle_vanishes_with_a_puff_of_smoke:7",
       "id": "sticks.do_zap.the_missle_vanishes_with_a_puff_of_smoke",
       "negative": false,
       "site": [
         "sticks.c",
-        200
+        218
       ]
     },
     {
-      "case": "site:sticks.c:246:sticks.do_zap.what_a_bizarre_schtick:7",
+      "case": "site:sticks.c:276:sticks.do_zap.what_a_bizarre_schtick:7",
       "id": "sticks.do_zap.what_a_bizarre_schtick",
       "negative": false,
       "site": [
         "sticks.c",
-        246
+        276
       ]
     },
     {
-      "case": "site:sticks.c:284:sticks.drain.you_have_a_tingling_feeling:7",
+      "case": "site:sticks.c:320:sticks.drain.you_have_a_tingling_feeling:7",
       "id": "sticks.drain.you_have_a_tingling_feeling",
       "negative": false,
       "site": [
         "sticks.c",
-        284
+        320
       ]
     },
     {
-      "case": "site:sticks.c:377:sticks.fire_bolt.the_bounces:7",
+      "case": "site:sticks.c:416:sticks.fire_bolt.the_bounces:7",
       "id": "sticks.fire_bolt.the_bounces",
       "negative": false,
       "site": [
         "sticks.c",
-        377
+        416
       ]
     },
     {
-      "case": "site:sticks.c:392:sticks.fire_bolt.the_flame_bounces:7",
+      "case": "site:sticks.c:434:sticks.fire_bolt.the_flame_bounces:7",
       "id": "sticks.fire_bolt.the_flame_bounces",
       "negative": false,
       "site": [
         "sticks.c",
-        392
+        434
       ]
     },
     {
-      "case": "site:sticks.c:394:sticks.fire_bolt.off_the_dragon:7",
+      "case": "site:sticks.c:436:sticks.fire_bolt.off_the_dragon:7",
       "id": "sticks.fire_bolt.off_the_dragon",
       "negative": false,
       "site": [
         "sticks.c",
-        394
+        436
       ]
     },
     {
-      "case": "site:sticks.c:405:sticks.fire_bolt.misses:7",
+      "case": "site:sticks.c:447:sticks.fire_bolt.misses:7",
       "id": "sticks.fire_bolt.misses",
       "negative": false,
       "site": [
         "sticks.c",
-        405
+        447
       ]
     },
     {
-      "case": "site:sticks.c:407:sticks.fire_bolt.the_whizzes_past:7",
+      "case": "site:sticks.c:449:sticks.fire_bolt.the_whizzes_past:7",
       "id": "sticks.fire_bolt.the_whizzes_past",
       "negative": false,
       "site": [
         "sticks.c",
-        407
+        449
       ]
     },
     {
-      "case": "site:sticks.c:430:sticks.fire_bolt.the_hits:7",
+      "case": "site:sticks.c:475:sticks.fire_bolt.the_hits:7",
       "id": "sticks.fire_bolt.the_hits",
       "negative": false,
       "site": [
         "sticks.c",
-        430
+        475
       ]
     },
     {
-      "case": "site:sticks.c:432:sticks.fire_bolt.you_are_hit_by_the:7",
+      "case": "site:sticks.c:477:sticks.fire_bolt.you_are_hit_by_the:7",
       "id": "sticks.fire_bolt.you_are_hit_by_the",
       "negative": false,
       "site": [
         "sticks.c",
-        432
+        477
       ]
     },
     {
-      "case": "site:sticks.c:435:sticks.fire_bolt.the_whizzes_by_you:7",
+      "case": "site:sticks.c:480:sticks.fire_bolt.the_whizzes_by_you:7",
       "id": "sticks.fire_bolt.the_whizzes_by_you",
       "negative": false,
       "site": [
         "sticks.c",
-        435
+        480
       ]
     },
     {
@@ -2746,39 +2746,39 @@
       ]
     },
     {
-      "case": "site:weapons.c:153:weapons.fall.the_vanishes_as_it_hits_the_ground:7",
+      "case": "site:weapons.c:166:weapons.fall.the_vanishes_as_it_hits_the_ground:7",
       "id": "weapons.fall.the_vanishes_as_it_hits_the_ground",
       "negative": false,
       "site": [
         "weapons.c",
-        153
+        166
       ]
     },
     {
-      "case": "site:weapons.c:251:weapons.wield.you_cant_wield_armor:7",
+      "case": "site:weapons.c:264:weapons.wield.you_cant_wield_armor:7",
       "id": "weapons.wield.you_cant_wield_armor",
       "negative": false,
       "site": [
         "weapons.c",
-        251
+        264
       ]
     },
     {
-      "case": "site:weapons.c:260:weapons.wield.you_are_now:7",
+      "case": "site:weapons.c:273:weapons.wield.you_are_now:7",
       "id": "weapons.wield.you_are_now",
       "negative": false,
       "site": [
         "weapons.c",
-        260
+        273
       ]
     },
     {
-      "case": "site:weapons.c:261:weapons.wield.wielding:7",
+      "case": "site:weapons.c:274:weapons.wield.wielding:7",
       "id": "weapons.wield.wielding",
       "negative": false,
       "site": [
         "weapons.c",
-        261
+        274
       ]
     },
     {
@@ -5203,6 +5203,26 @@
       "negative": false
     },
     {
+      "case": "id:window.item_target_list",
+      "id": "window.item_target_list",
+      "negative": false
+    },
+    {
+      "case": "id:window.item_target",
+      "id": "window.item_target",
+      "negative": false
+    },
+    {
+      "case": "id:window.item_list",
+      "id": "window.item_list",
+      "negative": false
+    },
+    {
+      "case": "id:input.choose_item_list",
+      "id": "input.choose_item_list",
+      "negative": false
+    },
+    {
       "case": "id:window.item",
       "id": "window.item",
       "negative": false
@@ -5375,11 +5395,6 @@
     {
       "case": "id:window.right_hand",
       "id": "window.right_hand",
-      "negative": false
-    },
-    {
-      "case": "id:save.browser",
-      "id": "save.browser",
       "negative": false
     },
     {
@@ -8259,12 +8274,12 @@
       ]
     },
     {
-      "case": "dynamic:pack.c:496:purpose",
+      "case": "dynamic:pack.c:497:purpose",
       "id": "message.entity",
       "negative": false,
       "site": [
         "pack.c",
-        496
+        497
       ]
     },
     {
@@ -8325,6 +8340,6 @@
     }
   ],
   "source_calls": 296,
-  "catalog_ids": 557,
+  "catalog_ids": 560,
   "dynamic_sites": 19
 }

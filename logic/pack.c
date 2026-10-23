@@ -467,6 +467,7 @@ get_item(char *purpose, int type)
         {"drop", "action.drop"}, {"throw", "action.throw"}, {"wield", "action.wield"}, {"identify", "action.identify"}
     };
     size_t purpose_index;
+    bool list_requested = FALSE;
     for (purpose_index = 0; purpose_index < sizeof purposes / sizeof purposes[0]; ++purpose_index)
         if (!strcmp(purpose, purposes[purpose_index].english)) {
             rg_semantic_register_term(purpose, purposes[purpose_index].id);
@@ -489,7 +490,7 @@ get_item(char *purpose, int type)
         rg_item_choices(pack, !strcmp(purpose, "throw") ? 0 : type);
         if (purpose_index < sizeof purposes / sizeof purposes[0])
             rg_ui_line("item_action", 0, 0, purposes[purpose_index].id, "[]", "");
-        rg_ui_line("input", -2, 0, "input.choose_item", "[]", "");
+        rg_ui_line("input", -2, 0, list_requested ? "input.choose_item_list" : "input.choose_item", "[]", "");
 #endif
 	    if (!terse)
 		addmsg("which object do you want to ");
@@ -523,6 +524,12 @@ get_item(char *purpose, int type)
 		    after = FALSE;
 		    return NULL;
 		}
+
+#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
+                /* Single-item original lists return immediately. Preserve the
+                 * requested list in the next selection view without new input. */
+                list_requested = TRUE;
+#endif
 		continue;
 	    }
 	    for (obj = pack; obj != NULL; obj = next(obj))

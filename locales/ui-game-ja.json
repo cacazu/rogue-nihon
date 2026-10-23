@@ -446,6 +446,18 @@
     "window.result": {
       "template": "ゲーム結果"
     },
+    "window.item_target_list": {
+      "template": "識別するアイテムの一覧"
+    },
+    "window.item_target": {
+      "template": "識別するアイテムを選択"
+    },
+    "window.item_list": {
+      "template": "アイテム一覧"
+    },
+    "input.choose_item_list": {
+      "template": "一覧からアイテムを選択。Esc：取消"
+    },
     "window.item": {
       "template": "アイテムを選択"
     },
@@ -550,9 +562,6 @@
     },
     "window.right_hand": {
       "template": "右手（R）"
-    },
-    "save.browser": {
-      "template": "階層移動時と、設定からトップ画面へ戻る時に自動保存します。"
     },
     "inventory.title": {
       "template": "持ち物"

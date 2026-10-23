@@ -1,8 +1,8 @@
 {
-  "built_at_utc": "2026-10-15T05:49:06.136124+00:00",
+  "built_at_utc": "2026-10-23T17:50:40.944947+09:00",
   "logic_source_directory": "logic",
   "c_source_files": 38,
-  "rust_library": ".local/tasks/python-en3ckht5/cargo-target/wasm32-unknown-emscripten/release/librogue_layers.a",
+  "rust_library": ".local/tasks/python-p70ktfuh/cargo-target/wasm32-unknown-emscripten/release/librogue_layers.a",
   "rust_engine": "Bevy 0.19.1",
   "sdk_root": "C:/Users/kit/emsdk",
   "rust_version": "rustc 1.98.1 (48a229cea 2026-09-01)",
@@ -27,22 +27,22 @@
   "outputs": [
     {
       "file": "game.wasm",
-      "bytes": 2517317,
-      "sha256": "cd3e3123c4f80182abedf0fb42a5dbffa133d202f0152c89f2e0af1f84e8bc89"
+      "bytes": 2532872,
+      "sha256": "31301af5622172dafd9a7596c9a3b122ea7c8166e2eca779f9771507746bbc2f"
     },
     {
       "file": "browser-ui.wasm",
-      "bytes": 5083942,
-      "sha256": "402bd8787b9cdbef16309e5bff81db94ecf7b82f0c9b14a692a83598d04e08e8"
+      "bytes": 5166132,
+      "sha256": "6e803011ad431a0a193b6eee7a1fda050cf94e4965f125a76f1e1883ece1e530"
     },
     {
       "file": "browser-ui.js",
-      "bytes": 68141,
-      "sha256": "45d2687b6dcb541aef164f03c9acce9d04af75e54c7df926d9113b597adb8ec3"
+      "bytes": 68515,
+      "sha256": "c8d7e2d7b4db35f9c35421ef5901b12c7ca2a3378e3ac0d4a37bf40d98397387"
     }
   ],
   "browser_ui": {
-    "built_at_utc": "2026-10-15T06:45:40.8870054Z",
+    "built_at_utc": "2026-10-23T08:58:54.0287162Z",
     "crate": "rogue-browser-display",
     "target": "wasm32-unknown-unknown"
   }

@@ -9,6 +9,28 @@
 #include "rogue.h"
 #include "semantic.h"
 
+/* Refresh at each input wait, including after equipment, pickup and restore.
+ * Only the equipped weapon kind and a public pack letter cross the boundary. */
+void rg_semantic_ranged_controls(void)
+{
+    THING *item;
+    int arrow = 0;
+    int bow = cur_weapon != NULL && cur_weapon->o_type == WEAPON && cur_weapon->o_which == BOW;
+    char arguments[96];
+    if (bow) {
+        for (item = pack; item != NULL; item = next(item)) {
+            if (item->o_type == WEAPON && item->o_which == ARROW && item->o_count > 0) {
+                arrow = (unsigned char)item->o_packch;
+                break;
+            }
+        }
+    }
+    snprintf(arguments, sizeof(arguments),
+        "[{\"kind\":\"bool\",\"value\":%s},{\"kind\":\"int\",\"value\":%d}]",
+        bow ? "true" : "false", arrow);
+    rg_host_ui("ranged", 0, 0, "ui.text", arguments, "");
+}
+
 static char actor_terrain(THING *actor)
 {
     char ch;
@@ -182,6 +204,43 @@ void rg_semantic_actor_moved(const THING *actor,int old_x,int old_y)
         rg_semantic_actor_event(actor,RG_ACTOR_MOVE);
     else
         rg_semantic_actor_forget(actor); /* Teleport is a new observation. */
+}
+
+/* Observe original traversal without advancing it or retaining hidden cells. */
+void rg_semantic_projectile_begin(uint32_t kind,int glyph,int x,int y)
+{
+    if (!cansee(y,x) && (x!=hero.x || y!=hero.y)) x=y=-1;
+    rg_host_map_projectile(RG_FLIGHT_BEGIN,kind,glyph,x,y);
+}
+void rg_semantic_projectile_point(int x,int y,int glyph)
+{
+    if (x>=0 && x<NUMCOLS && y>0 && y<NUMLINES-1 && cansee(y,x))
+        rg_host_map_projectile(RG_FLIGHT_POINT,0,glyph,x,y);
+    else
+        rg_host_map_projectile(RG_FLIGHT_GAP,0,0,0,0);
+}
+void rg_semantic_projectile_end(void)
+{
+    rg_host_map_projectile(RG_FLIGHT_END,0,0,0,0);
+}
+/* Light, drain and no-effect staves have no traversed rule path. Give their
+ * cast a short visual pulse over already displayed cells only. Preserve the
+ * curses cursor; neither the rule map nor any RNG is queried or changed. */
+void rg_semantic_magic_pulse(int dx,int dy)
+{
+    int x=hero.x,y=hero.y,n,ch,old_y,old_x;
+    getyx(stdscr,old_y,old_x);
+    rg_semantic_projectile_begin(RG_PROJECTILE_MAGIC,'*',x,y);
+    for(n=0;n<3;n++) {
+        x+=dx;y+=dy;
+        if(x<0 || x>=NUMCOLS || y<=0 || y>=NUMLINES-1 || !cansee(y,x)) break;
+        ch=mvinch(y,x)&A_CHARTEXT;
+        if(ch==' ' || ch=='-' || ch=='|' || ch==DOOR) break;
+        rg_semantic_projectile_point(x,y,'*');
+        if(ch>='A' && ch<='Z') break;
+    }
+    move(old_y,old_x);
+    rg_semantic_projectile_end();
 }
 
 #define RG_SEMANTIC_SLOTS 64

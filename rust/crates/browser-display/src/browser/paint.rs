@@ -116,6 +116,7 @@ impl Browser {
             .into_iter()
             .flatten()
             .rev()
+            .filter(|message| !crate::log_visibility::removed_guidance(message) && !crate::log_visibility::interaction_prompt(message))
             .take(6)
             .map(|m| m["text"].clone())
             .collect::<Vec<_>>()

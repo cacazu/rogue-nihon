@@ -1,4 +1,4 @@
-//! Canvas dropdowns dispatch the existing language/display selection actions.
+//! Canvas dropdowns share language, map-display and UI-theme selection.
 use super::*;
 
 impl BrowserUi {
@@ -8,6 +8,8 @@ impl BrowserUi {
                 .into_iter()
                 .map(|value| (value, self.t(&format!("language.{value}"))))
                 .collect(),
+            "theme" => crate::theme::Theme::options().into_iter()
+                .map(|(id, label)| (id, self.t(label))).collect(),
             "display-mode" => ["ascii", "tiles", "pixels"]
                 .into_iter()
                 .map(|value| (value, self.t(&format!("view.{value}"))))
@@ -17,11 +19,8 @@ impl BrowserUi {
     }
 
     fn dropdown_label(&self, id: &str) -> String {
-        let value = s(&self.model[if id == "language" {
-            "language"
-        } else {
-            "displayMode"
-        }]);
+        let value = s(&self.model[match id { "language" => "language", "theme" => "theme", _ => "displayMode" }]);
+        let value = if id == "theme" { crate::theme::Theme::named(value).id() } else { value };
         self.dropdown_options(id)
             .into_iter()
             .find(|(key, _)| *key == value)
@@ -32,7 +31,7 @@ impl BrowserUi {
     pub(super) fn dropdown_width(&self, id: &str) -> f64 {
         self.dropdown_options(id)
             .iter()
-            .map(|(_, label)| (self.measure)(label, 17., true, false).width + 44.)
+            .map(|(_, label)| (self.measure)(&Widgets::shortcut_label(label, self.choice_shortcut(0).as_deref()), 17., true, false).width + 44.)
             .fold(48., f64::max)
     }
 
@@ -47,6 +46,8 @@ impl BrowserUi {
 
     pub(super) fn dropdown_control(&mut self, id: &str, rect: Rect, disabled: bool) {
         let label = self.dropdown_label(id);
+        let shortcut = if self.widgets.shortcut_context == json!("settings") { self.choice_shortcut(if id == "theme" { 3 } else { 4 }) } else { None };
+        let visible_label = Widgets::shortcut_label(&label, shortcut.as_deref());
         self.control(
             &format!("select-{id}"),
             &label,
@@ -57,13 +58,15 @@ impl BrowserUi {
                 left: true,
                 disabled,
                 kind: Some("select"),
+                role: ControlRole::Select,
                 custom: true,
+                shortcut,
                 ..Default::default()
             },
         );
         self.widgets.commands.push(json!({"op":"save","alpha":if disabled {0.45} else {1.}}));
         self.widgets.single_line(
-            &label,
+            &visible_label,
             Rect::new(rect.x + 10., rect.y, rect.w - 40., rect.h),
             LineStyle {
                 text: TextStyle::new(17., TEXT, false),
@@ -99,7 +102,7 @@ impl BrowserUi {
             (anchor.rect.y - height - 4.).max(8.)
         };
         let rect = Rect::new(anchor.full_rect.x, y, anchor.full_rect.w, height);
-        self.widgets.controls.clear();
+        self.begin_choices("dropdown");
         self.regions.clear();
         self.map_rect = None;
         self.widgets.hit_target(
@@ -108,12 +111,8 @@ impl BrowserUi {
             Rect::new(0., 0., self.width, self.height),
             json!({"kind":"dropdown-close"}),
         );
-        self.widgets.box_rect(rect, PANEL, Some(LINE), 8.);
-        let selected = s(&self.model[if id == "language" {
-            "language"
-        } else {
-            "displayMode"
-        }])
+        self.widgets.box_rect(rect, PANEL, Some(LINE), 0.);
+        let selected = s(&self.model[match id.as_str() { "language" => "language", "theme" => "theme", _ => "displayMode" }])
         .to_string();
         for (index, (value, label)) in options.into_iter().enumerate() {
             self.control(
@@ -129,7 +128,9 @@ impl BrowserUi {
                 ControlStyle {
                     size: 17.,
                     left: true,
+                    role: ControlRole::ListItem,
                     primary: value == selected,
+                    shortcut: self.choice_shortcut(index),
                     ..Default::default()
                 },
             );

@@ -15,6 +15,13 @@ impl BrowserUi {
     }
     fn game_buttons(&mut self, map: Rect) {
         if !b(&self.model["topOpen"]) {
+            self.control(
+                "commands-open",
+                &self.t("commands.title"),
+                Rect::new(map.x + map.w - 156., map.y + 10., 44., 44.),
+                json!({"kind":"commands","open":true}),
+                ControlStyle { icon: Some("command-list"), icon_size: 24., ..Default::default() },
+            );
             self.settings_button(Rect::new(map.x + map.w - 104., map.y + 10., 44., 44.));
         }
         self.button(
@@ -58,6 +65,9 @@ impl BrowserUi {
     pub(super) fn draw_game(&mut self) {
         let mobile = self.width < 700. || b(&self.view["coarse"]);
         let game = Rect::new(0., 0., self.width, self.height);
+        let dock = self.mobile_controls && b(&self.model["running"])
+            && !self.model["frame"]["ui"]["window"].is_object();
+        let dock_height = if dock { super::desktop::DOCK_HEIGHT } else { 0. };
         let map = Rect::new(
             0.,
             game.y,
@@ -69,7 +79,7 @@ impl BrowserUi {
             if mobile {
                 (game.h * 0.68).floor()
             } else {
-                game.h
+                (game.h - dock_height).max(1.)
             },
         );
         self.map_rect = Some(map);
@@ -79,34 +89,33 @@ impl BrowserUi {
         if self.model["frame"].is_object() {
             self.draw_map(map);
         }
-        self.draw_hud(map);
+        if b(&self.model["loading"]) {
+            self.text(&self.t("notice.loading"), 24., (self.height / 2. - 24.).max(80.), map.w - 48., 17., MUTED, false);
+        }
+        // Use the same two rows and full-status interaction as the phone.
+        self.draw_status_bar(Rect::new(map.x, map.y + 8., (map.w - 164.).min(420.), 48.));
         let log = if mobile {
             Rect::new(0., map.y + map.h, self.width, game.h - map.h)
         } else {
-            Rect::new(map.w, game.y, self.width - map.w, game.h)
+            Rect::new(map.w, game.y, self.width - map.w, map.h)
         };
         if !b(&self.model["settingsOpen"]) {
             self.draw_log(log);
             self.history_target(log);
         }
-        if self.mobile_controls
-            && b(&self.model["running"])
-            && !self.model["frame"]["ui"]["window"].is_object()
-            && !b(&self.model["settingsOpen"])
-        {
-            self.touch_controls(map);
+        if dock && !b(&self.model["settingsOpen"]) {
+            self.draw_desktop_dock(Rect::new(0., map.h, self.width, dock_height));
         }
         if self.model["frame"]["ui"]["window"].is_object() && !b(&self.model["settingsOpen"]) {
             self.draw_dialog(game);
         }
         self.game_buttons(map);
-        self.draw_hud_details(map);
         if b(&self.model["settingsOpen"]) {
             self.draw_settings(game);
         }
     }
     pub(super) fn draw_map(&mut self, map: Rect) {
-        if self.mobile_full_map && (self.width < 700. || b(&self.view["coarse"])) {
+        if self.mobile_full_map {
             self.draw_mobile_full_map(map);
             return;
         }
@@ -172,11 +181,11 @@ impl BrowserUi {
                         TextStyle {
                             size: size * 0.75,
                             color: if glyph == "@" {
-                                "#9ef0c3"
+                                "@map.ascii.player"
                             } else if "/!?=:)]*,".contains(glyph) {
-                                "#ebcf91"
+                                "@map.ascii.item"
                             } else {
-                                "#c5d0d3"
+                                "@map.ascii.terrain"
                             },
                             bold: false,
                             mono: true,
@@ -185,6 +194,7 @@ impl BrowserUi {
                 }
             }
         }
+        if !ascii { self.draw_projectiles(&f, map, cam); }
         self.widgets.end_clip();
     }
     pub(super) fn constrain_camera(&mut self) {
@@ -211,8 +221,26 @@ impl BrowserUi {
         (x >= 0. && x < n(&f["width"]) && y >= 1. && y < n(&f["height"]) - 1.)
             .then(|| json!({"x":x,"y":y}))
     }
+    pub(super) fn log_rows(&self, width: f64) -> (Vec<log_text::LogRow>, f64) {
+        let mut rows = Vec::new();
+        let mut total = 0.;
+        for e in array(&self.model["entries"]) {
+            if b(&e["transient_prompt"])
+                || (self.width < 700. || b(&self.view["coarse"])) && b(&e["mobile_keyboard_hint"])
+            {
+                continue;
+            }
+            let mut runs = self.log_runs(e,self.width < 700. || b(&self.view["coarse"]));
+            if e["source"] == "system" { runs.insert(0,json!({"text":"ⓘ "})); }
+            let lines = self.log_lines(&runs,width-8.,18.);
+            let height = lines.len() as f64 * 30. + 8.;
+            rows.push(log_text::LogRow { lines, height, top: total });
+            total += height;
+        }
+        (rows, total)
+    }
     pub(super) fn draw_log(&mut self, r: Rect) {
-        self.widgets.box_rect(r, "#111b20", Some(LINE), 0.);
+        self.widgets.box_rect(r, PANEL, Some(LINE), 0.);
         let title = if self.description.is_empty() {
             self.t("log.title")
         } else {
@@ -224,23 +252,11 @@ impl BrowserUi {
             r.y + 11.,
             r.w - 24.,
             18.,
-            "#c9e4d5",
+            "@text.primary",
             false,
         );
         let viewport = Rect::new(r.x + 10., r.y + 52., r.w - 20., (r.h - 60.).max(10.));
-        let mut rows = Vec::new();
-        let mut total = 0.;
-        for e in array(&self.model["entries"]) {
-            if (self.width < 700. || b(&self.view["coarse"])) && b(&e["mobile_keyboard_hint"]) {
-                continue;
-            }
-            let mut runs = self.log_runs(e,self.width < 700. || b(&self.view["coarse"]));
-            if e["source"] == "system" { runs.insert(0,json!({"text":"ⓘ "})); }
-            let lines = self.log_lines(&runs,viewport.w-8.,18.);
-            let height = lines.len() as f64 * 30. + 8.;
-            rows.push((lines, e.clone(), height, total));
-            total += height;
-        }
+        let (rows, total) = self.log_rows(viewport.w);
         let max = (total - viewport.h).max(0.);
         if self.follow_log {
             self.scrolls.insert("log".into(), max);
@@ -255,86 +271,18 @@ impl BrowserUi {
             },
         );
         self.widgets.begin_clip(viewport);
-        for (lines, e, height, top) in rows {
+        for log_text::LogRow { lines, height, top } in rows {
             let y = viewport.y + top - self.scrolls["log"];
             if y + height < viewport.y || y > viewport.y + viewport.h {
                 continue;
             }
-            let color = if b(&e["error"]) {
-                    ERROR
-                } else if e["source"] == "game" {
-                    "#d6e6da"
-                } else {
-                    "#9dcbe9"
-                };
+            let color = TEXT;
             for (index,line) in lines.iter().enumerate() {
                 self.draw_log_line(line,viewport.x,y+index as f64*30.,18.,color);
             }
         }
         self.widgets.end_clip();
         self.widgets.scrollbar(viewport, total, self.scrolls["log"]);
-    }
-    fn touch_controls(&mut self, r: Rect) {
-        if !b(&self.model["running"]) {
-            return;
-        }
-        let ui = self.model["frame"]["ui"].clone();
-        let direction = b(&ui["movement_direction"]);
-        let size = if self.height < 500. { 32. } else { 36. };
-        for a in array(&ui["map_controls"]["directions"]) {
-            let key = char::from_u32(n(&a["key"]) as u32)
-                .unwrap_or(' ')
-                .to_string();
-            self.control(
-                &format!("touch-{key}"),
-                s(&a["text"]),
-                Rect::new(
-                    10. + n(&a["column"]) * (size + 3.),
-                    r.y + r.h - 3. * (size + 3.) - 10. + n(&a["row"]) * (size + 3.),
-                    size,
-                    size,
-                ),
-                json!({"kind":"send","key":a["key"]}),
-                ControlStyle {
-                    throw_direction: direction,
-                    size: 22.,
-                    key: Some(json!(key)),
-                    ..Default::default()
-                },
-            );
-        }
-        let actions = array(&ui["map_controls"]["actions"]);
-        let rows = actions.len().div_ceil(2) as f64;
-        for (i, a) in actions.iter().enumerate() {
-            let key = if a["key"] == 27 {
-                "Escape".into()
-            } else {
-                char::from_u32(n(&a["key"]) as u32)
-                    .unwrap_or(' ')
-                    .to_string()
-            };
-            let label_id = match s(&a["id"]) {
-                "action.descend" => "action.descend_short",
-                "action.cancel" => "action.cancel_short",
-                id => id,
-            };
-            self.control(
-                &format!("touch-action-{}", s(&a["id"])),
-                &self.t(label_id),
-                Rect::new(
-                    r.x + r.w - 176. + (i % 2) as f64 * 86.,
-                    r.y + r.h - rows * 48. - 10. + (i / 2) as f64 * 48.,
-                    80.,
-                    44.,
-                ),
-                json!({"kind":"send","key":a["key"]}),
-                ControlStyle {
-                    size: 16.,
-                    key: Some(json!(key)),
-                    ..Default::default()
-                },
-            );
-        }
     }
     fn after_use_naming_effects(&self, ui: &Value) -> Vec<Value> {
         let id = s(&ui["window"]["message"]["id"]);
@@ -360,8 +308,8 @@ impl BrowserUi {
         effects
     }
     pub(super) fn draw_dialog(&mut self, game: Rect) {
-        self.widgets.controls.clear();
-        self.widgets.rect(game, "#0006");
+        self.begin_choices("dialog");
+        self.widgets.rect(game, "@overlay.soft");
         // Keep the in-game buttons visible and clear of modal contents.
         let game = Rect::new(game.x, game.y + 60., game.w, (game.h - 60.).max(1.));
         let ui = self.model["frame"]["ui"].clone();
@@ -369,6 +317,7 @@ impl BrowserUi {
         let inventory_list = self.inventory_list_visible();
         if inventory_list { self.sync_inventory_tabs(&ui); }
         let mobile = self.width < 700. || b(&self.view["coarse"]);
+        let touch = b(&self.view["coarse"]);
         let w = if b(&d["map_view"]) { 920_f64 } else { 600_f64 }.min(self.width - 28.);
         let x = (self.width - w) / 2.;
         let font = 18.;
@@ -376,6 +325,8 @@ impl BrowserUi {
         let inner = w - 32.;
         let mut rows = Vec::new();
         let mut total = 0.;
+        let tombstone = super::tombstone::Tombstone::from_ui(&ui, inner, self.measure);
+        let mut tombstone_added = false;
         let naming_effects = self.after_use_naming_effects(&ui);
         if !naming_effects.is_empty() {
             let label = self.t("naming.effect");
@@ -390,13 +341,19 @@ impl BrowserUi {
             }
         }
         for source_line in array(&ui["lines"]) {
-            let line = self.inventory_item_row(source_line, mobile);
+            if let Some(tomb) = &tombstone {
+                if super::tombstone::Tombstone::contains(source_line) {
+                    if !tombstone_added {
+                        rows.push((String::new(), json!({"tombstone":true}), tomb.height(), total, false));
+                        total += tomb.height();
+                        tombstone_added = true;
+                    }
+                    continue;
+                }
+            }
+            let line = self.inventory_item_row(source_line, touch);
             if inventory_list && !self.inventory_row_visible(&line) { continue; }
-            if mobile
-                && matches!(
-                    s(&line["id"]),
-                    "options.hint.bool" | "options.hint.inventory"
-                )
+            if matches!(s(&line["id"]), "options.hint.bool" | "options.hint.inventory")
             {
                 continue;
             }
@@ -428,7 +385,7 @@ impl BrowserUi {
             }
             let text = if mobile && line["id"] == "ui.help.entry" {
                 self.mobile_help(s(&line["args"][1]["value"]))
-            } else if mobile && b(&line["selectable"]) && !s(&line["key"]).is_empty() {
+            } else if touch && b(&line["selectable"]) && !s(&line["key"]).is_empty() {
                 let prefix = format!("{}) ", s(&line["key"]));
                 s(&line["text"])
                     .strip_prefix(&prefix)
@@ -439,7 +396,7 @@ impl BrowserUi {
             } else {
                 s(&line["text"]).to_string()
             };
-            let text = if mobile
+            let text = if touch
                 && (b(&ui["inventory"])
                     || ui["input"]["kind"] == "item"
                     || matches!(s(&d["kind"]), "inventory_actions" | "inventory_details"))
@@ -472,25 +429,7 @@ impl BrowserUi {
                     "direction" | "hand" | "help" | "discovery"
                 ))
         {
-            let text = if mobile && ui["input"]["kind"] == "item" {
-                let hint = crate::display::message_language(
-                    "pack.get_item.for_list",
-                    &json!([]),
-                    "",
-                    s(&self.model["language"]),
-                )
-                .text;
-                s(&d["message"]["text"]).replace(
-                    &hint,
-                    if self.model["language"] == "ja" {
-                        "？"
-                    } else {
-                        "?"
-                    },
-                )
-            } else {
-                s(&d["message"]["text"]).to_string()
-            };
+            let text = self.dialog_message_text(&d["message"]);
             let height = self.wrap(&text, inner - 8., font).len() as f64 * line_h + 8.;
             rows.push((text, json!({}), height, total, false));
             total += height;
@@ -508,7 +447,11 @@ impl BrowserUi {
             None
         };
         let ending = matches!(s(&ui["mode"]), "death" | "tombstone" | "score" | "victory");
-        let cols = if mobile { 2 } else { 3 };
+        let return_to_top = ending && ui["input"]["id"] == "input.finish_game";
+        let stacked_actions = matches!(s(&d["kind"]), "inventory_actions" | "inventory_details")
+            || matches!(s(&ui["input"]["kind"]), "confirm" | "hand" | "option_bool" | "option_inventory");
+        let direction_choices = ui["input"]["kind"] == "direction";
+        let cols = if direction_choices { 3 } else if return_to_top || stacked_actions { 1 } else if mobile { 2 } else { 3 };
         let close_id = if ending {
             "result-top"
         } else if array(&d["actions"]).iter().any(|a| a["key"] == 27)
@@ -522,44 +465,21 @@ impl BrowserUi {
         } else {
             "window-close"
         };
-        let actions: Vec<_> = array(&d["actions"]).iter().filter(|a| {
-            let key = n(&a["key"]) as u32;
-            let back = matches!(s(&d["kind"]), "inventory_actions" | "inventory_details");
-            !(key == 27 && !back
-                || key == 32 && (ui["input"]["id"] == "input.close" || b(&ui["inventory"])))
-        }).collect();
-        let action_rows = actions.len().div_ceil(cols) as f64;
-        let prompt = if mobile {
-            String::new()
-        } else {
-            [
-                &d["prompt"],
-                &self.model["input"]["text"],
-                &ui["more"]["text"],
-            ]
-            .into_iter()
-            .find(|v| !s(v).is_empty())
-            .map(s)
-            .unwrap_or("")
-            .to_string()
-        };
-        let prompt_height = if prompt.is_empty() {
-            0.
-        } else {
-            self.wrap(&prompt, inner, if mobile { 17. } else { 16. })
-                .len() as f64
-                * 27.
-                + 8.
+        let actions = self.dialog_choices(&ui, d);
+        let action_rows = if direction_choices { 3. } else { actions.len().div_ceil(cols) as f64 };
+        let close_label = self.dialog_close_label(&ui, d);
+        let field_error = field.map(|id| self.field_error_text(id)).unwrap_or_default();
+        let field_error_height = if field_error.is_empty() { 0. } else {
+            self.wrap(&field_error, inner, 17.).len() as f64 * 26. + 6.
         };
         let bottom = action_rows * 46.
-            + if field.is_some() { 56. } else { 0. }
-            + prompt_height
+            + if field.is_some() { 56. + field_error_height } else { 0. }
             + 12.;
         let header = if inventory_list { 120. } else { 64. };
-        let h = (game.h - 28.).min(180_f64.max(total + bottom + header + 20.));
+        let h = (game.h - 28.).min(total + bottom + header + 20.);
         let y = game.y + 24_f64.min(8_f64.max((game.h - h) / 3.));
         let panel = Rect::new(x, y, w, h);
-        self.widgets.box_rect(panel, PANEL, Some("#81978e"), 9.);
+        self.widgets.box_rect(panel, PANEL, Some(LINE), 0.);
         let item_history = b(&self.model["itemHistoryOpen"]) && !b(&ui["inventory"]);
         let title = if item_history { self.t("inventory.history") } else { s(&d["title"]).to_string() };
         let title_width = if inventory_list || item_history {
@@ -569,30 +489,33 @@ impl BrowserUi {
         let mut title_x = x + 16.;
         if inventory_list || item_history {
             let label = self.t(if item_history { "action.inventory" } else { "inventory.history" });
+            let shortcut = self.pc_shortcut(if item_history { "I" } else { "D" });
+            let visible_label = Widgets::shortcut_label(&label, shortcut.as_deref());
             let available = (inner - 56. - title_width - 8.).max(48.);
-            let width = ((self.measure)(&label, 17., false, false).width + 16.).min(available);
+            let width = ((self.measure)(&visible_label, 17., false, false).width + 16.).min(available);
             let button_x = if item_history { title_x } else { title_x + title_width + 8. };
             self.control(
                 if item_history { "inventory-return" } else { "inventory-history" }, &label,
                 Rect::new(button_x, y + 15., width, title_height),
                 if item_history { json!({"kind":"invoke","id":"inventory-return"}) } else { json!({"kind":"send","key":68}) },
-                ControlStyle { custom: true, key: if item_history { None } else { Some(json!(68)) },
+                ControlStyle { custom: true, shortcut, key: if item_history { None } else { Some(json!(68)) },
                     disabled: b(&self.model["windowClosing"]), ..Default::default() },
             );
-            self.widgets.single_line(&label,Rect::new(button_x,y+15.,width,title_height),
+            self.widgets.single_line(&visible_label,Rect::new(button_x,y+15.,width,title_height),
                 LineStyle { text:TextStyle::new(17.,TEXT,false),center:true,ellipsis:false },self.measure);
             if item_history { title_x += width + 8.; }
         }
         self.text(&title, title_x, y + 15., title_width, title_height, TEXT, true);
         self.control(
             close_id,
-            &self.t("mobile.dialog.close"),
+            &close_label,
             Rect::new(x + w - 56., y + 8., 48., 48.),
             json!({"kind":"invoke","id":if ending { "result-top" } else { "window-close" }}),
             ControlStyle {
                 icon: Some("close"),
                 icon_size: 24.,
                 key: Some(json!(27)),
+                shortcut: self.pc_shortcut("Escape"),
                 disabled: b(&self.model["returnAfterEnd"]) || b(&self.model["windowClosing"]),
                 ..Default::default()
             },
@@ -625,6 +548,12 @@ impl BrowserUi {
             if ry + height < viewport.y || ry > viewport.y + viewport.h {
                 continue;
             }
+            if b(&line["tombstone"]) {
+                if let Some(tomb) = &tombstone {
+                    tomb.draw(&mut self.widgets, Rect::new(viewport.x, ry, viewport.w, height), self.measure);
+                }
+                continue;
+            }
             if map {
                 self.detection_map(Rect::new(viewport.x, ry, viewport.w, height));
                 continue;
@@ -650,6 +579,7 @@ impl BrowserUi {
                     json!({"kind":"send","key":key.chars().next().unwrap() as u32}),
                     ControlStyle {
                         left: true,
+                        role: ControlRole::ListItem,
                         size: font,
                         custom: line["item_runs"].is_array(),
                         key: Some(json!(key)),
@@ -666,9 +596,9 @@ impl BrowserUi {
                 if line["scope"] == "options" && line["row"] == d["active_row"] {
                     self.widgets.box_rect(
                         Rect::new(viewport.x, ry, viewport.w - 8., height),
-                        "#283d34",
+                        "@row.selected",
                         None,
-                        3.,
+                        0.,
                     );
                 }
                 self.text(
@@ -686,55 +616,62 @@ impl BrowserUi {
         self.widgets.scrollbar(viewport, total, scroll);
         let mut ay = y + h - bottom;
         if let Some(field) = field {
-            self.field(field, Rect::new(x + 16., ay, inner - 104., 42.), false);
+            let submit_label = self.t("action.submit");
+            let submit_shortcut = self.pc_shortcut("Enter");
+            let submit_caption = Widgets::shortcut_label(&submit_label, submit_shortcut.as_deref());
+            let submit_width = ((self.measure)(&submit_caption, 16., false, false).width + 16.).max(96.).min(inner * 0.65);
+            self.field(field, Rect::new(x + 16., ay, inner - submit_width - 8., 42.), false);
             self.control(
                 "submit-text",
-                &self.t("action.submit"),
-                Rect::new(x + w - 112., ay, 96., 42.),
+                &submit_label,
+                Rect::new(x + w - 16. - submit_width, ay, submit_width, 42.),
                 json!({"kind":"submit","id":field}),
                 ControlStyle {
                     size: 16.,
+                    shortcut: submit_shortcut,
                     disabled: !b(&self.model["running"]),
                     ..Default::default()
                 },
             );
-            ay += 56.;
+            ay += 48.;
+            if field_error_height > 0. {
+                self.text(&field_error, x + 16., ay, inner, 17., ERROR, false);
+                ay += field_error_height;
+            }
+            ay += 8.;
         }
         let gap = 6.;
         let bw = (inner - (cols - 1) as f64 * gap) / cols as f64;
         for (i, a) in actions.iter().enumerate() {
+            let slot = if direction_choices {
+                match a.key { 121=>0, 107=>1, 117=>2, 104=>3, 108=>5, 98=>6, 106=>7, 110=>8, _=>i }
+            } else { i };
+            // Values are plain choices; execution and navigation remain buttons.
+            let role = match (s(&ui["input"]["kind"]), a.key) {
+                ("hand", 108 | 114)
+                | ("option_bool", 116 | 102)
+                | ("option_inventory", 111 | 115 | 99) => ControlRole::ListItem,
+                _ => ControlRole::Command,
+            };
             self.control(
-                &format!("window-{}", a["key"]),
-                &if mobile {
-                    self.mobile_dialog_action(&ui, d, a)
-                } else {
-                    s(&a["text"]).to_string()
-                },
+                &format!("window-{}", a.key),
+                &a.label,
                 Rect::new(
-                    x + 16. + (i % cols) as f64 * (bw + gap),
-                    ay + (i / cols) as f64 * 46.,
+                    x + 16. + (slot % cols) as f64 * (bw + gap),
+                    ay + (slot / cols) as f64 * 46.,
                     bw,
                     40.,
                 ),
-                json!({"kind":"send","key":a["key"]}),
+                json!({"kind":"send","key":a.key}),
                 ControlStyle {
                     disabled: !b(&self.model["running"]) || b(&self.model["returnAfterEnd"]) || b(&self.model["windowClosing"]),
+                    role,
+                    left: matches!(role, ControlRole::ListItem),
                     size: if mobile { 17. } else { 16. },
-                    key: Some(a["key"].clone()),
+                    key: Some(json!(a.key)),
+                    shortcut: a.shortcut.clone(),
                     ..Default::default()
                 },
-            );
-        }
-        ay += action_rows * 46.;
-        if !prompt.is_empty() {
-            self.text(
-                &prompt,
-                x + 16.,
-                ay + 4.,
-                inner,
-                if mobile { 17. } else { 16. },
-                "#cad7e2",
-                false,
             );
         }
         self.dialog_rect = Some(panel);
@@ -745,13 +682,13 @@ impl BrowserUi {
         let height = n(&f["height"]) as usize;
         let cw = r.w / width as f64;
         let ch = r.h / (height - 2) as f64;
-        self.widgets.rect(r, "#10191d");
+        self.widgets.rect(r, "@map.background");
         for y in 1..height - 1 {
             for x in 0..width {
                 let i = y * width + x;
                 for (glyph, color) in [
-                    (s(&f["map_cells"]).get(i..i + 1).unwrap_or(" "), "#61727a"),
-                    (s(&f["cells"]).get(i..i + 1).unwrap_or(" "), "#ffe483"),
+                    (s(&f["map_cells"]).get(i..i + 1).unwrap_or(" "), "@map.detection.terrain"),
+                    (s(&f["cells"]).get(i..i + 1).unwrap_or(" "), "@map.detection.target"),
                 ] {
                     if glyph != " " {
                         self.widgets.raw_text(
