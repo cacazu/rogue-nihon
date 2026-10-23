@@ -149,9 +149,9 @@
     {
       "file": "pack.c",
       "original_sha256": "7b2158a7d75a698208b3841d12ed982f1f0a306301008a6adacd8d759c62c0c4",
-      "split_sha256": "a0f54b9a05fe19a956ac0ca649d187e2d7314b418e4b5bb41a242f9394128f81",
+      "split_sha256": "9093866b91789a25fcfc9fe2d21d0f0ea6eb86634ad5867847f32132f7c83a5a",
       "byte_identical": false,
-      "review_scope": "Deep-copy labels on stack splitting; observe item selection purpose/input state.",
+      "review_scope": "Deep-copy labels on stack splitting; observe item selection purpose, original requested category filter and input state; preserve original choice validation and RNG.",
       "diff": "split-diffs/pack.c.diff"
     },
     {
@@ -286,7 +286,7 @@
     },
     {
       "file": "semantic.c",
-      "sha256": "7f0c2de652aa4fed0963e661ee5f15ac61fdf470772bcacc31208fd71a66d10b"
+      "sha256": "dca680535ef196bd2cc8572471da860ceca444b96d392534f491953cf4b67507"
     }
   ],
   "limits": [

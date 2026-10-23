@@ -31,7 +31,7 @@ notes = {
     'mdport.c': 'Dispatch platform operations to virtual screen and host adapters.',
     'misc.c': 'Persist last direction; observe direction prompt/input state.',
     'options.c': 'Semantic settings UI; unsigned ctype; UTF-8 scalar editing within original 50-byte budget.',
-    'pack.c': 'Deep-copy labels on stack splitting; observe item selection purpose/input state.',
+    'pack.c': 'Deep-copy labels on stack splitting; observe item selection purpose, original requested category filter and input state; preserve original choice validation and RNG.',
     'potions.c': 'Observe the already selected effect text and fruit argument for semantic translation.',
     'rip.c': 'Observe outcomes/death cause; semantic ending UI and browser score adapter.',
     'save.c': 'Dispatch browser checkpoint serialization instead of native file/process restoration.',

@@ -4,6 +4,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/* Public object category shared by inventory descriptors and choice filters. */
+const char *rg_semantic_category_name(int category);
+
 /* Public equipped bow and available arrow letter; no game mutation or RNG. */
 void rg_semantic_ranged_controls(void);
 

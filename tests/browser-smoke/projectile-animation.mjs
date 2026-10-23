@@ -10,7 +10,7 @@ import {prepareBrowserRuntime} from './browser-runtime.mjs';
 import {installBrowserTestAdapter} from './test-adapter.mjs';
 import {fixtureWorker} from './fixture-worker.mjs';
 import {runGame} from '../run-game.mjs';
-import {createPreviewServer} from '../../../tools/server.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url)),output=artifactDirectory(path.join(root,'tests/browser-smoke/output/projectile-animation'));
 const baseline=process.env.ROGUE_PROJECTILE_BASELINE;assert.ok(baseline,'Set ROGUE_PROJECTILE_BASELINE to the independent pre-change fixture Wasm');
 await mkdir(output,{recursive:true});const runtime=await prepareBrowserRuntime(root),server=createPreviewServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));

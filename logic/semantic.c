@@ -322,7 +322,7 @@ void rg_semantic_register_message(const char *text,const char *id,const char *ar
     append_raw(&out,",\"args\":");append_raw(&out,args_json?args_json:"[]");append_raw(&out,"}");
     if(out.valid)remember(text,json);
 }
-static const char *category_name(int category)
+const char *rg_semantic_category_name(int category)
 {
     switch(category) {
     case POTION:return "potion";case SCROLL:return "scroll";case RING:return "ring";
@@ -364,7 +364,7 @@ static void semantic_item(const char *text,const THING *object,int drop,int pick
     const struct obj_info *info=NULL;
     const char *category,*equipment="none",*appearance_kind=NULL,*appearance_text=NULL;
     int which,known=1,identified,show_bonus=0,show_charges=0,show_weapon=0,show_armor=0,index=-1;
-    if(!object || !(category=category_name(object->o_type))) return;
+    if(!object || !(category=rg_semantic_category_name(object->o_type))) return;
     which=object->o_which;
     switch(object->o_type) {
     case POTION: if(which<0||which>=MAXPOTIONS)return;info=&pot_info[which];
@@ -444,7 +444,7 @@ void rg_semantic_combat_verb(const char *text,int hit,int index)
 }
 void rg_semantic_category(const char *text,int category)
 {
-    char json[160];const char *name=category_name(category);
+    char json[160];const char *name=rg_semantic_category_name(category);
     if(!name)return;
     snprintf(json,sizeof json,"{\"type\":\"item_category\",\"category\":\"%s\",\"category_code\":%d}",name,category);
     remember(text,json);
@@ -459,7 +459,7 @@ void rg_semantic_death(const char *text,int code,int article)
 
 static int table_name(const char *text,struct obj_info *table,int count,int category,struct writer *out)
 {
-    int i;const char *name=category_name(category);
+    int i;const char *name=rg_semantic_category_name(category);
     for(i=0;i<count;i++) if(text==table[i].oi_name) {
         formatted(out,"{\"type\":\"item_name\",\"category\":\"%s\",\"category_code\":%d,\"which\":%d,\"form\":\"%s\"}",
             name,category,i,(category==WEAPON || category==ARMOR)?"base":"effect");return 1;

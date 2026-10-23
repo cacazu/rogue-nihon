@@ -95,7 +95,7 @@ pub struct BrowserUi {
     follow_log: bool,
     drag: Option<Drag>,
     gestures: gestures::Gestures,
-    description: String,
+    hover_point: Option<(f64, f64)>,
     active_row: Value,
     hud: hud::HudWidget,
     mobile_controls: bool,
@@ -113,6 +113,8 @@ pub struct BrowserUi {
     mobile_repeat_open: bool,
     mobile_repeat_error: bool,
     inventory_tabs: inventory_tabs::InventoryTabs,
+    selection_tabs: inventory_tabs::InventoryTabs,
+    selection_context: String,
 }
 impl BrowserUi {
     /// Synchronize host lifecycle observations before an input event, even when
@@ -120,6 +122,8 @@ impl BrowserUi {
     pub fn set_context(&mut self, model: Value) {
         let generation_changed = self.model["generation"] != model["generation"];
         self.model = model;
+        if generation_changed || self.model["frame"]["ui"]["input"]["kind"] != "item" { self.selection_context.clear(); }
+        if generation_changed { self.hover_point = None; }
         self.sync_direction_window();
         if generation_changed || !self.wait_available() {
             self.stop_hold();
@@ -166,7 +170,7 @@ impl BrowserUi {
             follow_log: true,
             drag: None,
             gestures: gestures::Gestures::default(),
-            description: String::new(),
+            hover_point: None,
             active_row: Value::Null,
             hud: hud::HudWidget::default(),
             mobile_controls: true,
@@ -184,6 +188,8 @@ impl BrowserUi {
             mobile_repeat_open: false,
             mobile_repeat_error: false,
             inventory_tabs: inventory_tabs::InventoryTabs::default(),
+            selection_tabs: inventory_tabs::InventoryTabs::default(),
+            selection_context: String::new(),
         }
     }
     fn t(&self, id: &str) -> String {
@@ -283,12 +289,14 @@ impl BrowserUi {
         Widgets::wrap(text, w, size, self.measure)
     }
     pub fn render(&mut self, model: Value, view: Value) -> Value {
+        if self.model["generation"] != model["generation"] || b(&model["topOpen"]) { self.hover_point = None; }
         self.model = model;
         self.widgets.theme = crate::theme::Theme::named(s(&self.model["theme"]));
         self.view = view;
         self.width = n(&self.view["width"]).max(240.);
         self.height = n(&self.view["height"]).max(240.);
         let mobile = self.width < 700. || b(&self.view["coarse"]);
+        if !self.item_selection_visible() { self.selection_context.clear(); }
         let generation = n(&self.model["generation"]) as u64;
         if b(&self.model["running"]) && generation != self.mobile_generation {
             self.mobile_controls = true;
@@ -351,7 +359,7 @@ impl BrowserUi {
             if self.scope.starts_with("dialog") {
                 self.scrolls.insert("dialog".into(), 0.);
                 self.active_row = Value::Null;
-                if self.inventory_list_visible() { self.inventory_tabs.reveal = true; }
+                if self.inventory_list_visible() { self.list_tabs_mut().reveal = true; }
             }
         }
         self.fullscreen = b(&self.view["fullscreen"]) && !b(&self.model["topOpen"]);

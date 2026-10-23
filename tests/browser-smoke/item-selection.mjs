@@ -2,7 +2,7 @@ import {fixtureWorker} from "./fixture-worker.mjs";
 import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import { installBrowserTestAdapter } from "./test-adapter.mjs";
 import { artifactDirectory } from "../../tools/temporary-artifacts.mjs";
-import assert from 'node:assert/strict';import {readFile,writeFile,mkdir} from 'node:fs/promises';import {createHash} from 'node:crypto';import os from 'node:os';import path from 'node:path';import {fileURLToPath} from 'node:url';import {createPreviewServer} from '../../../tools/server.mjs';
+import assert from 'node:assert/strict';import {readFile,writeFile,mkdir} from 'node:fs/promises';import {createHash} from 'node:crypto';import os from 'node:os';import path from 'node:path';import {fileURLToPath} from 'node:url';import {createPreviewServer} from '../../tools/server.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url)),output=artifactDirectory(path.join(root,'tests/browser-smoke/output/item-selection'));await mkdir(output,{recursive:true});
 const {chromium} = loadPlaywright();
 const worker=await readFile(path.join(root,'web/worker.js'),'utf8');const server=createPreviewServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));

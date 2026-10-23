@@ -155,7 +155,7 @@ impl Presentation {
             }
             if matches!(
                 line["scope"].as_str(),
-                Some("browse" | "status_message" | "throw_direction" | "item_action")
+                Some("browse" | "status_message" | "throw_direction" | "item_action" | "item_filter")
             ) {
                 continue;
             }
@@ -212,6 +212,8 @@ impl Presentation {
         let mut input = self.input.clone();
         if input["kind"] == "item" {
             input["action"] = json!(item_action);
+            input["filter"] = self.lines.iter().find(|line| line["scope"] == "item_filter")
+                .map(|line| line["fallback"].clone()).unwrap_or(Value::Null);
         }
         let movement_direction = self.movement_direction();
         if movement_direction && self.lines.iter().any(|line| line["scope"] == "throw_direction") {

@@ -167,9 +167,6 @@ pub fn render(ui: &Value, language: &str) -> Value {
         }
         "enter" => action(13, enter_action),
         "item" => {
-            if matches!(input_id, "input.choose_item" | "input.choose_item_list") {
-                action(42, "window.item_list");
-            }
             action(27, "window.cancel");
         }
         "direction" => {

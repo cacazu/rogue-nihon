@@ -80,7 +80,7 @@
  	    next(nobj) = NULL;
  	    prev(nobj) = NULL;
  	    nobj->o_count = 1;
-@@ -348,6 +382,37 @@
+@@ -348,6 +382,43 @@
   *	Allow player to inventory a single item
   */
  
@@ -99,7 +99,13 @@
 +                     list->o_packch, inv_name(list, FALSE));
 +    }
 +}
-+static void rg_item_choices(THING *list, int type) { rg_item_rows(list, type, "choices"); }
++static void rg_item_choices(THING *list, int type)
++{
++    const char *filter = type == 0 ? "all" : type == CALLABLE ? "callable" :
++                         type == R_OR_S ? "ring-stick" : rg_semantic_category_name(type);
++    rg_item_rows(list, type, "choices");
++    rg_ui_line("item_filter", 0, 0, "ui.text", "[]", filter ? filter : "all");
++}
 +
 +/* Observational inventory for Rust's item menu, including empty/single packs.
 + * No look(), game mutation, RNG, or extra commands. C still executes actions. */
@@ -118,7 +124,7 @@
  void
  picky_inven()
  {
-@@ -362,7 +427,16 @@
+@@ -362,7 +433,17 @@
      {
  	msg(terse ? "item: " : "which item do you wish to inventory: ");
  	mpos = 0;
@@ -130,13 +136,14 @@
 +        mch = readchar();
 +#ifdef ROGUE_LAYERED
 +        rg_ui_clear("choices");
++        rg_ui_clear("item_filter");
 +        rg_ui_clear("input");
 +#endif
 +	if (mch == ESCAPE)
  	{
  	    msg("");
  	    return;
-@@ -386,6 +460,20 @@
+@@ -386,6 +467,20 @@
  {
      THING *obj;
      char ch;
@@ -157,7 +164,7 @@
  
      if (pack == NULL)
  	msg("you aren't carrying anything");
-@@ -398,6 +486,12 @@
+@@ -398,6 +493,12 @@
      {
  	for (;;)
  	{
@@ -170,19 +177,20 @@
  	    if (!terse)
  		addmsg("which object do you want to ");
  	    addmsg(purpose);
-@@ -405,6 +499,11 @@
+@@ -405,6 +506,12 @@
  		addmsg(" what");
  	    msg("? (* for list): ");
  	    ch = readchar();
 +#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
 +        rg_ui_clear("choices");
++        rg_ui_clear("item_filter");
 +        rg_ui_clear("item_action");
 +        rg_ui_clear("input");
 +#endif
  	    mpos = 0;
  	    /*
  	     * Give the poor player a chance to abort the command
-@@ -425,6 +524,12 @@
+@@ -425,6 +532,12 @@
  		    after = FALSE;
  		    return NULL;
  		}

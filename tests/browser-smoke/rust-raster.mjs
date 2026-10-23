@@ -7,7 +7,7 @@ import {loadPlaywright,browserExecutable} from '../../tools/toolchain.mjs';
 import {prepareBrowserRuntime} from './browser-runtime.mjs';
 import {installBrowserTestAdapter} from './test-adapter.mjs';
 import {artifactDirectory} from '../../tools/temporary-artifacts.mjs';
-import {createPreviewServer} from '../../../tools/server.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';
 
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const output=process.env.ROGUE_RASTER_OUTPUT?path.resolve(process.env.ROGUE_RASTER_OUTPUT):artifactDirectory(path.join(root,'tests/browser-smoke/output/rust-raster'));

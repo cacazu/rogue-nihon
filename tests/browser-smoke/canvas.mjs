@@ -9,7 +9,7 @@ import os from "node:os";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { inflateSync } from "node:zlib";
-import { createPreviewServer } from "../../../tools/server.mjs";
+import { createPreviewServer } from "../../tools/server.mjs";
 import { runGame } from "../run-game.mjs";
 import { prepareBrowserRuntime } from "./browser-runtime.mjs";
 const root=fileURLToPath(new URL("../../",import.meta.url)),output=artifactDirectory(path.join(root,"tests/browser-smoke/output/canvas"));
@@ -94,7 +94,7 @@ try{
   });
   await check("Hiding the HTML heading and Canvas leaves a uniform screenshot",onlyCanvas);
   await check("Canvas title screen opens GitHub after Load without HTML anchors",async()=>{
-    const url="https://github.com/cacazu/roguelike-nihon/tree/main/rogue-nihon";
+    const url="https://github.com/cacazu/rogue-nihon";
     await context.route(url,r=>r.fulfill({body:"Canvas link target",contentType:"text/plain"}));
     const opened=page.waitForEvent("popup");await click("credits-repository");const popup=await opened;await popup.waitForURL(url);assert.equal(popup.url(),url);await popup.close();
     assert.equal(await page.locator("a,button:not([data-control]),form,select").count(),0);

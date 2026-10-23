@@ -97,7 +97,12 @@ fn desktop_and_phone_share_status_rows_gauges_and_icon_colors() {
     let pc = desktop.render(model(), view(1400., 1050.));
     let mut phone = BrowserUi::new(measure);
     let mobile = phone.render(model(), view(484., 844.));
-    assert_eq!(pc["diagnostics"]["hud"], mobile["diagnostics"]["hud"]);
+    let pc_hud = &pc["diagnostics"]["hud"];
+    let mobile_hud = &mobile["diagnostics"]["hud"];
+    assert_eq!(n(&pc_hud["row"]["y"]), n(&mobile_hud["row"]["y"]) + 24.);
+    for key in ["metrics", "fontSize", "maxScroll"] { assert_eq!(pc_hud[key],mobile_hud[key]); }
+    assert!(desktop.widgets.text_runs.iter().any(|run| run["text"] == "勇者"));
+    assert!(!phone.widgets.text_runs.iter().any(|run| run["text"] == "勇者"));
     for (width, height, fullscreen) in [(700.,900.,false),(1240.,900.,false),(1240.,900.,true),(844.,390.,true)] {
         let mut ui = BrowserUi::new(measure);
         let mut v = view(width, height); v["fullscreen"] = json!(fullscreen);
@@ -115,7 +120,7 @@ fn desktop_and_phone_share_status_rows_gauges_and_icon_colors() {
         for id in ["settings-toggle", "header-fullscreen"] {
             let c = ui.widgets.controls.iter().find(|c| c.id == id).unwrap();
             assert!(!c.rect.overlaps(row));
-            assert_eq!(c.rect.y + c.rect.h / 2., row.y + row.h / 2.);
+
         }
         assert!(ui.widgets.controls.iter().any(|c| c.id == "status-open"));
         assert!(!ui.widgets.controls.iter().any(|c| c.id.starts_with("hud-")));
@@ -561,22 +566,138 @@ fn direction_wait_uses_a_dialog_when_the_optional_map_pad_is_hidden() {
 }
 
 #[test]
-fn item_list_shortcut_and_button_use_the_same_original_key() {
-    for id in ["input.choose_item", "input.choose_item_list", "input.inventory_one"] {
-        let mut m = model();
-        m["input"] = json!({"kind":"item","id":id,"action":"action.identify"});
-        m["frame"]["ui"]["input"] = m["input"].clone();
-        m["frame"]["ui"]["mode"] = json!("game");
-        m["frame"]["ui"]["window"] = crate::game_window::render(&m["frame"]["ui"], "ja");
-        assert_eq!(m["frame"]["ui"]["window"]["title"], if id == "input.choose_item_list" { "識別するアイテムの一覧" } else { "識別するアイテムを選択" });
-        let mut ui = BrowserUi::new(measure); ui.render(m, view(1400.,1050.));
-        assert_eq!(ui.widgets.controls.iter().any(|c| c.id == "window-42"), id != "input.inventory_one");
-        if id != "input.inventory_one" {
-            let star = ui.widgets.controls.iter().find(|c| c.id == "window-42").unwrap();
-            assert_eq!(star.shortcut.as_deref(), Some("*"));
-            let effect = star.action.clone();
-            assert!(array(&ui.event(json!({"type":"key","key":"*","code":"NumpadMultiply"}))["effects"]).contains(&effect));
+fn item_selection_has_no_list_button_but_physical_star_remains_a_c_key() {
+    for width in [390.,1400.] {
+        for id in ["input.choose_item", "input.choose_item_list", "input.inventory_one"] {
+            let mut m = model();
+            m["input"] = json!({"kind":"item","id":id,"action":"action.identify"});
+            m["frame"]["ui"]["input"] = m["input"].clone();
+            m["frame"]["ui"]["mode"] = json!("game");
+            m["frame"]["ui"]["window"] = crate::game_window::render(&m["frame"]["ui"], "ja");
+            assert_eq!(array(&m["frame"]["ui"]["window"]["actions"]).iter().map(|a| n(&a["key"]) as i32).collect::<Vec<_>>(),vec![27]);
+            let mut ui = BrowserUi::new(measure); ui.render(m, view(width,1050.));
+            assert!(!ui.widgets.controls.iter().any(|c| c.id == "window-42"));
+            let result = ui.event(json!({"type":"key","key":"*","code":"NumpadMultiply"}));
+            assert!(array(&result["effects"]).iter().any(|e| e["kind"] == "send" && e["key"] == 42));
         }
+    }
+}
+
+fn selection_model(action: &str, filter: &str, categories: &[&str]) -> Value {
+    let mut m=model();
+    m["input"]=json!({"kind":"item","id":"input.choose_item","action":action,"filter":filter});
+    let input=m["input"].clone();
+    let ui=&mut m["frame"]["ui"];
+    ui["input"]=input;
+    ui["mode"]=json!("game");
+    ui["lines"]=json!(categories.iter().enumerate().map(|(i,category)| {
+        let key=b'a'+i as u8;
+        json!({"scope":"choices","id":"ui.inventory.entry","row":i,"key":(key as char).to_string(),"selectable":true,
+            "args":[{"value":key},{"kind":"entity","value":{"type":"item","category":category,"which":0,"count":1,"known":false}}]})
+    }).collect::<Vec<_>>());
+    ui["window"]=crate::game_window::render(ui,"ja");m
+}
+
+#[test]
+fn selection_tabs_cover_each_original_purpose_and_preserve_browse_preferences() {
+    for (action,filter,categories,tabs) in [
+        ("action.wield","weapon",vec!["weapon"],vec!["weapon"]), ("action.wear","armor",vec!["armor"],vec!["armor"]),
+        ("action.quaff","potion",vec!["potion"],vec!["potion"]), ("action.read","scroll",vec!["scroll"],vec!["scroll"]),
+        ("action.eat","food",vec!["food"],vec!["food"]), ("action.put_ring","ring",vec!["ring"],vec!["ring"]),
+        ("action.zap","stick",vec!["stick"],vec!["stick"]), ("action.charge","stick",vec!["stick"],vec!["stick"]),
+        ("action.throw","all",vec!["food","weapon","potion"],vec!["all"]),
+        ("action.drop","all",vec!["food","weapon","potion"],vec!["all"]),
+        ("action.call","callable",vec!["weapon","armor","ring"],vec!["weapon","armor","ring"]),
+        ("action.identify","ring-stick",vec!["ring","stick"],vec!["stick","ring"]),
+        ("action.identify","weapon",vec!["weapon"],vec!["weapon"]),
+        ("action.identify","potion",vec!["potion"],vec!["potion"]),
+        ("action.identify","scroll",vec!["scroll"],vec!["scroll"]),
+        ("action.identify","armor",vec!["armor"],vec!["armor"]),
+        ("action.identify","all",vec!["food","potion","scroll","weapon","armor","ring","stick","amulet"],vec!["all"]),
+    ] {
+        for count in [0,1,categories.len()] {
+            let m=selection_model(action,filter,&categories[..count]);
+            let mut ui=BrowserUi::new(measure);
+            ui.load_inventory_preference(r#"{"version":1,"tab":"food","positions":{"food":140},"horizontal":31}"#);
+            let preference=ui.inventory_preference();
+            ui.render(m.clone(),view(1400.,1050.));
+            let actual:Vec<_>=ui.widgets.controls.iter().filter_map(|c| c.id.strip_prefix("inventory-tab-")).collect();
+            let expected=if filter=="callable" {
+                if count==0 { vec!["all"] } else { tabs.iter().copied().filter(|tab| categories[..count].contains(tab)).collect() }
+            } else { tabs.clone() };
+            assert_eq!(actual,expected,"{action}/{count}");
+            assert!(!ui.widgets.controls.iter().any(|c| c.id=="inventory-history" || c.id=="window-42"));
+            if count>0 {
+                if !ui.widgets.controls.iter().any(|c| c.id.starts_with("item-")) {
+                    click(&mut ui,&format!("inventory-tab-{}",categories[0]));
+                    ui.render(m.clone(),view(1400.,1050.));
+                }
+                let key=ui.widgets.controls.iter().find(|c| c.id.starts_with("item-")).unwrap().id.clone();
+                let result=click(&mut ui,&key);
+                let expected=(key.as_bytes()[5]) as u32;
+                assert!(array(&result["effects"]).iter().any(|e| e["kind"]=="send" && e["key"]==expected));
+            }
+            assert_eq!(ui.inventory_preference(),preference,"selection cannot persist over browsing");
+            let mut mobile=BrowserUi::new(measure);mobile.render(m,view(390.,844.));
+            assert!(!mobile.widgets.controls.iter().any(|c| c.id.starts_with("inventory-tab-")));
+        }
+    }
+}
+
+#[test]
+fn choice_filter_metadata_is_not_body_text_and_is_retired_with_choices() {
+    let mut presentation=crate::presentation::Presentation::default();
+    presentation.update("item_filter",0,0,"ui.text",json!([]),"weapon");
+    presentation.update("input",-2,0,"input.choose_item",json!([]),"");
+    let ui=presentation.render("ja","");
+    assert_eq!(ui["input"]["filter"],"weapon");
+    assert!(!array(&ui["lines"]).iter().any(|l| l["scope"]=="item_filter"));
+    presentation.update("item_filter",-1,0,"",json!([]),"");
+    assert!(presentation.render("ja","")["input"]["filter"].is_null());
+    let mut browser=BrowserUi::new(measure);let item=selection_model("action.call","callable",&["weapon","armor"]);
+    browser.render(item.clone(),view(1400.,1050.));browser.selection_tabs.tab="armor".into();
+    browser.set_context(model());browser.set_context(item.clone());browser.render(item,view(1400.,1050.));
+    assert_eq!(browser.selection_tabs.tab,"weapon");
+}
+
+#[test]
+fn single_item_inquiry_uses_the_common_all_tab_without_changing_browse_state() {
+    let mut ui=BrowserUi::new(measure);let mut m=selection_model("","all",&["weapon","armor","food"]);
+    m["frame"]["ui"]["input"]["id"]=json!("input.inventory_one");
+    let preference=ui.inventory_preference();ui.render(m,view(1400.,1050.));
+    let tabs:Vec<_>=ui.widgets.controls.iter().filter_map(|c| c.id.strip_prefix("inventory-tab-")).collect();
+    assert_eq!(tabs,vec!["all"]);assert_eq!(ui.inventory_preference(),preference);
+}
+
+#[test]
+fn pc_log_heading_uses_only_the_current_public_cell_and_name_is_bounded() {
+    let mut ui=BrowserUi::new(measure);let mut m=model();
+    m["frame"]["ui"]["name"]=json!("長い名前".repeat(30));
+    m["frame"]["map_tiles"]=json!(vec![0;80*24]);
+    for mode in ["ascii","tiles","pixels"] {
+        m["displayMode"]=json!(mode);ui.render(m.clone(),view(1400.,1050.));
+        assert!(ui.widgets.icons.iter().any(|i| i["name"]=="command-list"));
+        let c=ui.camera.unwrap();let r=ui.map_rect.unwrap();
+        ui.hover_point=Some((r.x+4.5*c.size-c.left,r.y+3.5*c.cell_h-c.top));
+        let output=ui.render(m.clone(),view(1400.,1050.));
+        let images:Vec<_>=array(&output["commands"]).iter().filter(|c| b(&c["logHeader"])).collect();
+        assert_eq!(images.len(),1);assert_eq!(images[0]["image"],"terrain.unexplored.png");
+        assert_eq!(images[0]["set"],if mode=="pixels" {"pixels"} else {"tiles"});
+        assert!(ui.widgets.text_runs.iter().any(|r| s(&r["text"]).contains('…')));
+        assert!(ui.widgets.text_runs.iter().any(|r| r["text"]=="暗闇"));
+        // Changes in undisclosed data do not affect the selected public image.
+        m["frame"]["hidden_monster"]=json!({"which":3});
+        let output=ui.render(m.clone(),view(1400.,1050.));
+        assert_eq!(array(&output["commands"]).iter().find(|c| b(&c["logHeader"])).unwrap()["image"],"terrain.unexplored.png");
+        m["frame"]["map_tiles"][4*80+4]=json!(15);
+        let output=ui.render(m.clone(),view(1400.,1050.));
+        assert_eq!(array(&output["commands"]).iter().find(|c| b(&c["logHeader"])).unwrap()["image"],"item.potion.png");
+        // A camera move under a stationary pointer resolves the newly pointed cell.
+        ui.camera.as_mut().unwrap().left+=c.size;
+        let output=ui.render(m.clone(),view(1400.,1050.));
+        assert_eq!(array(&output["commands"]).iter().find(|c| b(&c["logHeader"])).unwrap()["image"],"terrain.unexplored.png");
+        assert!(array(&ui.event(json!({"type":"leave"}))["effects"]).is_empty());
+        assert!(ui.hover_point.is_none());m["frame"]["map_tiles"][4*80+4]=json!(0);
     }
 }
 

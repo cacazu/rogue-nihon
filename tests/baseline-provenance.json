@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "original_source": "../investigation-20261002-original-rogue/sources/rogue5.4.4",
+  "original_source": "upstream/rogue5.4.4",
   "original_version": "Rogue 5.4.4",
-  "preparation_script_sha256": "3a491bffd304ff8a2313811b213a78d4b00f96e1af0ba9738551fae8fa0c3deb",
+  "preparation_script_sha256": "62b09d288755151568ffbcc80646c42683096b629e6311ae4020a7459d713f7d",
   "compiler_required": [
     "-DROGUE_LAYERED",
     "-std=gnu11",

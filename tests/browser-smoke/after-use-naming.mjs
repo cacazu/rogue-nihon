@@ -13,7 +13,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {loadPlaywright,browserExecutable} from '../../tools/toolchain.mjs';
 import {artifactDirectory} from '../../tools/temporary-artifacts.mjs';
-import {createPreviewServer} from '../../../tools/server.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';
 import {installBrowserTestAdapter} from './test-adapter.mjs';
 import {fixtureWorker} from './fixture-worker.mjs';
 

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';import path from 'node:path';import {fileURLToPath} from 'node:url';
 import {loadPlaywright,browserExecutable} from '../../tools/toolchain.mjs';
 import {artifactDirectory} from '../../tools/temporary-artifacts.mjs';
-import {createPreviewServer} from '../../../tools/server.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';
 import {installBrowserTestAdapter} from './test-adapter.mjs';import {fixtureWorker} from './fixture-worker.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url)),output=process.env.ROGUE_VERTICAL_OUTPUT||artifactDirectory(path.join(root,'tests/browser-smoke/output/vertical-alignment'));
 await mkdir(output,{recursive:true});const {chromium}=loadPlaywright(),browser=await chromium.launch({executablePath:browserExecutable(),headless:true}),server=createPreviewServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));

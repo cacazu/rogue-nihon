@@ -1,5 +1,5 @@
 {
-  "built_at_utc": "2026-10-23T11:35:57.503394+00:00",
+  "built_at_utc": "2026-10-23T12:06:50.490083+00:00",
   "logic_source_directory": "logic",
   "c_source_files": 38,
   "rust_library": ".local/tasks/python-p70ktfuh/cargo-target/wasm32-unknown-emscripten/release/librogue_layers.a",
@@ -27,13 +27,13 @@
   "outputs": [
     {
       "file": "game.wasm",
-      "bytes": 2534663,
-      "sha256": "68275fd4804ae7f2a0110d2a6c7316acbaf9390aebafea7e57859c13af371af2"
+      "bytes": 2535312,
+      "sha256": "135708e5a3bd8e0979be106671f820b709d6925ff434e13c5d221b8d26f693f7"
     },
     {
       "file": "browser-ui.wasm",
-      "bytes": 5190426,
-      "sha256": "fb992fe407824927112c43c7fb8a5bc2fd682d6c09d9c75d28c3a04eed249e39"
+      "bytes": 5200520,
+      "sha256": "98bd32144d0ae3b68df3ea2ad5bb1504441d2fde6b4ec155bbbea7a345b3456f"
     },
     {
       "file": "browser-ui.js",

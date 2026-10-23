@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import EventQueue from "../queue-runtime.mjs";
 import { Worker } from "node:worker_threads";
-import { createPreviewServer } from "../../../tools/server.mjs";
+import { createPreviewServer } from "../../tools/server.mjs";
 
 
 test("bounded transport rejects saturation and preserves command order across uint32 wrap", () => {

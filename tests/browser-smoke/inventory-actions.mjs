@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import os from 'node:os';
 import {createHash} from 'node:crypto';
-import {createPreviewServer} from '../../../tools/server.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';
 import {runGame} from '../run-game.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const {chromium} = loadPlaywright();

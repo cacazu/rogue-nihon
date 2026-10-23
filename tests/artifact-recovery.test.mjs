@@ -11,7 +11,7 @@ import { once } from "node:events";
 import os from "node:os";
 
 const root = realpathSync(fileURLToPath(new URL("../", import.meta.url)));
-const previewServer = fileURLToPath(new URL("../../tools/server.mjs", import.meta.url));
+const previewServer = fileURLToPath(new URL("../tools/server.mjs", import.meta.url));
 const base = path.join(root, ".local", "tasks");
 const helper = new URL("../tools/temporary-artifacts.mjs", import.meta.url).href;
 const registry = path.join(root, "tools/artifact_registry.py");

@@ -9,7 +9,7 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { createPreviewServer } from '../../../tools/server.mjs';
+import { createPreviewServer } from '../../tools/server.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const output = artifactDirectory(path.join(root, 'tests/browser-smoke/output/top-screen'));

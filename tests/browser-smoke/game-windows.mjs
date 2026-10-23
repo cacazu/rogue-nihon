@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import os from 'node:os';
-import { createPreviewServer } from '../../../tools/server.mjs';
+import { createPreviewServer } from '../../tools/server.mjs';
 const {chromium, modulePath} = loadPlaywright();
 const output = artifactDirectory(fileURLToPath(new URL('./output/windows/', import.meta.url)));
 await mkdir(output, { recursive: true });

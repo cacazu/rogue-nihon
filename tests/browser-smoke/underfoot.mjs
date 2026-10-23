@@ -8,7 +8,7 @@ import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createPreviewServer } from "../../../tools/server.mjs";
+import { createPreviewServer } from "../../tools/server.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const output = artifactDirectory(path.join(root, "tests/browser-smoke/output/underfoot/fixed"));

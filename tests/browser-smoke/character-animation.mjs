@@ -8,7 +8,7 @@ import {artifactDirectory} from '../../tools/temporary-artifacts.mjs';
 import {prepareBrowserRuntime} from './browser-runtime.mjs';
 import {installBrowserTestAdapter} from './test-adapter.mjs';
 import {fixtureWorker} from './fixture-worker.mjs';
-import {createPreviewServer} from '../../../tools/server.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';
 
 // This scenario observes real C moves/hits, Rust clips and completed Canvas pixels.
 const root=fileURLToPath(new URL('../../',import.meta.url));

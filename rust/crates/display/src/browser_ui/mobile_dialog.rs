@@ -29,7 +29,6 @@ impl BrowserUi {
             27 => "action.cancel_short",
             13 if option => "mobile.dialog.keep",
             45 if option => "mobile.dialog.back",
-            42 if kind == "item" => "dialog.item_list",
             42 => "mobile.dialog.all_button",
             121 if kind == "confirm" => "mobile.dialog.yes",
             110 if kind == "confirm" => "mobile.dialog.no",

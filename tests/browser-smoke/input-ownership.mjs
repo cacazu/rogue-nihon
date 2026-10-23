@@ -2,7 +2,7 @@ import {loadPlaywright, browserExecutable} from '../../tools/toolchain.mjs';
 import {installBrowserTestAdapter} from './test-adapter.mjs';
 import {prepareBrowserRuntime} from './browser-runtime.mjs';
 import {artifactDirectory} from '../../tools/temporary-artifacts.mjs';
-import {createPreviewServer} from '../../../tools/server.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';
 import assert from 'node:assert/strict';
 import {mkdir, writeFile} from 'node:fs/promises';
 import path from 'node:path';

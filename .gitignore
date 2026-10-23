@@ -35,3 +35,18 @@
 
 # Local HTTPS private keys and server logs.
 /.local/
+
+# Local dependencies, compiler caches and acquisition inputs.
+**/node_modules/
+**/target/
+**/em-cache/
+**/__pycache__/
+**/.pytest_cache/
+*.py[cod]
+/upstream/
+
+# Local credentials and chat attachments.
+.env
+.env.local
+.env.*.local
+/.codex-remote-attachments/

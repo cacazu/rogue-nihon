@@ -3,7 +3,7 @@ import {loadPlaywright,browserExecutable} from '../../tools/toolchain.mjs';
 import {artifactDirectory} from '../../tools/temporary-artifacts.mjs';
 import {prepareBrowserRuntime} from './browser-runtime.mjs';
 import {installBrowserTestAdapter} from './test-adapter.mjs';
-import {createPreviewServer} from '../../../tools/server.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';

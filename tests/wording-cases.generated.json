@@ -1657,165 +1657,165 @@
       ]
     },
     {
-      "case": "site:pack.c:423:pack.picky_inven.you_arent_carrying_anything:7",
+      "case": "site:pack.c:429:pack.picky_inven.you_arent_carrying_anything:7",
       "id": "pack.picky_inven.you_arent_carrying_anything",
       "negative": false,
       "site": [
         "pack.c",
-        423
+        429
       ]
     },
     {
-      "case": "site:pack.c:425:pack.picky_inven.a:7",
+      "case": "site:pack.c:431:pack.picky_inven.a:7",
       "id": "pack.picky_inven.a",
       "negative": false,
       "site": [
         "pack.c",
-        425
+        431
       ]
     },
     {
-      "case": "site:pack.c:428:pack.picky_inven.item:7",
+      "case": "site:pack.c:434:pack.picky_inven.item:7",
       "id": "pack.picky_inven.item",
       "negative": false,
       "site": [
         "pack.c",
-        428
+        434
       ]
     },
     {
-      "case": "site:pack.c:428:pack.picky_inven.which_item_do_you_wish_to_inventory:7",
+      "case": "site:pack.c:434:pack.picky_inven.which_item_do_you_wish_to_inventory:7",
       "id": "pack.picky_inven.which_item_do_you_wish_to_inventory",
       "negative": false,
       "site": [
         "pack.c",
-        428
+        434
       ]
     },
     {
-      "case": "clear:pack.c:441",
+      "case": "clear:pack.c:448",
       "id": "message.clear",
       "negative": false,
       "site": [
         "pack.c",
-        441
+        448
       ]
     },
     {
-      "case": "site:pack.c:447:pack.picky_inven.character_string:7",
+      "case": "site:pack.c:454:pack.picky_inven.character_string:7",
       "id": "pack.picky_inven.character_string",
       "negative": false,
       "site": [
         "pack.c",
-        447
+        454
       ]
     },
     {
-      "case": "site:pack.c:450:pack.picky_inven.not_in_pack:7",
+      "case": "site:pack.c:457:pack.picky_inven.not_in_pack:7",
       "id": "pack.picky_inven.not_in_pack",
       "negative": false,
       "site": [
         "pack.c",
-        450
+        457
       ]
     },
     {
-      "case": "site:pack.c:479:pack.get_item.you_arent_carrying_anything:7",
+      "case": "site:pack.c:486:pack.get_item.you_arent_carrying_anything:7",
       "id": "pack.get_item.you_arent_carrying_anything",
       "negative": false,
       "site": [
         "pack.c",
-        479
+        486
       ]
     },
     {
-      "case": "site:pack.c:484:pack.get_item.you_ran_out:7",
+      "case": "site:pack.c:491:pack.get_item.you_ran_out:7",
       "id": "pack.get_item.you_ran_out",
       "negative": false,
       "site": [
         "pack.c",
-        484
+        491
       ]
     },
     {
-      "case": "site:pack.c:496:pack.get_item.which_object_do_you_want_to:7",
+      "case": "site:pack.c:503:pack.get_item.which_object_do_you_want_to:7",
       "id": "pack.get_item.which_object_do_you_want_to",
       "negative": false,
       "site": [
         "pack.c",
-        496
+        503
       ]
     },
     {
-      "case": "site:pack.c:499:pack.get_item.what:7",
+      "case": "site:pack.c:506:pack.get_item.what:7",
       "id": "pack.get_item.what",
       "negative": false,
       "site": [
         "pack.c",
-        499
+        506
       ]
     },
     {
-      "case": "site:pack.c:500:pack.get_item.for_list:7",
+      "case": "site:pack.c:507:pack.get_item.for_list:7",
       "id": "pack.get_item.for_list",
       "negative": false,
       "site": [
         "pack.c",
-        500
+        507
       ]
     },
     {
-      "case": "clear:pack.c:515",
+      "case": "clear:pack.c:523",
       "id": "message.clear",
       "negative": false,
       "site": [
         "pack.c",
-        515
+        523
       ]
     },
     {
-      "case": "site:pack.c:540:pack.get_item.is_not_a_valid_item:7",
+      "case": "site:pack.c:548:pack.get_item.is_not_a_valid_item:7",
       "id": "pack.get_item.is_not_a_valid_item",
       "negative": false,
       "site": [
         "pack.c",
-        540
+        548
       ]
     },
     {
-      "case": "site:pack.c:564:pack.money.you_found:7",
+      "case": "site:pack.c:572:pack.money.you_found:7",
       "id": "pack.money.you_found",
       "negative": false,
       "site": [
         "pack.c",
-        564
+        572
       ]
     },
     {
-      "case": "site:pack.c:565:pack.money.gold_pieces:-7",
+      "case": "site:pack.c:573:pack.money.gold_pieces:-7",
       "id": "pack.money.gold_pieces",
       "negative": false,
       "site": [
         "pack.c",
-        565
+        573
       ]
     },
     {
-      "case": "site:pack.c:565:pack.money.gold_pieces:0",
+      "case": "site:pack.c:573:pack.money.gold_pieces:0",
       "id": "pack.money.gold_pieces",
       "negative": false,
       "site": [
         "pack.c",
-        565
+        573
       ]
     },
     {
-      "case": "site:pack.c:565:pack.money.gold_pieces:7",
+      "case": "site:pack.c:573:pack.money.gold_pieces:7",
       "id": "pack.money.gold_pieces",
       "negative": false,
       "site": [
         "pack.c",
-        565
+        573
       ]
     },
     {
@@ -8274,12 +8274,12 @@
       ]
     },
     {
-      "case": "dynamic:pack.c:497:purpose",
+      "case": "dynamic:pack.c:504:purpose",
       "id": "message.entity",
       "negative": false,
       "site": [
         "pack.c",
-        497
+        504
       ]
     },
     {

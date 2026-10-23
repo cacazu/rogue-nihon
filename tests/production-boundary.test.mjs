@@ -84,7 +84,7 @@ test("shipped browser modules exclude the local server, tests and artifact manag
     }
   }
   assert.doesNotMatch(await text("web/index.html"), /tests\/|tools\/|fixture|artifact/i);
-  const previewSource = await readFile(new URL("../../tools/server.mjs", import.meta.url), "utf8");
+  const previewSource = await readFile(new URL("../tools/server.mjs", import.meta.url), "utf8");
   assert.doesNotMatch(previewSource, /tests[\\/]|recoverTemporaryArtifacts|artifact-registry|temporary.artifacts/);
   assert.doesNotMatch(previewSource, /test-adapter|__rogueBrowserTest/);
   assert.doesNotMatch(previewSource, /web[\\/]server\.mjs/);

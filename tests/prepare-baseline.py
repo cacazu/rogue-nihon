@@ -15,7 +15,7 @@ import re
 from pathlib import Path
 
 PROJECT = Path(__file__).resolve().parent.parent
-DEFAULT_ORIGINAL = PROJECT.parent / "investigation-20261002-original-rogue/sources/rogue5.4.4"
+DEFAULT_ORIGINAL = Path(os.environ.get("ROGUE_ORIGINAL_SOURCE") or PROJECT / "upstream" / "rogue5.4.4")
 
 # These files have only platform startup, observation, typed callback, or state
 # access changes. The generated diff is authoritative; no rule algorithm is

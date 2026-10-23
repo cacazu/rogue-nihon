@@ -7,7 +7,7 @@ import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createPreviewServer } from "../../../tools/server.mjs";
+import { createPreviewServer } from "../../tools/server.mjs";
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const project = path.resolve(directory, "../..");
@@ -144,7 +144,7 @@ try {
   await page.locator("#language").selectOption("ja");
   assert.equal(await page.evaluate(() => __rogueBrowserTest.language), "ja");
   assert.equal(await page.evaluate(() => __rogueBrowserTest.generation), 0);
-  const repo = page.locator('a[href="https://github.com/cacazu/roguelike-nihon/tree/main/rogue-nihon"]');
+  const repo = page.locator('a[href="https://github.com/cacazu/rogue-nihon"]');
   assert.ok(await repo.count() > 0, "distribution repository is linked");
   evidence.checks.push("Title, unified map/UI/HUD game screen and GitHub footer are present; pre-start language selection creates no Worker");
   await page.locator("#seed").fill("12345");

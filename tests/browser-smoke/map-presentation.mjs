@@ -7,7 +7,7 @@ import {artifactDirectory} from '../../tools/temporary-artifacts.mjs';
 import {prepareBrowserRuntime} from './browser-runtime.mjs';
 import {installBrowserTestAdapter} from './test-adapter.mjs';
 import {fixtureWorker} from './fixture-worker.mjs';
-import {createPreviewServer} from '../../../tools/server.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';
 
 // Real C pickup/projectile frames, front-facing artwork and the settings control.
 const root=fileURLToPath(new URL('../../',import.meta.url));

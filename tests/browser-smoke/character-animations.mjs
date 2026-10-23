@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadPlaywright, browserExecutable } from '../../tools/toolchain.mjs';
 import { prepareBrowserRuntime } from './browser-runtime.mjs';
-import { createPreviewServer } from '../../../tools/server.mjs';
+import { createPreviewServer } from '../../tools/server.mjs';
 
 const require = createRequire(import.meta.url);
 const galleryOnly = process.argv.includes('--gallery-only');

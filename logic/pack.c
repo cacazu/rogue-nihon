@@ -397,7 +397,13 @@ static void rg_item_rows(THING *list, int type, const char *scope)
                      list->o_packch, inv_name(list, FALSE));
     }
 }
-static void rg_item_choices(THING *list, int type) { rg_item_rows(list, type, "choices"); }
+static void rg_item_choices(THING *list, int type)
+{
+    const char *filter = type == 0 ? "all" : type == CALLABLE ? "callable" :
+                         type == R_OR_S ? "ring-stick" : rg_semantic_category_name(type);
+    rg_item_rows(list, type, "choices");
+    rg_ui_line("item_filter", 0, 0, "ui.text", "[]", filter ? filter : "all");
+}
 
 /* Observational inventory for Rust's item menu, including empty/single packs.
  * No look(), game mutation, RNG, or extra commands. C still executes actions. */
@@ -434,6 +440,7 @@ picky_inven()
         mch = readchar();
 #ifdef ROGUE_LAYERED
         rg_ui_clear("choices");
+        rg_ui_clear("item_filter");
         rg_ui_clear("input");
 #endif
 	if (mch == ESCAPE)
@@ -501,6 +508,7 @@ get_item(char *purpose, int type)
 	    ch = readchar();
 #ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
         rg_ui_clear("choices");
+        rg_ui_clear("item_filter");
         rg_ui_clear("item_action");
         rg_ui_clear("input");
 #endif

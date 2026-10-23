@@ -36,6 +36,16 @@ impl BrowserUi {
         self.scrolls.insert("status".into(), 0.);
     }
 
+    pub(super) fn draw_player_name(&mut self, rect: Rect) {
+        let name = s(&self.model["frame"]["ui"]["name"]);
+        let start = self.widgets.commands.len();
+        self.widgets.single_line(name,Rect::new(rect.x+4.,rect.y,rect.w-8.,rect.h),
+            LineStyle { text:TextStyle::new(17.,TEXT,true),center:false,ellipsis:true },self.measure);
+        for command in &mut self.widgets.commands[start..] {
+            if command["op"] == "text" { command["outline"] = json!({"color":"@hud.outline","width":2.}); }
+        }
+    }
+
     pub(super) fn draw_status_bar(&mut self, rect: Rect) {
         let metrics = self.status_metrics();
         let metric = |id: &str| metrics.iter().find(|m| m.id == id).expect("status metric");

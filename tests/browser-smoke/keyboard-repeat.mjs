@@ -7,7 +7,7 @@ import {artifactDirectory} from '../../tools/temporary-artifacts.mjs';
 import {prepareBrowserRuntime} from './browser-runtime.mjs';
 import {installBrowserTestAdapter} from './test-adapter.mjs';
 import {fixtureWorker} from './fixture-worker.mjs';
-import {createPreviewServer} from '../../../tools/server.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';
 
 // Native repeated keydowns and distinct taps must both show movement while
 // inputs are still arriving, with identical C input and deterministic state.

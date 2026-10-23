@@ -12,7 +12,7 @@ import {prepareBrowserRuntime} from "./browser-runtime.mjs";
 import {installBrowserTestAdapter} from "./test-adapter.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
-const previewServer = fileURLToPath(new URL("../../../tools/server.mjs", import.meta.url));
+const previewServer = fileURLToPath(new URL("../../tools/server.mjs", import.meta.url));
 const output = artifactDirectory(path.join(root, "tests/browser-smoke/output/production-boundary"));
 await mkdir(output, {recursive: true});
 const {chromium} = loadPlaywright();

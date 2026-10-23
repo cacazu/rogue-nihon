@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';import path from 'node:path';import {fileURLToPath} from 'node:url';
 import {loadPlaywright,browserExecutable} from '../../tools/toolchain.mjs';import {artifactDirectory} from '../../tools/temporary-artifacts.mjs';
-import {createPreviewServer} from '../../../tools/server.mjs';import {installBrowserTestAdapter} from './test-adapter.mjs';import {fixtureWorker} from './fixture-worker.mjs';import {runGame} from '../run-game.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';import {installBrowserTestAdapter} from './test-adapter.mjs';import {fixtureWorker} from './fixture-worker.mjs';import {runGame} from '../run-game.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url)),output=process.env.ROGUE_SHORTCUT_OUTPUT||artifactDirectory(path.join(root,'tests/browser-smoke/output/inventory-action-shortcuts'));
 await mkdir(output,{recursive:true});const {chromium}=loadPlaywright(),browser=await chromium.launch({executablePath:browserExecutable(),headless:true}),server=createPreviewServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const worker=await readFile(path.join(root,'web/worker.js'),'utf8'),wasm=path.join(root,'build/game-fixtures.wasm'),headers={'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'};

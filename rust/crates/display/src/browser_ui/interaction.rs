@@ -92,7 +92,7 @@ impl BrowserUi {
             );
             self.scrolls.insert(id.into(), scroll);
             if id == "dialog" && self.inventory_list_visible() { self.remember_inventory_scroll(scroll); }
-            if id == "inventory-tabs" { self.inventory_tabs.horizontal = scroll; }
+            if id == "inventory-tabs" { self.list_tabs_mut().horizontal = scroll; }
             if id == "log" {
                 self.follow_log = scroll >= region.max - 4.;
             }
@@ -106,6 +106,7 @@ impl BrowserUi {
         self.widgets.pressed.clear();
         if clear_hover {
             self.widgets.hover.clear();
+            self.hover_point = None;
         }
     }
     pub(super) fn activate(&mut self, control: &Control, _value: &Value, effects: &mut Vec<Value>) {
@@ -117,8 +118,8 @@ impl BrowserUi {
         }
         match s(&control.action["kind"]) {
             "inventory-tab" => {
-                self.inventory_tabs.tab = s(&control.action["tab"]).into();
-                self.inventory_tabs.reveal = true;
+                self.list_tabs_mut().tab = s(&control.action["tab"]).into();
+                self.list_tabs_mut().reveal = true;
                 self.widgets.focus = control.id.clone();
             }
             "dropdown" => {
@@ -207,7 +208,7 @@ impl BrowserUi {
                     self.widgets.focus.clear();
                 }
             }
-            "leave" => self.widgets.hover.clear(),
+            "leave" => { self.widgets.hover.clear(); self.hover_point = None; },
             "down" => {
                 self.gestures.wait_key.clear();
                 if self.drag.is_some() && !b(&event["captured"]) {
@@ -263,6 +264,7 @@ impl BrowserUi {
                 }
             }
             "move" => {
+                if mouse { self.hover_point = Some((x,y)); }
                 if self.drag.as_ref().is_none_or(|d| d.id == id) {
                     let hit = self.hit(x, y);
                     self.widgets.hover = if mouse {
@@ -342,15 +344,6 @@ impl BrowserUi {
                             }
                             self.drag = Some(drag);
                         }
-                    } else if !b(&self.model["settingsOpen"])
-                        && !self.model["frame"]["ui"]["window"].is_object()
-                        && self.map_rect.is_some_and(|r| r.contains(x, y))
-                        && let Some(cell) = self.map_cell(x, y)
-                    {
-                        let f = &self.model["frame"];
-                        let index = n(&cell["y"]) * n(&f["width"]) + n(&cell["x"]);
-                        let tile = n(&f["map_tiles"][index as usize]) as usize;
-                        self.description = s(&self.model["tileDescriptions"][tile]).into();
                     }
                 }
             }
@@ -550,10 +543,10 @@ impl BrowserUi {
         if self.inventory_list_visible() && self.widgets.focus.starts_with("inventory-tab-")
             && matches!(key,"ArrowLeft" | "ArrowRight") {
             let tabs = self.inventory_available_tabs(&self.model["frame"]["ui"]);
-            let index = tabs.iter().position(|tab| *tab == self.inventory_tabs.tab).unwrap_or(0);
+            let index = tabs.iter().position(|tab| *tab == self.list_tabs().tab).unwrap_or(0);
             let next = (index as i64 + if key == "ArrowRight" { 1 } else { -1 }).rem_euclid(tabs.len() as i64) as usize;
-            self.inventory_tabs.tab = tabs[next].into();
-            self.inventory_tabs.reveal = true;
+            self.list_tabs_mut().tab = tabs[next].into();
+            self.list_tabs_mut().reveal = true;
             self.widgets.focus = format!("inventory-tab-{}",tabs[next]);
             return true;
         }
@@ -599,7 +592,7 @@ impl BrowserUi {
             let step = if b(&e["shift"]) { -1 } else { 1 };
             let next = &controls[(index + step).rem_euclid(controls.len() as i64) as usize];
             self.widgets.focus = next.id.clone();
-            if next.id.starts_with("inventory-tab-") { self.inventory_tabs.reveal = true; }
+            if next.id.starts_with("inventory-tab-") { self.list_tabs_mut().reveal = true; }
             if next.id.starts_with("hud-") {
                 let row: Rect =
                     serde_json::from_value(self.hud.layout["row"].clone()).expect("HUD row");

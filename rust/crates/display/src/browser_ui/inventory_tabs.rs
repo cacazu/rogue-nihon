@@ -24,9 +24,22 @@ fn matches(tab: &str, row: &Value) -> bool {
 }
 
 impl BrowserUi {
-    pub(super) fn inventory_list_visible(&self) -> bool {
+    pub(super) fn inventory_browse_visible(&self) -> bool {
         let ui = &self.model["frame"]["ui"];
         b(&ui["inventory"]) && ui["window"]["kind"] == "menu"
+    }
+    pub(super) fn item_selection_visible(&self) -> bool {
+        self.width >= 700. && !b(&self.view["coarse"])
+            && self.model["frame"]["ui"]["input"]["kind"] == "item"
+    }
+    pub(super) fn inventory_list_visible(&self) -> bool {
+        self.inventory_browse_visible() || self.item_selection_visible()
+    }
+    pub(super) fn list_tabs(&self) -> &InventoryTabs {
+        if self.item_selection_visible() { &self.selection_tabs } else { &self.inventory_tabs }
+    }
+    pub(super) fn list_tabs_mut(&mut self) -> &mut InventoryTabs {
+        if self.item_selection_visible() { &mut self.selection_tabs } else { &mut self.inventory_tabs }
     }
     pub fn inventory_preference(&self) -> Value {
         json!({"version":1,"tab":self.inventory_tabs.tab,"positions":self.inventory_tabs.positions,"horizontal":self.inventory_tabs.horizontal})
@@ -44,22 +57,44 @@ impl BrowserUi {
         self.inventory_tabs.reveal = true;
     }
     pub(super) fn inventory_available_tabs(&self, ui: &Value) -> Vec<&'static str> {
+        if self.item_selection_visible() {
+            let filter = s(&ui["input"]["filter"]);
+            if filter == "all" { return vec!["all"]; }
+            if filter == "ring-stick" { return vec!["stick","ring"]; }
+            if TABS.contains(&filter) && filter != "equipped" {
+                return vec![TABS.iter().copied().find(|tab| *tab == filter).unwrap()];
+            }
+            // CALLABLE offers only categories still present in public choices.
+            let tabs: Vec<_> = TABS.iter().copied().filter(|tab| !matches!(*tab,"all" | "equipped")
+                && array(&ui["lines"]).iter().any(|row| b(&row["selectable"]) && matches(tab,row))).collect();
+            return if tabs.is_empty() { vec!["all"] } else { tabs };
+        }
         TABS.iter().copied().filter(|tab| *tab == "all" || array(&ui["lines"]).iter().any(|row| b(&row["selectable"]) && matches(tab, row))).collect()
     }
     pub(super) fn sync_inventory_tabs(&mut self, ui: &Value) {
-        if !self.inventory_available_tabs(ui).contains(&self.inventory_tabs.tab.as_str()) {
-            self.inventory_tabs.tab = "all".into();
-            self.inventory_tabs.reveal = true;
+        if self.item_selection_visible() {
+            let context = format!("{}:{}:{}",s(&ui["input"]["action"]),s(&ui["input"]["id"]).replace("_list",""),s(&ui["input"]["filter"]));
+            if context != self.selection_context {
+                self.selection_tabs = InventoryTabs::default();
+                self.selection_context = context;
+            }
+        }
+        let tabs = self.inventory_available_tabs(ui);
+        if !tabs.contains(&self.list_tabs().tab.as_str()) {
+            let state = self.list_tabs_mut();
+            state.tab = tabs[0].into();
+            state.reveal = true;
         }
     }
     pub(super) fn inventory_row_visible(&self, row: &Value) -> bool {
-        !b(&row["selectable"]) || matches(&self.inventory_tabs.tab, row)
+        !b(&row["selectable"]) || matches(&self.list_tabs().tab, row)
     }
     pub(super) fn inventory_scroll(&self) -> f64 {
-        *self.inventory_tabs.positions.get(&self.inventory_tabs.tab).unwrap_or(&0.)
+        *self.list_tabs().positions.get(&self.list_tabs().tab).unwrap_or(&0.)
     }
     pub(super) fn remember_inventory_scroll(&mut self, scroll: f64) {
-        self.inventory_tabs.positions.insert(self.inventory_tabs.tab.clone(), scroll);
+        let tab = self.list_tabs().tab.clone();
+        self.list_tabs_mut().positions.insert(tab, scroll);
     }
     pub(super) fn draw_inventory_tabs(&mut self, ui: &Value, rect: Rect) {
         let tabs = self.inventory_available_tabs(ui);
@@ -75,23 +110,23 @@ impl BrowserUi {
         }
         total = (total - 6.).max(0.);
         let max = (total - rect.w).max(0.);
-        let mut scroll = clamp(self.inventory_tabs.horizontal,0.,max);
-        if self.inventory_tabs.reveal {
-            let reveal = self.widgets.focus.strip_prefix("inventory-tab-").unwrap_or(&self.inventory_tabs.tab);
+        let mut scroll = clamp(self.list_tabs().horizontal,0.,max);
+        if self.list_tabs().reveal {
+            let reveal = self.widgets.focus.strip_prefix("inventory-tab-").unwrap_or(&self.list_tabs().tab);
             if let Some((_,_,_,left,width)) = sizes.iter().find(|(tab,_,_,_,_)| *tab == reveal) {
                 if *left < scroll { scroll = *left; }
                 else if left + width > scroll + rect.w { scroll = left + width - rect.w; }
                 scroll = clamp(scroll,0.,max);
             }
-            self.inventory_tabs.reveal = false;
+            self.list_tabs_mut().reveal = false;
         }
-        self.inventory_tabs.horizontal = scroll;
+        self.list_tabs_mut().horizontal = scroll;
         self.scrolls.insert("inventory-tabs".into(),scroll);
         self.regions.insert("inventory-tabs".into(),Region { rect,max });
         self.widgets.begin_clip(rect);
         for (tab,label,shortcut,left,width) in sizes {
             let visible_label = Widgets::shortcut_label(&label, shortcut.as_deref());
-            let active = tab == self.inventory_tabs.tab;
+            let active = tab == self.list_tabs().tab;
             let r = Rect::new(rect.x+left-scroll,rect.y,width,rect.h);
             self.control(&format!("inventory-tab-{tab}"),&label,r,json!({"kind":"inventory-tab","tab":tab}),
                 ControlStyle { role:ControlRole::Tab,custom:true,shortcut,keep_offscreen:true,..Default::default() });

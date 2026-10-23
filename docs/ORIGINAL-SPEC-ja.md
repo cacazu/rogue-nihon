@@ -4,7 +4,7 @@
 
 原作はRoguelike Restoration Project Rogue 5.4.4。原配布は [Rogueforge](http://rogue.rogueforge.net/files/rogue5.4/rogue5.4.4-src.tar.gz)、取得元は [MacPortsミラー](https://distfiles.macports.org/rogue/rogue5.4.4-src.tar.gz)。取得アーカイブは209,839 bytes、SHA-256は `7d37a61fc098bda0e6fac30799da347294067e8e079e4b40d6c781468e08e8a1`。版とarchive hashで原作を識別する。
 
-`logic/` はWeb対応を加えた派生ソース。`tests/baseline-src/` は原作ルールへWasm接続・観測・保存を加えた比較版であり、無変更の原本ではない。根拠は [baseline-provenance.json](../tests/baseline-provenance.json)、[baseline-diffs](../tests/baseline-diffs/)、[baseline-source-audit.json](../tests/baseline-source-audit.json)、[split-provenance.json](../tests/split-provenance.json)、[split-diffs](../tests/split-diffs/)。取得原本はローカルの監査入力で、Web起動に不要である。
+`logic/` はWeb対応を加えた派生ソース。`tests/baseline-src/` は原作ルールへWasm接続・観測・保存を加えた比較版であり、無変更の原本ではない。根拠は [baseline-provenance.json](../tests/baseline-provenance.json)、[baseline-diffs](../tests/baseline-diffs/)、[baseline-source-audit.json](../tests/baseline-source-audit.json)、[split-provenance.json](../tests/split-provenance.json)、[split-diffs](../tests/split-diffs/)。取得原本はローカルの監査入力で、Web起動に不要である。`python tools/acquire-original.py` は上記の固定URL・byte数・SHA-256を検証し、`upstream/rogue5.4.4/` へ展開する。既存のarchive・原本は検証して再利用し、不一致を上書きしない。展開前に通常ファイル・ディレクトリーだけを許可し、パス逸脱・リンク・重複を拒否する。原本の各C/header/licenseはbaseline-provenanceのhashとも照合する。名称生成とbaseline準備の既定入力はこの作品内の原本であり、別の原本は各toolの明示引数で指定できる。
 
 ## 維持する仕様と変更する仕様
 
@@ -15,6 +15,7 @@
 | 英語ASCII画面、探索記憶、幻覚・擬態 | Cの表示結果を観測し、Rustが翻訳・画像へ変換 | `knowledge.c / semantic.c` |
 | 一般メッセージのMore | 通常Web操作はログへ流してSpace確認を省く。look・英語bufferの更新順は保持 | `io.c:rg_wait_message_ack`、platformの `MessagePaging` |
 | 一覧・検出・設定・結果の入力待ち | 待つCキーを維持し、RustのボタンとEnter/Esc変換を追加 | `io.c:rg_wait_for`、`input:decode_in_window` |
+| 品物対象選択 `get_item / picky_inven` | 元の候補・要求typeを共通観測metadataへ渡して種類タブを作る。原作の候補検証・空対象の早期終了・キー・RNGを維持 | `pack.c:rg_item_choices`、displayの `presentation.rs / inventory_tabs.rs` |
 | 所持品 `i` | 公開済み一覧からRustの操作メニューを追加。確定操作を元のCコマンドへ送る | display/inputの `inventory.rs` |
 | ASCII名前・命名編集 | UTF-8とUnicode scalar単位の消去を追加。原作の50 byte上限を保持 | `options.c:get_str/strucpy` |
 | 端末save/restore | byte checkpoint＋入力再生＋IndexedDBへ置換。旧端末save互換は提供しない | `save_adapter.c`、platform |
@@ -246,7 +247,7 @@ PCの選択ウィンドウは、表示する選択キー・キーを含まない
 
 候補の絞り込みは表示済み情報だけを使う。装備済み武器・指輪や埋まった装備枠、鑑定済みで名付け不能なアイテムを候補から除く。武器と鎧の個別命名は維持する。表示済みの階段・扉・罠の上では「落とす」を出さないが、足元が不明な場合やキーボード直入力の配置判定はCが行う。
 
-スマホの通常地図は8方向と待機、右側の移動形式・持ち物・状況別操作・全体図・リスト・繰返しを表示する。状況別操作は公開済みの足元・護符・浮遊状態に従って探索s、階段<>、罠調査^、拾得,へ切り替える。リストは画面上の操作との重複と休息・反復取消・記号調査を除く。持ち物のタイトル横の「アイテム履歴」は一覧を閉じて原作Dと全件選択*を順に送る。発見一覧のset_orderが消費する乱数と表示順を維持し、C処理を省略しない。キーボードで直接Dを押す経路は種類選択を残す。投げる・杖・自動戦闘f/F・拾わずに移動・罠調査の方向待ちは、ウィンドウを出さずパッドの8方向を強調し、取消を置く。原作get_dirに自分方向の受付はない。繰返しは長押しで1〜255回を設定し、短いタップで原作の数値接頭辞+aを送る（初期値1）。アイテム・文字・手・確認の待ちはゲームウインドウの操作を使う。PCの地図操作はキーボードを使う。
+スマホの通常地図は8方向と待機、右側の移動形式・持ち物・状況別操作・全体図・リスト・繰返しを表示する。状況別操作は公開済みの足元・護符・浮遊状態に従って探索s、階段<>、罠調査^、拾得,へ切り替える。リストは画面上の操作との重複と休息・反復取消・記号調査を除く。持ち物のタイトル横の「アイテム履歴」は一覧を閉じて原作Dと全件選択*を順に送る。発見一覧のset_orderが消費する乱数と表示順を維持し、C処理を省略しない。キーボードで直接Dを押す経路は種類選択を残す。投げる・杖・自動戦闘f/F・拾わずに移動・罠調査の方向待ちは、ウィンドウを出さずパッドの8方向を強調し、取消を置く。原作get_dirに自分方向の受付はない。繰返しは長押しで1〜255回を設定し、短いタップで原作の数値接頭辞+aを送る（初期値1）。アイテム・文字・手・確認の待ちはゲームウインドウの操作を使う。PCでも下部操作パッドを使える。地図のクリック・タップによる自動移動は通常方向キーを一歩ずつ送るWeb操作であり、公開経路と停止条件は実装資料に定義する。
 
 ## Space・Enter待ちの対応
 

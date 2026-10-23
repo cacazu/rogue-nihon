@@ -93,7 +93,9 @@ impl BrowserUi {
             self.text(&self.t("notice.loading"), 24., (self.height / 2. - 24.).max(80.), map.w - 48., 17., MUTED, false);
         }
         // Use the same two rows and full-status interaction as the phone.
-        self.draw_status_bar(Rect::new(map.x, map.y + 8., (map.w - 164.).min(420.), 48.));
+        let hud_width = (map.w - 164.).min(420.);
+        self.draw_player_name(Rect::new(map.x, map.y + 8., hud_width, 24.));
+        self.draw_status_bar(Rect::new(map.x, map.y + 32., hud_width, 48.));
         let log = if mobile {
             Rect::new(0., map.y + map.h, self.width, game.h - map.h)
         } else {
@@ -241,20 +243,32 @@ impl BrowserUi {
     }
     pub(super) fn draw_log(&mut self, r: Rect) {
         self.widgets.box_rect(r, PANEL, Some(LINE), 0.);
-        let title = if self.description.is_empty() {
-            self.t("log.title")
-        } else {
-            self.description.clone()
-        };
-        self.text(
-            &title,
-            r.x + 12.,
-            r.y + 11.,
-            r.w - 24.,
-            18.,
-            "@text.primary",
-            false,
-        );
+        let heading_image = self.width >= 700. && !b(&self.view["coarse"]) && !self.history_open;
+        let mode = if self.model["displayMode"] == "pixels" { "pixels" } else { "tiles" };
+        let manifest = tiles::manifest_ref(mode);
+        let entry = self.hover_point.and_then(|(px,py)| {
+            if !self.map_rect.is_some_and(|r| r.contains(px,py)) { return None; }
+            let cell = self.map_cell(px,py)?;
+            let (x,y) = (n(&cell["x"]) as usize,n(&cell["y"]) as usize);
+            let frame = &self.model["frame"];
+            let width = frame["width"].as_u64()? as usize;
+            let height = frame["height"].as_u64()? as usize;
+            if x >= width || y == 0 || y >= height.saturating_sub(1) { return None; }
+            let tile = frame["map_tiles"][y*width+x].as_u64()? as usize;
+            manifest["entries"].as_array()?.get(tile)
+        });
+        let title = entry.map(|e| s(&e["labels"][s(&self.model["language"])])).filter(|label| !label.is_empty())
+            .map(str::to_owned).unwrap_or_else(|| self.t("log.title"));
+        if heading_image {
+            let icon = Rect::new(r.x+12.,r.y+10.,24.,24.);
+            if let Some(entry) = entry {
+                self.widgets.box_rect(icon,PANEL,Some(LINE),0.);
+                self.widgets.commands.push(json!({"op":"image","set":mode,"image":entry["image"],
+                    "rect":Rect::new(icon.x+1.,icon.y+1.,22.,22.),"rotation":entry["rotation"],"pixelArt":mode=="pixels","logHeader":true}));
+            } else { self.widgets.icon("command-list",icon,TEXT); }
+        }
+        let prefix = if heading_image { 32. } else { 0. };
+        self.text(&title,r.x+12.+prefix,r.y+11.,r.w-24.-prefix,18.,"@text.primary",false);
         let viewport = Rect::new(r.x + 10., r.y + 52., r.w - 20., (r.h - 60.).max(10.));
         let (rows, total) = self.log_rows(viewport.w);
         let max = (total - viewport.h).max(0.);
@@ -315,6 +329,7 @@ impl BrowserUi {
         let ui = self.model["frame"]["ui"].clone();
         let d = &ui["window"];
         let inventory_list = self.inventory_list_visible();
+        let inventory_browse = self.inventory_browse_visible();
         if inventory_list { self.sync_inventory_tabs(&ui); }
         let mobile = self.width < 700. || b(&self.view["coarse"]);
         let touch = b(&self.view["coarse"]);
@@ -482,12 +497,12 @@ impl BrowserUi {
         self.widgets.box_rect(panel, PANEL, Some(LINE), 0.);
         let item_history = b(&self.model["itemHistoryOpen"]) && !b(&ui["inventory"]);
         let title = if item_history { self.t("inventory.history") } else { s(&d["title"]).to_string() };
-        let title_width = if inventory_list || item_history {
+        let title_width = if inventory_browse || item_history {
             (self.measure)(&title, 20., true, false).width
         } else { inner - 56. };
         let title_height = 20.;
         let mut title_x = x + 16.;
-        if inventory_list || item_history {
+        if inventory_browse || item_history {
             let label = self.t(if item_history { "action.inventory" } else { "inventory.history" });
             let shortcut = self.pc_shortcut(if item_history { "I" } else { "D" });
             let visible_label = Widgets::shortcut_label(&label, shortcut.as_deref());

@@ -7,7 +7,7 @@ import {artifactDirectory} from '../../tools/temporary-artifacts.mjs';
 import {prepareBrowserRuntime} from './browser-runtime.mjs';
 import {installBrowserTestAdapter} from './test-adapter.mjs';
 import {fixtureWorker} from './fixture-worker.mjs';
-import {createPreviewServer} from '../../../tools/server.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';
 
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const output=process.env.ROGUE_AUTOSAVE_OUTPUT?path.resolve(process.env.ROGUE_AUTOSAVE_OUTPUT):artifactDirectory(path.join(root,'tests/browser-smoke/output/autosave'));

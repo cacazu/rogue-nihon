@@ -12,7 +12,7 @@
       }
     ],
     "cargo_edges": "normal,build",
-    "cargo_lock_sha256": "fc0e7fe615614b37029b3cd5bdf843338d122d9f54ad6d1aa937982904dcf9b2",
+    "cargo_lock_sha256": "01667c82b9e0ce038fbbeea40661592daf0404c8c0c86587f429888b1b4b3ea4",
     "rust_version": "1.98.1",
     "rust_std_features": [
       "backtrace",

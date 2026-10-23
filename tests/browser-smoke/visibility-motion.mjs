@@ -10,7 +10,7 @@ import {prepareBrowserRuntime} from './browser-runtime.mjs';
 import {installBrowserTestAdapter} from './test-adapter.mjs';
 import {fixtureWorker} from './fixture-worker.mjs';
 import {runGame} from '../run-game.mjs';
-import {createPreviewServer} from '../../../tools/server.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';
 
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const wasm=path.resolve(root,process.env.ROGUE_VISIBILITY_WASM||'build/visibility-fixtures.wasm');

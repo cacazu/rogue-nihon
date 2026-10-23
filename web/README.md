@@ -12,4 +12,4 @@ Cross-Origin-Resource-Policy: same-origin
 
 Wasmは `Content-Type: application/wasm` で配信します。LAN接続はHTTPSを使います。URLの `?lang=ja` / `?lang=en`、`?view=ascii` / `?view=tiles` / `?view=pixels` で起動時の言語・地図表示を指定できます。
 
-ローカルの `start.ps1` は作品外の [開発・テスト用サーバー](../../tools/server.mjs) に配信対象を渡します。このサーバー・tests・開発tools・.localは公開対象に含めません。ライセンス通知と [案内](../docs/LICENSES-ja.md) は保持します。
+ローカルの `start.ps1` は作品内の [開発・テスト用サーバー](../tools/server.mjs) に配信対象を渡します。このサーバー・tests・開発tools・.localは公開対象に含めません。ライセンス通知と [案内](../docs/LICENSES-ja.md) は保持します。

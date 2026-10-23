@@ -6,7 +6,7 @@ import {loadPlaywright,browserExecutable} from '../../tools/toolchain.mjs';
 import {artifactDirectory} from '../../tools/temporary-artifacts.mjs';
 import {prepareBrowserRuntime} from './browser-runtime.mjs';
 import {installBrowserTestAdapter} from './test-adapter.mjs';
-import {createPreviewServer} from '../../../tools/server.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';
 
 // Ordinary production game, real inventory taps, and original t/direction/item keys.
 // Optional ROGUE_BOW_BEFORE points to a pre-change build for state/visual comparison.

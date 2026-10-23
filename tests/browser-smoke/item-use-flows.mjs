@@ -6,7 +6,7 @@ import path from 'node:path';import {fileURLToPath} from 'node:url';
 import {loadPlaywright,browserExecutable} from '../../tools/toolchain.mjs';
 import {artifactDirectory} from '../../tools/temporary-artifacts.mjs';
 import {prepareBrowserRuntime} from './browser-runtime.mjs';
-import {createPreviewServer} from '../../../tools/server.mjs';
+import {createPreviewServer} from '../../tools/server.mjs';
 import {installBrowserTestAdapter} from './test-adapter.mjs';
 import {fixtureWorker} from './fixture-worker.mjs';import {runGame} from '../run-game.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url)),wasm=path.resolve(root,process.env.ROGUE_ITEM_USE_WASM||'build/item-use-fixtures.wasm');
@@ -47,7 +47,10 @@ async function followups(phases){
   if(k==='item'){
    assert.ok(ui.window,'A requested item target has a selection window');const choices=ui.lines.filter(l=>l.selectable);assert.ok(choices.length,'A requested item target has selectable public rows');
    const targets={5:'g',6:'h',7:'d',8:'b',9:current.scenario==='sticktarget'?'j':'i'},target=targets[current.type]||choices[0].key;
-   assert.ok(choices.some(c=>c.key===target),'The correct target category is offered');await tap('item-'+target);text+=target;
+   assert.ok(choices.some(c=>c.key===target),'The correct target category is offered');
+   const targetCategory=choices.find(c=>c.key===target).args[1].value.category;
+   if(!current.mobile&&!s.scene.controls.some(c=>c.id==='item-'+target)&&s.scene.controls.some(c=>c.id==='inventory-tab-'+targetCategory))await tap('inventory-tab-'+targetCategory);
+   await tap('item-'+target);text+=target;
   }else if(k==='text'){assert.ok(current.verb==='c'||/^misc\.call_it\./.test(ui.window?.message?.id||''));if(current.verb==='c'){await tap('prompt-text');await page.keyboard.press('Control+a');await page.keyboard.insertText('UseLabel');}await tap('submit-text');text+='\x15'+(current.verb==='c'?'UseLabel':'')+'\r';}
   else if(k==='hand'){const choice=ui.window.actions.find(a=>a.key===108);assert.ok(choice);if(current.mobile)await tap('window-108');else{const c=s.scene.controls.find(c=>c.id==='window-108');await physical(c.shortcut);}text+='l';}
   else if(k==='space'||k==='space_cancel'){if(current.mobile)await tap('window-32');else await physical('Space');text+=' ';}
@@ -81,8 +84,8 @@ try{
    if(current.mobile){await tap('touch-action-action.inventory');text+='i';await tap('item-f');assert.equal((await snap()).state.frame.ui.window.kind,'inventory_actions');assert.equal((await snap()).state.frame.ui.lines[0].args[1].value.category,current.category,'The requested item category is selected');await tap('window-'+current.verb.charCodeAt(0));text+=' '+current.verb;}
    else{await send(current.verb);text+=current.verb;}
    if(current.verb==='z'||current.verb==='t'){
-    assert.equal((await snap()).state.input.kind,'direction');assert.ok((await snap()).scene.controls.some(c=>c.id===(current.mobile?'touch-l':'window-108')),'A usable direction selector is visible');
-    if(current.mobile)await tap('touch-l');else await tap('window-108');text+='l';
+    assert.equal((await snap()).state.input.kind,'direction');const direction=(await snap()).scene.controls.some(c=>c.id==='touch-l')?'touch-l':'window-108';assert.ok((await snap()).scene.controls.some(c=>c.id===direction),'A usable direction selector is visible');
+    await tap(direction);text+='l';
    }
    if(current.mobile){text+='f';await page.waitForTimeout(20);await paint();}else{assert.equal((await snap()).state.input.kind,'item');const row=(await snap()).state.frame.ui.lines.find(l=>l.key==='f');assert.equal(row?.args[1].value.category,current.category,'The original selection offers the requested item');await send('f');text+='f';}
    await followups(phases);await equivalent('Use');

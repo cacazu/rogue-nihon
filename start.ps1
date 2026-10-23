@@ -2,7 +2,7 @@ param(
     [int]$Port = 4173,
     [switch]$Lan,
     [string]$Address,
-    [string]$PreviewServer = (Join-Path (Split-Path -Parent $PSScriptRoot) 'tools\server.mjs')
+    [string]$PreviewServer = (Join-Path $PSScriptRoot 'tools\server.mjs')
 )
 $ErrorActionPreference = 'Stop'
 if ($Port -lt 1 -or $Port -gt 65535) { throw 'Port must be 1..65535' }
