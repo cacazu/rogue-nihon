@@ -40,8 +40,8 @@ impl BrowserUi {
                 self.t("mobile.long_press")
             }
         } else {
-            format!("{}{}", Widgets::shortcut_label(&self.t("mobile.repeat_count"),
-                self.pc_shortcut(web_command(WebAction::RepeatCount).key).as_deref()), self.mobile_repeat_count)
+            let count = self.t("mobile.repeat_count_short").replace("{count}", &self.mobile_repeat_count.to_string());
+            format!("{}){count}", web_command(WebAction::RepeatCount).key)
         };
         self.web_control(WebAction::Repeat,"touch-again", &format!("{title}\n{subtitle}"), rect,
             ControlStyle { custom:true, key:Some(json!(97)), ..Default::default() });

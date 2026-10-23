@@ -938,11 +938,11 @@ fn physical_directions_follow_selected_mode_without_changing_other_inputs() {
 
 #[test]
 fn repeat_button_displays_phone_hold_hint_until_configured_and_keeps_pc_count() {
-    for (coarse, prefix) in [(false,"A) 繰り返し回数"),(true,"回数")] {
+    for (coarse, prefix) in [(false,"A)回数"),(true,"回数")] {
         let mut ui=BrowserUi::new(measure);
         let m=shortcut_model();let mut v=view(1400.,1000.);v["coarse"]=json!(coarse);
         ui.render(m.clone(),v.clone());
-        let initial = if coarse { "繰返し\n長押し" } else { "E) E) 繰返し\nA) 繰り返し回数1" };
+        let initial = if coarse { "繰返し\n長押し" } else { "E) E) 繰返し\nA)回数1" };
         assert_eq!(ui.widgets.controls.iter().find(|c| c.id=="touch-again").unwrap().label, initial);
         let mut effects=Vec::new();ui.open_repeat_count(&mut effects);
         ui.event(json!({"type":"key","key":"Escape"}));
