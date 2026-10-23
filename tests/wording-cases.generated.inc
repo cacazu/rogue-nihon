@@ -304,10 +304,11 @@
     wording_delta = 7; wording_site("site:things.c:719:things.pr_list.what_type:7", "things.pr_list.what_type", "things.c", 719, "what type");
     wording_delta = 7; wording_site("site:things.c:721:things.pr_list.of_object_do_you_want_a_list:7", "things.pr_list.of_object_do_you_want_a_list", "things.c", 721, " of object do you want a list");
     wording_delta = 7; wording_site("site:things.c:722:things.pr_list.question_prompt:7", "things.pr_list.question_prompt", "things.c", 722, "? ");
-    wording_delta = 7; wording_site("site:weapons.c:166:weapons.fall.the_vanishes_as_it_hits_the_ground:7", "weapons.fall.the_vanishes_as_it_hits_the_ground", "weapons.c", 167, "the %s vanishes as it hits the ground" ,wording_item());
-    wording_delta = 7; wording_site("site:weapons.c:264:weapons.wield.you_cant_wield_armor:7", "weapons.wield.you_cant_wield_armor", "weapons.c", 264, "you can't wield armor");
-    wording_delta = 7; wording_site("site:weapons.c:273:weapons.wield.you_are_now:7", "weapons.wield.you_are_now", "weapons.c", 273, "you are now ");
-    wording_delta = 7; wording_site("site:weapons.c:274:weapons.wield.wielding:7", "weapons.wield.wielding", "weapons.c", 274, "wielding %s (%c)" ,wording_item(),'a');
+    wording_delta = 7; wording_site("site:weapons.c:178:weapons.fall.the_vanishes_as_it_hits_the_ground:7", "weapons.fall.the_vanishes_as_it_hits_the_ground", "weapons.c", 179, "the %s vanishes as it hits the ground" ,wording_item());
+    wording_delta = 7; wording_site("site:weapons.c:181:weapons.fall.vanishes_as_it_hits_the_ground:7", "weapons.fall.vanishes_as_it_hits_the_ground", "weapons.c", 181, "%s vanishes as it hits the ground" ,wording_item());
+    wording_delta = 7; wording_site("site:weapons.c:278:weapons.wield.you_cant_wield_armor:7", "weapons.wield.you_cant_wield_armor", "weapons.c", 278, "you can't wield armor");
+    wording_delta = 7; wording_site("site:weapons.c:287:weapons.wield.you_are_now:7", "weapons.wield.you_are_now", "weapons.c", 287, "you are now ");
+    wording_delta = 7; wording_site("site:weapons.c:288:weapons.wield.wielding:7", "weapons.wield.wielding", "weapons.c", 288, "wielding %s (%c)" ,wording_item(),'a');
     wording_delta = 7; wording_site("site:wizard.c:33:wizard.whatis.you_dont_have_anything_in_your_pack_to_identify:7", "wizard.whatis.you_dont_have_anything_in_your_pack_to_identify", "wizard.c", 33, "you don't have anything in your pack to identify");
     wording_delta = 7; wording_site("site:wizard.c:49:wizard.whatis.you_dont_have_anything_in_your_pack_to_identify:7", "wizard.whatis.you_dont_have_anything_in_your_pack_to_identify", "wizard.c", 49, "you don't have anything in your pack to identify");
     wording_delta = 7; wording_site("site:wizard.c:63:wizard.whatis.you_must_identify_a:7", "wizard.whatis.you_must_identify_a", "wizard.c", 63, "you must identify a %s" ,"potion");
@@ -618,6 +619,7 @@
     wording_direct("id:things.pr_list.question_prompt", "things.pr_list.question_prompt", "[]");
     wording_direct("id:things.pr_list.what_type", "things.pr_list.what_type", "[]");
     wording_direct("id:weapons.fall.the_vanishes_as_it_hits_the_ground", "weapons.fall.the_vanishes_as_it_hits_the_ground", "[{\"kind\": \"string\", \"value\": \"検証名0\"}]");
+    wording_direct("id:weapons.fall.vanishes_as_it_hits_the_ground", "weapons.fall.vanishes_as_it_hits_the_ground", "[{\"kind\": \"string\", \"value\": \"検証名0\"}]");
     wording_direct("id:weapons.wield.wielding", "weapons.wield.wielding", "[{\"kind\": \"string\", \"value\": \"検証名0\"}, {\"kind\": \"signed\", \"value\": 97}]");
     wording_direct("id:weapons.wield.you_are_now", "weapons.wield.you_are_now", "[]");
     wording_direct("id:weapons.wield.you_cant_wield_armor", "weapons.wield.you_cant_wield_armor", "[]");

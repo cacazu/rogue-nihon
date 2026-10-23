@@ -12,6 +12,7 @@
 |---|---|---|
 | command、BEFORE/AFTER、加速・睡眠、反復、waste_time | Cの呼出し順・行動機会・時間消費を維持 | `command.c / daemon.c / daemons.c / armor.c` |
 | 32 bit LCG乱数 | seedのbit patternと消費順を維持。符号付きoverflowを明示的なu32 wrapへ置換 | `core.c:rg_random_next`、`extern.h` |
+| 投げ物の壁衝突と落下 | 固い壁・岩で停止した時だけ、落下中心を直前の通過マスへ戻す。原作の衝突マス中心の3×3抽選による壁裏への着地を防ぐ意図した差。全品種に共通し、候補とRNG消費は変わる。扉・敵への命中／外れ・魔法投射・矢罠・敵の所持品落下の規則は維持。落下候補がない非武器の消滅文は、武器表の誤参照を公開済みの品名へ置換 | `weapons.c:missile / fall` |
 | 英語ASCII画面、探索記憶、幻覚・擬態 | Cの表示結果を観測し、Rustが翻訳・画像へ変換 | `knowledge.c / semantic.c` |
 | 一般メッセージのMore | 通常Web操作はログへ流してSpace確認を省く。look・英語bufferの更新順は保持 | `io.c:rg_wait_message_ack`、platformの `MessagePaging` |
 | 一覧・検出・設定・結果の入力待ち | 待つCキーを維持し、RustのボタンとEnter/Esc変換を追加 | `io.c:rg_wait_for`、`input:decode_in_window` |

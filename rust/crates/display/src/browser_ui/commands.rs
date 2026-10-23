@@ -1,93 +1,112 @@
 //! Read-only PC command reference. It never activates a listed game command.
 use super::*;
 
-const GROUPS: &[(&str, &[(&str, &str)])] = &[
+#[derive(Clone, Copy)]
+pub(super) enum GameAction { Key(u32), Direction(u32) }
+
+#[derive(Clone, Copy)]
+pub(super) struct ReferenceCommand {
+    pub keys: &'static str,
+    pub description: &'static str,
+    pub phone_action: Option<GameAction>,
+}
+const fn reference(keys: &'static str, description: &'static str) -> ReferenceCommand {
+    ReferenceCommand {keys,description,phone_action:None}
+}
+const fn game(keys: &'static str, description: &'static str, key: u8) -> ReferenceCommand {
+    ReferenceCommand {keys,description,phone_action:Some(GameAction::Key(key as u32))}
+}
+const fn direction(keys: &'static str, description: &'static str, key: u8) -> ReferenceCommand {
+    ReferenceCommand {keys,description,phone_action:Some(GameAction::Direction(key as u32))}
+}
+
+pub(super) const GROUPS: &[(&str, &[ReferenceCommand])] = &[
     (
         "mobile.group.movement",
         &[
-            ("← / h / {pad}4", "help.left"),
-            ("↓ / j / {pad}2", "help.down"),
-            ("↑ / k / {pad}8", "help.up"),
-            ("→ / l / {pad}6", "help.right"),
-            ("Home / y / {pad}7", "help.up_left"),
-            ("PageUp / u / {pad}9", "help.up_right"),
-            ("End / b / {pad}1", "help.down_left"),
-            ("PageDown / n / {pad}3", "help.down_right"),
-            ("commands.shift_direction", "help.run"),
-            ("commands.ctrl_direction", "help.run_adjacent"),
-            ("m", "help.move_without_pickup"),
-            (". / {pad}5", "help.rest"),
-            ("s", "help.search"),
-            (",", "help.pickup"),
-            (">", "help.downstairs"),
-            ("<", "help.upstairs"),
-            ("^", "help.trap"),
+            direction("← / h / {pad}4", "help.left", b'h'),
+            direction("↓ / j / {pad}2", "help.down", b'j'),
+            direction("↑ / k / {pad}8", "help.up", b'k'),
+            direction("→ / l / {pad}6", "help.right", b'l'),
+            direction("Home / y / {pad}7", "help.up_left", b'y'),
+            direction("PageUp / u / {pad}9", "help.up_right", b'u'),
+            direction("End / b / {pad}1", "help.down_left", b'b'),
+            direction("PageDown / n / {pad}3", "help.down_right", b'n'),
+            reference("commands.shift_direction", "help.run"),
+            reference("commands.ctrl_direction", "help.run_adjacent"),
+            game("m", "help.move_without_pickup", b'm'),
+            game(". / {pad}5", "help.rest", b'.'),
+            game("s", "help.search", b's'),
+            game(",", "help.pickup", b','),
+            game(">", "help.downstairs", b'>'),
+            game("<", "help.upstairs", b'<'),
+            game("^", "help.trap", b'^'),
         ],
     ),
     (
         "mobile.group.combat",
         &[
-            ("f", "help.fight_carefully"),
-            ("F", "help.fight_to_death"),
-            ("t", "help.throw"),
-            ("z", "help.zap"),
+            game("f", "help.fight_carefully", b'f'),
+            game("F", "help.fight_to_death", b'F'),
+            game("t", "help.throw", b't'),
+            game("z", "help.zap", b'z'),
         ],
     ),
     (
         "commands.group.items",
         &[
-            ("q", "help.quaff"),
-            ("r", "help.read"),
-            ("e", "help.eat"),
-            ("w", "help.wield"),
-            ("W", "help.wear"),
-            ("T", "help.take_off"),
-            ("P", "help.put_ring"),
-            ("R", "help.remove_ring"),
-            ("d", "help.drop"),
-            ("c", "help.call"),
+            game("q", "help.quaff", b'q'),
+            game("r", "help.read", b'r'),
+            game("e", "help.eat", b'e'),
+            game("w", "help.wield", b'w'),
+            game("W", "help.wear", b'W'),
+            game("T", "help.take_off", b'T'),
+            game("P", "help.put_ring", b'P'),
+            game("R", "help.remove_ring", b'R'),
+            game("d", "help.drop", b'd'),
+            game("c", "help.call", b'c'),
         ],
     ),
     (
         "mobile.group.info",
         &[
-            ("i", "help.inventory"),
-            ("I", "help.inventory_one"),
-            (")", "help.weapon"),
-            ("]", "help.armor"),
-            ("=", "help.rings"),
-            ("@", "help.stats"),
-            ("D", "help.discoveries"),
-            ("/", "help.identify"),
-            ("?", "help.help"),
-            ("Ctrl + P", "help.recall"),
+            game("i", "help.inventory", b'i'),
+            game("I", "help.inventory_one", b'I'),
+            game(")", "help.weapon", b')'),
+            game("]", "help.armor", b']'),
+            game("=", "help.rings", b'='),
+            game("@", "help.stats", b'@'),
+            game("D", "help.discoveries", b'D'),
+            game("/", "help.identify", b'/'),
+            game("?", "help.help", b'?'),
+            reference("Ctrl + P", "help.recall"),
         ],
     ),
     (
         "mobile.group.repeat",
         &[
-            ("a", "help.again"),
-            ("0 - 9", "commands.repeat"),
-            ("Esc", "help.cancel"),
+            game("a", "help.again", b'a'),
+            reference("0 - 9", "commands.repeat"),
+            reference("Esc", "help.cancel"),
         ],
     ),
     (
         "commands.group.selection",
         &[
-            ("a - z", "commands.choose"),
-            ("*", "commands.item_list"),
-            ("Tab / Shift + Tab", "commands.focus"),
-            ("Enter", "commands.activate"),
-            ("PageUp / PageDown", "commands.scroll"),
+            reference("a - z", "commands.choose"),
+            reference("*", "commands.item_list"),
+            reference("Tab / Shift + Tab", "commands.focus"),
+            reference("Enter", "commands.activate"),
+            reference("PageUp / PageDown", "commands.scroll"),
         ],
     ),
     (
         "commands.group.system",
         &[
-            ("o", "help.options"),
-            ("Q", "help.quit"),
-            ("Ctrl + R", "help.redraw"),
-            ("v", "help.version"),
+            reference("o", "help.options"),
+            game("Q", "help.quit", b'Q'),
+            reference("Ctrl + R", "help.redraw"),
+            reference("v", "help.version"),
         ],
     ),
 ];
@@ -132,39 +151,28 @@ impl BrowserUi {
         let key_width = (table_width * 0.38).min(280.);
         let description_width = table_width - key_width;
         let mut rows = Vec::new();
-        for (heading, entries) in GROUPS {
-            let heading = self.wrap(&self.t(heading), table_width - 20., 16.);
+        for (group, entries) in GROUPS {
+            let heading = self.wrap(&self.t(group), table_width - 20., 16.);
             rows.push(ReferenceRow {
                 height: heading.len() as f64 * 26. + 12.,
                 key: heading,
                 description: vec![],
                 heading: true,
             });
-            for (key, id) in *entries {
+            let entries = entries.iter().map(|entry| (entry.keys, entry.description)).chain(WEB_COMMANDS.iter()
+                .filter(|command| command.group == *group)
+                .map(|command| (command.key, command.label)));
+            for (key, id) in entries {
                 let mut label = if key.starts_with("commands.") {
                     self.t(key)
                 } else {
                     key.replace("{pad}", &self.t("commands.keypad"))
                 };
-                if matches!(*key, "f" | "F" | "t" | "z" | "m" | "^") {
+                if matches!(key, "f" | "F" | "t" | "z" | "m" | "^") || key == web_command(WebAction::Fire).key {
                     label.push_str(&format!(" + {}", self.t("commands.direction")));
                 }
                 let description = if id.starts_with("help.") {
-                    // The semantic help describes direction prefixes before its tab/colon.
-                    let text = crate::display::message_language(
-                        id,
-                        &json!([]),
-                        "",
-                        s(&self.model["language"]),
-                    )
-                    .text;
-                    let text = text
-                        .split_once('\t')
-                        .map_or(text.as_str(), |(_, value)| value);
-                    text.rsplit_once(['：', ':'])
-                        .map_or(text, |(_, value)| value)
-                        .trim()
-                        .to_string()
+                    self.mobile_help(id)
                 } else {
                     self.t(id)
                 };

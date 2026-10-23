@@ -239,6 +239,9 @@
     "settings.off": "オフ",
     "error.name_characters": "名前に使えない文字が含まれています。",
     "error.prompt_text_characters": "使えない文字が含まれています。",
-    "platform.name_error": "この名前は使えません。"
+    "platform.name_error": "この名前は使えません。",
+    "commands.movement_mode": "移動方式を切り替える",
+    "commands.configured_repeat": "設定回数だけ前の操作を繰り返す",
+    "commands.controls": "操作ボタンの表示切替"
   }
 }

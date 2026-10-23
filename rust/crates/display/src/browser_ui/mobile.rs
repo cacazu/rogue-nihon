@@ -6,19 +6,6 @@ const TARGET: f64 = 48.;
 const FONT: f64 = 17.;
 
 impl BrowserUi {
-    fn mobile_button(&mut self, id: &str, label: &str, r: Rect, disabled: bool) {
-        self.button(
-            id,
-            label,
-            r,
-            ControlStyle {
-                size: FONT,
-                disabled,
-                ..Default::default()
-            },
-        );
-    }
-
     pub(super) fn mobile_context_command(&self) -> (u32, &'static str) {
         let frame = &self.model["frame"];
         let ui = &frame["ui"];
@@ -55,27 +42,8 @@ impl BrowserUi {
                 effects.push(json!({"kind":"invoke","id":"settings-close"}));
                 true
             }
-            "mobile-operations" => {
-                self.mobile_operations = true;
-                self.scrolls.insert("mobile-operations".into(), 0.);
-                true
-            }
             "mobile-operations-close" => {
                 self.mobile_operations = false;
-                true
-            }
-            "mobile-movement" => {
-                self.mobile_movement = (self.mobile_movement + 1) % 3;
-                true
-            }
-            "touch-again" => {
-                if self.model["input"]["kind"] == "command" && !self.mobile_repeat_open {
-                    let mut keys = if self.mobile_repeat_count > 1 {
-                        self.mobile_repeat_count.to_string().bytes().map(u32::from).collect::<Vec<_>>()
-                    } else { Vec::new() };
-                    keys.push(97);
-                    effects.push(json!({"kind":"send","keys":keys}));
-                }
                 true
             }
             "repeat-count-close" => {
@@ -93,13 +61,6 @@ impl BrowserUi {
                 self.center_key.clear();
                 true
             }
-            "mobile-full-map" => {
-                self.mobile_full_map = !self.mobile_full_map;
-                self.mobile_overview = self.mobile_full_map;
-                self.mobile_operations = false;
-                self.center_key.clear();
-                true
-            }
             id if id.starts_with("mobile-system-") => {
                 if b(&self.model["running"]) && !b(&self.model["savePending"]) {
                     effects.push(json!({"kind":"invoke","id":"settings-close"}));
@@ -108,7 +69,7 @@ impl BrowserUi {
                 true
             }
             id if id.starts_with("mobile-op-") => {
-                self.mobile_operations = false;
+                if control.action["kind"] != "web" { self.mobile_operations = false; }
                 false
             }
             _ => false,
@@ -152,10 +113,9 @@ impl BrowserUi {
                 self.widgets.rect(Rect::new(0., y, self.width, fire_height), BG);
                 let ready = self.model["input"]["kind"] == "command"
                     && self.model["frame"]["ui"]["ranged"]["arrow_key"].as_u64().is_some_and(|key| (97..=122).contains(&key));
-                self.control(
-                    "touch-fire", &self.t("mobile.fire"),
+                self.web_control(
+                    WebAction::Fire, "touch-fire", &self.t("mobile.fire"),
                     Rect::new(12., y + 3., self.width - 24., 52.),
-                    json!({"kind":"send","key":rogue_contract::RG_KEY_FIRE}),
                     ControlStyle { size: FONT, role: ControlRole::Command, disabled: !ready, ..Default::default() },
                 );
             }
@@ -172,8 +132,8 @@ impl BrowserUi {
                 false,
             );
         }
-        self.button(
-            "settings-toggle",
+        self.web_control(
+            WebAction::Settings, "settings-toggle",
             &self.t("action.settings"),
             Rect::new(self.width - 56., 8., TARGET, TARGET),
             ControlStyle {
@@ -227,9 +187,9 @@ impl BrowserUi {
     pub(super) fn mobile_help(&self, id: &str) -> String {
         let text =
             crate::display::message_language(id, &json!([]), "", s(&self.model["language"])).text;
-        text.rsplit_once('：')
-            .map_or(text.trim_start_matches(':'), |(_, text)| text)
-            .to_string()
+        let text = text.split_once('\t').map_or(text.as_str(), |(_, text)| text);
+        text.rsplit_once(['：', ':'])
+            .map_or(text, |(_, text)| text).trim().to_string()
     }
 
     fn mobile_command(&mut self, id: &str, key: u32, label: &str, r: Rect, disabled: bool) {
@@ -257,22 +217,22 @@ impl BrowserUi {
             2 => "mobile.run_adjacent",
             _ => "mobile.step",
         });
-        self.control(
-            "mobile-movement",
+        self.web_control(
+            WebAction::Movement, "mobile-movement",
             &label,
             rect,
-            json!({"kind":"invoke","id":"mobile-movement"}),
             ControlStyle {
                 size: FONT,
                 custom: true,
                 ..Default::default()
             },
         );
+        let caption = Widgets::shortcut_label(&label, self.pc_shortcut(web_command(WebAction::Movement).key).as_deref());
         self.widgets.single_line(
-            &label,
+            &caption,
             Rect::new(rect.x + 2., rect.y, rect.w - 4., rect.h),
             LineStyle {
-                text: TextStyle::new(FONT, TEXT, false),
+                text: TextStyle::new(FONT.min(FONT * (rect.w - 8.) / (self.measure)(&caption,FONT,false,false).width.max(1.)), TEXT, false),
                 center: true,
                 ellipsis: false,
             },
@@ -287,15 +247,7 @@ impl BrowserUi {
         let direction = b(&ui["movement_direction"]);
         for a in array(&ui["map_controls"]["directions"]) {
             let key = n(&a["key"]) as u32;
-            let emitted = if direction || key == 46 {
-                key
-            } else {
-                match self.mobile_movement {
-                    1 => key - 32,
-                    2 => key | rogue_contract::RG_EVENT_CTRL,
-                    _ => key,
-                }
-            };
+            let emitted = self.movement_key(key);
             let label = if key == 46 {
                 self.t("mobile.wait")
             } else {
@@ -350,17 +302,17 @@ impl BrowserUi {
             Rect::new(x, y + 66., cell_width, 52.),
             false,
         );
-        self.mobile_button(
-            "mobile-full-map",
+        self.web_control(
+            WebAction::FullMap, "mobile-full-map",
             &self.t("mobile.full_map"),
             Rect::new(x + cell_width + 8., y + 66., cell_width, 52.),
-            false,
+            ControlStyle {size:FONT,..Default::default()},
         );
-        self.mobile_button(
-            "mobile-operations",
+        self.web_control(
+            WebAction::Commands, "mobile-operations",
             &self.t("action.help"),
             Rect::new(x, y + 124., cell_width, 52.),
-            false,
+            ControlStyle {size:FONT,..Default::default()},
         );
         self.draw_repeat_button(Rect::new(x + cell_width + 8., y + 124., cell_width, 52.));
     }
@@ -369,20 +321,20 @@ impl BrowserUi {
         self.regions.clear();
         self.map_rect = None;
         self.widgets.rect(game, "@overlay.strong");
-        let context_key = self.mobile_context_command().0;
-        let groups: Vec<_> = [
-            ("mobile.group.movement", &[
-                (109, "help.move_without_pickup"), (44, "help.pickup"),
-                (115, "help.search"), (94, "help.trap"),
-                (62, "help.downstairs"), (60, "help.upstairs"),
-            ][..]),
-            ("mobile.group.combat", &[
-                (102, "help.fight_carefully"), (70, "help.fight_to_death"),
-            ][..]),
-        ].into_iter().map(|(title, operations)| {
-            let operations: Vec<_> = operations.iter().copied().filter(|(key, _)|
-                *key != context_key && (*key != 60 || b(&self.model["frame"]["ui"]["player_state"]["amulet"]))).collect();
-            (title, operations)
+        // Keep every operation in its group. Availability never removes its row.
+        let groups: Vec<_> = commands::GROUPS.iter().filter_map(|(title, entries)| {
+            let originals = entries.iter().filter_map(|entry| {
+                let (key, action) = match entry.phone_action? {
+                    commands::GameAction::Key(key) => (key,json!({"kind":"send","key":key})),
+                    commands::GameAction::Direction(key) => (key,json!({"kind":"movement","key":key})),
+                };
+                Some((format!("mobile-op-{key}"), self.mobile_help(entry.description), action, Some(key), None))
+            });
+            let web = WEB_COMMANDS.iter().filter(|command| command.group == *title).map(|command|
+                (format!("mobile-op-web-{}", command.id), self.t(command.label),
+                 json!({"kind":"web","id":command.id}), None, Some(command.action)));
+            let operations: Vec<_> = originals.chain(web).collect();
+            (!operations.is_empty()).then_some((*title, operations))
         }).collect();
         let total = groups.iter().map(|(_, operations)| 36. + operations.len() as f64 * 60. + 12.).sum::<f64>() - 24.;
         let (panel, viewport) = self.sheet_layout(self.width - 16., total);
@@ -420,18 +372,20 @@ impl BrowserUi {
         for (title, operations) in &groups {
             self.text(&self.t(title), viewport.x, row + 6., viewport.w, FONT, ACCENT, true);
             row += 36.;
-            for (key, label) in operations {
+            for (id, label, action, key, web) in operations {
                 let ui = &self.model["frame"]["ui"];
-                let stair_disabled = match key {
-                    60 => !b(&ui["map_controls"]["stairs"]["ascend"]),
-                    62 => !b(&ui["map_controls"]["stairs"]["descend"]),
-                    _ => false,
-                };
-                self.mobile_command(
-                    &format!("mobile-op-{key}"), *key, &self.mobile_help(label),
-                    Rect::new(viewport.x, row, viewport.w, TARGET),
-                    !b(&self.model["running"]) || stair_disabled,
-                );
+                let available = self.command_ready() && match key {
+                    Some(60) => b(&ui["map_controls"]["stairs"]["ascend"]),
+                    Some(62) => b(&ui["map_controls"]["stairs"]["descend"]),
+                    Some(44) => !b(&ui["player_state"]["levitating"]) && self.model["frame"]["map_player_surface"]["tile"].as_u64().is_some_and(|tile| (14..=22).contains(&tile)),
+                    _ => true,
+                } && web.is_none_or(|action| self.web_available(action));
+                self.control(id, label, Rect::new(viewport.x, row, viewport.w, TARGET), action.clone(),
+                    ControlStyle { size:FONT, left:true, role:ControlRole::Command,
+                        key:key.map(|key| json!(key)), disabled:!available, keep_offscreen:true,
+                        shortcut: if let Some(action) = web { self.pc_shortcut(web_command(*action).key) }
+                            else { key.and_then(|key| char::from_u32(key)).and_then(|key| self.pc_shortcut(&key.to_string())) },
+                        ..Default::default() });
                 row += 60.;
             }
             row += 12.;

@@ -2746,39 +2746,48 @@
       ]
     },
     {
-      "case": "site:weapons.c:166:weapons.fall.the_vanishes_as_it_hits_the_ground:7",
+      "case": "site:weapons.c:178:weapons.fall.the_vanishes_as_it_hits_the_ground:7",
       "id": "weapons.fall.the_vanishes_as_it_hits_the_ground",
       "negative": false,
       "site": [
         "weapons.c",
-        166
+        178
       ]
     },
     {
-      "case": "site:weapons.c:264:weapons.wield.you_cant_wield_armor:7",
+      "case": "site:weapons.c:181:weapons.fall.vanishes_as_it_hits_the_ground:7",
+      "id": "weapons.fall.vanishes_as_it_hits_the_ground",
+      "negative": false,
+      "site": [
+        "weapons.c",
+        181
+      ]
+    },
+    {
+      "case": "site:weapons.c:278:weapons.wield.you_cant_wield_armor:7",
       "id": "weapons.wield.you_cant_wield_armor",
       "negative": false,
       "site": [
         "weapons.c",
-        264
+        278
       ]
     },
     {
-      "case": "site:weapons.c:273:weapons.wield.you_are_now:7",
+      "case": "site:weapons.c:287:weapons.wield.you_are_now:7",
       "id": "weapons.wield.you_are_now",
       "negative": false,
       "site": [
         "weapons.c",
-        273
+        287
       ]
     },
     {
-      "case": "site:weapons.c:274:weapons.wield.wielding:7",
+      "case": "site:weapons.c:288:weapons.wield.wielding:7",
       "id": "weapons.wield.wielding",
       "negative": false,
       "site": [
         "weapons.c",
-        274
+        288
       ]
     },
     {
@@ -4365,6 +4374,11 @@
     {
       "case": "id:weapons.fall.the_vanishes_as_it_hits_the_ground",
       "id": "weapons.fall.the_vanishes_as_it_hits_the_ground",
+      "negative": false
+    },
+    {
+      "case": "id:weapons.fall.vanishes_as_it_hits_the_ground",
+      "id": "weapons.fall.vanishes_as_it_hits_the_ground",
       "negative": false
     },
     {
@@ -8339,7 +8353,7 @@
       "negative": false
     }
   ],
-  "source_calls": 296,
-  "catalog_ids": 560,
+  "source_calls": 297,
+  "catalog_ids": 561,
   "dynamic_sites": 19
 }

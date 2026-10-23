@@ -1,9 +1,9 @@
 {
   "schema": 1,
   "count_basis": "all C source msg/addmsg/debug sites, including inactive conditional and legacy OS code",
-  "calls": 296,
-  "literal_template_ids": 273,
-  "literal_or_choice_calls": 277,
+  "calls": 297,
+  "literal_template_ids": 274,
+  "literal_or_choice_calls": 278,
   "dynamic_calls": [
     {
       "file": "command.c",
@@ -205,7 +205,7 @@
     "%c": 12,
     "%d": 26,
     "%ld": 1,
-    "%s": 70
+    "%s": 71
   },
   "limitations": [
     "runtime names, item purpose/name fragments and English grammar are not yet ID-separated",

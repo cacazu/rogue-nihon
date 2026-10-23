@@ -72,7 +72,18 @@ missile(int ydelta, int xdelta)
      */
     if (moat(obj->o_pos.y, obj->o_pos.x) == NULL ||
 	!hit_monster(unc(obj->o_pos), obj))
-	    fall(obj, TRUE);
+    {
+        /* A solid impact scatters from the last traversed square. Centering
+         * fall() inside the wall can place any thrown item through it. Keep
+         * doors, monster impacts and do_motion()'s magic-bolt contract intact. */
+        int ch = winat(obj->o_pos.y, obj->o_pos.x);
+        if (ch == ' ' || ch == '-' || ch == '|')
+        {
+            obj->o_pos.y -= ydelta;
+            obj->o_pos.x -= xdelta;
+        }
+        fall(obj, TRUE);
+    }
 }
 
 /*
@@ -163,8 +174,11 @@ fall(THING *obj, bool pr)
 	    endmsg();
 	    has_hit = FALSE;
 	}
-	msg("the %s vanishes as it hits the ground",
-	    weap_info[obj->o_which].oi_name);
+        if (obj->o_type == WEAPON)
+            msg("the %s vanishes as it hits the ground",
+                weap_info[obj->o_which].oi_name);
+        else
+            msg("%s vanishes as it hits the ground", inv_name(obj, FALSE));
     }
     discard(obj);
 }

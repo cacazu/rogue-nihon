@@ -15,7 +15,7 @@ const root=fileURLToPath(new URL('../../',import.meta.url)),output=artifactDirec
 await mkdir(output,{recursive:true});
 const runtime=await prepareBrowserRuntime(root),server=createPreviewServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const browser=await loadPlaywright().chromium.launch({executablePath:browserExecutable(),headless:true,downloadsPath:runtime.downloadsPath});
-const worker=await readFile(path.join(root,'web/worker.js'),'utf8'),wasm=path.join(root,'build/item-use-fixtures.wasm');
+const worker=await readFile(path.join(root,'web/worker.js'),'utf8'),wasm=path.resolve(root,process.env.ROGUE_COMMAND_REFERENCE_WASM||'build/item-use-fixtures.wasm');
 const headers={'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'};
 const report={checks:[],windows:[],errors:[]},corpus=[];let ctx,page,cfg,journal;
 const snap=()=>page.evaluate(()=>({state:__rogueUiAdapter.state,scene:__rogueBrowserTest.canvas,commands:__rogueBrowserTest.commands}));
@@ -65,6 +65,7 @@ try{
    await key('PageDown');
   }
   for(const group of cfg.lang==='ja'?['移動・探索','戦闘','アイテム・装備','情報の確認','反復・取消','ウィンドウの選択・入力','システム']:['Movement and search','Combat','Items and equipment','Information','Repeat and cancel','Window selection and input','System'])assert.ok(seen.has(group),'All command genres are reachable: '+group);
+  for(const shortcut of ['g','p','x + '+(cfg.lang==='ja'?'方向':'direction'),'E','A','C','O','G','V','M'])assert.ok([...seen].some(text=>text===shortcut||text.startsWith(shortcut)), 'Web shortcut is documented: '+shortcut);
   await screenshot('system');assert.ok((await snap()).scene.scrolls.commands>0);
   await key('Home');assert.equal((await snap()).scene.scrolls.commands,0);const r=(await snap()).scene.regions.commands.rect,b=await page.locator('#rogue-canvas').boundingBox();await page.mouse.move(b.x+r.x+40,b.y+r.y+40);await page.mouse.wheel(0,500);await paint();assert.ok((await snap()).scene.scrolls.commands>0,'Mouse wheel scrolls table');
   await page.mouse.move(b.x+r.x+40,b.y+r.y+70);await page.mouse.down();await page.mouse.move(b.x+r.x+40,b.y+r.y+20,{steps:5});await page.mouse.up();await paint();

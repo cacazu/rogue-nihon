@@ -4582,6 +4582,28 @@
       "source": "weapons.c:149",
       "function": "fall"
     },
+    "weapons.fall.vanishes_as_it_hits_the_ground": {
+      "template": "{0}は地面に落ちた途端に消えた。",
+      "source_template": "%s vanishes as it hits the ground",
+      "argument_types": [
+        "string"
+      ],
+      "conversions": [
+        "s"
+      ],
+      "control_indexes": [],
+      "grammar_indexes": [],
+      "argument_roles": {
+        "0": "item"
+      },
+      "argument_sources": {
+        "0": "inv_name(obj,FALSE)"
+      },
+      "argument_values": {},
+      "unresolved": [],
+      "source": "weapons.c:181",
+      "function": "fall"
+    },
     "weapons.wield.wielding": {
       "template": "{0}（{1}）を構えた。",
       "source_template": "wielding %s (%c)",

@@ -29,16 +29,19 @@ impl BrowserUi {
     }
 
     pub(super) fn draw_repeat_button(&mut self, rect: Rect) {
-        let title = self.t("mobile.repeat");
+        let title = Widgets::shortcut_label(&self.t("mobile.repeat"),self.pc_shortcut(web_command(WebAction::Repeat).key).as_deref());
         let subtitle = if self.mobile_repeat_configured {
             self.mobile_repeat_count.to_string()
         } else { self.t("mobile.long_press") };
-        self.control("touch-again", &format!("{title}\n{subtitle}"), rect,
-            json!({"kind":"send","key":97}),
+        let subtitle = if b(&self.view["coarse"]) { subtitle } else {
+            format!("{} {}{}", web_command(WebAction::RepeatCount).key, self.t("mobile.repeat_count"),
+                if self.mobile_repeat_configured {format!(": {}",self.mobile_repeat_count)} else {String::new()})
+        };
+        self.web_control(WebAction::Repeat,"touch-again", &format!("{}\n{subtitle}",self.t("mobile.repeat")), rect,
             ControlStyle { custom:true, key:Some(json!(97)), ..Default::default() });
         for (index, text) in [&title, &subtitle].into_iter().enumerate() {
             self.widgets.single_line(text, Rect::new(rect.x + 1., rect.y + index as f64 * rect.h / 2., rect.w - 2., rect.h / 2.),
-                LineStyle { text:TextStyle::new(17., TEXT, false), center:true, ellipsis:false }, self.measure);
+                LineStyle { text:TextStyle::new(17_f64.min(17. * (rect.w - 8.) / (self.measure)(text,17.,false,false).width.max(1.)), TEXT, false), center:true, ellipsis:false }, self.measure);
         }
     }
 

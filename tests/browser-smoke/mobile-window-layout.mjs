@@ -16,7 +16,7 @@ import {runGame} from '../run-game.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const output=process.env.ROGUE_MOBILE_WINDOWS_OUTPUT||artifactDirectory(path.join(root,'tests/browser-smoke/output/mobile-window-layout/after'));
 await mkdir(output,{recursive:true});
-const wasm=path.join(root,'build/item-use-fixtures.wasm'),worker=await readFile(path.join(root,'web/worker.js'),'utf8');
+const wasm=path.resolve(root,process.env.ROGUE_MOBILE_WINDOWS_WASM||'build/item-use-fixtures.wasm'),worker=await readFile(path.join(root,'web/worker.js'),'utf8');
 const headers={'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'};
 const runtime=await prepareBrowserRuntime(root),server=createPreviewServer();
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
@@ -104,6 +104,41 @@ async function followups(name,target){
 async function check(name,fn){if(process.env.ROGUE_MOBILE_WINDOWS_FILTER&&!name.match(new RegExp(process.env.ROGUE_MOBILE_WINDOWS_FILTER)))return;await fn();report.checks.push(`${width} ${name}`);console.log('PASS '+width+' '+name);}
 try{
  for(width of process.env.ROGUE_MOBILE_WINDOWS_WIDTHS?.split(',').map(Number)||[390,320]){
+  await check('retired original settings stay absent from phone command menu',async()=>{
+   await open('inventory-all');const clean=(await snap()).state.trace;
+   await tap('mobile-operations');
+   for(const key of [111,118,18,16,83,33,42])assert.ok(!(await snap()).scene.controls.some(c=>c.id==='mobile-op-'+key),'Retired/selection control stays absent: '+key);
+   for(const id of ['movement','full-map','fire','repeat','repeat-count','commands','settings','fullscreen','controls','history'])assert.ok((await snap()).scene.controls.some(c=>c.id==='mobile-op-web-'+id),'Web operation stays listed: '+id);
+   for(let i=0;i<12&&(await snap()).scene.scrolls['mobile-operations']<(await snap()).scene.regions['mobile-operations'].max;i++)await swipe('mobile-operations',500);
+   await inspect('operations-settings-boundary');
+   await tap('mobile-op-web-settings','mobile-operations');assert.equal((await snap()).scene.scope,'settings');
+   await tap('settings-close');assert.deepEqual((await snap()).state.trace,clean);
+  });
+  await check('all command menu actions and ranged touch paths',async()=>{
+   await open('inventory-all');const clean=(await snap()).state.trace;
+   await tap('mobile-operations');await inspect('operations-all-top');
+   let scene=(await snap()).scene;
+   for(const code of 'hjklyubn.,ms^><fFtzqrewWTPRdcIiD@/=)?a')assert.ok(scene.controls.some(c=>c.id==='mobile-op-'+code.charCodeAt(0)),code+' is listed');
+   for(const id of ['movement','full-map','fire','repeat','repeat-count','commands','settings','fullscreen','controls','history'])assert.ok(scene.controls.some(c=>c.id==='mobile-op-web-'+id),id+' is listed');
+   assert.ok(!scene.controls.some(c=>c.id==='mobile-op-42'),'Selection-only * is absent');
+   for(const key of [111,118,18,16,83,33])assert.ok(!scene.controls.some(c=>c.id==='mobile-op-'+key),'Retired control stays absent: '+key);
+   assert.ok(scene.controls.find(c=>c.id==='mobile-op-60').disabled,'Conditional stair operation remains listed');
+   assert.ok(scene.controls.find(c=>c.id==='mobile-op-web-fire').disabled,'Firing needs an equipped bow');
+   for(let i=0;i<12&&(await snap()).scene.scrolls['mobile-operations']<(await snap()).scene.regions['mobile-operations'].max;i++)await swipe('mobile-operations',500);
+   await inspect('operations-all-bottom');assert.deepEqual((await snap()).state.trace,clean);
+   await tap('mobile-operations-close');
+   const menu=async id=>{await tap('mobile-operations');await tap(id,'mobile-operations');};
+   await menu('mobile-op-web-full-map');await inspect('operation-overview');assert.deepEqual((await snap()).state.trace,clean);await tap('mobile-full-map');
+   for(let i=1;i<=3;i++){await menu('mobile-op-web-movement');assert.equal((await snap()).scene.controls.find(c=>c.id==='touch-h').key,i===1?72:i===2?104|0x01000000:104);}
+   assert.deepEqual((await snap()).state.trace,clean);
+   await menu('mobile-op-119');journal+='w';await wait('item');await tap('item-d','dialog');journal+='d';await wait('command');
+   const arrow=(await snap()).state.frame.ui.ranged.arrow_key;assert.equal(typeof arrow,'number');
+   await menu('mobile-op-web-fire');journal+='t';await wait('direction');await inspect('operation-fire-direction');await tap('touch-action-action.cancel');journal+='\x1b';await wait('command');
+   await menu('mobile-op-web-fire');journal+='t';await wait('direction');await tap('touch-l');journal+='l'+String.fromCharCode(arrow);await wait('command');
+   for(const verb of ['t','z']){await menu('mobile-op-'+verb.charCodeAt(0));journal+=verb;await wait('direction');await tap('touch-action-action.cancel');journal+='\x1b';await wait('command');}
+   await menu('mobile-op-113');journal+='q';await wait('item');await tap('window-27');journal+='\x1b';await wait('command');
+   await next();
+  });
   await check('top language choices and inventory tabs/actions/details/history',async()=>{
    await open('inventory-all',{top:true});await tap('select-language');await inspect('language');await tap('select-language-ja');await tap('new-game');await wait('command');
    await inventory();await inspect('inventory');const before=(await snap()).state.trace,found=new Set();
@@ -159,9 +194,11 @@ try{
    for(const ending of ['ending-death','ending-no-tomb','ending-victory']){await open(ending);for(let i=0;i<8&&!(await snap()).state.topOpen;i++){const s=await inspect(ending+'-'+i);await tap(s.scene.controls.find(c=>c.id==='window-32'||c.id==='window-13')?.id||'result-top');await page.waitForFunction(n=>__rogueBrowserTest.inputRequestCount>n||__rogueBrowserTest.topOpen||!__rogueBrowserTest.running,s.state.inputRequestCount);await paint();}assert.equal((await snap()).state.topOpen,true);}
   });
  }
- // Long English labels and both other map modes use the same phone windows.
+ // Apply the scenario filter to the cross-locale tail as well as the width loop.
+ await check('long English labels and other map modes',async()=>{
  width=320;await open('item-use-potion-11-base',{language:'en',mode:'tiles'});await tap('settings-toggle');await inspect('english-settings');await tap('settings-close');await actions();await inspect('english-actions');await tap('window-113');journal+=' qf';await followups('english-naming');await next();
  width=390;await open('item-use-scroll-15-base',{mode:'ascii'});await actions();await tap('window-114');journal+=' rf';await followups('ascii-naming');await next();
+ });
  assert.deepEqual(report.errors,[]);report.result='pass';
 }catch(e){report.result='fail';report.failure=e.stack;report.last=await snap().catch(()=>null);await page?.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});throw e;}
 finally{await writeFile(path.join(output,'result.json'),JSON.stringify(report,null,2));await context?.close();await browser.close();await new Promise(r=>server.close(r));await runtime.dispose();console.log('Evidence: '+output);}

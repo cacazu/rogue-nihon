@@ -13,7 +13,12 @@
 #error "game-fixtures.c must only be linked into a RG_TEST_FIXTURES build"
 #endif
 
+#ifndef msg
+/* Original io.c has no translated-message entry; wording is a split-only fixture. */
+static void wording_catalog_fixture(void) { abort(); }
+#else
 #include "wording-fixture.inc"
+#endif
 
 static void clear_objects(THING **list)
 {
@@ -127,7 +132,79 @@ void rg_test_apply_fixture(void)
     name_length = rg_host_fixture_id(name, sizeof(name));
     if (name_length <= 0) return;
     clean_world();
-    if (!strncmp(name, "autowalk-", 9)) {
+    if (!strncmp(name, "throw-wall-", 11)) {
+        char category[16], scenario[32];
+        int x, y, type, which = 0;
+        if (sscanf(name, "throw-wall-%15[^-]-%31s", category, scenario) != 2) abort();
+        clear_objects(&player.t_pack);
+        cur_weapon = cur_armor = cur_ring[0] = cur_ring[1] = NULL;
+        memset(pack_used, 0, 26 * sizeof(pack_used[0])); inpack = 0;
+        if (!strcmp(category,"food")) { type=FOOD; which=1; }
+        else if (!strcmp(category,"potion")) { type=POTION; which=MAXPOTIONS-1; }
+        else if (!strcmp(category,"scroll")) { type=SCROLL; which=MAXSCROLLS-1; }
+        else if (!strcmp(category,"weapon")) { type=WEAPON; which=MAXWEAPONS-1; }
+        else if (!strcmp(category,"armor")) { type=ARMOR; which=MAXARMORS-1; }
+        else if (!strcmp(category,"ring")) { type=RING; which=MAXRINGS-1; }
+        else if (!strcmp(category,"stick")) { type=STICK; which=MAXSTICKS-1; }
+        else if (!strcmp(category,"amulet")) type=AMULET;
+        else abort();
+        object=new_item(); object->o_type=type; object->o_which=which; object->o_count=1;
+        strcpy(object->o_damage,"1x2"); strcpy(object->o_hurldmg,"1x2");
+        if (type==WEAPON) { init_weapon(object,which); object->o_count=1; }
+        if (type==ARMOR) object->o_arm=a_class[which];
+        if (type==POTION) pot_info[which].oi_know=FALSE;
+        if (type==SCROLL) scr_info[which].oi_know=FALSE;
+        if (type==RING) ring_info[which].oi_know=FALSE;
+        if (type==STICK) { ws_info[which].oi_know=FALSE; object->o_charges=3; }
+        if (strstr(scenario,"called")) {
+            struct obj_info *info = type==POTION ? pot_info : type==SCROLL ? scr_info :
+                type==RING ? ring_info : type==STICK ? ws_info : NULL;
+            if (!info) abort();
+            free(info[which].oi_guess); info[which].oi_guess=malloc(12);
+            strcpy(info[which].oi_guess,"red %s-name");
+        }
+        add_pack(object,TRUE); /* a: highest valid subtype, still unidentified. */
+        if (!strcmp(scenario,"hit") || !strcmp(scenario,"miss")) {
+            monster=monster_at('Z',12,10); monster->t_flags |= ISHELD;
+            monster->t_flags &= ~ISRUN;
+            monster->t_stats.s_hpt=monster->t_stats.s_maxhp=1000;
+            monster->t_stats.s_arm=!strcmp(scenario,"hit") ? 100 : -100;
+        } else if (!strcmp(scenario,"trap")) {
+            chat(11,10)=TRAP; flat(11,10)=F_REAL|T_ARROW;
+            pstats.s_arm=-100;
+        } else if (!strcmp(scenario,"enemy-drop")) {
+            monster=monster_at('Z',11,10); monster->t_flags |= ISHELD;
+            monster->t_flags &= ~ISRUN; monster->t_stats.s_hpt=1; monster->t_stats.s_arm=100;
+            object=new_item(); object->o_type=FOOD; object->o_count=1;
+            attach(monster->t_pack,object);
+            object=new_item(); init_weapon(object,SPEAR); object->o_hplus=100;
+            add_pack(object,TRUE); cur_weapon=object;
+        } else {
+            if (!strcmp(scenario,"bolt")) {
+                object->o_which=WS_MISSILE;
+                ws_info[WS_MISSILE].oi_know=TRUE;
+            }
+            for(y=3;y<=20;y++) for(x=3;x<=25;x++) {
+                if ((!strcmp(scenario,"h") && y==12) ||
+                    (!strcmp(scenario,"d") && x+y==24) ||
+                    (strcmp(scenario,"h") && strcmp(scenario,"d") && x==12)) {
+                    chat(y,x)=!strcmp(scenario,"rock") ? ' ' :
+                        (!strcmp(scenario,"h") || !strcmp(scenario,"d")) ? '-' : '|';
+                    if (!strcmp(scenario,"secret")) flat(y,x)=0;
+                }
+            }
+            if (!strcmp(scenario,"door")) chat(10,12)=DOOR;
+            if (!strncmp(scenario,"blocked",7)) {
+                hero.x=11; oldpos=hero;
+                for(y=9;y<=11;y++)for(x=10;x<=12;x++) chat(y,x)='|';
+                chat(hero.y,hero.x)=FLOOR;
+            }
+            if (strcmp(scenario,"v") && strcmp(scenario,"h") && strcmp(scenario,"d") &&
+                strcmp(scenario,"rock") && strcmp(scenario,"secret") && strcmp(scenario,"blocked") &&
+                strcmp(scenario,"door") && strcmp(scenario,"bolt") && strcmp(scenario,"blocked-called")) abort();
+        }
+        clear(); enter_room(&hero);
+    } else if (!strncmp(name, "autowalk-", 9)) {
         if (!strcmp(name,"autowalk-gaze-hit") || !strcmp(name,"autowalk-gaze-miss")) {
             int x,y;
             struct room *room=&rooms[0];

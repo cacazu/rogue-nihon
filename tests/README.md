@@ -69,6 +69,8 @@ node tests/run.mjs --env ROGUE_BASELINE_MODULE=build/baseline.wasm tests/game-re
 
 auditはprepareが記録した原本パスを読みます。`game-fixtures.test.mjs` は `build/baseline-fixtures.wasm` と `game-fixtures.wasm` を使用します。`run-game.mjs` の検証hostは同じ開始設定ABIを使い、歴史的なJS loader付きarchiveも読み込めます。各scriptのfixture・比較archive依存を確認してから実行してください。比較元がなくskipした検査は原作一致を確認した扱いにしません。20 word・入力位置・原英文画面に加え、保存復元後の次操作を照合します。
 
+投げ物の壁衝突は `tests/throw-wall.test.mjs` で、同じ `game-fixtures.c` を使った原作・修正前・修正後を比較します。`ROGUE_THROW_ORIGINAL` は原作baseline fixture、`ROGUE_THROW_BEFORE` は修正前Cを保持して新しいfixtureだけをリンクした独立Wasm、`ROGUE_THROW_WASM` は修正後（既定 `build/game-fixtures.wasm`）を指定します。全品種・縦横斜め・岩と秘密壁・着地先なしの公開品名を検査し、扉・敵・魔法・矢罠・敵ドロップは同じ消費済み入力と全20状態語・RNG・C画面で原作と比較します。壁衝突後の着地・RNG差は意図した原作差として区別します。
+
 UI変更前・画像変更前などの歴史的比較は、各scriptの環境変数で指定した独立archiveが必要です。原作baselineとの比較と、以前のWeb版との比較を区別します。
 
 ## 一時出力と実行記録

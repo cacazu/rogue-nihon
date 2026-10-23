@@ -114,8 +114,8 @@ try{
     });
     await check(lang+" operations swipe on a button, block background input, and expose every command",async()=>{
       const before=await state();await tap("mobile-operations");await page.keyboard.press(".");await page.keyboard.press("h");await page.touchscreen.tap(4,320);assert.deepEqual(await state(),before);
-      const c=(await scene()).controls.find(c=>c.id==="mobile-op-62");
-      await swipe(c.rect.x+c.rect.w/2,c.rect.y+c.rect.h/2,200);
+      const c=(await scene()).controls.filter(c=>c.id.startsWith("mobile-op-")&&c.rect.h>=48).at(-1);
+      await swipe(c.rect.x+c.rect.w/2,c.rect.y+c.rect.h/2,c.rect.y+c.rect.h/2-200);
       assert.equal((await scene()).scrolls["mobile-operations"],Math.min(200,(await scene()).regions["mobile-operations"].max));assert.deepEqual(await state(),before);
       const ids=new Set((await scene()).controls.map(c=>c.id));
       for(let i=0;i<10;i++){
@@ -129,8 +129,9 @@ try{
       for(const c of (await scene()).controls)if(c.rect.h>=47.9)ids.add(c.id);
       for(const key of [109,44,94,62,102,70])assert.ok(ids.has("mobile-op-"+key),"command "+key);
       assert.ok(!ids.has("mobile-movement"));
-      for(const key of [105,116,113,114,101,122,119,87,84,80,82,100,99,73,41,93,61,115,46,64,68,47,97,48,49,50,51,52,53,54,55,56,57,27])assert.ok(!ids.has("mobile-op-"+key),"inventory action excluded "+key);
-      assert.ok(!ids.has("mobile-op-60"),"ascending is hidden before the Amulet");
+      for(const key of [105,116,113,114,101,122,119,87,84,80,82,100,99,73,41,93,61,115,46,64,68,47,97])assert.ok(ids.has("mobile-op-"+key),"all item and game commands "+key);
+      for(const id of ['movement','full-map','fire','repeat','repeat-count','commands','settings','fullscreen','controls','history'])assert.ok(ids.has('mobile-op-web-'+id),'Web operation '+id);
+      assert.ok((await scene()).controls.find(c=>c.id==='mobile-op-60').disabled,'ascending stays listed but disabled before the Amulet');
       await shot(lang+"-operations");await tap("mobile-operations-close");assert.deepEqual(await state(),before);
     });
     await check(lang+" inventory and throw keep their existing rows and actions",async()=>{

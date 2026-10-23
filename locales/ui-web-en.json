@@ -239,6 +239,9 @@
     "settings.off": "Off",
     "error.name_characters": "The name contains characters that cannot be used.",
     "error.prompt_text_characters": "The text contains characters that cannot be used.",
-    "platform.name_error": "This name cannot be used."
+    "platform.name_error": "This name cannot be used.",
+    "commands.movement_mode": "Cycle movement mode",
+    "commands.configured_repeat": "Repeat the last command using the set count",
+    "commands.controls": "Toggle controls"
   }
 }

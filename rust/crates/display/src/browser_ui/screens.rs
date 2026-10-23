@@ -1,8 +1,8 @@
 use super::*;
 impl BrowserUi {
     pub(super) fn settings_button(&mut self, rect: Rect) {
-        self.button(
-            "settings-toggle",
+        self.web_control(
+            WebAction::Settings, "settings-toggle",
             &self.t("action.settings"),
             rect,
             ControlStyle {
@@ -15,17 +15,16 @@ impl BrowserUi {
     }
     fn game_buttons(&mut self, map: Rect) {
         if !b(&self.model["topOpen"]) {
-            self.control(
-                "commands-open",
+            self.web_control(
+                WebAction::Commands, "commands-open",
                 &self.t("commands.title"),
                 Rect::new(map.x + map.w - 156., map.y + 10., 44., 44.),
-                json!({"kind":"commands","open":true}),
                 ControlStyle { icon: Some("command-list"), icon_size: 24., ..Default::default() },
             );
             self.settings_button(Rect::new(map.x + map.w - 104., map.y + 10., 44., 44.));
         }
-        self.button(
-            "header-fullscreen",
+        self.web_control(
+            WebAction::Fullscreen, "header-fullscreen",
             &self.t(if b(&self.view["fullscreen"]) {
                 "action.exit_fullscreen"
             } else {

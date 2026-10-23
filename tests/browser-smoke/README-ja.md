@@ -12,6 +12,13 @@ node tests/run.mjs --keep-artifacts tests/browser-smoke/canvas.mjs
 node tests/run.mjs --playwright /path/to/playwright --browser /path/to/browser --python /path/to/python tests/browser-smoke/canvas.mjs
 ```
 
+通常fixtureの最新buildを明示してWeb操作を確認する場合は、次の入口を使います。fixtureの実体は上書きせず、指定したWasmをブラウザーとC/RNG参照実行の両方へ使います。
+
+```sh
+node tests/run.mjs --keep-artifacts --env ROGUE_COMMAND_REFERENCE_WASM=build/game-fixtures.wasm tests/browser-smoke/command-reference.mjs
+node tests/run.mjs --keep-artifacts --env ROGUE_MOBILE_WINDOWS_WASM=build/game-fixtures.wasm --env "ROGUE_MOBILE_WINDOWS_FILTER=all command menu" --env ROGUE_MOBILE_WINDOWS_WIDTHS=390,320 tests/browser-smoke/mobile-window-layout.mjs
+```
+
 設定を省略した場合は、通常のNodeモジュール検索でPlaywrightを読みます。既存の `ROGUE_PLAYWRIGHT_MODULE`、`ROGUE_CHROME`、`ROGUE_TEST_PYTHON` も使用できます。ブラウザー検査はすべてPlaywright経由です。
 
 通常は終了時に一時出力を削除します。結果とスクリーンショットを保持する場合は `--keep-artifacts` を指定します。`browser-runtime.mjs` はOSの一時フォルダーとダウンロードを実行専用領域へ向けます。
@@ -23,11 +30,11 @@ node tests/run.mjs --playwright /path/to/playwright --browser /path/to/browser -
 | script（tests/browser-smoke/） | 確認対象 |
 |---|---|
 | `canvas.mjs` | PC・スマホ・日英の開始、単一Canvas、持ち物・ヘルプ・設定、IME編集、保存復元、終了、全画面、フッターのリンク |
-| `desktop-dock.mjs` | PC下部の方向・主要操作、700px以上の日英配置と地図・ログの分離、実クリックから探索・待機・武器変更・投射・杖の方向取消・射撃・繰返し、履歴・設定・持ち物の背景遮断、全体図・全画面・PC/スマホ切替、旧UI/通常キーとのC・RNG比較。`ROGUE_PC_DOCK_BEFORE` に変更前buildを含む作品コピーを指定可能。 |
+| `desktop-dock.mjs` | PC下部の方向・主要操作とキー表記、Web操作の厳密大小shortcut・パッド非表示時の入力・無効射撃・設定回数Eと原作aの区別、700px以上の日英配置と地図・ログの分離、実クリックから探索・待機・武器変更・投射・杖の方向取消・射撃・繰返し、履歴・設定・持ち物の背景遮断、全体図・全画面・PC/スマホ切替、旧UI/通常キーとのC・RNG比較。`ROGUE_PC_DOCK_BEFORE` に変更前buildを含む作品コピーを指定可能。 |
 | `mobile-ui.mjs` | スマホのトップ・開始/保存/トップからのロード、開始直後からの操作パッド、48px以上の新規ターゲット、操作一覧の全コマンド・ボタン上スワイプ・背景入力遮断、広域・全画面のC/RNG不変、320px縦/横表示、PC幅への復帰 |
 | `wording-catalog.mjs` | 全C出力箇所のID・引数を実C→Rustで検査、全557文言ID、動的名・個数・数値・未鑑定品、スマホの2行ログと全履歴・PC・日英、翻訳失敗と引数不足の負例 |
 | `log-parameters-wrap.mjs` | ログの装備パラメータの色付きアイコン、スマホは項目名省略・PCは併記、実装備変更・固定文の折り返しと文字保持（翻訳の全件検査は `wording-catalog.mjs`）、320px・再表示・未鑑定・英語 |
-| `mobile-window-layout.mjs` | 390px・320pxのタッチ表示で持ち物の全タブ・操作・詳細・履歴、設定・選択肢・ステータス・ログ・操作一覧・回数入力、各使用後の識別対象・命名・左右の手・方向・検出結果・終了画面を実際に開き、重複案内・空白・枠内配置と次コマンドまでのC/RNGを確認。`item-use-flows.mjs` と同じ専用Wasmを使用 |
+| `mobile-window-layout.mjs` | 390px・320pxのタッチ表示で持ち物の全タブ・操作・詳細・履歴、設定・選択肢・ステータス・ログ・操作一覧・回数入力、全操作一覧のscroll・条件行・選択専用*の除外・移動3方式、一覧タップから武器変更・射撃・投射・杖・品選択取消・次操作、各使用後の識別対象・命名・左右の手・方向・検出結果・終了画面を実際に開き、重複案内・空白・枠内配置と次コマンドまでのC/RNGを確認。`item-use-flows.mjs` と同じ専用Wasmを使用 |
 | `mobile-log-hints.mjs` | PC・スマホのログ・全履歴から一時的な質問を除外し、スマホではキー専用案内も除外、実Cの発見一覧・アイテム選択・指輪の手・終了確認、合成文と再表示、ゲーム文・名前・エラーの維持、PC・英語 |
 | `parameter-icons.mjs` | 持ち物の数値ラベルのアイコン化、詳細のアイコンと項目名、武器・防具・指輪・杖、未鑑定の非表示、スマホ320px・PC・日英・配布Wasm |
 | `equipment-style.mjs` | 右端の装備部位名、半角括弧・半角空白の数値書式、未鑑定情報の非表示、武器・防具・左右の指輪の装備変更、320pxスマホ・PC・日英・配布Wasm |
@@ -39,7 +46,7 @@ node tests/run.mjs --playwright /path/to/playwright --browser /path/to/browser -
 | `mobile-context-history.mjs` | リストの除外と状況別ボタン、実アイテム拾得・罠の方向選択・階段昇降、PC/スマホの持ち物からアイテム履歴への遷移、配布Wasmの接続 |
 | `mobile-layout.mjs` | 共通設定行・連続ズーム・スマホのステータスと履歴・全体図の凡例・設定内の保存とファイル再開 |
 | `themes.mjs` | デフォルト／緑黒の実プルダウン操作、PC・390/320pxスマホ・日英・3表示方式、設定・HUD・履歴・持ち物・操作・詳細・入力・使用後・墓石・得点の配色、再読込・旧/不明設定、地図とC/RNGの不変。`item-use-fixtures.wasm` を使用 |
-| `command-reference.mjs` | PCの設定横ボタン、日英・配色・3表示方式・狭い画面、ジャンル別のキー/処理2列表、全件スクロール、背景入力遮断、所持品・方向・対象・命名・確認の待ちへの復帰、次ターンのC/RNG一致、スマホへの影響なし。`item-use-fixtures.wasm` を使用 |
+| `command-reference.mjs` | PCの設定横ボタン、日英・配色・3表示方式・狭い画面、ジャンル別のキー/処理2列表とWeb10操作の全件掲載、全件スクロール、背景入力遮断、所持品・方向・対象・命名・確認の待ちへの復帰、次ターンのC/RNG一致、スマホへの影響なし。`item-use-fixtures.wasm` を使用 |
 | `hud-widgets.mjs` | PC・スマホで共通の二段ステータス、HP/経験値ゲージ、列・色・文字縁、全数値ウィンドウ、クリック・タップ・Tab/Enter・Esc、全画面、日英・DPR・全表示方式、次コマンドまでのC/RNG |
 | `save-export.mjs` | ダウンロードした実ファイル、IndexedDBとの一致、取消、復元と次ターン |
 | `system-messages.mjs` | PC・スマホ・幅320pxの日本語/英語で、処理中表示の履歴除外、名前・シード・文字入力の原因別エラーと欄直下配置、訂正解除、設定から保存する時の不正草稿・入力転送失敗、S説明通知の遮断を確認 |

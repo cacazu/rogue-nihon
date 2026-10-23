@@ -78,6 +78,16 @@ try{
   const {initial,expected}=await reference(config);await open(config);let s=await snap();layout(s.scene);
   if(process.env.ROGUE_PC_DOCK_BEFORE)assert.equal(initial.mapRect.h-s.scene.mapRect.h,172,'Dedicated dock height');
   await shot(config.label+'-after');const clean=await state();
+  const shortcut=async value=>{await page.locator('#rogue-canvas').focus();await page.keyboard.press(value);await paint();};
+  for(const [id,key]of [['mobile-movement','g'],['mobile-full-map','p'],['touch-again','E'],['commands-open','C'],['settings-toggle','O'],['header-fullscreen','G'],['history-open','M']])assert.equal((await snap()).scene.controls.find(c=>c.id===id).shortcut,key,id+' displays its actual shortcut');
+  for(let i=0;i<3;i++)await shortcut('g');assert.deepEqual(await state(),clean);
+  await shortcut('p');await shot(config.label+'-key-overview');await shortcut('p');assert.deepEqual(await state(),clean);
+  await shortcut('C');assert.equal((await snap()).scene.scope,'commands');await shortcut('g');await shortcut('C');assert.equal((await snap()).scene.scope,'game');assert.deepEqual(await state(),clean);
+  await shortcut('M');assert.equal((await snap()).scene.scope,'history');await shortcut('Escape');
+  await shortcut('O');assert.equal((await snap()).scene.scope,'settings');await shortcut('Escape');
+  await shortcut('G');await paint();assert.equal(await page.evaluate(()=>!!document.fullscreenElement),true);await shortcut('G');await paint();
+  await shortcut('V');assert.ok(!(await snap()).scene.controls.some(c=>c.id==='pc-inventory'));await shortcut('g');await shortcut('g');await shortcut('g');await shortcut('V');layout((await snap()).scene);assert.deepEqual(await state(),clean);
+  await shortcut('A');assert.equal((await snap()).scene.scope,'repeat-count');await shortcut('Escape');assert.deepEqual(await state(),clean);
   await tap('mobile-full-map');await shot(config.label+'-overview');assert.deepEqual(await state(),clean);
   await tap('mobile-full-map');assert.deepEqual(await state(),clean);
   await tap('history-open');assert.ok(!(await snap()).scene.controls.some(c=>c.id==='pc-inventory'));await page.keyboard.press('Escape');await paint();assert.deepEqual(await state(),clean);
@@ -87,7 +97,7 @@ try{
   await tap('pc-inventory');await wait('space');assert.ok(!(await snap()).scene.controls.some(c=>c.id==='pc-inventory'));await key('Escape');await wait();
   await tap('pc-wield');await wait('item');await tap('item-d');await wait();
   s=await snap();assert.ok(s.scene.controls.some(c=>c.id==='pc-fire'&&!c.disabled));assert.ok(!s.scene.controls.some(c=>c.id==='pc-throw'));await shot(config.label+'-bow');
-  await tap('pc-fire');await wait('direction');assert.ok((await snap()).scene.controls.some(c=>c.id==='pc-cancel'));assert.ok(!(await snap()).scene.controls.some(c=>c.id==='touch-.'));await shot(config.label+'-direction');await tap('pc-cancel');await wait();
+  await shortcut('x');await wait('direction');assert.ok((await snap()).scene.controls.some(c=>c.id==='pc-cancel'));assert.ok(!(await snap()).scene.controls.some(c=>c.id==='touch-.'));await shot(config.label+'-direction');await tap('pc-cancel');await wait();
   await tap('pc-fire');await wait('direction');await tap('touch-l');await wait();
   await tap('pc-zap');await wait('direction');await tap('pc-cancel');await wait();
   await tap('pc-wield');await wait('item');await tap('item-c');await wait();assert.ok((await snap()).scene.controls.some(c=>c.id==='pc-throw'));
@@ -97,10 +107,11 @@ try{
   await page.mouse.move(box.x+repeat.rect.x+repeat.rect.w/2,box.y+repeat.rect.y+repeat.rect.h/2);await page.mouse.down();await page.waitForTimeout(600);await page.mouse.up();await paint();
   assert.equal((await snap()).scene.scope,'repeat-count');assert.deepEqual(await state(),beforeRepeat);
   await page.locator('#repeat-count').fill('3');await tap('repeat-count-submit');await paint();
-  assert.notEqual((await snap()).scene.scope,'repeat-count');await tap('touch-again');await wait();
+  assert.notEqual((await snap()).scene.scope,'repeat-count');await key('E');await wait();
   assert.deepEqual(await state(),expected,'Clicks preserve the original C commands and RNG');
   await tap('pc-wield');await wait('item');await tap('item-d');await wait();await key('d');await key('e');await wait();
   assert.ok((await snap()).scene.controls.find(c=>c.id==='pc-fire').disabled,'Arrow depletion disables desktop firing');
+  const depleted=await state();await shortcut('x');assert.deepEqual(await state(),depleted,'Disabled shortcut sends no game input');
   s=await snap();assert.deepEqual(s.state.uiMissing,[]);assert.deepEqual(s.state.translationFallbacks,[]);
   report.checks.push(config.label+': dock layout, actual commands, bow, cancel, repeat, overview and C/RNG parity');console.log('PASS '+report.checks.at(-1));
  }

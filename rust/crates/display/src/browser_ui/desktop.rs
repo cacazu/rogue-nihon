@@ -21,20 +21,24 @@ impl BrowserUi {
         let x = dock.x + (dock.w - action_width - 184.) / 2.;
         for action in array(&ui["map_controls"]["directions"]) {
             let key = n(&action["key"]) as u32;
-            let emitted = if direction || key == 46 { key } else {
-                match self.mobile_movement {
-                    1 => key - 32,
-                    2 => key | rogue_contract::RG_EVENT_CTRL,
-                    _ => key,
-                }
-            };
+            let emitted = self.movement_key(key);
             let label = if key == 46 { self.t("mobile.wait") } else { s(&action["text"]).into() };
             self.control(&format!("touch-{}",char::from_u32(key).unwrap_or(' ')), &label,
                 Rect::new(x + n(&action["column"])*54., dock.y + 8. + n(&action["row"])*54., 48., 48.),
                 json!({"kind":"send","key":emitted}), ControlStyle {
-                    size:if key == 46 {17.} else {26.}, key:Some(json!(emitted)),
+                    size:if key == 46 {17.} else {26.}, key:Some(json!(emitted)), custom:true,
+                    shortcut:Some(if emitted & rogue_contract::RG_EVENT_CTRL != 0 {
+                        format!("Ctrl+{}",char::from_u32(key).unwrap())
+                    } else {char::from_u32(emitted).unwrap_or('.').to_string()}),
                     throw_direction:direction, ..Default::default()
                 });
+            let button = Rect::new(x + n(&action["column"])*54., dock.y + 8. + n(&action["row"])*54., 48.,48.);
+            let color = if direction { "@background" } else { TEXT };
+            self.widgets.single_line(&label,Rect::new(button.x,button.y+2.,48.,27.),
+                LineStyle {text:TextStyle::new(if key == 46 {15.} else {24.},color,false),center:true,ellipsis:false},self.measure);
+            let hint = self.widgets.controls.last().and_then(|control| control.shortcut.clone()).unwrap_or_default();
+            self.widgets.single_line(&hint,Rect::new(button.x,button.y+30.,48.,15.),
+                LineStyle {text:TextStyle::new(12.,color,false),center:true,ellipsis:false},self.measure);
         }
         let left = x + 184.;
         if direction {
@@ -56,12 +60,12 @@ impl BrowserUi {
         self.desktop_command("pc-wield",119,&self.t("mobile.weapon"),rect(3),disabled);
         if b(&ui["ranged"]["bow"]) {
             let arrow = ui["ranged"]["arrow_key"].as_u64().is_some_and(|key| (97..=122).contains(&key));
-            self.desktop_command("pc-fire",rogue_contract::RG_KEY_FIRE,&self.t("mobile.fire"),rect(4),disabled || !arrow);
+            self.web_control(WebAction::Fire,"pc-fire",&self.t("mobile.fire"),rect(4),ControlStyle {size:17.,disabled:disabled || !arrow,..Default::default()});
         } else {
             self.desktop_command("pc-throw",116,&self.t("mobile.throw"),rect(4),disabled);
         }
         self.desktop_command("pc-zap",122,&self.mobile_help("help.zap"),rect(5),disabled);
-        self.button("mobile-full-map",&self.t("mobile.full_map"),rect(6),ControlStyle {size:17.,..Default::default()});
+        self.web_control(WebAction::FullMap,"mobile-full-map",&self.t("mobile.full_map"),rect(6),ControlStyle {size:17.,..Default::default()});
         self.draw_repeat_button(rect(7));
     }
 }

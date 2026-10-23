@@ -7,8 +7,18 @@ impl BrowserUi {
             "history-open",
             &self.t("mobile.log"),
             rect,
-            json!({"kind":"history","open":true}),
+            json!({"kind":"web","id":web_command(WebAction::History).id}),
         );
+        if self.width >= 700. && !b(&self.view["coarse"]) {
+            if let Some(control) = self.widgets.controls.last_mut() {
+                control.shortcut = Some(web_command(WebAction::History).key.into());
+                control.label = Widgets::shortcut_label(&control.label, control.shortcut.as_deref());
+            }
+            let badge = Rect::new(rect.x + rect.w - 26., rect.y + 4., 22., 20.);
+            self.widgets.box_rect(badge, BG, Some(LINE), 0.);
+            self.widgets.single_line(web_command(WebAction::History).key, badge,
+                LineStyle { text:TextStyle::new(13.,TEXT,false),center:true,ellipsis:false },self.measure);
+        }
     }
 
     pub(super) fn draw_history(&mut self) {

@@ -754,3 +754,131 @@ fn repeated_wait_keys_pause_until_release_cancellation_or_another_action() {
         }
     }
 }
+
+
+fn shortcut_model() -> Value {
+    let mut m = model();
+    m["input"] = json!({"kind":"command"});
+    m["frame"]["ui"]["input"] = m["input"].clone();
+    m["frame"]["ui"]["mode"] = json!("game");
+    m["frame"]["ui"]["ranged"] = json!({"bow":true,"arrow_key":101});
+    m["frame"]["ui"]["map_controls"] = crate::game_window::map_controls(&m["frame"]["ui"],false);
+    m
+}
+
+#[test]
+fn web_shortcuts_share_actions_with_buttons_and_preserve_original_keys() {
+    for (key, id) in [("g","mobile-movement"),("p","mobile-full-map"),("x","pc-fire"),
+        ("E","touch-again"),("C","commands-open"),("O","settings-toggle"),("G","header-fullscreen"),("M","history-open")] {
+        let mut pointer = BrowserUi::new(measure);
+        let mut keyboard = BrowserUi::new(measure);
+        let m = shortcut_model();
+        pointer.render(m.clone(),view(1400.,1000.)); keyboard.render(m.clone(),view(1400.,1000.));
+        let control = pointer.widgets.controls.iter().find(|control| control.id == id).unwrap().clone();
+        assert_eq!(control.shortcut.as_deref(),Some(key));
+        let mut effects = Vec::new();pointer.activate(&control,&Value::Null,&mut effects);
+        let result = keyboard.event(json!({"type":"key","key":key}));
+        assert_eq!(result["effects"],json!(effects),"{key}");
+        assert_eq!(keyboard.mobile_movement,pointer.mobile_movement);
+        assert_eq!(keyboard.mobile_full_map,pointer.mobile_full_map);
+        assert_eq!(keyboard.commands_open,pointer.commands_open);
+        assert_eq!(keyboard.history_open,pointer.history_open);
+    }
+    let mut ui = BrowserUi::new(measure);let m = shortcut_model();
+    ui.render(m.clone(),view(1400.,1000.));
+    for key in ["a","o","f","F","w","W","r","R","t","T","potion-key"] {
+        let result = ui.event(json!({"type":"key","key":key}));
+        if key.chars().count() == 1 {
+            assert_eq!(result["effects"],json!([{"kind":"send","key":key.chars().next().unwrap() as u32,"redraw":false}]),"{key}");
+        }
+    }
+    ui.mobile_repeat_count=3;ui.mobile_repeat_configured=true;
+    assert_eq!(ui.event(json!({"type":"key","key":"E"}))["effects"],json!([{"kind":"send","keys":[51,97]}]));
+    ui.event(json!({"type":"key","key":"A"}));assert!(ui.repeat_count_open());
+    ui.mobile_repeat_open=false;
+    for _ in 0..2 { ui.event(json!({"type":"key","key":"V"})); }
+    assert!(ui.mobile_controls);ui.mobile_controls=false;
+    ui.render(m,view(1400.,1000.));
+    assert!(!ui.widgets.controls.iter().any(|control| control.id=="mobile-movement"));
+    ui.event(json!({"type":"key","key":"g"}));assert_eq!(ui.mobile_movement,1);
+    assert_eq!(ui.event(json!({"type":"key","key":"x"}))["effects"],json!([{"kind":"send","key":rogue_contract::RG_KEY_FIRE}]));
+}
+
+#[test]
+fn web_shortcuts_are_isolated_by_waits_modifiers_ime_and_key_repeat() {
+    for field in ["ctrlKey","altKey","metaKey","composing","native","keyCode"] {
+        let mut ui = BrowserUi::new(measure);ui.render(shortcut_model(),view(1400.,1000.));
+        let mut event=json!({"type":"key","key":"g"});
+        event[field]=match field {"native"=>json!("prompt-text"),"keyCode"=>json!(229),_=>json!(true)};
+        ui.event(event);assert_eq!(ui.mobile_movement,0,"{field}");
+    }
+    for kind in ["direction","item","confirm","text","space","enter"] {
+        let mut ui = BrowserUi::new(measure);let mut m=shortcut_model();m["input"]["kind"]=json!(kind);
+        m["frame"]["ui"]["window"]=json!({"kind":"test","title":"test","actions":[]});
+        ui.render(m,view(1400.,1000.));ui.event(json!({"type":"key","key":"g"}));
+        assert_eq!(ui.mobile_movement,0,"{kind}");
+    }
+    let mut ui=BrowserUi::new(measure);let m=shortcut_model();ui.render(m.clone(),view(1400.,1000.));
+    ui.event(json!({"type":"key","key":"g","repeat":true}));assert_eq!(ui.mobile_movement,0);
+    ui.event(json!({"type":"key","key":"C"}));assert!(ui.commands_open);
+    ui.event(json!({"type":"key","key":"g"}));assert_eq!(ui.mobile_movement,0);
+    ui.event(json!({"type":"key","key":"C","repeat":true}));assert!(ui.commands_open);
+    ui.event(json!({"type":"key","key":"C"}));assert!(!ui.commands_open);
+    for arrows in [Value::Null,json!(0)] {
+        let mut absent=m.clone();absent["frame"]["ui"]["ranged"]["arrow_key"]=arrows;
+        ui.render(absent,view(1400.,1000.));
+        assert_eq!(ui.event(json!({"type":"key","key":"x"}))["effects"],json!([]));
+        assert!(ui.widgets.controls.iter().find(|control| control.id=="pc-fire").unwrap().disabled);
+    }
+}
+
+#[test]
+fn phone_operations_include_every_web_and_item_command_without_hiding_unavailable_rows() {
+    let mut ui=BrowserUi::new(measure);let mut v=view(390.,844.);v["coarse"]=json!(true);
+    let mut m=shortcut_model();m["frame"]["ui"]["ranged"]["arrow_key"]=Value::Null;
+    ui.render(m.clone(),v.clone());click(&mut ui,"mobile-operations");ui.render(m.clone(),v.clone());
+    for command in WEB_COMMANDS {
+        let control=ui.widgets.controls.iter().find(|control| control.id==format!("mobile-op-web-{}",command.id)).unwrap();
+        assert_eq!(control.action,json!({"kind":"web","id":command.id}));
+        assert!(control.shortcut.is_none());
+    }
+    for key in "hjklyubn.,ms^><fFtzqrewWTPRdcIiD@/=)?a".chars() {
+        assert!(ui.widgets.controls.iter().any(|control| control.id==format!("mobile-op-{}",key as u32)),"{key}");
+    }
+    for key in [111, 118, 18, 16, 83, 33] {
+        assert!(!ui.widgets.controls.iter().any(|control| control.id==format!("mobile-op-{key}")),"Retired control {key} stays absent");
+    }
+    assert!(ui.widgets.controls.iter().any(|control| control.id=="mobile-op-web-settings"));
+    assert!(ui.widgets.controls.iter().find(|control| control.id=="mobile-op-web-fire").unwrap().disabled);
+    assert!(ui.widgets.controls.iter().find(|control| control.id=="mobile-op-60").unwrap().disabled);
+    assert!(ui.regions["mobile-operations"].max>0.);
+    // A menu action closes the sheet, then uses the existing original C input path.
+    let command=ui.widgets.controls.iter().find(|control| control.id=="mobile-op-116").unwrap().clone();
+    let mut effects=Vec::new();ui.activate(&command,&Value::Null,&mut effects);
+    assert_eq!(effects,vec![json!({"kind":"send","key":116})]);assert!(!ui.mobile_operations);
+}
+
+
+#[test]
+fn phone_direction_commands_use_the_pad_mode_and_selection_rows_are_not_game_commands() {
+    for mode in 0..3 {
+        let mut ui=BrowserUi::new(measure);let m=shortcut_model();let mut v=view(390.,844.);v["coarse"]=json!(true);
+        ui.render(m.clone(),v.clone());ui.mobile_movement=mode;
+        let expected:Vec<_>="hjklyubn".chars().map(|key| {
+            let value=key as u32;
+            (value,match mode {1=>value-32,2=>value|rogue_contract::RG_EVENT_CTRL,_=>value})
+        }).collect();
+        for (key,emitted) in expected {
+            ui.mobile_operations=false;ui.render(m.clone(),v.clone());
+            let pad=ui.widgets.controls.iter().find(|control| control.id==format!("touch-{}",char::from_u32(key).unwrap())).unwrap().clone();
+            assert_eq!(pad.action["key"],emitted);
+            ui.mobile_operations=true;ui.render(m.clone(),v.clone());
+            assert!(!ui.widgets.controls.iter().any(|control| control.id=="mobile-op-42"),"Selection-only * is absent");
+            let command=ui.widgets.controls.iter().find(|control| control.id==format!("mobile-op-{key}")).unwrap().clone();
+            let mut effects=Vec::new();ui.activate(&command,&Value::Null,&mut effects);
+            assert_eq!(effects,vec![json!({"kind":"send","key":emitted})],"{mode} {key}");
+        }
+    }
+    let selection=commands::GROUPS.iter().find(|(group,_)| *group=="commands.group.selection").unwrap();
+    assert!(selection.1.iter().all(|entry| entry.phone_action.is_none()));
+}

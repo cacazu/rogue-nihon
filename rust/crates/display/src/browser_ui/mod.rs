@@ -1,4 +1,5 @@
 //! Browser surface composition and interaction, independent of DOM/Canvas APIs.
+mod actions;
 mod commands;
 mod desktop;
 mod dropdown;
@@ -25,6 +26,7 @@ mod tests;
 pub mod tiles;
 pub mod pixels;
 use crate::widgets::*;
+use actions::{WebAction, WEB_COMMANDS, web_command};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;

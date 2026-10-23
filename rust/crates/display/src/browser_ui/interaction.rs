@@ -117,6 +117,16 @@ impl BrowserUi {
             return;
         }
         match s(&control.action["kind"]) {
+            "movement" => {
+                if self.command_ready() {
+                    effects.push(json!({"kind":"send","key":self.movement_key(n(&control.action["key"]) as u32)}));
+                }
+            }
+            "web" => {
+                if let Some(command) = WEB_COMMANDS.iter().find(|command| command.id == s(&control.action["id"])) {
+                    self.activate_web(command.action, effects);
+                }
+            }
             "inventory-tab" => {
                 self.list_tabs_mut().tab = s(&control.action["tab"]).into();
                 self.list_tabs_mut().reveal = true;
@@ -470,12 +480,13 @@ impl BrowserUi {
         } else { false }
     }
     fn key_event(&mut self, e: &Value, effects: &mut Vec<Value>) -> bool {
-        if self.model.is_null() || b(&e["composing"]) || b(&e["metaKey"]) {
+        if self.model.is_null() || b(&e["composing"]) || n(&e["keyCode"]) == 229. || b(&e["metaKey"]) {
             return false;
         }
         let key = s(&e["key"]);
         let native = s(&e["native"]);
         if self.commands_open {
+            if self.web_modal_close_key(e, WebAction::Commands) { self.commands_open = false; return true; }
             if self.activate_shortcut(e, "commands", effects) { return true; }
             match key {
                 "Escape" => self.commands_open = false,
@@ -670,6 +681,7 @@ impl BrowserUi {
             return true;
         }
         if self.mobile_operations {
+            if self.web_modal_close_key(e, WebAction::Commands) { self.mobile_operations = false; return true; }
             if self.activate_shortcut(e, "mobile-operations", effects) { return true; }
             match key {
                 "Escape" => self.mobile_operations = false,
@@ -697,6 +709,7 @@ impl BrowserUi {
             }
             return true;
         }
+        if self.web_key(e, effects) { return true; }
         if self.model["frame"]["ui"]["window"].is_object()
             && self.activate_shortcut(e, "dialog", effects) { return true; }
         if key == "Escape"
