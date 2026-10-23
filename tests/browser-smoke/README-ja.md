@@ -40,7 +40,7 @@ node tests/run.mjs --keep-artifacts --env ROGUE_MOBILE_WINDOWS_WASM=build/game-f
 | `equipment-style.mjs` | 右端の装備部位名、半角括弧・半角空白の数値書式、未鑑定情報の非表示、武器・防具・左右の指輪の装備変更、320pxスマホ・PC・日英・配布Wasm |
 | `inventory-tabs.mjs` | 所持品だけの種類・装備中タブ、横スクロール、タイトル高の履歴ボタン、タブごとの位置復元・再読み込みと保存復元、使用後の空タブ除去、PCのキー操作 |
 | `discovery-direct.mjs` | アイテム履歴の直接全件表示、変更前の手動D*と20-word/入力位置/表示順を比較、一覧中の保存復元・複数ページ・次ターン。ROGUE_DISCOVERY_BASELINEに変更前のfixture moduleを指定 |
-| `autowalk.mjs` / `autowalk-production.mjs` | PCクリック・スマホタップと3表示方式の到達、100msごとの実入力、命中/miss/不可視攻撃・罠・敵衝突・進行不可・物理操作での停止、取消済みtimer・手入力直後tap、pan/pinchと未知地形のC/RNG不変。前者は `game-fixtures.wasm`、後者は配布用binding・Wasmだけで通常seedのPC/スマホ到達を確認。`ROGUE_AUTOWALK_OUTPUT` で証拠出力先を指定 |
+| `autowalk.mjs` / `autowalk-production.mjs` | PCクリック・スマホタップと3表示方式の到達、歩行100ms・走る1/2の原作run境界、階段での自然停止差・途中目的地・L字の区間切替、専用待ち中の実キー/Web操作/blur/保存復帰取消、命中/miss/不可視攻撃・罠・敵衝突・進行不可・物理操作での停止、取消済みtimer・手入力直後tap、pan/pinchと未知地形のC/RNG不変。前者は `game-fixtures.wasm`（`--run-only` で走行ケースだけ実行）、後者は配布用binding・Wasmだけで通常seedのPC/スマホ到達を確認。`ROGUE_AUTOWALK_OUTPUT` で証拠出力先を指定 |
 | `wait-direction-preferences.mjs` | PC・390/320pxの待機保持中の主人公画素固定とCターン継続・解除・同一入力の20word比較、待機キーとTabからのEnter/Space反復、方向パッド／共通ウィンドウの強調と取消、初訪問と3方式の保存・再読込・再開・URL優先。`ROGUE_WAIT_CONTROLS_BASE` で既存配信origin、`ROGUE_WAIT_CONTROLS_OUTPUT` で証拠出力先を指定 |
 | `repeat-direction-pad.mjs` | 繰返しの長押し・回数入力・原作20回反復、全6方向操作のパッド表示と取消、持ち物からの投射と杖、PCの方向入力、キーボードで狭まった入力画面 |
 | `mobile-context-history.mjs` | リストの除外と状況別ボタン、実アイテム拾得・罠の方向選択・階段昇降、PC/スマホの持ち物からアイテム履歴への遷移、配布Wasmの接続 |

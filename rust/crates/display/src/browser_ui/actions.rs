@@ -33,11 +33,7 @@ impl BrowserUi {
     /// A phone command-list direction and the visible pad use the same mode.
     pub(super) fn movement_key(&self, key: u32) -> u32 {
         if b(&self.model["frame"]["ui"]["movement_direction"]) || key == 46 { return key; }
-        match self.mobile_movement {
-            1 => key - 32,
-            2 => key | rogue_contract::RG_EVENT_CTRL,
-            _ => key,
-        }
+        rogue_contract::movement_mode_key(key, self.mobile_movement)
     }
 
     pub(super) fn command_ready(&self) -> bool {

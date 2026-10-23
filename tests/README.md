@@ -42,6 +42,7 @@ Cとリンクする `rogue-layers` は独立lib testから除外します。ゲ�
 | タイル語彙・画像・重ね順 | `tests/tiles.test.mjs`、`pixels.test.mjs`、`graphics-beams.test.mjs` |
 | 実ゲーム・locale差・保存継続 | `tests/game-regression.test.mjs`、`game-ui.test.mjs`、`game-localization.test.mjs`、`game-more-localization.test.mjs`、`game-log-paging.test.mjs` |
 | 自動移動のCイベントと原作状態 | `tests/autowalk.test.mjs`。比較する変更前fixture Wasmを `ROGUE_AUTOWALK_BEFORE` へ指定。未指定時は変更前比較のみ明示skip |
+| 目的地走行の原作run・保存再生 | `tests/target-run.test.mjs`。走る1/2の停止・区間切替・専用待ち・取消・保存復元を検査。`ROGUE_TARGET_RUN_MODULE` に現行fixture Wasm（既定 `build/game-fixtures.wasm`）、`ROGUE_TARGET_RUN_BEFORE` に変更前fixture Wasm、`ROGUE_TARGET_RUN_ORIGINAL` に固定原典fixture Wasmを指定すると全検査を実行。比較先未指定時は該当比較のみ明示skip。契約は[実装資料](../docs/IMPLEMENTATION-ja.md#目的地への自動移動)を参照 |
 | 実ブラウザー | [Playwrightの実行とシナリオ](browser-smoke/README-ja.md) |
 
 Python検査は使用するPythonを指定し、`node tools/run-clean.mjs <Python実行ファイル> <試験ファイル>` で実行できます。
@@ -69,7 +70,7 @@ node tests/run.mjs --env ROGUE_BASELINE_MODULE=build/baseline.wasm tests/game-re
 
 auditはprepareが記録した原本パスを読みます。`game-fixtures.test.mjs` は `build/baseline-fixtures.wasm` と `game-fixtures.wasm` を使用します。`run-game.mjs` の検証hostは同じ開始設定ABIを使い、歴史的なJS loader付きarchiveも読み込めます。各scriptのfixture・比較archive依存を確認してから実行してください。比較元がなくskipした検査は原作一致を確認した扱いにしません。20 word・入力位置・原英文画面に加え、保存復元後の次操作を照合します。
 
-投げ物の壁衝突は `tests/throw-wall.test.mjs` で、同じ `game-fixtures.c` を使った原作・修正前・修正後を比較します。`ROGUE_THROW_ORIGINAL` は原作baseline fixture、`ROGUE_THROW_BEFORE` は修正前Cを保持して新しいfixtureだけをリンクした独立Wasm、`ROGUE_THROW_WASM` は修正後（既定 `build/game-fixtures.wasm`）を指定します。全品種・縦横斜め・岩と秘密壁・着地先なしの公開品名を検査し、扉・敵・魔法・矢罠・敵ドロップは同じ消費済み入力と全20状態語・RNG・C画面で原作と比較します。壁衝突後の着地・RNG差は意図した原作差として区別します。
+投げ物の壁衝突は `tests/throw-wall.test.mjs` で、同じ `game-fixtures.c` を使った固定原作・壁の落下中心を変更する前の独立C・現行Cを比較します。`ROGUE_THROW_ORIGINAL` は原作baseline fixture、`ROGUE_THROW_BEFORE` は落下中心変更前Cを保持して同じfixtureだけをリンクした独立Wasm、`ROGUE_THROW_WASM` は現行版（既定 `build/game-fixtures.wasm`）を指定します。全品種・縦横斜め・岩と秘密壁の着地は、壁の向こうの候補を含め、同じ消費済み入力と全20状態語・RNG・C画面・着地位置で原作と一致させます。着地先なしの公開品名の安全性を検査し、扉・敵・魔法・矢罠・敵ドロップの13例も原作と比較します。
 
 UI変更前・画像変更前などの歴史的比較は、各scriptの環境変数で指定した独立archiveが必要です。原作baselineとの比較と、以前のWeb版との比較を区別します。
 

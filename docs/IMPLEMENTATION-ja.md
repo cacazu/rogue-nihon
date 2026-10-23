@@ -41,13 +41,15 @@ Workerの `Transfer` は `rg_alloc / rg_dealloc` で確保元のゲーム側Rust
 
 ## 目的地への自動移動
 
-PCのクリックとスマホのタップは、描画と同じcameraで地図の目的地へ戻す。`browser-display/src/autowalk.rs` は現在公開されている `map_cells` と観測済み足元だけを使い、8方向の経路を作る。空白・壁・不明な地形は通らず、斜めは両側の直交セルが公開済みで通行可能な場合だけ使う。表示済みの敵は途中経路へ入れず、その敵を目的地に指定した場合に限り最後の通常移動で一度攻撃できる。Cの未公開地形・罠・敵や移動可否を問い合わせない。
+PCのクリックとスマホのタップは、描画と同じcameraで地図の目的地へ戻す。`browser-display/src/autowalk.rs` は現在公開されている `map_cells` と観測済み足元だけを使い、8方向の経路を作る。空白・壁・不明な地形は通らず、斜めは両側の直交セルが公開済みで通行可能な場合だけ使う。表示済みの敵は途中経路へ入れない。歩く場合は、その敵を目的地に指定した時に限り最後の通常移動で一度攻撃できる。走る1・走る2は原作の停止判定を優先し、走る1は敵との衝突で一度攻撃して停止し、走る2は隣接した時点で手前に停止する。Cの未公開地形・罠・敵や移動可否を問い合わせない。
 
-通常command待ちに達するたび、前の1歩の確定位置と最新の公開経路を照合し、100msの単発タイマー後に通常移動キーを一つだけ送る。これは既存長押し反復と同じ間隔で、描画と物理操作の割込み時間を保つ。手入力の処理中に目的地を指定した場合は次の実入力待ちまで保留する。同じ要求への二重送信、未確定の移動の積み上げは行わない。
+移動形式はクリック・タップにも適用する。歩く場合は通常command待ちごとに前の1歩の確定位置と最新の公開経路を照合し、100msの単発タイマー後に通常移動キーを一つだけ送る。走る1・走る2では専用開始値で原作のShift・Ctrl走行を一度開始し、原作look(TRUE)後にまだrunningが続く時だけ現れるrun-boundary待ちへ30msごとに一歩の継続許可を送る。開始値自体は移動しない。原作のdoor_stop・firstmove・passgoと停止判定を各歩で保持し、Ctrlを毎歩送り直さない。許可は公開経路の次方向とCの走行方向が一致する場合だけ出す。目的地ではSTOP、経路が曲がる時はSTOPで通常command待ちへ戻した後、次の直線区間を開始する。原作が自然停止したら通知と通常command待ちで経路を終了し、自動再開しない。手入力の処理中に目的地を指定した場合は次の実入力待ちまで保留する。同じ要求への二重送信、未確定の移動の積み上げは行わない。
 
 何らかの操作入力、敵からの攻撃（missを含む）、敵への近接攻撃、罠の発動で経路と予約タイマーを破棄する。Cは `attack`、`fight`、`wake_monster` で成立した凝視、敵の光線が主人公へ実到達した `fire_bolt`、浮遊を除く `be_trapped` の成立箇所から `rg_host_player_event` を呼ぶ。Rustはinstance内sequenceを付け、次のframe・入力要求より先にWorkerへ公開する。通知はプレイヤー自身の種別だけを持ち、攻撃者の位置・正体や罠の種類を持たず、英文ログやHP差から中断を推測しない。到達、次歩の失敗・予期しない位置、経路消失、入力ウィンドウ、scene・階層・Workerの変更、終了、blur・非表示・pagehideでも停止する。新規開始・ロード中と再生中には自動移動を開始せず、古い世代の通知・タイマーは新しいsessionへ作用しない。すでに送信した一歩を除き、停止後の入力は残さない。
 
-経路、目的地、タイマー、sequenceは保存対象にしない。実際に消費した通常移動キーだけを既存journalへ記録し、ルール・RNG・ターン・保存形式はCと既存の保存経路が所有する。hoverの地形説明と、6pxを超える地図drag・二本指pinchの表示操作は維持し、それらを目的地tapに変換しない。
+run-boundaryのUI投影は通常command待ちとし、Web操作・方向ボタン・物理キーを受け付ける。内部では専用待ちを保持し、停止はSTOPを一度だけ送って解放する。同じ操作で届いた手入力はSTOPの後に一度送り、通常commandで消費する。復元後に経路を持たない専用待ちもSTOPで解放し、余分な一歩を許可しない。
+
+経路、目的地、タイマー、sequenceは保存対象にしない。実際に消費した通常移動キーと専用run入力だけを既存journalへ記録し、ルール・RNG・ターン・保存形式はCと既存の保存経路が所有する。hoverの地形説明と、6pxを超える地図drag・二本指pinchの表示操作は維持し、それらを目的地tapに変換しない。
 
 ## スマホの操作部品
 
@@ -144,6 +146,7 @@ Cは外側command境界の状態を保存する。Rustはそのcheckpointと、�
 | 保存する持続状態 | 理由・担当 |
 |---|---|
 | `countch / direction / newcount` | 数値反復・Ctrl方向反復を次commandへ引き継ぐ。`command.c` のget/set |
+| target-runのactive | 専用走行境界を通常走行と区別し、checkpoint復元後に同じ待ちを再構築する。経路・目的地は保存しない |
 | `last_delt` | 再実行が直前方向を使う。`misc.c` のget/set。混乱前の記録順も維持する |
 | statusの幅と値キャッシュ | raw画面の更新順とページ送りに影響する。`io.c` のstatus get/set |
 | `line_cnt / newpage / maxlen` | 一覧の境界と窓幅。`things.c` のmenu get/set。外側境界ではline_cnt=0を検証する |
@@ -172,7 +175,7 @@ WS_MISSILEのstatic boltは呼出しで必要属性を設定する。cur_weapon�
 
 CRCは0〜39 byteと全payloadを対象とする破損検出で、認証ではない。各長さの和は入力長と一致させ、headerとruntimeのturnも照合する。
 
-logicにはroomsとpassagesの参照空間、13種類のdaemon/fuse callback、monster/object/gold/hero参照、seed・dnum・max_hit等を保存する。knowledgeは `RGKN` 版1、24×80のglyph/standoutとcursor・属性、3,856 bytes。runtimeは `RGRT` と版・core word数・message byte数の16 byte headerに、17 u32のcore状態とmessage状態を続ける。message状態は版1・newpos・143 byteのmsgbuf、計151 bytes。
+logicにはroomsとpassagesの参照空間、13種類のdaemon/fuse callback、monster/object/gold/hero参照、seed・dnum・max_hit等を保存する。knowledgeは `RGKN` 版1、24×80のglyph/standoutとcursor・属性、3,856 bytes。runtimeは `RGRT` と版・core word数・message byte数の16 byte headerに、18 u32のcore状態とmessage状態を続ける。末尾wordはtarget-runのactiveで、旧17 wordも受け付けてactiveを0として復元する。message状態は版1・newpos・143 byteのmsgbuf、計151 bytes。
 
 読み込みは版・CRC・長さ・参照・範囲・終端・callback・割り当て上限を検証する。logic decoderはglobalを退避し、新規割り当てを追跡する。失敗時は元状態へ戻して新規割り当てを解放し、成功時だけ旧graphを解放する。分割したアイテムのlabel共有が残る旧graphは文字列addressを重複排除して一度だけ解放する。
 
@@ -180,7 +183,7 @@ GOLDのcount=0、食料や杖のwield、方向指定の絶対target、壁移動�
 
 ## Rust保存envelope
 
-`rogue-platform::Envelope` はformat・版・ABI・原作source hash・seed・名前・checkpoint_hex・inputs・input_index・checksumを持つ。JSON全体は16 MiB、checkpointは4 MiB、journalは65,536入力まで。版2のpresentationは512 KiBまでで、`lines / input / history / last_message` の構造も検証する。
+`rogue-platform::Envelope` はformat・版・ABI・原作source hash・seed・名前・checkpoint_hex・inputs・input_index・checksumを持つ。JSON全体は16 MiB、checkpointは4 MiB、journalは65,536入力まで。現在の出力は版3で、版2と共通のpresentationは512 KiBまでに制限し、`lines / input / history / last_message` の構造も検証する。
 
 `browser-display/src/save_loading.rs` は同じ `Envelope::parse` でファイル・IndexedDBの保存をゲーム開始前に検証する。拡張子だけでは受け付けず、形式・版・ABI・source・構造・上限・checksumを検査する。無効なファイルと選択取消では現在のセッションを終了せず、保存済みbytesも差し替えない。ファイルのbytesは検証成功の命令後にだけ復元元へ移す。ゲーム内のcheckpoint復元でも失敗した場合はトップへ戻してエラーを表示し、再開・新規開始を可能にする。
 
@@ -188,7 +191,7 @@ GOLDのcount=0、食料や杖のwield、方向指定の絶対target、壁移動�
 
 画像の準備状態も応答件数ではなく、`tiles` と `pixels` の各セットの成功状態から決める。同じセットの重複応答は準備完了を早めず、成功・失敗の応答とも対象セットを渡す。
 
-版1はASCII入力履歴、版2はUTF-8 byteと意味ID付きpresentationを保存する。旧版1はルール状態を復元できるが、当時の意味付き履歴がないため過去メッセージの日本語を完全には復元できない。checksumは破損検出であり署名ではない。表示モード・倍率と持ち物の選択タブ・スクロール位置は別のlocalStorage設定で、ゲーム保存へ含めない。
+版3はUTF-8 byte・意味ID付きpresentationに加え、専用のtarget-run開始・継続・停止値をjournalへ保存する。開始値は通常command、継続・停止はrun-boundaryで再生し、文脈不一致を拒否する。旧版1のASCII入力履歴と旧版2のUTF-8 byte・意味ID付きpresentationも読み込めるが、両旧版へ専用run入力を混ぜることは許可しない。旧版1はルール状態を復元できるが、当時の意味付き履歴がないため過去メッセージの日本語を完全には復元できない。checksumは破損検出であり署名ではない。表示モード・倍率と持ち物の選択タブ・スクロール位置は別のlocalStorage設定で、ゲーム保存へ含めない。
 
 ## 本番・ビルド・検証の分離
 

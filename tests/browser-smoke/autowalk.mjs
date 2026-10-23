@@ -36,6 +36,8 @@ async function open(fixture='autowalk-clear',touch=false,mode='pixels'){
  }
  await context.addInitScript(()=>{
   const NativeWorker=window.Worker;window.__walkTimeline=[];
+  const nativeTimeout=window.setTimeout;
+  window.setTimeout=(fn,delay,...args)=>nativeTimeout(()=>{if(delay===30&&window.__pauseRunTimers)return;fn(...args);},delay);
   window.Worker=class extends NativeWorker{constructor(...args){super(...args);this.addEventListener('message',e=>{if(['frame','input-request','player-event'].includes(e.data.type))window.__walkTimeline.push({type:e.data.type,kind:e.data.kind,sequence:e.data.sequence,at:performance.now(),player:e.data.player});});}};
  });
  page=await context.newPage();await installBrowserTestAdapter(page);page.setDefaultTimeout(15000);page.on('pageerror',e=>report.errors.push(e.message));
@@ -59,6 +61,70 @@ async function reference(fixture,s,keys){
 async function check(label,fn){await fn();report.checks.push(label);console.log('PASS '+label);}
 try{
  runtime=await prepareBrowserRuntime(root);browser=await loadPlaywright().chromium.launch({executablePath:browserExecutable(),headless:true,downloadsPath:runtime.downloadsPath});
+ const runOnly=process.argv.includes('--run-only')||process.argv.includes('--keys-only');
+ if(!process.argv.includes('--walk-only')&&!process.argv.includes('--keys-only')) for(const touch of [false,true])for(const movement of [1,2]) {
+  const prefix=(touch?'mobile':'pc')+' run'+movement;
+  await check(prefix+' original stair stopping without automatic restart',async()=>{
+   await open('autowalk-clear',touch);for(let i=0;i<movement;i++)await tap('mobile-movement');
+   await target(touch?16:20,10);await stopped('natural');const after=await stable();
+   assert.deepEqual(after.frame.player,{x:movement===1?15:14,y:10});
+   const original=await runGame(path.join(root,'build/game-fixtures.wasm'),{fixture:'autowalk-clear',seed:17,name:'Player',locale:'ja',messagePaging:'log',events:[movement===1?76:12]});
+   assert.deepEqual(after.trace.words,original.traces.at(-1).words,'Target run retains original stop rules, state and RNG');
+   await shot(prefix.replaceAll(' ','-')+'-natural');
+  });
+  await check(prefix+' exact target before original stop',async()=>{
+   await open('autowalk-clear',touch);for(let i=0;i<movement;i++)await tap('mobile-movement');
+   await target(13,10);await stopped('arrived');const after=await stable();
+   assert.deepEqual(after.frame.player,{x:13,y:10});
+   const original=await runGame(path.join(root,'build/game-fixtures.wasm'),{fixture:'autowalk-clear',seed:17,name:'Player',locale:'ja',messagePaging:'log',events:[0x120010+(movement-1)*8+3,0x120020,0x120020,0x120020,0x120021]});
+   assert.deepEqual(after.trace.words,original.traces.at(-1).words);
+   await shot(prefix.replaceAll(' ','-')+'-target');
+  });
+  await check(prefix+' public right angle route uses two original runs',async()=>{
+   await open('autowalk-turn',touch);for(let i=0;i<movement;i++)await tap('mobile-movement');
+   await target(14,14);await stopped('arrived');const after=await stable();
+   assert.deepEqual(after.frame.player,{x:14,y:14});
+   const start=0x120010+(movement-1)*8;
+   const events=[start+3,...Array(4).fill(0x120020),0x120021,start+1,...Array(4).fill(0x120020),0x120021];
+   const original=await runGame(path.join(root,'build/game-fixtures.wasm'),{fixture:'autowalk-turn',seed:17,name:'Player',locale:'ja',messagePaging:'log',events});
+   assert.deepEqual(after.trace.words,original.traces.at(-1).words,'Corner stops old original run before starting a new direction');
+  });
+  for(const cancel of ['key','web','blur','restore'])await check(prefix+' gate cancellation '+cancel,async()=>{
+   await open('autowalk-clear',touch);for(let i=0;i<movement;i++)await tap('mobile-movement');
+   // Hold only run permission timers so physical cancellation is tested at
+   // a real C gate, independent of slow screenshot/render hosts.
+   await page.evaluate(()=>window.__pauseRunTimers=true);
+   await target(13,10);
+   await page.evaluate(()=>{const s=__rogueUiAdapter.state;__rogueUiAdapter.dispatch({type:'autowalk-tick',generation:s.generation,token:s.autowalk.scheduled.token});});
+   await page.waitForFunction(()=>__rogueUiAdapter.state.input?.kind==='run-boundary');
+   if(cancel==='key')await page.keyboard.press('s');
+   if(cancel==='web')await tap('mobile-movement');
+   if(cancel==='blur')await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
+   if(cancel==='restore'){
+    await tap('settings-toggle');await tap('settings-top');
+    await page.waitForFunction(()=>__rogueBrowserTest.topOpen&&!__rogueBrowserTest.savePending);
+    await tap('load');
+   }
+   await page.waitForFunction(()=>!__rogueUiAdapter.state.autowalk.active);await idle();
+   const after=await stable();assert.deepEqual(after.frame.player,{x:10,y:10},'Cancellation at the first gate permits no movement');
+   if(cancel==='key'){
+    const original=await runGame(path.join(root,'build/game-fixtures.wasm'),{fixture:'autowalk-clear',seed:17,name:'Player',locale:'ja',messagePaging:'log',events:[0x120010+(movement-1)*8+3,0x120021,115]});
+    assert.deepEqual(after.trace.words,original.traces.at(-1).words,'Manual key following STOP is consumed exactly once');
+   }
+   const n=after.trace.input_index;await page.keyboard.press('.');
+   await page.waitForFunction(n=>__rogueUiAdapter.state.trace.input_index>n,n);await idle();
+  });
+ }
+ if(!process.argv.includes('--walk-only')) for(const movement of [1,2])await check('pc selected run'+movement+' physical ArrowRight preserves original state',async()=>{
+  await open('autowalk-clear',false);for(let i=0;i<movement;i++)await tap('mobile-movement');
+  await page.keyboard.press('ArrowRight');
+  await page.waitForFunction(x=>__rogueBrowserTest.frame.player.x===x,movement===1?15:14);await idle();
+  const after=await stable();
+  const original=await runGame(path.join(root,'build/game-fixtures.wasm'),{fixture:'autowalk-clear',seed:17,name:'Player',locale:'ja',messagePaging:'log',events:[movement===1?76:12]});
+  assert.deepEqual(after.trace.words,original.traces.at(-1).words,'Physical selected direction executes the same original run as explicit L/CtrlL');
+  await shot('pc-selected-run'+movement+'-keyboard');
+ });
+ if(!runOnly) {
  for(const touch of [false,true])for(const mode of ['pixels','tiles','ascii'])await check((touch?'mobile':'pc')+' '+mode+' arrival and cadence',async()=>{
   await open('autowalk-clear',touch,mode);const before=await snap(),x=touch?15:18;
   await shot((touch?'mobile':'pc')+'-'+mode+'-before');await target(x,10);
@@ -134,6 +200,7 @@ try{
   const points=await page.evaluate(()=>{const s=__rogueBrowserTest.canvas,c=s.camera,r=s.mapRect,f=__rogueBrowserTest.frame;return Array.from(f.map_cells,(glyph,i)=>({glyph,x:i%f.width,y:Math.floor(i/f.width)})).filter(p=>p.y>0&&p.y<f.height-1&&r.x+(p.x+.5)*c.size-c.left>r.x+60&&r.x+(p.x+.5)*c.size-c.left<r.x+r.w-30&&r.y+(p.y-.5)*c.size-c.top>r.y+100&&r.y+(p.y-.5)*c.size-c.top<r.y+r.h-30);});
   for(const group of [' ','-|']){const p=points.find(p=>group.includes(p.glyph));assert.ok(p,'Visible viewport has a target for '+group);await target(p.x,p.y);await page.waitForTimeout(250);assert.deepEqual((await snap()).trace,before.trace);assert.equal((await snap()).autowalk.active,false);}
  });
+ }
  assert.deepEqual(report.errors,[]);report.result='pass';
 }catch(error){report.result='fail';report.failure=error.stack;report.debug=await snap().catch(()=>null);report.scene=await page.evaluate(()=>__rogueBrowserTest.canvas).catch(()=>null);report.timeline=await page.evaluate(()=>__walkTimeline).catch(()=>null);await shot('failure').catch(()=>{});throw error;}
 finally{await writeFile(path.join(output,'browser-evidence.json'),JSON.stringify(report,null,2)+'\n');await context?.close();await browser?.close();await runtime?.dispose();await new Promise(resolve=>server.close(resolve));}

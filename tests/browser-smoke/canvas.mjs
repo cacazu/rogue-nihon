@@ -226,7 +226,7 @@ try{
     const downloaded=page.waitForEvent("download");await click("download-save");const download=await downloaded;
     assert.equal(await download.failure(),null);assert.equal(download.suggestedFilename(),"rogue-save.json");
     await download.saveAs(path.join(output,"exported-save.json"));
-    const bytes=await readFile(path.join(output,"exported-save.json"));assert.equal(bytes.length,await page.evaluate(()=>__rogueBrowserTest.savedLength));assert.equal(JSON.parse(bytes).version,2);
+    const bytes=await readFile(path.join(output,"exported-save.json"));assert.equal(bytes.length,await page.evaluate(()=>__rogueBrowserTest.savedLength));assert.equal(JSON.parse(bytes).version,3);
     evidence.download={result:"pass",file:"exported-save.json",bytes:bytes.length,sha256:createHash("sha256").update(bytes).digest("hex")};
     await click("settings-top");await page.waitForFunction(()=>__rogueBrowserTest.topOpen);
     await click("load");await settled();const loaded=await state();

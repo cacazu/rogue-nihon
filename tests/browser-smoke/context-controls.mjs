@@ -204,7 +204,7 @@ try {
     await click("view-pixels"); assert.ok((await scene()).controls.some(c => c.id === "tile-zoom")); await click("save"); await page.waitForFunction(() => __rogueBrowserTest.savedLength > 0 && !__rogueBrowserTest.savePending); await draw();
     const downloaded = page.waitForEvent("download"); await click("download-save"); const download = await downloaded;
     assert.equal(await download.failure(), null); await download.saveAs(path.join(output, "context-save.json"));
-    const exported = await readFile(path.join(output, "context-save.json")); assert.equal(JSON.parse(exported).version, 2);
+    const exported = await readFile(path.join(output, "context-save.json")); assert.equal(JSON.parse(exported).version, 3);
     assert.equal(exported.length, await page.evaluate(() => __rogueBrowserTest.savedLength));
     await click("center-map"); await click("fullscreen"); await page.waitForFunction(() => Boolean(document.fullscreenElement)); await draw(); await shot("fullscreen-settings");
     await click("settings-top"); await page.waitForFunction(() => __rogueBrowserTest.topOpen); await click("load"); await page.waitForFunction(() => __rogueBrowserTest.running && __rogueBrowserTest.trace && __rogueBrowserTest.queuePending === 0); await draw();

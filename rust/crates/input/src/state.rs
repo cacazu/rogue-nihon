@@ -12,6 +12,8 @@ pub struct State {
     text_bytes: Vec<u8>,
     text_pending: VecDeque<i32>,
     current_text: Option<String>,
+    target_run_start: bool,
+    deferred_event: Option<u32>,
 }
 
 #[cfg(test)]
@@ -65,6 +67,11 @@ impl State {
     pub fn pending_key(&mut self) -> Option<i32> {
         self.text_pending.pop_front()
     }
+
+    pub fn mark_target_run_start(&mut self) { self.target_run_start = true; }
+    pub fn take_target_run_start(&mut self) -> bool { std::mem::take(&mut self.target_run_start) }
+    pub fn defer_event(&mut self, raw: u32) { self.deferred_event = Some(raw); }
+    pub fn take_deferred_event(&mut self) -> Option<u32> { self.deferred_event.take() }
 
     pub fn text_limit(&self) -> usize {
         self.text_limit

@@ -22,6 +22,9 @@
 #define RG_KEY_SAVE 0x00120001
 #define RG_KEY_END_INPUT 0x00120002
 #define RG_KEY_FIRE 0x00120003
+#define RG_KEY_TARGET_RUN_BASE 0x00120010
+#define RG_KEY_TARGET_RUN_CONTINUE 0x00120020
+#define RG_KEY_TARGET_RUN_STOP 0x00120021
 
 #define RG_SNAPSHOT_WORDS 20
 #define RG_SNAPSHOT_ABI 0
@@ -77,6 +80,9 @@ void rg_core_save_free(uint8_t *bytes);
 
 /* Rust-owned host callbacks. The C caller lends buffers only for the call. */
 int32_t rg_host_read_key(void);
+int32_t rg_host_take_target_run_start(void);
+int32_t rg_host_target_run_gate(int32_t direction);
+void rg_host_target_run_ended(int32_t reason);
 /* Preserve recorded legacy inventory reads while replaying older saves. */
 int32_t rg_host_inventory_browser_enabled(void);
 /* Presentation policy for ordinary narration only. No input/RNG/turn.

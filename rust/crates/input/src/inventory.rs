@@ -27,6 +27,28 @@ fn descriptor(row: &Value) -> &Value {
     &row["args"][1]["value"]
 }
 
+#[cfg(test)]
+mod legacy_presentation_tests {
+    use super::*;
+
+    #[test]
+    fn absent_legacy_presentation_stays_null_and_keeps_inventory_boundary() {
+        let mut presentation = Value::Null;
+        let restored = Inventory::restore(&mut presentation, 7);
+        assert!(presentation.is_null(), "v1 has no presentation to deserialize");
+        assert!(!restored.enabled(7));
+        assert!(restored.enabled(8));
+    }
+
+    #[test]
+    fn presentation_metadata_is_removed_without_losing_saved_view() {
+        let mut presentation = json!({"lines":[],"input":{"kind":"item","inventory_browser":"actions"},"history":[],"last_message":null});
+        let restored = Inventory::restore(&mut presentation, 7);
+        assert!(restored.enabled(7));
+        assert_eq!(presentation, json!({"lines":[],"input":{"kind":"item"},"history":[],"last_message":null}));
+    }
+}
+
 impl Inventory {
     pub fn restore(presentation: &mut Value, index: u32) -> Self {
         let legacy_until = if presentation["input"]["inventory_browser"] == "actions" {
@@ -45,7 +67,7 @@ impl Inventory {
                         && (97..=122).contains(&pending.item)
                         && pending.hand.is_none()
                 });
-        if let Some(input) = presentation["input"].as_object_mut() {
+        if let Some(input) = presentation.get_mut("input").and_then(Value::as_object_mut) {
             input.remove("inventory_intent");
             let marked = input.remove("inventory_browser").is_some();
             input.remove("inventory_browser_legacy_until");

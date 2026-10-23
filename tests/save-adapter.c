@@ -149,6 +149,10 @@ int32_t rg_host_calendar_year(void) {
 }
 void rg_host_outcome(int32_t code,const char *text) {(void)code;(void)text;}
 void rg_host_flush_input(void) {}
+void rg_host_player_event(uint32_t kind) {(void)kind;}
+void rg_host_map_projectile(uint32_t phase,uint32_t kind,int32_t glyph,int32_t x,int32_t y) {
+    (void)phase;(void)kind;(void)glyph;(void)x;(void)y;
+}
 int32_t rg_host_inventory_browser_enabled(void) {return 0;}
 int32_t rg_host_message_requires_acknowledgement(void) {return 0;}
 void rg_host_map_effect(int32_t x,int32_t y,int32_t glyph,int32_t active) {
@@ -168,6 +172,9 @@ int32_t rg_host_restore_data(const uint8_t **bytes,uint32_t *length) {
     *bytes=NULL;*length=0;return 0;
 }
 int32_t rg_host_read_key(void) {rg_core_exit(1);return -1;}
+int32_t rg_host_take_target_run_start(void) {return 0;}
+int32_t rg_host_target_run_gate(int32_t direction) {(void)direction;return RG_KEY_TARGET_RUN_STOP;}
+void rg_host_target_run_ended(int32_t reason) {(void)reason;}
 
 void rg_host_checkpoint(void) {
     uint8_t *changed;
@@ -190,6 +197,15 @@ void rg_host_checkpoint(void) {
     rg_core_inspect(restored,RG_SNAPSHOT_WORDS);
     check(memcmp(words,restored,sizeof words)==0,"initial snapshot roundtrip");
     check(same_state(),"initial byte-for-byte roundtrip");
+    {
+        uint32_t runtime[128];
+        check(rg_core_runtime_export(runtime,128)==18,"target run runtime has eighteen words");
+        check(rg_core_runtime_validate(runtime,17)==0,"legacy seventeen-word runtime remains valid");
+        runtime[17]=1;
+        check(rg_core_runtime_validate(runtime,18)==0,"active target run runtime is valid");
+        runtime[17]=2;
+        check(rg_core_runtime_validate(runtime,18)!=0,"invalid target run flag is rejected");
+    }
     {
         void (*callbacks[])()={rollwand,doctor,stomach,runners,swander,nohaste,unconfuse,unsee,sight,come_down,visuals,land,(void(*)())turn_see};
         for(n=0;n<13;n++) {
@@ -277,7 +293,7 @@ void rg_host_checkpoint(void) {
         rejected(changed,baseline_length,"CRC-valid knowledge attribute invalid");
         memcpy(changed,baseline,baseline_length);write32(changed+runtime+8,129);checksum(changed,baseline_length);
         rejected(changed,baseline_length,"CRC-valid excessive runtime words");
-        memcpy(changed,baseline,baseline_length);write32(changed+runtime+16+17*4+4,143);checksum(changed,baseline_length);
+        memcpy(changed,baseline,baseline_length);write32(changed+runtime+16+read32(changed+runtime+8)*4+4,143);checksum(changed,baseline_length);
         rejected(changed,baseline_length,"CRC-valid message position invalid");
     }
     location=marker(UINT32_C(0xabcd0007));

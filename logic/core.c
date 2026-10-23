@@ -98,6 +98,8 @@ int32_t rg_core_start(uint32_t initial_seed,const char *name) {
 
 void rg_command_state_get(uint32_t *out);
 void rg_command_state_set(const uint32_t *in);
+uint32_t rg_target_run_state_get(void);
+void rg_target_run_state_set(uint32_t active);
 void rg_direction_state_get(uint32_t *out);
 void rg_direction_state_set(const uint32_t *in);
 void rg_status_state_get(uint32_t *out);
@@ -105,15 +107,16 @@ void rg_status_state_set(const uint32_t *in);
 void rg_menu_state_get(uint32_t *out);
 void rg_menu_state_set(const uint32_t *in);
 uint32_t rg_core_runtime_export(uint32_t *out,uint32_t capacity) {
-    if(!out || capacity<17) return 17;
+    if(!out || capacity<18) return 18;
     out[0]=completed_turns;
     rg_command_state_get(out+1);rg_direction_state_get(out+4);
     rg_status_state_get(out+6);rg_menu_state_get(out+14);
-    return 17;
+    out[17]=rg_target_run_state_get();
+    return 18;
 }
 int rg_core_runtime_validate(const uint32_t *in,uint32_t words) {
     int32_t dx,dy,width;
-    if(!in || words!=17 || in[1]>255 || in[2]>255 || in[3]>1) return -1;
+    if(!in || (words!=17 && words!=18) || in[1]>255 || in[2]>255 || in[3]>1 || (words==18 && in[17]>1)) return -1;
     dx=(int32_t)in[4];dy=(int32_t)in[5];width=(int32_t)in[16];
     if(dx<-1 || dx>1 || dy<-1 || dy>1 || in[6]>10 || in[7]>3 || in[15]>1 || in[14]!=0 || width<-1 || width>4096) return -1;
     return 0;
@@ -122,6 +125,7 @@ int rg_core_runtime_import(const uint32_t *in,uint32_t words) {
     if(rg_core_runtime_validate(in,words)!=0) return -1;
     completed_turns=in[0];rg_command_state_set(in+1);rg_direction_state_set(in+4);
     rg_status_state_set(in+6);rg_menu_state_set(in+14);
+    rg_target_run_state_set(words==18 ? in[17] : 0);
     return 0;
 }
 

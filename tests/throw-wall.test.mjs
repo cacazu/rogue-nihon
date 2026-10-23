@@ -1,6 +1,6 @@
-// Intentional original-rule difference: docs/ORIGINAL-SPEC-ja.md.
+// Preserve original wall-impact landing rules: docs/ORIGINAL-SPEC-ja.md.
 // Build all three modules with this same game-fixtures.c. The original uses
-// tests/baseline-src; BEFORE is an independent archive of the C before this fix.
+// tests/baseline-src; BEFORE independently archives the C before the wall change.
 // ROGUE_THROW_ORIGINAL and ROGUE_THROW_BEFORE are required: missing comparisons
 // must never turn an unverified original-rule claim into a passing test.
 import assert from 'node:assert/strict';
@@ -41,9 +41,9 @@ function sameRules(expected, actual, label) {
   assert.deepEqual(actual.outcomes, expected.outcomes, label+' outcomes');
 }
 
-// Both programs are executed before the corrected behavior is asserted. The
-// pre-fix C must exhibit the reported bug and match the fixed original source.
-test('Every throwable category lands on the player side of solid walls and rock', async () => {
+// Wall impacts use the fixed original's landing candidates and RNG consumption,
+// including landing beyond the impact wall when the 3x3 area contains floor.
+test('Every throwable category preserves original wall/rock landing and C/RNG', async () => {
   let originalBackside = 0;
   for (const [category,glyph] of Object.entries(categories)) {
     for (const scenario of ['v','h','d','rock','secret']) {
@@ -55,21 +55,24 @@ test('Every throwable category lands on the player side of solid walls and rock'
         for (const result of [source,old,now]) completed(result, options);
         sameRules(source, old, options.fixture+' pre-fix versus original');
         const isBackside = ([x,y]) => scenario === 'h' ? y > 12 : scenario === 'd' ? x + y > 24 : x > 12;
-        const oldPoints = positions(old,glyph), newPoints = positions(now,glyph);
-        assert.equal(oldPoints.length,1);
-        assert.equal(newPoints.length,1);
-        if (oldPoints.some(isBackside)) originalBackside++;
-        assert.ok(!newPoints.some(isBackside), options.fixture+' cannot scatter through the impact wall');
+        sameRules(source, now, options.fixture+' current versus original');
+        // The fixed baseline lacks intermediate semantic prompt instrumentation.
+        const nextWait = result => {
+          const input = result.input_contexts.at(-1).input;
+          return {kind:input.kind,mode:input.mode};
+        };
+        assert.deepEqual(nextWait(now),nextWait(source),'The next input wait remains identical');
+        const sourcePoints = positions(source,glyph), newPoints = positions(now,glyph);
+        assert.equal(sourcePoints.length,1);
+        assert.deepEqual(newPoints,sourcePoints,options.fixture+' original landing position');
+        if (sourcePoints.some(isBackside)) originalBackside++;
         const flights = now.frames.flatMap(frame => frame.map_projectile_events || []);
         assert.equal(flights.length,1);
         assert.ok(!flights[0].path.some(point => isBackside([point.x,point.y])), 'Observed flight stops before the wall');
-        // Item input ends at index 2; wall landing is the intended subsequent
-        // state/RNG difference. The original command/selection boundaries stay.
-        assert.deepEqual(now.traces.filter(t => t.input_index <= 2), old.traces.filter(t => t.input_index <= 2));
       }
     }
   }
-  assert.ok(originalBackside > 0, 'The independent original and old build reproduce wall crossing');
+  assert.ok(originalBackside > 0, 'Fixtures cover original landing beyond the impact wall');
 });
 
 test('No landing square uses safe public names for every highest valid subtype', async () => {

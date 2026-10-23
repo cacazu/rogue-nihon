@@ -60,7 +60,7 @@ async function restoreCase(label, prefix, suffix) {
   assert.deepEqual(originalFrames([restored.frames.at(-1)]), originalFrames([original.frames.at(-1)]), 'complete original C frame restored');
   // V1 never stored semantic UI metadata; even the prior committed executable
   // loses ui.status at an unchanged C status cache. V2 checks retain full UI.
-  if(envelope.version===2) assert.deepEqual(restored.frames.at(-1).ui,original.frames.at(-1).ui);
+  if(envelope.version>=2) assert.deepEqual(restored.frames.at(-1).ui,original.frames.at(-1).ui);
   return { original, restored, envelope };
 }
 

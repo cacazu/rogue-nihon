@@ -145,359 +145,323 @@
       ]
     },
     {
-      "case": "clear:command.c:87",
+      "case": "clear:command.c:119",
       "id": "message.clear",
       "negative": false,
       "site": [
         "command.c",
-        87
+        119
       ]
     },
     {
-      "case": "site:command.c:101:command.command.you_can_move_again:7",
+      "case": "site:command.c:133:command.command.you_can_move_again:7",
       "id": "command.command.you_can_move_again",
       "negative": false,
       "site": [
         "command.c",
-        101
+        133
       ]
     },
     {
-      "case": "site:command.c:182:command.command.there_is:7",
+      "case": "site:command.c:223:command.command.there_is:7",
       "id": "command.command.there_is",
       "negative": false,
       "site": [
         "command.c",
-        182
+        223
       ]
     },
     {
-      "case": "site:command.c:183:command.command.nothing_here:7",
+      "case": "site:command.c:224:command.command.nothing_here:7",
       "id": "command.command.nothing_here",
       "negative": false,
       "site": [
         "command.c",
-        183
+        224
       ]
     },
     {
-      "case": "site:command.c:185:command.command.to_pick_up:7",
+      "case": "site:command.c:226:command.command.to_pick_up:7",
       "id": "command.command.to_pick_up",
       "negative": false,
       "site": [
         "command.c",
-        185
+        226
       ]
     },
     {
-      "case": "site:command.c:238:command.command.i_see:7",
+      "case": "site:command.c:279:command.command.i_see:7",
       "id": "command.command.i_see",
       "negative": false,
       "site": [
         "command.c",
-        238
+        279
       ]
     },
     {
-      "case": "site:command.c:239:command.command.no_monster_there:7",
+      "case": "site:command.c:280:command.command.no_monster_there:7",
       "id": "command.command.no_monster_there",
       "negative": false,
       "site": [
         "command.c",
-        239
+        280
       ]
     },
     {
-      "case": "site:command.c:264:command.command.you_havent_typed_a_command_yet:7",
+      "case": "site:command.c:305:command.command.you_havent_typed_a_command_yet:7",
       "id": "command.command.you_havent_typed_a_command_yet",
       "negative": false,
       "site": [
         "command.c",
-        264
+        305
       ]
     },
     {
-      "case": "site:command.c:307:command.command.string:7",
+      "case": "site:command.c:348:command.command.string:7",
       "id": "command.command.string",
       "negative": false,
       "site": [
         "command.c",
-        307
+        348
       ]
     },
     {
-      "case": "site:command.c:314:command.command.version_mctesq_was_here:7",
+      "case": "site:command.c:355:command.command.version_mctesq_was_here:7",
       "id": "command.command.version_mctesq_was_here",
       "negative": false,
       "site": [
         "command.c",
-        314
+        355
       ]
     },
     {
-      "case": "site:command.c:327:command.command.you_have_found:7",
+      "case": "site:command.c:368:command.command.you_have_found:7",
       "id": "command.command.you_have_found",
       "negative": false,
       "site": [
         "command.c",
-        327
+        368
       ]
     },
     {
-      "case": "site:command.c:329:command.command.no_trap_there:7",
+      "case": "site:command.c:370:command.command.no_trap_there:7",
       "id": "command.command.no_trap_there",
       "negative": false,
       "site": [
         "command.c",
-        329
+        370
       ]
     },
     {
-      "case": "site:command.c:344:command.command.not_wizard_any_more:7",
+      "case": "site:command.c:385:command.command.not_wizard_any_more:7",
       "id": "command.command.not_wizard_any_more",
       "negative": false,
       "site": [
         "command.c",
-        344
+        385
       ]
     },
     {
-      "case": "site:command.c:353:command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon:-7",
+      "case": "site:command.c:394:command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon:-7",
       "id": "command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon",
       "negative": false,
       "site": [
         "command.c",
-        353
+        394
       ]
     },
     {
-      "case": "site:command.c:353:command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon:0",
+      "case": "site:command.c:394:command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon:0",
       "id": "command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon",
       "negative": false,
       "site": [
         "command.c",
-        353
+        394
       ]
     },
     {
-      "case": "site:command.c:353:command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon:7",
+      "case": "site:command.c:394:command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon:7",
       "id": "command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon",
       "negative": false,
       "site": [
         "command.c",
-        353
+        394
       ]
     },
     {
-      "case": "site:command.c:356:command.command.sorry:7",
+      "case": "site:command.c:397:command.command.sorry:7",
       "id": "command.command.sorry",
       "negative": false,
       "site": [
         "command.c",
-        356
+        397
       ]
     },
     {
-      "case": "site:command.c:391:command.command.number_number:-7",
+      "case": "site:command.c:432:command.command.number_number:-7",
       "id": "command.command.number_number",
       "negative": false,
       "site": [
         "command.c",
-        391
+        432
       ]
     },
     {
-      "case": "site:command.c:391:command.command.number_number:0",
+      "case": "site:command.c:432:command.command.number_number:0",
       "id": "command.command.number_number",
       "negative": false,
       "site": [
         "command.c",
-        391
+        432
       ]
     },
     {
-      "case": "site:command.c:391:command.command.number_number:7",
+      "case": "site:command.c:432:command.command.number_number:7",
       "id": "command.command.number_number",
       "negative": false,
       "site": [
         "command.c",
-        391
+        432
       ]
     },
     {
-      "case": "site:command.c:393:command.command.inpack:-7",
+      "case": "site:command.c:434:command.command.inpack:-7",
       "id": "command.command.inpack",
       "negative": false,
       "site": [
         "command.c",
-        393
+        434
       ]
     },
     {
-      "case": "site:command.c:393:command.command.inpack:0",
+      "case": "site:command.c:434:command.command.inpack:0",
       "id": "command.command.inpack",
       "negative": false,
       "site": [
         "command.c",
-        393
+        434
       ]
     },
     {
-      "case": "site:command.c:393:command.command.inpack:7",
+      "case": "site:command.c:434:command.command.inpack:7",
       "id": "command.command.inpack",
       "negative": false,
       "site": [
         "command.c",
-        393
+        434
       ]
     },
     {
-      "case": "site:command.c:400:command.command.food_left:-7",
+      "case": "site:command.c:441:command.command.food_left:-7",
       "id": "command.command.food_left",
       "negative": false,
       "site": [
         "command.c",
-        400
+        441
       ]
     },
     {
-      "case": "site:command.c:400:command.command.food_left:0",
+      "case": "site:command.c:441:command.command.food_left:0",
       "id": "command.command.food_left",
       "negative": false,
       "site": [
         "command.c",
-        400
+        441
       ]
     },
     {
-      "case": "site:command.c:400:command.command.food_left:7",
+      "case": "site:command.c:441:command.command.food_left:7",
       "id": "command.command.food_left",
       "negative": false,
       "site": [
         "command.c",
-        400
+        441
       ]
     },
     {
-      "case": "site:command.c:497:command.illcom.illegal_command:7",
+      "case": "site:command.c:540:command.illcom.illegal_command:7",
       "id": "command.illcom.illegal_command",
       "negative": false,
       "site": [
         "command.c",
-        497
+        540
       ]
     },
     {
-      "case": "site:command.c:533:command.search.a_secret_door:7",
+      "case": "site:command.c:576:command.search.a_secret_door:7",
       "id": "command.search.a_secret_door",
       "negative": false,
       "site": [
         "command.c",
-        533
+        576
       ]
     },
     {
-      "case": "site:command.c:545:command.search.you_found:7",
+      "case": "site:command.c:588:command.search.you_found:7",
       "id": "command.search.you_found",
       "negative": false,
       "site": [
         "command.c",
-        545
+        588
       ]
     },
     {
-      "case": "site:command.c:600:command.help.character_you_want_help_for_for_all:7",
+      "case": "site:command.c:643:command.help.character_you_want_help_for_for_all:7",
       "id": "command.help.character_you_want_help_for_for_all",
       "negative": false,
       "site": [
         "command.c",
-        600
+        643
       ]
     },
     {
-      "case": "site:command.c:623:command.help.string_string:7",
+      "case": "site:command.c:666:command.help.string_string:7",
       "id": "command.help.string_string",
       "negative": false,
       "site": [
         "command.c",
-        623
+        666
       ]
     },
     {
-      "case": "site:command.c:627:command.help.unknown_character:7",
+      "case": "site:command.c:670:command.help.unknown_character:7",
       "id": "command.help.unknown_character",
       "negative": false,
       "site": [
         "command.c",
-        627
+        670
       ]
     },
     {
-      "case": "clear:command.c:685",
+      "case": "clear:command.c:728",
       "id": "message.clear",
       "negative": false,
       "site": [
         "command.c",
-        685
+        728
       ]
     },
     {
-      "case": "site:command.c:722:command.identify.what_do_you_want_identified:7",
+      "case": "site:command.c:765:command.identify.what_do_you_want_identified:7",
       "id": "command.identify.what_do_you_want_identified",
       "negative": false,
       "site": [
         "command.c",
-        722
+        765
       ]
     },
     {
-      "case": "clear:command.c:733",
+      "case": "clear:command.c:776",
       "id": "message.clear",
       "negative": false,
       "site": [
         "command.c",
-        733
+        776
       ]
     },
     {
-      "case": "site:command.c:762:command.identify.string_string:7",
+      "case": "site:command.c:805:command.identify.string_string:7",
       "id": "command.identify.string_string",
-      "negative": false,
-      "site": [
-        "command.c",
-        762
-      ]
-    },
-    {
-      "case": "site:command.c:775:command.d_level.i_see_no_way_down:7",
-      "id": "command.d_level.i_see_no_way_down",
-      "negative": false,
-      "site": [
-        "command.c",
-        775
-      ]
-    },
-    {
-      "case": "site:command.c:800:command.u_level.you_feel_a_wrenching_sensation_in_your_gut:7",
-      "id": "command.u_level.you_feel_a_wrenching_sensation_in_your_gut",
-      "negative": false,
-      "site": [
-        "command.c",
-        800
-      ]
-    },
-    {
-      "case": "site:command.c:803:command.u_level.your_way_is_magically_blocked:7",
-      "id": "command.u_level.your_way_is_magically_blocked",
-      "negative": false,
-      "site": [
-        "command.c",
-        803
-      ]
-    },
-    {
-      "case": "site:command.c:805:command.u_level.i_see_no_way_up:7",
-      "id": "command.u_level.i_see_no_way_up",
       "negative": false,
       "site": [
         "command.c",
@@ -505,8 +469,8 @@
       ]
     },
     {
-      "case": "site:command.c:818:command.levit_check.you_cant_youre_floating_off_the_ground:7",
-      "id": "command.levit_check.you_cant_youre_floating_off_the_ground",
+      "case": "site:command.c:818:command.d_level.i_see_no_way_down:7",
+      "id": "command.d_level.i_see_no_way_down",
       "negative": false,
       "site": [
         "command.c",
@@ -514,80 +478,62 @@
       ]
     },
     {
-      "case": "site:command.c:863:command.call.you_cant_call_that_anything:7",
+      "case": "site:command.c:843:command.u_level.you_feel_a_wrenching_sensation_in_your_gut:7",
+      "id": "command.u_level.you_feel_a_wrenching_sensation_in_your_gut",
+      "negative": false,
+      "site": [
+        "command.c",
+        843
+      ]
+    },
+    {
+      "case": "site:command.c:846:command.u_level.your_way_is_magically_blocked:7",
+      "id": "command.u_level.your_way_is_magically_blocked",
+      "negative": false,
+      "site": [
+        "command.c",
+        846
+      ]
+    },
+    {
+      "case": "site:command.c:848:command.u_level.i_see_no_way_up:7",
+      "id": "command.u_level.i_see_no_way_up",
+      "negative": false,
+      "site": [
+        "command.c",
+        848
+      ]
+    },
+    {
+      "case": "site:command.c:861:command.levit_check.you_cant_youre_floating_off_the_ground:7",
+      "id": "command.levit_check.you_cant_youre_floating_off_the_ground",
+      "negative": false,
+      "site": [
+        "command.c",
+        861
+      ]
+    },
+    {
+      "case": "site:command.c:906:command.call.you_cant_call_that_anything:7",
       "id": "command.call.you_cant_call_that_anything",
       "negative": false,
       "site": [
         "command.c",
-        863
+        906
       ]
     },
     {
-      "case": "site:command.c:872:command.call.that_has_already_been_identified:7",
+      "case": "site:command.c:915:command.call.that_has_already_been_identified:7",
       "id": "command.call.that_has_already_been_identified",
       "negative": false,
       "site": [
         "command.c",
-        872
+        915
       ]
     },
     {
-      "case": "site:command.c:878:command.call.was:7",
+      "case": "site:command.c:921:command.call.was:7",
       "id": "command.call.was",
-      "negative": false,
-      "site": [
-        "command.c",
-        878
-      ]
-    },
-    {
-      "case": "site:command.c:879:command.call.called:7",
-      "id": "command.call.called",
-      "negative": false,
-      "site": [
-        "command.c",
-        879
-      ]
-    },
-    {
-      "case": "site:command.c:882:command.call.call_it:7",
-      "id": "command.call.call_it",
-      "negative": false,
-      "site": [
-        "command.c",
-        882
-      ]
-    },
-    {
-      "case": "site:command.c:884:command.call.what_do_you_want_to_call_it:7",
-      "id": "command.call.what_do_you_want_to_call_it",
-      "negative": false,
-      "site": [
-        "command.c",
-        884
-      ]
-    },
-    {
-      "case": "site:command.c:916:command.current.you_are:7",
-      "id": "command.current.you_are",
-      "negative": false,
-      "site": [
-        "command.c",
-        916
-      ]
-    },
-    {
-      "case": "site:command.c:918:command.current.character_string:7",
-      "id": "command.current.character_string",
-      "negative": false,
-      "site": [
-        "command.c",
-        918
-      ]
-    },
-    {
-      "case": "site:command.c:921:command.current.string:7",
-      "id": "command.current.string",
       "negative": false,
       "site": [
         "command.c",
@@ -595,8 +541,26 @@
       ]
     },
     {
-      "case": "site:command.c:927:command.current.you_are_trailing_space:7",
-      "id": "command.current.you_are_trailing_space",
+      "case": "site:command.c:922:command.call.called:7",
+      "id": "command.call.called",
+      "negative": false,
+      "site": [
+        "command.c",
+        922
+      ]
+    },
+    {
+      "case": "site:command.c:925:command.call.call_it:7",
+      "id": "command.call.call_it",
+      "negative": false,
+      "site": [
+        "command.c",
+        925
+      ]
+    },
+    {
+      "case": "site:command.c:927:command.call.what_do_you_want_to_call_it:7",
+      "id": "command.call.what_do_you_want_to_call_it",
       "negative": false,
       "site": [
         "command.c",
@@ -604,21 +568,57 @@
       ]
     },
     {
-      "case": "site:command.c:928:command.current.nothing:7",
-      "id": "command.current.nothing",
+      "case": "site:command.c:959:command.current.you_are:7",
+      "id": "command.current.you_are",
       "negative": false,
       "site": [
         "command.c",
-        928
+        959
       ]
     },
     {
-      "case": "site:command.c:930:command.current.string:7",
+      "case": "site:command.c:961:command.current.character_string:7",
+      "id": "command.current.character_string",
+      "negative": false,
+      "site": [
+        "command.c",
+        961
+      ]
+    },
+    {
+      "case": "site:command.c:964:command.current.string:7",
       "id": "command.current.string",
       "negative": false,
       "site": [
         "command.c",
-        930
+        964
+      ]
+    },
+    {
+      "case": "site:command.c:970:command.current.you_are_trailing_space:7",
+      "id": "command.current.you_are_trailing_space",
+      "negative": false,
+      "site": [
+        "command.c",
+        970
+      ]
+    },
+    {
+      "case": "site:command.c:971:command.current.nothing:7",
+      "id": "command.current.nothing",
+      "negative": false,
+      "site": [
+        "command.c",
+        971
+      ]
+    },
+    {
+      "case": "site:command.c:973:command.current.string:7",
+      "id": "command.current.string",
+      "negative": false,
+      "site": [
+        "command.c",
+        973
       ]
     },
     {
@@ -2746,48 +2746,48 @@
       ]
     },
     {
-      "case": "site:weapons.c:178:weapons.fall.the_vanishes_as_it_hits_the_ground:7",
+      "case": "site:weapons.c:167:weapons.fall.the_vanishes_as_it_hits_the_ground:7",
       "id": "weapons.fall.the_vanishes_as_it_hits_the_ground",
       "negative": false,
       "site": [
         "weapons.c",
-        178
+        167
       ]
     },
     {
-      "case": "site:weapons.c:181:weapons.fall.vanishes_as_it_hits_the_ground:7",
+      "case": "site:weapons.c:170:weapons.fall.vanishes_as_it_hits_the_ground:7",
       "id": "weapons.fall.vanishes_as_it_hits_the_ground",
       "negative": false,
       "site": [
         "weapons.c",
-        181
+        170
       ]
     },
     {
-      "case": "site:weapons.c:278:weapons.wield.you_cant_wield_armor:7",
+      "case": "site:weapons.c:267:weapons.wield.you_cant_wield_armor:7",
       "id": "weapons.wield.you_cant_wield_armor",
       "negative": false,
       "site": [
         "weapons.c",
-        278
+        267
       ]
     },
     {
-      "case": "site:weapons.c:287:weapons.wield.you_are_now:7",
+      "case": "site:weapons.c:276:weapons.wield.you_are_now:7",
       "id": "weapons.wield.you_are_now",
       "negative": false,
       "site": [
         "weapons.c",
-        287
+        276
       ]
     },
     {
-      "case": "site:weapons.c:288:weapons.wield.wielding:7",
+      "case": "site:weapons.c:277:weapons.wield.wielding:7",
       "id": "weapons.wield.wielding",
       "negative": false,
       "site": [
         "weapons.c",
-        288
+        277
       ]
     },
     {
@@ -8162,39 +8162,39 @@
       "negative": false
     },
     {
-      "case": "dynamic:command.c:331:tr_name[rnd(NTRAPS)]",
+      "case": "dynamic:command.c:372:tr_name[rnd(NTRAPS)]",
       "id": "message.entity",
       "negative": false,
       "site": [
         "command.c",
-        331
+        372
       ]
     },
     {
-      "case": "dynamic:command.c:333:tr_name[*fp&F_TMASK]",
+      "case": "dynamic:command.c:374:tr_name[*fp&F_TMASK]",
       "id": "message.entity",
       "negative": false,
       "site": [
         "command.c",
-        333
+        374
       ]
     },
     {
-      "case": "dynamic:command.c:547:tr_name[rnd(NTRAPS)]",
+      "case": "dynamic:command.c:590:tr_name[rnd(NTRAPS)]",
       "id": "message.entity",
       "negative": false,
       "site": [
         "command.c",
-        547
+        590
       ]
     },
     {
-      "case": "dynamic:command.c:549:tr_name[*fp&F_TMASK]",
+      "case": "dynamic:command.c:592:tr_name[*fp&F_TMASK]",
       "id": "message.entity",
       "negative": false,
       "site": [
         "command.c",
-        549
+        592
       ]
     },
     {

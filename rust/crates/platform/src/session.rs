@@ -153,7 +153,7 @@ impl Session {
     }
 
     pub fn accept_key(&mut self, key: i32) -> bool {
-        if !(0..=255).contains(&key)
+        if (!(0..=255).contains(&key) && !rogue_contract::target_run_journal_key(key))
             || self.journal.len() >= MAX_INPUTS
             || self.input_index == u32::MAX
         {

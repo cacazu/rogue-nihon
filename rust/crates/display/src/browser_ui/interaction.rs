@@ -454,7 +454,7 @@ impl BrowserUi {
         {
             return;
         }
-        effects.push(json!({"kind":"map-target","x":cell["x"],"y":cell["y"]}));
+        effects.push(json!({"kind":"map-target","x":cell["x"],"y":cell["y"],"movement":self.mobile_movement}));
     }
     fn activate_shortcut(&mut self, event: &Value, scope: &str, effects: &mut Vec<Value>) -> bool {
         if b(&self.view["coarse"]) || b(&event["ctrlKey"]) || b(&event["altKey"])
@@ -755,6 +755,7 @@ impl BrowserUi {
             if b(&self.model["running"])
                 && let Some(raw) = game_key(e, s(&self.model["input"]["kind"]))
             {
+                let raw = if self.command_ready() { self.movement_key(raw) } else { raw };
                 let redraw = key == "@" && self.model["input"]["kind"] == "command";
                 if redraw {
                     self.open_status();

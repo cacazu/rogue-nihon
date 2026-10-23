@@ -116,7 +116,7 @@ impl Envelope {
         }
         let mut value = Self {
             format: "rogue-four-layer".into(),
-            version: if presentation.is_null() { 1 } else { 2 },
+            version: if presentation.is_null() { 1 } else { 3 },
             abi: rogue_contract::RG_ABI_VERSION,
             source: SOURCE_HASH.into(),
             seed,
@@ -153,7 +153,7 @@ impl Envelope {
 
     fn validate(&self) -> Result<(), String> {
         if self.format != "rogue-four-layer"
-            || !(1..=2).contains(&self.version)
+            || !(1..=3).contains(&self.version)
             || self.abi != rogue_contract::RG_ABI_VERSION
             || self.source != SOURCE_HASH
         {
@@ -170,7 +170,8 @@ impl Envelope {
         let _ = self.checkpoint()?;
         let max_key = if self.version == 1 { 127 } else { 255 };
         if self.inputs.len() > MAX_INPUTS
-            || self.inputs.iter().any(|key| !(0..=max_key).contains(key))
+            || self.inputs.iter().any(|key| !(0..=max_key).contains(key)
+                && !(self.version == 3 && rogue_contract::target_run_journal_key(*key)))
         {
             return Err("invalid input journal".into());
         }
@@ -178,7 +179,7 @@ impl Envelope {
             return Err("invalid journal position".into());
         }
         if (self.version == 1 && !self.presentation.is_null())
-            || (self.version == 2
+            || (self.version >= 2
                 && (!self.presentation.is_object()
                     || serde_json::to_vec(&self.presentation)
                         .map_err(|_| "invalid presentation")?
@@ -187,7 +188,7 @@ impl Envelope {
         {
             return Err("invalid saved presentation".into());
         }
-        if self.version == 2 {
+        if self.version >= 2 {
             let object = self
                 .presentation
                 .as_object()
@@ -251,7 +252,7 @@ impl Envelope {
             add(&key.to_le_bytes());
         }
         add(&self.input_index.to_le_bytes());
-        if self.version == 2
+        if self.version >= 2
             && let Ok(bytes) = serde_json::to_vec(&self.presentation)
         {
             add(&bytes);
@@ -311,6 +312,30 @@ pub fn hex_decode(value: &str) -> Result<Vec<u8>, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn target_run_v3_whitelist_and_legacy_checksums() {
+        use rogue_contract::*;
+        let view = serde_json::json!({"lines":[],"input":null,"history":[],"last_message":null});
+        let keys = vec![RG_KEY_TARGET_RUN_BASE as i32, (RG_KEY_TARGET_RUN_BASE+15) as i32,
+            RG_KEY_TARGET_RUN_CONTINUE as i32, RG_KEY_TARGET_RUN_STOP as i32, 255];
+        let saved = Envelope::new_with_presentation(7,"Player".into(),&[1],keys.clone(),5,view.clone()).unwrap();
+        assert_eq!(saved.version,3);
+        assert_eq!(Envelope::parse(&saved.bytes().unwrap()).unwrap().inputs,keys);
+        for invalid in [-1,256,(RG_KEY_TARGET_RUN_BASE-1) as i32,(RG_KEY_TARGET_RUN_STOP+1) as i32] {
+            assert!(Envelope::new_with_presentation(7,"Player".into(),&[1],vec![invalid],1,view.clone()).is_err());
+        }
+        for version in [1,2] {
+            let mut old = saved.clone(); old.version=version; old.inputs=vec![107,27];old.input_index=2;
+            if version==1 { old.presentation=serde_json::Value::Null; }
+            old.checksum=old.digest();
+            assert_eq!(Envelope::parse(&old.bytes().unwrap()).unwrap().version,version);
+            old.inputs=vec![RG_KEY_TARGET_RUN_CONTINUE as i32];old.checksum=old.digest();
+            assert!(old.bytes().is_err());
+        }
+        let mut corrupt=saved;corrupt.inputs[2]=RG_KEY_TARGET_RUN_STOP as i32;
+        assert!(corrupt.bytes().is_err());
+    }
+
     #[test]
     fn saves_validate_identity_lengths_journal_and_corruption() {
         let value =

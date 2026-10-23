@@ -351,7 +351,7 @@ fn platform_checks() -> usize {
     let saved =
         platform::Envelope::new_with_presentation(1, "Rogue".into(), &[1], vec![], 0, marked)
             .expect("policy fixture");
-    checks.equal("policy uses existing v2", saved.version, 2);
+    checks.equal("policy uses current save version", saved.version, 3);
     let mut restored = platform::Envelope::parse(&saved.bytes().expect("policy bytes"))
         .expect("policy parse")
         .presentation;
@@ -503,7 +503,7 @@ fn platform_checks() -> usize {
     .expect("UTF-8 presentation fixture");
     let decoded =
         platform::Envelope::parse(&v2.bytes().expect("UTF-8 encode")).expect("UTF-8 decode");
-    checks.equal("presentation schema version", decoded.version, 2);
+    checks.equal("presentation schema version", decoded.version, 3);
     checks.equal(
         "typed UTF-8 journal bytes",
         decoded.inputs,

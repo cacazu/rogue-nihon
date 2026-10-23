@@ -24,6 +24,7 @@ pub struct Controller {
     input: Value,
     composing: bool,
     waiting_for_request: bool,
+    run_stop_request: Option<u64>,
     text_mode: bool,
     draft_dirty: bool,
     window_open: bool,
@@ -57,6 +58,7 @@ impl Controller {
             input: Value::Null,
             composing: false,
             waiting_for_request: false,
+            run_stop_request: None,
             text_mode: false,
             draft_dirty: false,
             window_open: false,
@@ -78,20 +80,34 @@ impl Controller {
         if self.autowalk.stop(reason) {
             self.effects.push(json!({"kind":"autowalk-timer"}));
         }
+        self.release_target_run();
+    }
+    fn release_target_run(&mut self) {
+        let request = number(&self.state["inputRequestCount"]);
+        if self.input["kind"] == "run-boundary" && !self.waiting_for_request
+            && self.run_stop_request != Some(request) {
+            self.queue(json!([rogue_contract::RG_KEY_TARGET_RUN_STOP]), "target-run-stop");
+        }
     }
     fn autowalk_available(&self) -> bool {
         flag(&self.model["running"]) && !flag(&self.model["topOpen"])
             && !flag(&self.model["settingsOpen"]) && !flag(&self.model["savePending"])
             && !flag(&self.model["returnAfterEnd"]) && !self.restore_pending && !self.session_ended
-            && self.input["kind"] == "command" && self.model["frame"]["ui"]["mode"] == "game"
+            && matches!(text(&self.input["kind"]), "command" | "run-boundary") && self.model["frame"]["ui"]["mode"] == "game"
             && !self.model["frame"]["ui"]["window"].is_object() && self.ui.map_navigation_available()
     }
     fn schedule_autowalk(&mut self) {
-        if !self.autowalk.active() || self.waiting_for_request { return; }
+        if !self.autowalk.active() {
+            self.release_target_run();
+            return;
+        }
+        if self.waiting_for_request { return; }
         if !self.autowalk_available() { self.stop_autowalk("context"); return; }
-        if let Some(mut effect) = self.autowalk.schedule(&self.model["frame"],number(&self.state["inputRequestCount"])) {
+        if let Some(mut effect) = self.autowalk.schedule(&self.model["frame"],&self.input,number(&self.state["inputRequestCount"])) {
             effect["generation"] = self.model["generation"].clone();
             self.effects.push(effect);
+        } else if !self.autowalk.active() {
+            self.release_target_run();
         }
     }
     fn notice(&mut self, id: &str, args: Value, error: bool) {
@@ -306,9 +322,20 @@ impl Controller {
         };
         self.queue(json!([key]), "end");
     }
-    fn queue(&mut self, events: Value, after: &str) {
+    fn queue(&mut self, mut events: Value, after: &str) {
         if !flag(&self.model["running"]) {
             return;
+        }
+        let request = number(&self.state["inputRequestCount"]);
+        if self.input["kind"] == "run-boundary" && self.run_stop_request != Some(request) {
+            let gate_key = events.as_array().and_then(|a| a.first()).and_then(Value::as_u64);
+            if !matches!(gate_key, Some(key) if key == rogue_contract::RG_KEY_TARGET_RUN_CONTINUE as u64
+                || key == rogue_contract::RG_KEY_TARGET_RUN_STOP as u64) {
+                if let Some(keys) = events.as_array_mut() { keys.insert(0, json!(rogue_contract::RG_KEY_TARGET_RUN_STOP)); }
+                self.run_stop_request = Some(request);
+            } else if gate_key == Some(rogue_contract::RG_KEY_TARGET_RUN_STOP as u64) {
+                self.run_stop_request = Some(request);
+            }
         }
         self.waiting_for_request = true;
         self.effects.push(json!({"kind":"queue","events":events,"after":after,"generation":self.model["generation"],"request":self.state["inputRequestCount"]}));
@@ -387,7 +414,7 @@ impl Controller {
         }
     }
     fn apply_input(&mut self, input: Value) {
-        if input["kind"] != "command" { self.stop_autowalk("context"); }
+        if !matches!(text(&input["kind"]), "command" | "run-boundary") { self.stop_autowalk("context"); }
         let next = input["kind"] == "text";
         let was = self.text_mode;
         self.field(
@@ -420,6 +447,7 @@ impl Controller {
     fn start(&mut self, restore: bool) {
         self.stop_autowalk("scene");
         self.waiting_for_request = false;
+        self.run_stop_request = None;
         if !restore && self.composing {
             let field = if flag(&self.inputs["seed"]["active"]) { "seed" } else { "name" };
             self.field_error(field, "error.text_composing");
@@ -700,6 +728,7 @@ impl Controller {
                     push(&mut self.state["playerEvents"], data, 128);
                 }
             }
+            "target-run-ended" => self.stop_autowalk("natural"),
             "trace" => {
                 self.state["trace"] = data.clone();
                 push(&mut self.state["traces"], data, 2048);
@@ -1027,7 +1056,12 @@ impl Controller {
                 .collect::<Vec<_>>()
         );
         self.model["loading"] = json!(flag(&self.model["starting"]) || self.restore_pending);
-        self.model["input"] = self.input.clone();
+        // The dedicated C gate is interruptible with the same controls as a
+        // command wait. Only this UI projection is normalized; queue policy
+        // retains the actual gate and sends STOP before a manual command.
+        self.model["input"] = if self.input["kind"] == "run-boundary" {
+            json!({"kind":"command"})
+        } else { self.input.clone() };
         self.model["inputRequests"] = self.state["inputRequestCount"].clone();
         let m = tiles::manifest_ref(text(&self.model["displayMode"]));
         let locale = text(&self.model["language"]);
@@ -1062,6 +1096,7 @@ impl Controller {
             result[k] = v.clone();
         }
         result["autowalk"] = self.autowalk.snapshot();
+        result["input"] = self.input.clone();
         result["notice"] = json!(notice);
         result["message"] = json!(message);
         result["uiMissing"] = json!(self.catalog.missing);
@@ -1126,7 +1161,7 @@ impl Controller {
                             // Retired timers cannot cancel a new route, even while
                             // it is waiting for outstanding manual input to finish.
                         } else if self.autowalk_available() && !self.waiting_for_request {
-                            if let Some(key) = self.autowalk.tick(&self.model["frame"],number(&self.state["inputRequestCount"]),number(&e["token"])) {
+                            if let Some(key) = self.autowalk.tick(&self.model["frame"],&self.input,number(&self.state["inputRequestCount"]),number(&e["token"])) {
                                 self.queue(json!([key]), "autowalk");
                             }
                         } else { self.stop_autowalk("context"); }
@@ -1201,7 +1236,7 @@ impl Controller {
                                 "submit" => self.submit(text(&effect["id"])),
                                 "map-target" => {
                                     if self.autowalk_available() {
-                                        self.autowalk.start(&self.model["frame"], effect);
+                                        self.autowalk.start(&self.model["frame"], effect,number(&effect["movement"]) as u32);
                                         self.schedule_autowalk();
                                     }
                                 }
@@ -1331,5 +1366,50 @@ fn push(values: &mut Value, value: Value, limit: usize) {
     entries.push(value);
     if entries.len() > limit {
         entries.remove(0);
+    }
+}
+
+#[cfg(test)]
+mod target_run_tests {
+    use super::*;
+    fn measure(text: &str, size: f64, _bold: bool, _mono: bool) -> rogue_display::widgets::TextSize {
+        rogue_display::widgets::TextSize { width:text.len() as f64 * size, ascent:0., descent:size }
+    }
+    fn gate() -> Controller {
+        let mut c = Controller::new(measure);
+        c.model["running"] = json!(true);
+        c.input = json!({"kind":"run-boundary","direction":108});
+        c.state["inputRequestCount"] = json!(7);
+        c
+    }
+    #[test]
+    fn manual_input_releases_gate_once_and_preserves_the_command() {
+        let mut c = gate();
+        c.stop_autowalk("input");
+        c.queue(json!([115]), "send");
+        c.stop_autowalk("input");
+        let queues: Vec<_> = c.effects.iter().filter(|e| e["kind"] == "queue").collect();
+        assert_eq!(queues.len(),2);
+        assert_eq!(queues[0]["events"],json!([rogue_contract::RG_KEY_TARGET_RUN_STOP]));
+        assert_eq!(queues[1]["events"],json!([115]));
+        // Input arriving after an already sent permission still carries STOP
+        // before the raw command, so it cannot vanish into the next gate.
+        let mut c = gate();
+        c.queue(json!([rogue_contract::RG_KEY_TARGET_RUN_CONTINUE]), "autowalk");
+        c.stop_autowalk("input");
+        c.queue(json!([115]), "send");
+        assert_eq!(c.effects.last().unwrap()["events"],json!([rogue_contract::RG_KEY_TARGET_RUN_STOP,115]));
+    }
+    #[test]
+    fn restored_gate_without_route_is_released_without_moving() {
+        let mut c = gate();
+        c.schedule_autowalk();
+        c.schedule_autowalk();
+        assert_eq!(c.effects.len(),1);
+        assert_eq!(c.effects[0]["events"],json!([rogue_contract::RG_KEY_TARGET_RUN_STOP]));
+        assert_eq!(c.input["kind"],"run-boundary");
+        c.sync_model();
+        assert_eq!(c.model["input"]["kind"],"command");
+        assert_eq!(c.input["kind"],"run-boundary");
     }
 }

@@ -12,7 +12,7 @@ for(const locale of ['ja','en']) test('ordinary combat narration needs no Space 
  assert.deepEqual(live.final,legacy.final,'all twenty C words, including RNG, agree at next command');
  const saved=await runGame(module,{...config,text:undefined,messagePaging:'log',events:[...textEvents('ll'),SAVE_EVENT,...textEvents('l')]});
  const envelope=JSON.parse(saved.stores[0]);
- assert.equal(envelope.version,2);
+ assert.equal(envelope.version,3);
  assert.equal(envelope.presentation.input.message_paging,'log');
  assert.equal(envelope.inputs.includes(32),false,'no acknowledgement fabricated in journal');
  const resumed=await runGame(module,{locale,restore:saved.stores[0],text:'l'});

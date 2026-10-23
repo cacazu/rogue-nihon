@@ -72,18 +72,7 @@ missile(int ydelta, int xdelta)
      */
     if (moat(obj->o_pos.y, obj->o_pos.x) == NULL ||
 	!hit_monster(unc(obj->o_pos), obj))
-    {
-        /* A solid impact scatters from the last traversed square. Centering
-         * fall() inside the wall can place any thrown item through it. Keep
-         * doors, monster impacts and do_motion()'s magic-bolt contract intact. */
-        int ch = winat(obj->o_pos.y, obj->o_pos.x);
-        if (ch == ' ' || ch == '-' || ch == '|')
-        {
-            obj->o_pos.y -= ydelta;
-            obj->o_pos.x -= xdelta;
-        }
-        fall(obj, TRUE);
-    }
+	    fall(obj, TRUE);
 }
 
 /*

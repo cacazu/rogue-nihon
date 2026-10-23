@@ -196,7 +196,8 @@ void rg_test_apply_fixture(void)
             if (!strcmp(scenario,"door")) chat(10,12)=DOOR;
             if (!strncmp(scenario,"blocked",7)) {
                 hero.x=11; oldpos=hero;
-                for(y=9;y<=11;y++)for(x=10;x<=12;x++) chat(y,x)='|';
+                /* Block both the impact-centered and approach-side landing areas. */
+                for(y=9;y<=11;y++)for(x=10;x<=13;x++) chat(y,x)='|';
                 chat(hero.y,hero.x)=FLOOR;
             }
             if (strcmp(scenario,"v") && strcmp(scenario,"h") && strcmp(scenario,"d") &&
@@ -255,6 +256,23 @@ void rg_test_apply_fixture(void)
             if (cur_armor) cur_armor->o_arm=pstats.s_arm;
             if (!strcmp(name,"autowalk-death")) pstats.s_hpt=1;
             max_stats.s_arm=pstats.s_arm;
+        } else if (!strcmp(name,"autowalk-turn")) {
+            int x,y;
+            for (y=1;y<NUMLINES-1;y++) for (x=0;x<NUMCOLS;x++) {
+                chat(y,x)=' ';flat(y,x)=F_REAL;
+            }
+            rooms[0].r_flags=ISGONE;
+            proom=oldrp=&passages[0];
+            for (x=10;x<=14;x++) {chat(10,x)=PASSAGE;flat(10,x)=F_REAL|F_PASS;}
+            for (y=10;y<=15;y++) {chat(y,14)=PASSAGE;flat(y,14)=F_REAL|F_PASS;}
+            clear();
+            for (x=10;x<=14;x++) mvaddch(10,x,PASSAGE);
+            for (y=10;y<=15;y++) mvaddch(y,14,PASSAGE);
+            mvaddch(hero.y,hero.x,PLAYER);
+        } else if (!strcmp(name,"autowalk-haste")) {
+            player.t_flags |= ISHASTE;
+        } else if (!strcmp(name,"autowalk-no-command")) {
+            no_command=2;
         } else if (strcmp(name,"autowalk-clear")) abort();
     } else if (!strncmp(name, "item-use-", 9)) {
         char category[16], scenario[16] = "base";

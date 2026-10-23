@@ -17,10 +17,14 @@
 #include "rogue.h"
 #ifdef ROGUE_LAYERED
 #include "semantic.h"
+#include "core.h"
 #endif
 
 /* Persistent command state; accessors permit exact outer-boundary restore. */
 static char countch, direction, newcount = FALSE;
+#ifdef ROGUE_LAYERED
+static int target_run_active;
+#endif
 
 /*
  * command:
@@ -62,7 +66,11 @@ command()
 	status();
 	lastscore = purse;
 	move(hero.y, hero.x);
-	if (!((running || count) && jump))
+	if (!((running || count) && jump)
+#ifdef ROGUE_LAYERED
+            || target_run_active
+#endif
+        )
 	    refresh();			/* Draw screen */
 	take = 0;
 	after = TRUE;
@@ -73,8 +81,29 @@ command()
 	if (wizard)
 	    noscore = TRUE;
 #endif
+#ifdef ROGUE_LAYERED
+        if (target_run_active && (!running || no_command)) {
+            target_run_active = 0;
+            running = door_stop = FALSE;
+            rg_host_target_run_ended(no_command ? 1 : 0);
+        }
+#endif
 	if (!no_command)
 	{
+#ifdef ROGUE_LAYERED
+            if (target_run_active && running) {
+                int32_t control;
+                rg_core_pending(1);
+                control = rg_host_target_run_gate((unsigned char)runch);
+                rg_core_pending(0);
+                /* End the C lifetime only after the Rust callback returned. */
+                if (control < 0) { rg_core_set_outcome(-1,"input ended"); rg_core_exit(-1); }
+                if (control == RG_KEY_TARGET_RUN_STOP) {
+                    target_run_active = 0;
+                    running = door_stop = FALSE;
+                }
+            }
+#endif
 	    if (running || to_death)
 		ch = runch;
 	    else if (count)
@@ -82,6 +111,9 @@ command()
 	    else
 	    {
 		ch = readchar();
+#ifdef ROGUE_LAYERED
+                if (rg_host_take_target_run_start()) target_run_active = 1;
+#endif
 		move_on = FALSE;
 		if (mpos != 0)		/* Erase message if its there */
 		    msg("");
@@ -117,6 +149,15 @@ command()
 		    if (count > 255)
 			count = 255;
 		    ch = readchar();
+#ifdef ROGUE_LAYERED
+                    /* A new map target replaces an unfinished numeric prefix. */
+                    if (rg_host_take_target_run_start()) {
+                        target_run_active = 1;
+                        count = 0;
+                        newcount = FALSE;
+                        break;
+                    }
+#endif
 		}
 		countch = ch;
 		/*
@@ -477,6 +518,8 @@ over:
 }
 
 #ifdef ROGUE_LAYERED
+uint32_t rg_target_run_state_get(void) { return (uint32_t)target_run_active; }
+void rg_target_run_state_set(uint32_t active) { target_run_active = active != 0; }
 void rg_command_state_get(uint32_t *out) {
     out[0]=(unsigned char)countch;out[1]=(unsigned char)direction;out[2]=(unsigned char)newcount;
 }

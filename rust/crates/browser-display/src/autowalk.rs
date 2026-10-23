@@ -1,9 +1,10 @@
-//! One ordinary movement key per real input wait, over public map cells only.
+//! Public-route walking, or one permission per original C run boundary.
 use rogue_contract::*;
 use serde_json::{Value, json};
 use std::collections::VecDeque;
 
 pub(crate) const STEP_DELAY_MS: u32 = 100;
+pub(crate) const RUN_DELAY_MS: u32 = 30;
 type Point = (i32, i32);
 const DIRECTIONS: [(i32, i32, u32); 8] = [
     (-1,0,RG_KEY_LEFT),(1,0,RG_KEY_RIGHT),(0,-1,RG_KEY_UP),(0,1,RG_KEY_DOWN),
@@ -76,6 +77,8 @@ impl<'a> Map<'a> {
 #[derive(Default)]
 pub(crate) struct AutoWalk {
     target: Option<Point>,
+    mode: u32,
+    running: bool,
     epoch: Option<u64>,
     expected: Option<Point>,
     sent_request: Option<u64>,
@@ -86,6 +89,7 @@ pub(crate) struct AutoWalk {
 impl AutoWalk {
     pub fn stop(&mut self, reason: &'static str) -> bool {
         let active = self.target.take().is_some();
+        self.running = false;
         self.expected = None;
         self.sent_request = None;
         self.scheduled = None;
@@ -93,13 +97,14 @@ impl AutoWalk {
         active
     }
     pub fn active(&self) -> bool { self.target.is_some() }
-    pub fn start(&mut self, frame: &Value, target: &Value) {
+    pub fn start(&mut self, frame: &Value, target: &Value, mode: u32) {
         self.stop("replaced");
         self.reason = "unreachable";
         let Some(target) = point(target) else { return; };
         let Some(start) = point(&frame["player"]) else { return; };
         if start == target { self.reason = "arrived"; return; }
         if Map::new(frame).and_then(|m| m.next(start,target)).is_none() { return; }
+        self.mode = mode.min(2);
         self.target = Some(target);
         self.epoch = frame["map_actor_epoch"].as_u64();
         self.reason = "";
@@ -111,9 +116,13 @@ impl AutoWalk {
         }
         false
     }
-    pub fn schedule(&mut self, frame: &Value, request: u64) -> Option<Value> {
+    pub fn schedule(&mut self, frame: &Value, input: &Value, request: u64) -> Option<Value> {
         let target = self.target?;
         if self.sent_request == Some(request) || self.scheduled.is_some_and(|(_,r)| r == request) { return None; }
+        // A run which returned to command by itself must never restart.
+        if self.running && input["kind"] == "command" {
+            self.stop("natural"); return None;
+        }
         let here = point(&frame["player"])?;
         if let Some(expected) = self.expected.take() && here != expected {
             self.stop("blocked"); return None;
@@ -124,12 +133,12 @@ impl AutoWalk {
         }
         self.token = self.token.wrapping_add(1);
         self.scheduled = Some((self.token,request));
-        Some(json!({"kind":"autowalk-timer","token":self.token,"request":request,"delay":STEP_DELAY_MS}))
+        Some(json!({"kind":"autowalk-timer","token":self.token,"request":request,"delay":if self.mode == 0 { STEP_DELAY_MS } else { RUN_DELAY_MS }}))
     }
     pub fn accepts_tick(&self, token: u64) -> bool {
         self.scheduled.is_some_and(|(current,_)| current == token)
     }
-    pub fn tick(&mut self, frame: &Value, request: u64, token: u64) -> Option<u32> {
+    pub fn tick(&mut self, frame: &Value, input: &Value, request: u64, token: u64) -> Option<u32> {
         if self.scheduled != Some((token,request)) { return None; }
         self.scheduled = None;
         let target = self.target?;
@@ -137,12 +146,36 @@ impl AutoWalk {
         let Some((next,key)) = Map::new(frame).and_then(|m| m.next(here,target)) else {
             self.stop("unreachable"); return None;
         };
-        self.expected = Some(next);
+        let direction = match key {
+            RG_KEY_LEFT => b'h', RG_KEY_DOWN => b'j', RG_KEY_UP => b'k', RG_KEY_RIGHT => b'l',
+            RG_KEY_HOME => b'y', RG_KEY_PAGE_UP => b'u', RG_KEY_END => b'b', RG_KEY_PAGE_DOWN => b'n',
+            _ => return None,
+        };
+        let emitted = if input["kind"] == "run-boundary" {
+            if self.mode != 0 && input["direction"].as_u64() == Some(u64::from(direction)) {
+                self.expected = Some(next);
+                RG_KEY_TARGET_RUN_CONTINUE
+            } else {
+                // A turn is an intentional end of this original straight run.
+                // Only its subsequent ordinary command wait may start the next segment.
+                self.expected = Some(here);
+                self.running = false;
+                RG_KEY_TARGET_RUN_STOP
+            }
+        } else if self.mode != 0 {
+            self.expected = Some(here); // C has not moved before the first gate.
+            self.running = true;
+            RG_KEY_TARGET_RUN_BASE + (self.mode - 1) * 8
+                + b"hjklyubn".iter().position(|d| *d == direction)? as u32
+        } else {
+            self.expected = Some(next);
+            key
+        };
         self.sent_request = Some(request);
-        Some(key)
+        Some(emitted)
     }
     pub fn snapshot(&self) -> Value {
-        json!({"active":self.active(),"target":self.target.map(|(x,y)|json!({"x":x,"y":y})),
+        json!({"active":self.active(),"mode":self.mode,"target":self.target.map(|(x,y)|json!({"x":x,"y":y})),
             "reason":self.reason,"scheduled":self.scheduled.map(|(token,request)|json!({"token":token,"request":request}))})
     }
 }
@@ -158,29 +191,29 @@ mod tests {
     #[test]
     fn bounded_public_paths_and_single_request_cadence() {
         let mut f = frame(); let mut walk = AutoWalk::default();
-        walk.start(&f,&json!({"x":5.0,"y":2.0}));
-        let timer = walk.schedule(&f,1).unwrap();
+        walk.start(&f,&json!({"x":5.0,"y":2.0}),0);
+        let timer = walk.schedule(&f,&json!({"kind":"command"}),1).unwrap();
         assert_eq!(timer["delay"],100);
-        assert!(walk.schedule(&f,1).is_none());
+        assert!(walk.schedule(&f,&json!({"kind":"command"}),1).is_none());
         // A fresh manual-input boundary replaces a timer for an older wait.
-        let newer=walk.schedule(&f,2).unwrap();
-        assert!(walk.tick(&f,2,timer["token"].as_u64().unwrap()).is_none());
-        walk.stop("input");walk.start(&f,&json!({"x":5,"y":2}));
-        let timer=walk.schedule(&f,1).unwrap();
+        let newer=walk.schedule(&f,&json!({"kind":"command"}),2).unwrap();
+        assert!(walk.tick(&f,&json!({"kind":"command"}),2,timer["token"].as_u64().unwrap()).is_none());
+        walk.stop("input");walk.start(&f,&json!({"x":5,"y":2}),0);
+        let timer=walk.schedule(&f,&json!({"kind":"command"}),1).unwrap();
         assert!(newer["token"] != timer["token"]);
-        assert_eq!(walk.tick(&f,1,99),None);
-        assert_eq!(walk.tick(&f,1,timer["token"].as_u64().unwrap()),Some(RG_KEY_RIGHT));
-        assert!(walk.schedule(&f,1).is_none());
-        assert!(walk.schedule(&f,2).is_none());
+        assert_eq!(walk.tick(&f,&json!({"kind":"command"}),1,99),None);
+        assert_eq!(walk.tick(&f,&json!({"kind":"command"}),1,timer["token"].as_u64().unwrap()),Some(RG_KEY_RIGHT));
+        assert!(walk.schedule(&f,&json!({"kind":"command"}),1).is_none());
+        assert!(walk.schedule(&f,&json!({"kind":"command"}),2).is_none());
         assert_eq!(walk.snapshot()["reason"],"blocked");
         // A blank is not traversable, even when a hidden internal corridor could exist.
         f["map_cells"] = json!("        |......||@ ....||......||......|        ");
         let map = Map::new(&f).unwrap();
         assert!(!map.walkable((2,2),(2,2)));
-        walk.start(&f,&json!({"x":2,"y":2})); assert!(!walk.active());
-        walk.start(&f,&json!({"x":5,"y":2})); assert!(walk.active());
-        let timer=walk.schedule(&f,3).unwrap();walk.stop("input");
-        assert!(walk.tick(&f,3,timer["token"].as_u64().unwrap()).is_none());
+        walk.start(&f,&json!({"x":2,"y":2}),0); assert!(!walk.active());
+        walk.start(&f,&json!({"x":5,"y":2}),0); assert!(walk.active());
+        let timer=walk.schedule(&f,&json!({"kind":"command"}),3).unwrap();walk.stop("input");
+        assert!(walk.tick(&f,&json!({"kind":"command"}),3,timer["token"].as_u64().unwrap()).is_none());
     }
     #[test]
     fn diagonal_corners_enemies_and_scene_are_public() {
@@ -192,7 +225,53 @@ mod tests {
         f["map_underlays"]=json!([{"x":5,"y":2,"tile":1}]);
         let map=Map::new(&f).unwrap();assert!(map.next((1,2),(5,2)).is_some());
         assert!(!map.walkable((5,2),(6,2)));
-        let mut walk=AutoWalk::default();walk.start(&f,&json!({"x":5,"y":2}));
+        let mut walk=AutoWalk::default();walk.start(&f,&json!({"x":5,"y":2}),0);
         f["map_actor_epoch"]=json!(2);assert!(walk.observe(&f));assert!(!walk.active());
     }
+    fn fire(walk: &mut AutoWalk, f: &Value, input: &Value, request: u64) -> Option<u32> {
+        let timer=walk.schedule(f,input,request)?;
+        walk.tick(f,input,request,timer["token"].as_u64().unwrap())
+    }
+    #[test]
+    fn run_starts_without_motion_then_grants_each_original_step() {
+        let command=json!({"kind":"command"});
+        let boundary=json!({"kind":"run-boundary","direction":108});
+        for mode in [1,2] {
+            let mut f=frame();let mut walk=AutoWalk::default();
+            walk.start(&f,&json!({"x":3,"y":2}),mode);
+            assert_eq!(fire(&mut walk,&f,&command,1),Some(RG_KEY_TARGET_RUN_BASE+(mode-1)*8+3));
+            assert_eq!(fire(&mut walk,&f,&boundary,2),Some(RG_KEY_TARGET_RUN_CONTINUE));
+            f["player"]["x"]=json!(2);
+            assert_eq!(fire(&mut walk,&f,&boundary,3),Some(RG_KEY_TARGET_RUN_CONTINUE));
+            f["player"]["x"]=json!(3);
+            assert_eq!(fire(&mut walk,&f,&boundary,4),None);
+            assert_eq!(walk.snapshot()["reason"],"arrived");
+        }
+    }
+    #[test]
+    fn turns_require_stop_and_new_command_but_natural_stops_never_restart() {
+        let f=frame();let mut walk=AutoWalk::default();
+        let command=json!({"kind":"command"});
+        walk.start(&f,&json!({"x":5,"y":2}),2);
+        let start=RG_KEY_TARGET_RUN_BASE+8+3;
+        assert_eq!(fire(&mut walk,&f,&command,1),Some(start));
+        assert_eq!(fire(&mut walk,&f,&json!({"kind":"run-boundary","direction":104}),2),Some(RG_KEY_TARGET_RUN_STOP));
+        assert_eq!(fire(&mut walk,&f,&command,3),Some(start));
+        assert_eq!(fire(&mut walk,&f,&command,4),None);
+        assert_eq!(walk.snapshot()["reason"],"natural");
+        assert!(!walk.active());
+    }
+    #[test]
+    fn unexpected_original_movement_cancels_next_permission() {
+        let mut f=frame();let mut walk=AutoWalk::default();
+        let command=json!({"kind":"command"});
+        let gate=json!({"kind":"run-boundary","direction":108});
+        walk.start(&f,&json!({"x":5,"y":2}),1);
+        assert!(fire(&mut walk,&f,&command,1).is_some());
+        assert_eq!(fire(&mut walk,&f,&gate,2),Some(RG_KEY_TARGET_RUN_CONTINUE));
+        f["player"]=json!({"x":2,"y":3});
+        assert_eq!(fire(&mut walk,&f,&gate,3),None);
+        assert_eq!(walk.snapshot()["reason"],"blocked");
+    }
+
 }

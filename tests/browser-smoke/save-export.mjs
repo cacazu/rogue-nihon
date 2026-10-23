@@ -51,7 +51,7 @@ try{
     await page.waitForFunction(()=>__rogueBrowserTest.savedLength>0&&!__rogueBrowserTest.savePending);await paint();
     await page.waitForFunction(n=>__rogueBrowserTest.queuePending===0&&__rogueBrowserTest.inputRequestCount>n,before.input);
     const exportState=await state();assert.deepEqual(exportState.words,before.words);assert.equal(exportState.frameCount,before.frameCount);
-    const saved=Buffer.from(await persistedBytes());assert.equal(JSON.parse(saved).version,2);
+    const saved=Buffer.from(await persistedBytes());assert.equal(JSON.parse(saved).version,3);
     await check(label+" exports the exact saved bytes twice without C/RNG input",async()=>{
       for(let n=1;n<=2;n++){
         const pending=page.waitForEvent("download");await click("download-save",touch);const download=await pending;

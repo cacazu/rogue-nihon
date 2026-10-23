@@ -34,7 +34,8 @@ impl BrowserUi {
             self.mobile_repeat_count.to_string()
         } else { self.t("mobile.long_press") };
         let subtitle = if b(&self.view["coarse"]) { subtitle } else {
-            format!("{} {}{}", web_command(WebAction::RepeatCount).key, self.t("mobile.repeat_count"),
+            format!("{}{}", Widgets::shortcut_label(&self.t("mobile.repeat_count"),
+                self.pc_shortcut(web_command(WebAction::RepeatCount).key).as_deref()),
                 if self.mobile_repeat_configured {format!(": {}",self.mobile_repeat_count)} else {String::new()})
         };
         self.web_control(WebAction::Repeat,"touch-again", &format!("{}\n{subtitle}",self.t("mobile.repeat")), rect,

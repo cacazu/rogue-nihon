@@ -882,3 +882,56 @@ fn phone_direction_commands_use_the_pad_mode_and_selection_rows_are_not_game_com
     let selection=commands::GROUPS.iter().find(|(group,_)| *group=="commands.group.selection").unwrap();
     assert!(selection.1.iter().all(|entry| entry.phone_action.is_none()));
 }
+
+
+#[test]
+fn physical_directions_follow_selected_mode_without_changing_other_inputs() {
+    use rogue_contract::*;
+    let mut ui=BrowserUi::new(measure);
+    ui.render(shortcut_model(),view(1400.,1000.));
+    let send = |key| json!([{"kind":"send","key":key,"redraw":false}]);
+    for mode in 0..3 {
+        ui.mobile_movement=mode;
+        for (name,digit,letter,symbol) in [
+            ("ArrowUp",8,b'k',RG_KEY_UP),("ArrowDown",2,b'j',RG_KEY_DOWN),
+            ("ArrowLeft",4,b'h',RG_KEY_LEFT),("ArrowRight",6,b'l',RG_KEY_RIGHT),
+            ("Home",7,b'y',RG_KEY_HOME),("End",1,b'b',RG_KEY_END),
+            ("PageUp",9,b'u',RG_KEY_PAGE_UP),("PageDown",3,b'n',RG_KEY_PAGE_DOWN),
+        ] {
+            let expected=match mode {1=>u32::from(letter.to_ascii_uppercase()),2=>symbol|RG_EVENT_CTRL,_=>symbol};
+            for event in [json!({"type":"key","key":name}),
+                json!({"type":"key","key":name,"code":format!("Numpad{digit}")}),
+                json!({"type":"key","key":digit.to_string(),"code":format!("Numpad{digit}")})] {
+                assert_eq!(ui.event(event)["effects"],send(expected),"mode {mode}, {name}");
+            }
+            let expected=match mode {1=>u32::from(letter.to_ascii_uppercase()),2=>u32::from(letter)|RG_EVENT_CTRL,_=>u32::from(letter)};
+            assert_eq!(ui.event(json!({"type":"key","key":char::from(letter).to_string()}))["effects"],send(expected));
+            for (field,flag) in [("shiftKey",RG_EVENT_SHIFT),("ctrlKey",RG_EVENT_CTRL),("altKey",RG_EVENT_ALT)] {
+                let mut event=json!({"type":"key","key":name});event[field]=json!(true);
+                assert_eq!(ui.event(event)["effects"],send(symbol|flag),"{field}, mode {mode}");
+            }
+            assert_eq!(ui.event(json!({"type":"key","key":char::from(letter.to_ascii_uppercase()).to_string()}))["effects"],send(u32::from(letter.to_ascii_uppercase())));
+        }
+        for digit in 0..10 {
+            assert_eq!(ui.event(json!({"type":"key","key":digit.to_string(),"code":format!("Digit{digit}")}))["effects"],send(48+digit));
+        }
+        for key in ["5","Clear"] {
+            assert_eq!(ui.event(json!({"type":"key","key":key,"code":"Numpad5"}))["effects"],send(46));
+        }
+        for field in ["metaKey","composing","keyCode","native"] {
+            let mut event=json!({"type":"key","key":"ArrowRight"});
+            event[field]=match field {"keyCode"=>json!(229),"native"=>json!("prompt-text"),_=>json!(true)};
+            assert_eq!(ui.event(event)["effects"],json!([]),"{field}");
+        }
+    }
+    for kind in ["direction","item","confirm","text","space","enter"] {
+        let mut m=shortcut_model();m["input"]["kind"]=json!(kind);
+        ui.render(m,view(1400.,1000.));ui.mobile_movement=2;
+        for (key,expected) in [("ArrowRight",RG_KEY_RIGHT),("l",108)] {
+            assert_eq!(ui.event(json!({"type":"key","key":key}))["effects"],send(expected),"{kind}");
+        }
+    }
+    let mut m=shortcut_model();m["frame"]["ui"]["movement_direction"]=json!(true);
+    ui.render(m,view(1400.,1000.));ui.mobile_movement=2;
+    assert_eq!(ui.event(json!({"type":"key","key":"ArrowRight"}))["effects"],send(RG_KEY_RIGHT));
+}

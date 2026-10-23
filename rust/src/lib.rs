@@ -372,8 +372,12 @@ pub extern "C" fn rg_host_read_key() -> i32 {
             // Keep those actions suppressed until the first real input wait.
             engine::map_actor(rogue_display::map::ActorObservation::Replay(false));
             // The host waits on the Worker's SAB queue and does not update the game.
-            let raw = host::read_event() as u32;
-            match engine::decode(raw) {
+            let raw = engine::with_session_mut(|session| session.input.take_deferred_event())
+                .unwrap_or_else(|| host::read_event() as u32);
+            if target_run_start_key(raw as i32).is_some() && ui["input"]["kind"] == "command"
+                && !ui["window"].is_object() {
+                raw as i32
+            } else { match engine::decode(raw) {
                 input::Input::Key(key) => key,
                 input::Input::Save => {
                     persist();
@@ -386,16 +390,80 @@ pub extern "C" fn rg_host_read_key() -> i32 {
                     emit(&json!({"type":"presentation","ui":ui}));
                     continue;
                 }
-            }
+            } }
         };
+        // Validate every source, including journal replay, before setting a C start marker.
+        if target_run_start_key(key).is_some()
+            && (ui["input"]["kind"] != "command" || ui["window"].is_object()) {
+            notice("target-run journal context mismatch");
+            return -1;
+        }
+        // A boundary token can never become an ordinary char command, including replay.
+        if key == RG_KEY_TARGET_RUN_CONTINUE as i32 || key == RG_KEY_TARGET_RUN_STOP as i32 {
+            notice("target-run journal context mismatch");
+            return -1;
+        }
         let accepted = engine::accept_key(key);
         if !accepted {
             notice("input journal limit reached; restart from a safe checkpoint");
             return -1;
         }
         emit_input_context();
+        if let Some(original) = target_run_start_key(key) {
+            engine::with_session_mut(|session| session.input.mark_target_run_start());
+            return i32::from(original);
+        }
         return key;
     }
+}
+
+/// C consumes this marker after readchar has safely received an ordinary byte.
+#[unsafe(no_mangle)]
+pub extern "C" fn rg_host_take_target_run_start() -> i32 {
+    engine::with_session_mut(|session| i32::from(session.input.take_target_run_start()))
+}
+
+/// A target run pauses at the existing action boundary without re-running look or daemons.
+/// Only continue/stop are journalled here; a manual fallback is deferred to normal input.
+#[unsafe(no_mangle)]
+pub extern "C" fn rg_host_target_run_gate(direction: i32) -> i32 {
+    loop {
+        emit(&json!({"type":"input-context","input":{"kind":"run-boundary","direction":direction}}));
+        trace();
+        let replay = engine::with_session_mut(|session| session.platform.next_replay_key());
+        let control = if let Some(key) = replay {
+            if key != RG_KEY_TARGET_RUN_CONTINUE as i32 && key != RG_KEY_TARGET_RUN_STOP as i32 {
+                notice("target-run journal context mismatch");
+                return -1;
+            }
+            key
+        } else {
+            engine::map_actor(rogue_display::map::ActorObservation::Replay(false));
+            let raw = host::read_event() as u32;
+            match raw {
+                RG_KEY_TARGET_RUN_CONTINUE | RG_KEY_TARGET_RUN_STOP => raw as i32,
+                RG_KEY_SAVE => { persist(); continue; },
+                RG_KEY_END_INPUT => return -1,
+                _ => {
+                    engine::with_session_mut(|session| session.input.defer_event(raw));
+                    RG_KEY_TARGET_RUN_STOP as i32
+                }
+            }
+        };
+        if !engine::accept_key(control) {
+            notice("input journal limit reached; restart from a safe checkpoint");
+            return -1;
+        }
+        if control == RG_KEY_TARGET_RUN_STOP as i32 { emit_input_context(); }
+        return control;
+    }
+}
+
+/// Natural C stops end the whole target, rather than starting another run segment.
+#[unsafe(no_mangle)]
+pub extern "C" fn rg_host_target_run_ended(reason: i32) {
+    emit(&json!({"type":"target-run-ended","reason":if reason == 1 { "no-command" } else { "natural" }}));
+    emit_input_context();
 }
 
 /// Discards browser typeahead; semantic replay records already consumed in the
