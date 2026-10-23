@@ -28,10 +28,10 @@ impl BrowserUi {
         effects.push(json!({"kind":"native-focus","id":"repeat-count"}));
     }
 
-    pub(super) fn draw_repeat_button(&mut self, rect: Rect) {
+    pub(super) fn repeat_control(&mut self, id: &str, rect: Rect, action: Value, editing: bool) {
         let coarse = b(&self.view["coarse"]);
         let title = if coarse { self.t("mobile.repeat_title") } else {
-            Widgets::shortcut_label(&self.t("mobile.repeat"),self.pc_shortcut(web_command(WebAction::Repeat).key).as_deref())
+            Widgets::shortcut_label(&self.t("mobile.repeat"),self.command_shortcut("web.repeat").as_deref())
         };
         let subtitle = if coarse {
             if self.mobile_repeat_configured {
@@ -41,11 +41,13 @@ impl BrowserUi {
             }
         } else {
             let count = self.t("mobile.repeat_count_short").replace("{count}", &self.mobile_repeat_count.to_string());
-            format!("{}){count}", web_command(WebAction::RepeatCount).key)
+            Widgets::shortcut_label(&count, self.command_shortcut("web.repeat-count").as_deref())
         };
-        self.web_control(WebAction::Repeat,"touch-again", &format!("{title}\n{subtitle}"), rect,
-            ControlStyle { custom:true, key:Some(json!(97)), ..Default::default() });
-        self.widgets.begin_control_content(!self.web_available(WebAction::Repeat));
+        let disabled = !editing && !self.web_available(WebAction::Repeat);
+        self.control(id, &format!("{title}\n{subtitle}"), rect, action,
+            ControlStyle { custom:true, key:Some(json!(97)), disabled,
+                shortcut:if editing {None}else{self.command_shortcut("web.repeat")}, ..Default::default() });
+        self.widgets.begin_control_content(disabled);
         for (index, text) in [&title, &subtitle].into_iter().enumerate() {
             self.widgets.control_line(text, Rect::new(rect.x + 1., rect.y + index as f64 * rect.h / 2., rect.w - 2., rect.h / 2.),
                 LineStyle { text:TextStyle::new(17., TEXT, false), center:true, ellipsis:false }, self.measure);

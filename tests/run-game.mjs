@@ -49,12 +49,17 @@ export async function runGame(modulePath, config = {}) {
   const standalone = jsBytes === null;
   result.module = { javascript_sha256: standalone ? null : digest(jsBytes), wasm_sha256: digest(wasmBytes) };
   let position = 0;
+  let interruptPolls = 0;
   let module;
   // New Rust-declared imports pass borrowed addresses. Historical comparison
   // builds pass already copied values; support both only in this test harness.
   const bytes=(value,length)=>typeof value==='number'?module.HEAPU8.slice(value,value+length):value;
   const text=(value,length)=>typeof value==='number'?new TextDecoder().decode(bytes(value,length)):value;
   const host = globalThis.RogueHost = {
+    interruptEpoch() {
+      interruptPolls++;
+      return config.interruptAtPoll && interruptPolls >= config.interruptAtPoll ? 1 : 0;
+    },
     readEvent() {
       // Test-only legacy comparison: acknowledge the currently observed C More,
       // representing explicit reader responses, never production input injection.

@@ -76,247 +76,247 @@
     },
     "command.call.call_it": {
       "template": "call it: ",
-      "source": "command.c:925",
+      "source": "command.c:931",
       "function": "call",
       "note": "original English printf format"
     },
     "command.call.called": {
       "template": "called \"%s\"",
-      "source": "command.c:922",
+      "source": "command.c:928",
       "function": "call",
       "note": "original English printf format"
     },
     "command.call.that_has_already_been_identified": {
       "template": "that has already been identified",
-      "source": "command.c:915",
+      "source": "command.c:921",
       "function": "call",
       "note": "original English printf format"
     },
     "command.call.was": {
       "template": "Was ",
-      "source": "command.c:921",
+      "source": "command.c:927",
       "function": "call",
       "note": "original English printf format"
     },
     "command.call.what_do_you_want_to_call_it": {
       "template": "what do you want to call it? ",
-      "source": "command.c:927",
+      "source": "command.c:933",
       "function": "call",
       "note": "original English printf format"
     },
     "command.call.you_cant_call_that_anything": {
       "template": "you can't call that anything",
-      "source": "command.c:906",
+      "source": "command.c:912",
       "function": "call",
       "note": "original English printf format"
     },
     "command.command.food_left": {
       "template": "food left: %d",
-      "source": "command.c:441",
+      "source": "command.c:447",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.i_see": {
       "template": "I see ",
-      "source": "command.c:279",
+      "source": "command.c:285",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.inpack": {
       "template": "inpack = %d",
-      "source": "command.c:434",
+      "source": "command.c:440",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.no_monster_there": {
       "template": "no monster there",
-      "source": "command.c:280",
+      "source": "command.c:286",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.no_trap_there": {
       "template": "no trap there",
-      "source": "command.c:370",
+      "source": "command.c:376",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.not_wizard_any_more": {
       "template": "not wizard any more",
-      "source": "command.c:385",
+      "source": "command.c:391",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.nothing_here": {
       "template": "nothing here",
-      "source": "command.c:224",
+      "source": "command.c:230",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.number_number": {
       "template": "@ %d,%d",
-      "source": "command.c:432",
+      "source": "command.c:438",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.sorry": {
       "template": "sorry",
-      "source": "command.c:397",
+      "source": "command.c:403",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.string": {
       "template": "%s",
-      "source": "command.c:348",
+      "source": "command.c:354",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.there_is": {
       "template": "there is ",
-      "source": "command.c:223",
+      "source": "command.c:229",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.to_pick_up": {
       "template": " to pick up",
-      "source": "command.c:226",
+      "source": "command.c:232",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.version_mctesq_was_here": {
       "template": "version %s. (mctesq was here)",
-      "source": "command.c:355",
+      "source": "command.c:361",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.you_are_suddenly_as_smart_as_ken_arnold_in_dungeon": {
       "template": "you are suddenly as smart as Ken Arnold in dungeon #%d",
-      "source": "command.c:394",
+      "source": "command.c:400",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.you_can_move_again": {
       "template": "you can move again",
-      "source": "command.c:133",
+      "source": "command.c:136",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.you_have_found": {
       "template": "You have found ",
-      "source": "command.c:368",
+      "source": "command.c:374",
       "function": "command",
       "note": "original English printf format"
     },
     "command.command.you_havent_typed_a_command_yet": {
       "template": "you haven't typed a command yet",
-      "source": "command.c:305",
+      "source": "command.c:311",
       "function": "command",
       "note": "original English printf format"
     },
     "command.current.character_string": {
       "template": "%c) %s",
-      "source": "command.c:961",
+      "source": "command.c:967",
       "function": "current",
       "note": "original English printf format"
     },
     "command.current.nothing": {
       "template": "%s nothing",
-      "source": "command.c:971",
+      "source": "command.c:977",
       "function": "current",
       "note": "original English printf format"
     },
     "command.current.string": {
       "template": " %s",
-      "source": "command.c:964",
+      "source": "command.c:970",
       "function": "current",
       "note": "original English printf format"
     },
     "command.current.you_are": {
       "template": "you are %s (",
-      "source": "command.c:959",
+      "source": "command.c:965",
       "function": "current",
       "note": "original English printf format"
     },
     "command.current.you_are_trailing_space": {
       "template": "you are ",
-      "source": "command.c:970",
+      "source": "command.c:976",
       "function": "current",
       "note": "original English printf format"
     },
     "command.d_level.i_see_no_way_down": {
       "template": "I see no way down",
-      "source": "command.c:818",
+      "source": "command.c:824",
       "function": "d_level",
       "note": "original English printf format"
     },
     "command.help.character_you_want_help_for_for_all": {
       "template": "character you want help for (* for all): ",
-      "source": "command.c:643",
+      "source": "command.c:649",
       "function": "help",
       "note": "original English printf format"
     },
     "command.help.string_string": {
       "template": "%s%s",
-      "source": "command.c:666",
+      "source": "command.c:672",
       "function": "help",
       "note": "original English printf format"
     },
     "command.help.unknown_character": {
       "template": "unknown character '%s'",
-      "source": "command.c:670",
+      "source": "command.c:676",
       "function": "help",
       "note": "original English printf format"
     },
     "command.identify.string_string": {
       "template": "'%s': %s",
-      "source": "command.c:805",
+      "source": "command.c:811",
       "function": "identify",
       "note": "original English printf format"
     },
     "command.identify.what_do_you_want_identified": {
       "template": "what do you want identified? ",
-      "source": "command.c:765",
+      "source": "command.c:771",
       "function": "identify",
       "note": "original English printf format"
     },
     "command.illcom.illegal_command": {
       "template": "illegal command '%s'",
-      "source": "command.c:540",
+      "source": "command.c:546",
       "function": "illcom",
       "note": "original English printf format"
     },
     "command.levit_check.you_cant_youre_floating_off_the_ground": {
       "template": "You can't.  You're floating off the ground!",
-      "source": "command.c:861",
+      "source": "command.c:867",
       "function": "levit_check",
       "note": "original English printf format"
     },
     "command.search.a_secret_door": {
       "template": "a secret door",
-      "source": "command.c:576",
+      "source": "command.c:582",
       "function": "search",
       "note": "original English printf format"
     },
     "command.search.you_found": {
       "template": "you found ",
-      "source": "command.c:588",
+      "source": "command.c:594",
       "function": "search",
       "note": "original English printf format"
     },
     "command.u_level.i_see_no_way_up": {
       "template": "I see no way up",
-      "source": "command.c:848",
+      "source": "command.c:854",
       "function": "u_level",
       "note": "original English printf format"
     },
     "command.u_level.you_feel_a_wrenching_sensation_in_your_gut": {
       "template": "you feel a wrenching sensation in your gut",
-      "source": "command.c:843",
+      "source": "command.c:849",
       "function": "u_level",
       "note": "original English printf format"
     },
     "command.u_level.your_way_is_magically_blocked": {
       "template": "your way is magically blocked",
-      "source": "command.c:846",
+      "source": "command.c:852",
       "function": "u_level",
       "note": "original English printf format"
     },
@@ -892,37 +892,37 @@
     },
     "pack.get_item.for_list": {
       "template": "? (* for list): ",
-      "source": "pack.c:507",
+      "source": "pack.c:519",
       "function": "get_item",
       "note": "original English printf format"
     },
     "pack.get_item.is_not_a_valid_item": {
       "template": "'%s' is not a valid item",
-      "source": "pack.c:548",
+      "source": "pack.c:560",
       "function": "get_item",
       "note": "original English printf format"
     },
     "pack.get_item.what": {
       "template": " what",
-      "source": "pack.c:506",
+      "source": "pack.c:518",
       "function": "get_item",
       "note": "original English printf format"
     },
     "pack.get_item.which_object_do_you_want_to": {
       "template": "which object do you want to ",
-      "source": "pack.c:503",
+      "source": "pack.c:515",
       "function": "get_item",
       "note": "original English printf format"
     },
     "pack.get_item.you_arent_carrying_anything": {
       "template": "you aren't carrying anything",
-      "source": "pack.c:486",
+      "source": "pack.c:498",
       "function": "get_item",
       "note": "original English printf format"
     },
     "pack.get_item.you_ran_out": {
       "template": "you ran out",
-      "source": "pack.c:491",
+      "source": "pack.c:503",
       "function": "get_item",
       "note": "original English printf format"
     },
@@ -952,13 +952,13 @@
     },
     "pack.money.gold_pieces": {
       "template": "%d gold pieces",
-      "source": "pack.c:573",
+      "source": "pack.c:585",
       "function": "money",
       "note": "original English printf format"
     },
     "pack.money.you_found": {
       "template": "you found ",
-      "source": "pack.c:572",
+      "source": "pack.c:584",
       "function": "money",
       "note": "original English printf format"
     },
@@ -1000,37 +1000,37 @@
     },
     "pack.picky_inven.a": {
       "template": "a) %s",
-      "source": "pack.c:431",
+      "source": "pack.c:443",
       "function": "picky_inven",
       "note": "original English printf format"
     },
     "pack.picky_inven.character_string": {
       "template": "%c) %s",
-      "source": "pack.c:454",
+      "source": "pack.c:466",
       "function": "picky_inven",
       "note": "original English printf format"
     },
     "pack.picky_inven.item": {
       "template": "item: ",
-      "source": "pack.c:434",
+      "source": "pack.c:446",
       "function": "picky_inven",
       "note": "original English printf format"
     },
     "pack.picky_inven.not_in_pack": {
       "template": "'%s' not in pack",
-      "source": "pack.c:457",
+      "source": "pack.c:469",
       "function": "picky_inven",
       "note": "original English printf format"
     },
     "pack.picky_inven.which_item_do_you_wish_to_inventory": {
       "template": "which item do you wish to inventory: ",
-      "source": "pack.c:434",
+      "source": "pack.c:446",
       "function": "picky_inven",
       "note": "original English printf format"
     },
     "pack.picky_inven.you_arent_carrying_anything": {
       "template": "you aren't carrying anything",
-      "source": "pack.c:429",
+      "source": "pack.c:441",
       "function": "picky_inven",
       "note": "original English printf format"
     },

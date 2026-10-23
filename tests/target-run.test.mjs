@@ -119,3 +119,45 @@ function legacyDigest(saved){
  for(const key of saved.inputs)add(u32(key));add(u32(saved.input_index));
  return digest;
 }
+
+
+// New transport permissions retain the exact consumed v3 run journal.
+const permit=(steps,direction=3)=>0x130000+(steps-1)*8+direction;
+for(const mode of [1,2])for(const steps of [1,2])test('one permit advances exactly '+steps+' original run steps in mode '+mode,async()=>{
+ const expected=await runGame(module,{...cfg,events:[start(mode),...continuations(steps),STOP,46]});
+ const actual=await runGame(module,{...cfg,events:[start(mode),permit(steps),STOP,46]});
+ assert.deepEqual(actual.final,expected.final);
+ assert.equal(actual.final[3],10+steps,'start itself advances zero cells');
+ assert.equal(actual.consumed,4,'one raw permit replaces the step permissions');
+ if(steps>1)assert.ok(actual.frames.length<expected.frames.length,'intermediate frames are coalesced');
+});
+for(const mode of [1,2])test('natural C stop discards a long permit in mode '+mode,async()=>{
+ const actual=await runGame(module,{...cfg,events:[start(mode),permit(80),106,46]});
+ const expected=await runGame(module,{...cfg,events:[mode===1?76:0x100006c,106,46]});
+ assert.deepEqual(actual.final,expected.final);
+ assert.equal(actual.host_events.filter(e=>e.type==='target-run-ended').length,1);
+});
+test('manual shared transport interrupt stops the next original action without consuming the queued command twice',async()=>{
+ const actual=await runGame(module,{...cfg,interruptAtPoll:4,events:[start(1),permit(80),46]});
+ const expected=await runGame(module,{...cfg,events:[start(1),CONTINUE,STOP,46]});
+ assert.deepEqual(actual.final,expected.final);
+ assert.equal(actual.final[3],11);
+});
+test('saving after a permit stores only consumed original continue keys and resumes the live gate',async()=>{
+ const actual=await runGame(module,{...cfg,events:[start(1),permit(2),SAVE_EVENT,STOP,46]});
+ const saved=JSON.parse(actual.stores[0]);
+ assert.equal(saved.version,3);
+ assert.equal(saved.inputs.some(k=>k>=0x130000),false,'permission transport is never serialized');
+ const restored=await runGame(module,{...cfg,fixture:undefined,restore:actual.stores[0],events:[STOP,46]});
+ assert.deepEqual(restored.final,actual.final);
+ assert.equal(restored.traces[restored.reads[0].trace].words[3],12,'restore adds no action');
+});
+
+for(const fixture of ['autowalk-dragon-hit','autowalk-dragon-miss'])test('a long run permit preserves every original bolt drawing event: '+fixture,async()=>{
+ const actual=await runGame(module,{...cfg,seed:0,fixture,events:[start(1),permit(80),46]});
+ const expected=await runGame(module,{...cfg,seed:0,fixture,events:[start(1),CONTINUE,STOP,46]});
+ assert.deepEqual(actual.final,expected.final,'source interruption stops at the same C action');
+ const projectiles=result=>result.frames.flatMap(frame=>frame.map_projectile_events||[]);
+ assert.ok(projectiles(expected).some(event=>event.kind==='magic'),'fixture actually fires a dragon bolt');
+ assert.deepEqual(projectiles(actual),projectiles(expected),'coalescing must retain every important projectile frame');
+});

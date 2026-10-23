@@ -90,7 +90,11 @@ score(int amount, int flags, char monst)
     };
 
     start_score();
-    rg_ui_clear("score");
+#ifdef ROGUE_LAYERED
+    /* Quit's summary owns the ending scope through terminal cleanup. */
+    if (flags != 1)
+#endif
+        rg_ui_clear("score");
 
  if (flags >= 0
 #ifdef MASTER
@@ -98,13 +102,20 @@ score(int amount, int flags, char monst)
 #endif
         )
     {
-	mvaddstr(LINES - 1, 0 , "[Press return to continue]");
-        rg_ui_line("score", LINES - 1, 0, "ui.ending.return", "[]",
-            "[Press return to continue]");
-        refresh();
-        rg_ui_line("input", -2, 0, "input.show_score", "[]", "");
-        wgetnstr(stdscr,prbuf,80);
-        rg_ui_clear("input");
+#ifdef ROGUE_LAYERED
+        /* Quit already has its confirmation. Its empty pre-score screen has
+         * no result to acknowledge; retain all score and terminal cleanup. */
+        if (flags != 1)
+#endif
+        {
+            mvaddstr(LINES - 1, 0 , "[Press return to continue]");
+            rg_ui_line("score", LINES - 1, 0, "ui.ending.return", "[]",
+                "[Press return to continue]");
+            refresh();
+            rg_ui_line("input", -2, 0, "input.show_score", "[]", "");
+            wgetnstr(stdscr,prbuf,80);
+            rg_ui_clear("input");
+        }
  	endwin();
         printf("\n");
         resetltchars();
@@ -191,6 +202,9 @@ score(int amount, int flags, char monst)
 	putchar('\n');
     printf("Top %s %s:\n", Numname, allscore ? "Scores" : "Rogueists");
     printf("   Score Name\n");
+#ifdef ROGUE_LAYERED
+    if (flags == 1) rg_ui_clear("score");
+#endif
     rg_ending_line("score", 0, 0, "ui.score.heading", "Top %s %s:",
         Numname, allscore ? "Scores" : "Rogueists");
     rg_ui_line("score", 1, 0, "ui.score.columns", "[]", "   Score Name");

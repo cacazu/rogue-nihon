@@ -54,7 +54,7 @@ impl BrowserUi {
 
     pub(super) fn web_control(&mut self, action: WebAction, id: &str, label: &str, rect: Rect, mut style: ControlStyle<'_>) {
         let command = web_command(action);
-        style.shortcut = self.pc_shortcut(command.key);
+        style.shortcut = self.command_shortcut(commands::web_id(action));
         style.disabled |= !self.web_available(action);
         self.control(id, label, rect, json!({"kind":"web","id":command.id}), style);
     }
@@ -131,9 +131,7 @@ impl BrowserUi {
     }
 
     pub(super) fn web_modal_close_key(&self, event: &Value, action: WebAction) -> bool {
-        s(&event["key"]) == web_command(action).key && !b(&event["ctrlKey"])
-            && !b(&event["altKey"]) && !b(&event["metaKey"])
+        keybindings::KeyBinding::from_event(event).is_some_and(|key| self.command_bindings(commands::web_id(action)).contains(&key))
             && !b(&event["repeat"]) && s(&event["native"]).is_empty()
-            && !b(&event["composing"]) && n(&event["keyCode"]) != 229.
     }
 }

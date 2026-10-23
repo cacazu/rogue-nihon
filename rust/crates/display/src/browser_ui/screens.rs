@@ -111,7 +111,7 @@ impl BrowserUi {
             self.draw_dialog(game);
         }
         self.game_buttons(map);
-        if b(&self.model["settingsOpen"]) {
+        if b(&self.model["settingsOpen"]) && self.controls_editor.is_none() {
             self.draw_settings(game);
         }
     }

@@ -405,6 +405,18 @@ static void rg_item_choices(THING *list, int type)
     rg_ui_line("item_filter", 0, 0, "ui.text", "[]", filter ? filter : "all");
 }
 
+/* Publish the same public item descriptors before a command is consumed.
+ * Rust may browse them without inserting an inventory command or a look(). */
+void rg_command_item_choices(void)
+{
+    char saved_prbuf[2 * MAXSTR];
+    /* inv_name uses the original shared scratch buffer. Its public descriptor
+     * is copied synchronously, then the scratch bytes are restored. */
+    memcpy(saved_prbuf, prbuf, sizeof saved_prbuf);
+    rg_item_rows(pack, 0, "command_items");
+    memcpy(prbuf, saved_prbuf, sizeof saved_prbuf);
+}
+
 /* Observational inventory for Rust's item menu, including empty/single packs.
  * No look(), game mutation, RNG, or extra commands. C still executes actions. */
 void rg_inventory_browser(void)

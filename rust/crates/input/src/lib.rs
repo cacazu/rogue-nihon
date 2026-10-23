@@ -1,6 +1,7 @@
 //! Browser events become the original game's semantic keys here.
 use rogue_contract::*;
 pub mod inventory;
+pub mod target_run;
 mod state;
 pub use state::State;
 

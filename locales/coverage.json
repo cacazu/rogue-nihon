@@ -7,8 +7,8 @@
   "dynamic_calls": [
     {
       "file": "command.c",
-      "line": 372,
-      "end_line": 372,
+      "line": 378,
+      "end_line": 378,
       "function": "command",
       "call": "msg",
       "argument_count": 0,
@@ -17,8 +17,8 @@
     },
     {
       "file": "command.c",
-      "line": 374,
-      "end_line": 374,
+      "line": 380,
+      "end_line": 380,
       "function": "command",
       "call": "msg",
       "argument_count": 0,
@@ -27,8 +27,8 @@
     },
     {
       "file": "command.c",
-      "line": 590,
-      "end_line": 590,
+      "line": 596,
+      "end_line": 596,
       "function": "search",
       "call": "msg",
       "argument_count": 0,
@@ -37,8 +37,8 @@
     },
     {
       "file": "command.c",
-      "line": 592,
-      "end_line": 592,
+      "line": 598,
+      "end_line": 598,
       "function": "search",
       "call": "msg",
       "argument_count": 0,
@@ -147,8 +147,8 @@
     },
     {
       "file": "pack.c",
-      "line": 504,
-      "end_line": 504,
+      "line": 516,
+      "end_line": 516,
       "function": "get_item",
       "call": "addmsg",
       "argument_count": 0,

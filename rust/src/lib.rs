@@ -15,6 +15,7 @@ use rogue_platform as platform;
 use serde_json::{Value, json};
 use session::Session;
 use std::ffi::{CStr, CString, c_char};
+use std::cell::RefCell;
 
 unsafe extern "C" {
     fn rg_core_start(seed: u32, name: *const c_char) -> i32;
@@ -71,6 +72,25 @@ fn emit(value: &Value) {
     }
 }
 
+thread_local! { static RUN_FRAME: RefCell<Option<Value>> = const { RefCell::new(None) }; }
+fn flush_run_frame() {
+    if let Some(frame)=RUN_FRAME.with(|slot| slot.borrow_mut().take()) {emit(&frame);}
+}
+fn clear_run_permit() {
+    engine::with_session_mut(|session| session.input.target_run.clear());
+    flush_run_frame();
+}
+fn emit_game_frame(frame: Value) {
+    let important=frame["map_actor_events"].as_array().is_some_and(|events|
+        events.iter().any(|event| event["kind"] != "move"))
+        || frame["map_projectile_events"].as_array().is_some_and(|events| !events.is_empty());
+    if !important && engine::with_session(|session| session.input.target_run.coalescing()) {
+        RUN_FRAME.with(|slot| *slot.borrow_mut()=Some(frame));
+    } else {
+        flush_run_frame();
+        emit(&frame);
+    }
+}
 fn emit_input_context() {
     let ui = engine::render_ui();
     emit(&json!({"type":"input-context","input":ui["input"]}));
@@ -115,6 +135,7 @@ pub unsafe extern "C" fn rg_host_ui(
         )
     });
     if row < 0 && scope.to_bytes() == b"input" {
+        clear_run_permit();
         emit_input_context();
     }
 }
@@ -124,6 +145,7 @@ pub unsafe extern "C" fn rg_host_ui(
 /// `initial` is null or a readable NUL-terminated UTF-8 string during this call.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn rg_host_text_mode(enabled: i32, limit: u32, initial: *const c_char) {
+    clear_run_permit();
     let initial = if initial.is_null() {
         String::new()
     } else {
@@ -350,6 +372,7 @@ pub extern "C" fn rg_host_inventory_browser_enabled() -> i32 {
 /// Returns one original game key, consuming raw browser events in Rust.
 #[unsafe(no_mangle)]
 pub extern "C" fn rg_host_read_key() -> i32 {
+    clear_run_permit();
     let ui = engine::render_ui();
     emit(&json!({"type":"presentation","ui":ui}));
     trace();
@@ -410,7 +433,12 @@ pub extern "C" fn rg_host_read_key() -> i32 {
         }
         emit_input_context();
         if let Some(original) = target_run_start_key(key) {
-            engine::with_session_mut(|session| session.input.mark_target_run_start());
+            let sequence=engine::current_player_event_sequence();
+            let interrupt=host::interrupt_epoch();
+            engine::with_session_mut(|session| {
+                session.input.mark_target_run_start();
+                session.input.target_run.start(sequence,interrupt);
+            });
             return i32::from(original);
         }
         return key;
@@ -427,34 +455,54 @@ pub extern "C" fn rg_host_take_target_run_start() -> i32 {
 /// Only continue/stop are journalled here; a manual fallback is deferred to normal input.
 #[unsafe(no_mangle)]
 pub extern "C" fn rg_host_target_run_gate(direction: i32) -> i32 {
+    use input::target_run::Decision;
     loop {
-        emit(&json!({"type":"input-context","input":{"kind":"run-boundary","direction":direction}}));
-        trace();
-        let replay = engine::with_session_mut(|session| session.platform.next_replay_key());
-        let control = if let Some(key) = replay {
-            if key != RG_KEY_TARGET_RUN_CONTINUE as i32 && key != RG_KEY_TARGET_RUN_STOP as i32 {
-                notice("target-run journal context mismatch");
-                return -1;
+        let replay=engine::with_session_mut(|session| session.platform.next_replay_key());
+        let control=if let Some(key)=replay {
+            emit(&json!({"type":"input-context","input":{"kind":"run-boundary","direction":direction}}));
+            trace();
+            if key!=RG_KEY_TARGET_RUN_CONTINUE as i32 && key!=RG_KEY_TARGET_RUN_STOP as i32 {
+                notice("target-run journal context mismatch");return -1;
             }
             key
         } else {
-            engine::map_actor(rogue_display::map::ActorObservation::Replay(false));
-            let raw = host::read_event() as u32;
-            match raw {
-                RG_KEY_TARGET_RUN_CONTINUE | RG_KEY_TARGET_RUN_STOP => raw as i32,
-                RG_KEY_SAVE => { persist(); continue; },
-                RG_KEY_END_INPUT => return -1,
-                _ => {
-                    engine::with_session_mut(|session| session.input.defer_event(raw));
-                    RG_KEY_TARGET_RUN_STOP as i32
+            let frame=engine::cached_frame().unwrap_or(Value::Null);
+            let sequence=engine::current_player_event_sequence();
+            let interrupt=host::interrupt_epoch();
+            let decision=engine::with_session_mut(|session| session.input.target_run
+                .decision(&frame,direction as u8,sequence,interrupt));
+            match decision {
+                Decision::Continue => RG_KEY_TARGET_RUN_CONTINUE as i32,
+                Decision::Stop => {flush_run_frame();RG_KEY_TARGET_RUN_STOP as i32},
+                Decision::Wait => {
+                    flush_run_frame();
+                    emit(&json!({"type":"input-context","input":{"kind":"run-boundary","direction":direction}}));
+                    trace();
+                    engine::map_actor(rogue_display::map::ActorObservation::Replay(false));
+                    let raw=host::read_event() as u32;
+                    if target_run_permit(raw).is_some() {
+                        let granted=engine::with_session_mut(|session| session.input.target_run
+                            .grant(raw,&frame,direction as u8));
+                        if granted {continue;}
+                        RG_KEY_TARGET_RUN_STOP as i32
+                    } else {
+                        match raw {
+                            RG_KEY_TARGET_RUN_CONTINUE | RG_KEY_TARGET_RUN_STOP => raw as i32,
+                            RG_KEY_SAVE => {persist();continue;},
+                            RG_KEY_END_INPUT => return -1,
+                            _ => {
+                                engine::with_session_mut(|session| session.input.defer_event(raw));
+                                RG_KEY_TARGET_RUN_STOP as i32
+                            }
+                        }
+                    }
                 }
             }
         };
         if !engine::accept_key(control) {
-            notice("input journal limit reached; restart from a safe checkpoint");
-            return -1;
+            notice("input journal limit reached; restart from a safe checkpoint");return -1;
         }
-        if control == RG_KEY_TARGET_RUN_STOP as i32 { emit_input_context(); }
+        if control==RG_KEY_TARGET_RUN_STOP as i32 {clear_run_permit();emit_input_context();}
         return control;
     }
 }
@@ -462,6 +510,7 @@ pub extern "C" fn rg_host_target_run_gate(direction: i32) -> i32 {
 /// Natural C stops end the whole target, rather than starting another run segment.
 #[unsafe(no_mangle)]
 pub extern "C" fn rg_host_target_run_ended(reason: i32) {
+    clear_run_permit();
     emit(&json!({"type":"target-run-ended","reason":if reason == 1 { "no-command" } else { "natural" }}));
     emit_input_context();
 }
@@ -514,7 +563,7 @@ pub unsafe extern "C" fn rg_host_present(cells: *const u8, rows: u32, columns: u
         );
     });
     let value = engine::present(value);
-    emit(&value);
+    emit_game_frame(value);
 }
 
 /// Tags a bolt that C has already drawn, without looking up hidden terrain.
@@ -690,6 +739,7 @@ pub unsafe extern "C" fn rg_host_restore_data(out: *mut *const u8, length: *mut 
 /// `message` is null or a readable NUL-terminated string during this call.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn rg_host_outcome(code: i32, message: *const c_char) {
+    clear_run_permit();
     let text = if message.is_null() {
         "".into()
     } else {

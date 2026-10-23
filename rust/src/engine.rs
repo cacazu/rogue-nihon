@@ -153,6 +153,9 @@ pub(crate) fn present(frame: Value) -> Value {
     })
 }
 /// Presentation metadata is reset with this instance and excluded from saves.
+pub(crate) fn current_player_event_sequence() -> u64 {
+    RUNTIME.with(|runtime| runtime.borrow().player_event_sequence)
+}
 pub(crate) fn player_event_sequence() -> u64 {
     RUNTIME.with(|runtime| {
         let mut runtime = runtime.borrow_mut();
@@ -188,7 +191,6 @@ pub(crate) fn map_actor(observation: rogue_display::map::ActorObservation) {
 pub(crate) fn map_projectile(observation: rogue_display::projectile::Observation) {
     map_actor(rogue_display::map::ActorObservation::Projectile(observation));
 }
-#[cfg(feature = "test-hooks")]
 pub(crate) fn cached_frame() -> Option<Value> {
     RUNTIME.with(|runtime| {
         let mut runtime = runtime.borrow_mut();

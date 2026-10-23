@@ -47,6 +47,33 @@ mod movement_tests {
         }
     }
 }
+/// Decode transport permission without admitting it into the journal.
+pub fn target_run_permit(raw: u32) -> Option<(u8, u32)> {
+    let index = raw.checked_sub(RG_KEY_TARGET_RUN_PERMIT_BASE)?;
+    let steps = index / 8 + 1;
+    (steps <= RG_TARGET_RUN_PERMIT_MAX_STEPS).then(|| (b"hjklyubn"[(index % 8) as usize], steps))
+}
+pub fn target_run_permit_key(direction: u8, steps: u32) -> Option<u32> {
+    if !(1..=RG_TARGET_RUN_PERMIT_MAX_STEPS).contains(&steps) { return None; }
+    let index = b"hjklyubn".iter().position(|v| *v == direction)? as u32;
+    Some(RG_KEY_TARGET_RUN_PERMIT_BASE + (steps - 1) * 8 + index)
+}
+#[cfg(test)]
+mod permit_tests {
+    use super::*;
+    #[test]
+    fn transport_grants_are_bounded_and_never_journal_keys() {
+        for direction in b"hjklyubn" { for steps in 1..=80 {
+            let key=target_run_permit_key(*direction,steps).unwrap();
+            assert_eq!(target_run_permit(key),Some((*direction,steps)));
+            assert!(!target_run_journal_key(key as i32));
+        }}
+        assert!(target_run_permit_key(b'l',0).is_none());
+        assert!(target_run_permit_key(b'l',81).is_none());
+        assert!(target_run_permit(RG_KEY_TARGET_RUN_PERMIT_BASE-1).is_none());
+        assert!(target_run_permit(RG_KEY_TARGET_RUN_PERMIT_BASE+640).is_none());
+    }
+}
 /// Only these dedicated journal values may cross the target-run boundary.
 pub fn target_run_start_key(key: i32) -> Option<u8> {
     let index = key.checked_sub(RG_KEY_TARGET_RUN_BASE as i32)?;

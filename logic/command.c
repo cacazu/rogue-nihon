@@ -110,6 +110,9 @@ command()
 		ch = countch;
 	    else
 	    {
+#ifdef ROGUE_LAYERED
+                rg_command_item_choices();
+#endif
 		ch = readchar();
 #ifdef ROGUE_LAYERED
                 if (rg_host_take_target_run_start()) target_run_active = 1;
@@ -148,6 +151,9 @@ command()
 		    count = count * 10 + (ch - '0');
 		    if (count > 255)
 			count = 255;
+#ifdef ROGUE_LAYERED
+                    rg_command_item_choices();
+#endif
 		    ch = readchar();
 #ifdef ROGUE_LAYERED
                     /* A new map target replaces an unfinished numeric prefix. */

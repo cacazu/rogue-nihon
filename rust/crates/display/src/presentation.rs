@@ -139,6 +139,7 @@ impl Presentation {
         let mut status = Value::Null;
         let mut more = Value::Null;
         let mut ranged = json!({"bow":false,"arrow_key":0});
+        let mut command_items = Vec::new();
         let mut missing = Vec::new();
         let mut mode = "game";
         let inventory = self.lines.iter().any(|line| line["scope"] == "browse");
@@ -168,7 +169,7 @@ impl Presentation {
                 continue;
             }
             let mut value = Self::translated(line, language, name);
-            if (line["scope"] == "choices" || line["scope"] == "inventory")
+            if (line["scope"] == "choices" || line["scope"] == "inventory" || line["scope"] == "command_items")
                 && line["id"] == "ui.inventory.entry"
                 && let Some(key) = line["args"][0]["value"]
                     .as_u64()
@@ -179,6 +180,10 @@ impl Presentation {
             }
             if let Some(ids) = value["missing_ids"].as_array() {
                 missing.extend(ids.iter().cloned());
+            }
+            if line["scope"] == "command_items" {
+                command_items.push(value);
+                continue;
             }
             match line["scope"].as_str().unwrap_or("") {
                 "game"
@@ -251,7 +256,33 @@ impl Presentation {
         }
         let mut ui = json!({"mode":mode,"inventory":inventory,"movement_direction":movement_direction,"ranged":ranged,"lines":lines,"status":status,"more":more,"name":name,"input":input,"message":message,
             "fallback_used":!missing.is_empty(),"missing_ids":missing});
+        ui["command_items"] = if ui["input"]["kind"] == "command" { json!(command_items) } else { json!([]) };
         ui["window"] = crate::game_window::render(&ui, language);
         ui
+    }
+}
+
+#[cfg(test)]
+mod command_items_tests {
+    use super::*;
+    #[test]
+    fn command_descriptors_never_become_dungeon_lines_or_history_and_clear_cleanly() {
+        let mut p=Presentation::default();
+        p.update("command_items",0,0,"ui.inventory.entry",json!([
+            {"kind":"char","value":97},{"kind":"entity","value":{
+                "type":"item","category":"weapon","category_code":41,"which":0,"count":1,
+                "known":true,"identified":false,"equipped":"none","visible_fields":{}}}
+        ]),"a) A mace");
+        let shown=p.render("ja","Player");
+        assert_eq!(shown["command_items"][0]["key"],"a");
+        assert_eq!(shown["command_items"][0]["selectable"],true);
+        assert_eq!(shown["lines"],json!([]));
+        assert!(shown["window"].is_null());
+        assert!(p.history.is_empty());
+        p.update("input",-2,0,"input.choose_direction",json!([]),"");
+        assert_eq!(p.render("ja","Player")["command_items"],json!([]));
+        p.update("command_items",-1,0,"",json!([]),"");
+        p.update("input",-1,0,"",json!([]),"");
+        assert_eq!(p.render("ja","Player")["command_items"],json!([]));
     }
 }

@@ -321,7 +321,7 @@ mod tests {
         let saved = Envelope::new_with_presentation(7,"Player".into(),&[1],keys.clone(),5,view.clone()).unwrap();
         assert_eq!(saved.version,3);
         assert_eq!(Envelope::parse(&saved.bytes().unwrap()).unwrap().inputs,keys);
-        for invalid in [-1,256,(RG_KEY_TARGET_RUN_BASE-1) as i32,(RG_KEY_TARGET_RUN_STOP+1) as i32] {
+        for invalid in [-1,256,RG_KEY_SELECT_THROW as i32,RG_KEY_SELECT_ZAP as i32,(RG_KEY_TARGET_RUN_BASE-1) as i32,(RG_KEY_TARGET_RUN_STOP+1) as i32] {
             assert!(Envelope::new_with_presentation(7,"Player".into(),&[1],vec![invalid],1,view.clone()).is_err());
         }
         for version in [1,2] {

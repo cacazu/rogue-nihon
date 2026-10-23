@@ -31,6 +31,7 @@ node tests/run.mjs --keep-artifacts --env ROGUE_MOBILE_WINDOWS_WASM=build/game-f
 |---|---|
 | `canvas.mjs` | PC・スマホ・日英の開始、単一Canvas、持ち物・ヘルプ・設定、IME編集、保存復元、終了、全画面、フッターのリンク |
 | `desktop-dock.mjs` | PC下部の方向・主要操作とキー表記、Web操作の厳密大小shortcut・パッド非表示時の入力・無効射撃・設定回数Eと原作aの区別、700px以上の日英配置と地図・ログの分離、実クリックから探索・待機・武器変更・投射・杖の方向取消・射撃・繰返し、履歴・設定・持ち物の背景遮断、全体図・全画面・PC/スマホ切替、旧UI/通常キーとのC・RNG比較。`ROGUE_PC_DOCK_BEFORE` に変更前buildを含む作品コピーを指定可能。 |
+| `control-customization.mjs` | PC・スマホの配置／コマンド編集、ボタン交換・パッド列交換、決定・取消・項目別の既定復元、保存再読込・画面種別の分離、編集中のゲーム入力遮断、PCのボタン起点・キーボード起点の方向選択。 |
 | `handedness-controls.mjs` | PC1400/700・スマホ390/320の日英表示、利き手の切替・保存復元、自然なパッド方位と非表示時の方向選択、PC常設13操作と品物選択・取消・実使用、状況別操作の併存とスマホの強調、Cの20 word・入力位置の保持 |
 | `mobile-ui.mjs` | スマホのトップ・開始/保存/トップからのロード、開始直後からの操作パッド、48px以上の新規ターゲット、操作一覧の全コマンド・ボタン上スワイプ・背景入力遮断、広域・全画面のC/RNG不変、320px縦/横表示、PC幅への復帰 |
 | `wording-catalog.mjs` | 全C出力箇所のID・引数を実C→Rustで検査、全557文言ID、動的名・個数・数値・未鑑定品、スマホの2行ログと全履歴・PC・日英、翻訳失敗と引数不足の負例 |
@@ -72,6 +73,7 @@ node tests/run.mjs --keep-artifacts --env ROGUE_MOBILE_WINDOWS_WASM=build/game-f
 | `inventory-actions.mjs / context-controls.mjs / item-selection.mjs / throw-direction.mjs` | コマンドと後続入力、状態別候補、方向・手・文字・識別、取消後の復帰 |
 | `pixels-v2.mjs / wall-blocks.mjs / underfoot.mjs` | 現行画像、倍率、壁・足元・重ね順、クリック移動 |
 | `touch-input.mjs / lan.mjs` | タッチ入力、スマホ縦横、LAN HTTPS |
+| `quit-flow.mjs` | 配布用UI・通常WasmだけでPCのクリックとスマホのタップから設定→冒険終了→はいを実行し、追加キーなしの得点画面表示と、得点前の空画面待ちがないことを確認。`ROGUE_QUIT_OUTPUT` で画像と記録の出力先を指定 |
 | `top-screen.mjs / ending-screens.mjs / combat-log.mjs / playthrough-fixes.mjs` | トップ復帰、終了経路、通常ログ、ゲーム不具合の再現 |
 | `session-rng.mjs` | 表示操作のC/RNG不変、指定した旧buildとの比較 |
 

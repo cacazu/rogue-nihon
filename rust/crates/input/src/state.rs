@@ -13,6 +13,7 @@ pub struct State {
     text_pending: VecDeque<i32>,
     current_text: Option<String>,
     target_run_start: bool,
+    pub target_run: crate::target_run::Permit,
     deferred_event: Option<u32>,
 }
 
@@ -85,6 +86,9 @@ impl State {
 
     pub fn decode(&mut self, raw: u32, ui: &Value, window_open: bool) -> Input {
         let scalar = raw & RG_EVENT_SCALAR_MASK;
+        if raw == RG_KEY_SELECT_THROW || raw == RG_KEY_SELECT_ZAP {
+            return self.inventory.select_first(if raw == RG_KEY_SELECT_THROW { 116 } else { 122 }, ui);
+        }
         if raw == RG_KEY_FIRE {
             return self.inventory.fire(ui);
         }
@@ -146,5 +150,82 @@ impl State {
                 self.current_text = Some(text);
             }
         }
+    }
+}
+#[cfg(test)]
+mod item_first_tests {
+    use super::*;
+    use rogue_display::{inventory, presentation::Presentation};
+    use serde_json::json;
+
+    fn ready() -> Value {
+        json!({"input":{"kind":"command"},"mode":"game","lines":[],"window":null,
+            "command_items":[
+                {"scope":"command_items","key":"a","selectable":true,"id":"ui.inventory.entry","args":[{"value":97},{"value":{"type":"item","category":"weapon","equipped":"none"}}]},
+                {"scope":"command_items","key":"b","selectable":true,"id":"ui.inventory.entry","args":[{"value":98},{"value":{"type":"item","category":"stick","equipped":"none"}}]}
+            ]})
+    }
+    fn wait(kind: &str) -> Presentation {
+        Presentation { input: json!({"kind":kind}), lines: vec![
+            json!({"scope":"choices","args":[{"value":97}]}),
+            json!({"scope":"choices","args":[{"value":98}]})
+        ], ..Default::default() }
+    }
+    #[test]
+    fn pc_item_first_selects_before_c_then_reserves_exactly_one_original_item_key() {
+        for (event,command,item) in [(RG_KEY_SELECT_THROW,116,97),(RG_KEY_SELECT_ZAP,122,98)] {
+            let mut state=State::default();let ui=ready();
+            assert_eq!(state.decode(event,&ui,false),Input::View);
+            let mut shown=ui.clone();inventory::decorate(&state.inventory.view(),&mut shown,"ja");
+            assert_eq!(shown["input"]["kind"],"item");
+            assert_eq!(state.decode(item as u32,&ui,true),Input::Key(command));
+            state.accepted(command);
+            assert_eq!(state.inventory.next_key(&wait("direction")),None);
+            assert_eq!(state.inventory.next_key(&wait("item")),Some(item));
+            assert_eq!(state.inventory.next_key(&wait("item")),None);
+        }
+    }
+    #[test]
+    fn cancelling_pc_preselection_never_sends_a_c_command_or_item() {
+        let mut state=State::default();let ui=ready();
+        assert_eq!(state.decode(RG_KEY_SELECT_THROW,&ui,false),Input::View);
+        assert_eq!(state.decode(27,&ui,true),Input::View);
+        assert_eq!(state.inventory.next_key(&wait("command")),None);
+        assert_eq!(state.decode(46,&ui,false),Input::Key(46));
+    }
+    #[test]
+    fn phone_raw_commands_and_non_command_contexts_keep_existing_meaning() {
+        for command in [116,122] {
+            assert_eq!(State::default().decode(command,&ready(),false),Input::Key(command as i32));
+        }
+        for kind in ["item","text","direction","confirm","space","enter"] {
+            let mut ui=ready();ui["input"]["kind"]=json!(kind);
+            for event in [RG_KEY_SELECT_THROW,RG_KEY_SELECT_ZAP] {
+                assert_eq!(State::default().decode(event,&ui,true),Input::Ignore);
+            }
+        }
+    }
+    #[test]
+    fn preselection_filters_zap_and_rejects_a_removed_candidate() {
+        let mut state=State::default();let mut ui=ready();
+        assert_eq!(state.decode(RG_KEY_SELECT_ZAP,&ui,false),Input::View);
+        assert_eq!(state.decode(97,&ui,true),Input::Ignore);
+        ui["command_items"]=json!([]);
+        assert_eq!(state.decode(98,&ui,true),Input::Ignore);
+        assert_eq!(state.decode(27,&ui,true),Input::View);
+        assert_eq!(state.inventory.next_key(&wait("command")),None);
+    }
+    #[test]
+    fn selected_direction_intent_restores_but_unsubmitted_item_selection_does_not() {
+        let mut state=State::default();let ui=ready();
+        assert_eq!(state.decode(RG_KEY_SELECT_THROW,&ui,false),Input::View);
+        let mut saved=serde_json::to_value(wait("command")).unwrap();
+        state.inventory.mark(&mut saved);
+        assert!(saved["input"]["inventory_intent"].is_null());
+        assert_eq!(state.decode(97,&ui,true),Input::Key(116));state.accepted(116);
+        let mut saved=serde_json::to_value(wait("direction")).unwrap();state.inventory.mark(&mut saved);
+        let mut restored=crate::inventory::Inventory::restore(&mut saved,7);
+        assert_eq!(restored.next_key(&wait("direction")),None);
+        assert_eq!(restored.next_key(&wait("item")),Some(97));
     }
 }

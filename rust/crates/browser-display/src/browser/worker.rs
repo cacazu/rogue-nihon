@@ -13,6 +13,7 @@ thread_local! {
 struct Callbacks {
     read: Closure<dyn FnMut() -> Result<i32, JsValue>>,
     flush: Closure<dyn FnMut() -> Result<(), JsValue>>,
+    interrupt: Closure<dyn FnMut() -> Result<i32, JsValue>>,
     present: Closure<dyn FnMut(u32, u32) -> Result<(), JsValue>>,
     store: Closure<dyn FnMut(u32, u32) -> Result<(), JsValue>>,
     outcome: Closure<dyn FnMut(i32, u32, u32) -> Result<(), JsValue>>,
@@ -98,6 +99,7 @@ async fn run(start: JsValue) -> Result<(), JsValue> {
     QUEUE.with(|slot| *slot.borrow_mut() = Some(transport));
     let callbacks = Callbacks {
         read: Closure::new(|| { post(json!({"type":"input-request"}))?; queue()?.take() }),
+        interrupt: Closure::new(|| Ok(queue()?.interrupt_epoch()? as i32)),
         flush: Closure::new(|| {
             let events = queue()?.discard()?;
             if !events.is_empty() { post(json!({"type":"input-flush","count":events.len(),"events":events}))?; }
@@ -131,6 +133,7 @@ async fn run(start: JsValue) -> Result<(), JsValue> {
     let host = Object::new();
     for (name, function) in [
         ("read_event", callbacks.read.as_ref()), ("flush_input", callbacks.flush.as_ref()),
+        ("interrupt_epoch", callbacks.interrupt.as_ref()),
         ("present", callbacks.present.as_ref()), ("store", callbacks.store.as_ref()),
         ("outcome", callbacks.outcome.as_ref()), ("clock_milliseconds", callbacks.clock.as_ref()),
         ("diagnostic", callbacks.diagnostic.as_ref()), ("calendar_year", callbacks.year.as_ref()),

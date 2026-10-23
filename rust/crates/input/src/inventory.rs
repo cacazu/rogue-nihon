@@ -14,6 +14,7 @@ pub struct Inventory {
     pending: Option<Pending>,
     legacy_until: Option<u32>,
     restored_pending: Option<Pending>,
+    item_first: Option<(i32, bool)>,
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -111,7 +112,17 @@ impl Inventory {
         InventoryView {
             selected: self.selected.clone(),
             details: self.details,
+            item_first: self.item_first,
         }
+    }
+
+    /// PC explicitly requests this view. Raw t/z (including phone and replay)
+    /// retain their existing original direction-first interpretation.
+    pub fn select_first(&mut self, command: i32, ui: &Value) -> Input {
+        if ui["input"]["kind"] != "command" || ui["window"].is_object()
+            || !matches!(command, 116 | 122) { return Input::Ignore; }
+        self.item_first = Some((command, false));
+        Input::View
     }
 
     /// Reuse the inventory throw intent, selecting arrows only at C's item wait.
@@ -129,6 +140,28 @@ impl Inventory {
     /// Handle keys before the C acknowledgement adapter, so Escape navigates
     /// back inside Rust instead of inadvertently dismissing the C inventory wait.
     pub fn handle(&mut self, key: i32, ui: &Value) -> Option<Input> {
+        if let Some((command, _)) = self.item_first {
+            if ui["input"]["kind"] != "command" {
+                self.item_first = None;
+                return Some(Input::Ignore);
+            }
+            if key == 27 {
+                self.item_first = None;
+                return Some(Input::View);
+            }
+            if key == 42 {
+                self.item_first = Some((command, true));
+                return Some(Input::View);
+            }
+            let found = ui["command_items"].as_array().is_some_and(|rows| rows.iter().any(|row| {
+                row["key"].as_str().is_some_and(|value| value.as_bytes() == [key as u8])
+                    && (command != 122 || descriptor(row)["category"] == "stick")
+            }));
+            if !found { return Some(Input::Ignore); }
+            self.item_first = None;
+            self.pending = Some(Pending { command, item:key, hand:None, started:true });
+            return Some(Input::Key(command));
+        }
         if ui["inventory"] != true {
             return None;
         }

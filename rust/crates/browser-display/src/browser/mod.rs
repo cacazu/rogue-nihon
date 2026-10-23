@@ -254,6 +254,7 @@ async fn start_main(window: Window, document: Document) -> Result<(), JsValue> {
     let preference = storage
         .as_ref()
         .and_then(|s| s.get_item("rogue-map-display-v1").ok().flatten());
+    let controls = storage.as_ref().and_then(|s|s.get_item("rogue-controls-v1").ok().flatten());
     let inventory = storage
         .as_ref()
         .and_then(|s| s.get_item("rogue-inventory-view-v1").ok().flatten());
@@ -262,7 +263,7 @@ async fn start_main(window: Window, document: Document) -> Result<(), JsValue> {
         .as_bool()
         .unwrap_or(false)
         && !Reflect::get(&host.window, &JsValue::from_str("SharedArrayBuffer"))?.is_undefined();
-    host.dispatch(json!({"type":"boot","preference":preference,"inventoryPreference":inventory,"environment":{"parameters":parameters,"isolated":isolated}}))?;
+    host.dispatch(json!({"type":"boot","preference":preference,"inventoryPreference":inventory,"controlsPreference":controls,"environment":{"parameters":parameters,"isolated":isolated}}))?;
     Ok(())
 }
 fn query_parameters(search: &str) -> Value {

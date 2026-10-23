@@ -6,6 +6,7 @@ use serde_json::{Value, json};
 pub struct InventoryView {
     pub selected: Option<Value>,
     pub details: bool,
+    pub item_first: Option<(i32, bool)>,
 }
 
 fn text(id: &str, language: &str) -> String {
@@ -105,6 +106,22 @@ pub fn actions(row: &Value, ui: &Value) -> Vec<(i32, &'static str)> {
     actions
 }
 pub fn decorate(view: &InventoryView, ui: &mut Value, language: &str) {
+    if let Some((command, list)) = view.item_first {
+        if ui["input"]["kind"] == "command" {
+            let action = if command == 122 { "action.zap" } else { "action.throw" };
+            let rows: Vec<_> = ui["command_items"].as_array().into_iter().flatten()
+                .filter(|row| command != 122 || descriptor(row)["category"] == "stick")
+                .map(|row| { let mut row=row.clone();row["scope"]=json!("choices");row }).collect();
+            let id = if list { "input.choose_item_list" } else { "input.choose_item" };
+            ui["lines"] = json!(rows);
+            ui["input"] = json!({"kind":"item","id":id,"args":[],"fallback":"","text":text(id,language),
+                "action":action,"filter":if command == 122 { "stick" } else { "all" }});
+            ui["movement_direction"] = json!(false);
+            ui["message"] = Value::Null;
+            ui["window"] = crate::game_window::render(ui, language);
+        }
+        return;
+    }
     if ui["inventory"] != true {
         return;
     }

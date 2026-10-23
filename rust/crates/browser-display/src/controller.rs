@@ -40,6 +40,7 @@ pub struct Controller {
     assets_error: bool,
     saves: SaveOperations,
     inventory_preference_cache: String,
+    control_preference_cache: String,
 }
 impl Controller {
     pub fn new(measure: MeasureText) -> Self {
@@ -74,10 +75,12 @@ impl Controller {
             assets_error: false,
             saves: SaveOperations::default(),
             inventory_preference_cache: String::new(),
+            control_preference_cache: String::new(),
         }
     }
     fn stop_autowalk(&mut self, reason: &'static str) {
         if self.autowalk.stop(reason) {
+            self.effects.push(json!({"kind":"run-interrupt"}));
             self.effects.push(json!({"kind":"autowalk-timer"}));
         }
         self.release_target_run();
@@ -105,7 +108,14 @@ impl Controller {
         if !self.autowalk_available() { self.stop_autowalk("context"); return; }
         if let Some(mut effect) = self.autowalk.schedule(&self.model["frame"],&self.input,number(&self.state["inputRequestCount"])) {
             effect["generation"] = self.model["generation"].clone();
-            self.effects.push(effect);
+            if self.autowalk.uses_run() {
+                let request=number(&self.state["inputRequestCount"]);
+                if let Some(key)=self.autowalk.tick(&self.model["frame"],&self.input,request,number(&effect["token"])) {
+                    self.queue(json!([key]),"autowalk");
+                }
+            } else {
+                self.effects.push(effect);
+            }
         } else if !self.autowalk.active() {
             self.release_target_run();
         }
@@ -330,7 +340,8 @@ impl Controller {
         if self.input["kind"] == "run-boundary" && self.run_stop_request != Some(request) {
             let gate_key = events.as_array().and_then(|a| a.first()).and_then(Value::as_u64);
             if !matches!(gate_key, Some(key) if key == rogue_contract::RG_KEY_TARGET_RUN_CONTINUE as u64
-                || key == rogue_contract::RG_KEY_TARGET_RUN_STOP as u64) {
+                || key == rogue_contract::RG_KEY_TARGET_RUN_STOP as u64
+                || u32::try_from(key).ok().and_then(rogue_contract::target_run_permit).is_some()) {
                 if let Some(keys) = events.as_array_mut() { keys.insert(0, json!(rogue_contract::RG_KEY_TARGET_RUN_STOP)); }
                 self.run_stop_request = Some(request);
             } else if gate_key == Some(rogue_contract::RG_KEY_TARGET_RUN_STOP as u64) {
@@ -554,7 +565,7 @@ impl Controller {
         let theme = rogue_display::theme::Theme::named(text(&self.model["theme"]));
         self.effects
             .push(json!({"kind":"document","language":self.model["language"],"title":title,"heading":heading,
-                "theme":theme.id(),"background":theme.color("@background"),"foreground":theme.color("@text.primary")}));
+                "themeTarget":"canvas-stage","theme":theme.id(),"background":theme.color("@background"),"foreground":theme.color("@text.primary")}));
     }
     fn text_batch(&mut self, ending: u32) -> Option<Value> {
         let value = text(&self.inputs["prompt-text"]["value"]);
@@ -1121,6 +1132,8 @@ impl Controller {
         match text(&r["type"]) {
             "boot" => {
                 self.environment = r["environment"].clone();
+                self.ui.load_control_preferences(text(&r["controlsPreference"]));
+                self.control_preference_cache = self.ui.control_preferences().to_string();
                 self.ui.load_inventory_preference(text(&r["inventoryPreference"]));
                 self.inventory_preference_cache = self.ui.inventory_preference().to_string();
                 let p = preference(text(&r["preference"]));
@@ -1352,6 +1365,11 @@ impl Controller {
         }
         let inspect = r["inspect"].as_bool().unwrap_or(true);
         let state = if inspect { self.snapshot() } else { Value::Null };
+        let control_preference = self.ui.control_preferences().to_string();
+        if control_preference != self.control_preference_cache {
+            self.control_preference_cache.clone_from(&control_preference);
+            self.effects.push(json!({"kind":"storage-write","key":"rogue-controls-v1","value":control_preference}));
+        }
         let inventory_preference = self.ui.inventory_preference().to_string();
         if inventory_preference != self.inventory_preference_cache {
             self.inventory_preference_cache.clone_from(&inventory_preference);
@@ -1403,6 +1421,17 @@ mod target_run_tests {
         c.queue(json!([rogue_contract::RG_KEY_TARGET_RUN_CONTINUE]), "autowalk");
         c.stop_autowalk("input");
         c.queue(json!([115]), "send");
+        assert_eq!(c.effects.last().unwrap()["events"],json!([rogue_contract::RG_KEY_TARGET_RUN_STOP,115]));
+    }
+    #[test]
+    fn straight_permit_crosses_the_gate_unchanged_but_manual_input_still_stops() {
+        let permit=rogue_contract::target_run_permit_key(b'l',3).unwrap();
+        let mut c=gate();
+        c.queue(json!([permit]),"autowalk");
+        assert_eq!(c.effects.last().unwrap()["events"],json!([permit]));
+        assert_eq!(c.run_stop_request,None);
+        c.stop_autowalk("input");
+        c.queue(json!([115]),"send");
         assert_eq!(c.effects.last().unwrap()["events"],json!([rogue_contract::RG_KEY_TARGET_RUN_STOP,115]));
     }
     #[test]

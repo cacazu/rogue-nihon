@@ -15,6 +15,7 @@ export async function createStandaloneGame(wasmBytes, host, printErr = () => {})
   const imports = {
     rogue: {
       read_event: () => host.readEvent(),
+      interrupt_epoch: () => host.interruptEpoch?.() ?? 0,
       flush_input: () => host.flushInput(),
       present: (pointer, length) => {
         // The test host keeps values, never views of the C/Rust borrowed memory.

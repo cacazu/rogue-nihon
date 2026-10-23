@@ -506,6 +506,7 @@ fn ui_theme_persists_without_game_input_and_old_preferences_keep_the_default() {
     let saved=effects.iter().find(|e| e["kind"]=="storage-write").unwrap();
     let saved: Value=serde_json::from_str(text(&saved["value"])).unwrap();assert_eq!(saved["theme"],"green-black");
     let doc=effects.iter().find(|e| e["kind"]=="document").unwrap();assert_eq!(doc["foreground"],"#00ff66");
+    assert_eq!(doc["themeTarget"],"canvas-stage","The game palette is scoped below the HTML shell");
     assert_eq!(event(&mut c,json!({"type":"select","id":"theme","value":"unknown"}))["state"]["theme"],"green-black");
     let mut restored=Controller::new(measure);
     let r=restored.request(json!({"type":"boot","preference":saved.to_string(),"environment":{"isolated":true,"parameters":{}}}));

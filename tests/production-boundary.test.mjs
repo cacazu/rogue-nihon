@@ -145,7 +145,7 @@ test("published Wasm excludes regression code and imports the fixed-width Rust h
   const i32 = 0x7f, f64 = 0x7c;
   const host = (name, parameters = [], results = []) => ({module:"rogue", name, kind:"function", parameters, results});
   const expected = [
-    host("read_event", [], [i32]), host("flush_input"),
+    host("read_event", [], [i32]), host("interrupt_epoch", [], [i32]), host("flush_input"),
     host("present", [i32, i32]), host("store", [i32, i32]),
     host("outcome", [i32, i32, i32]), host("clock_milliseconds", [], [f64]),
     host("diagnostic", [i32, i32]), host("calendar_year", [], [i32]),

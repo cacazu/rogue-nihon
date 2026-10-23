@@ -16,7 +16,7 @@ await mkdir(output,{recursive:true});
 const spec=JSON.parse(await readFile(path.join(root,'web/themes.json'),'utf8'));
 const runtime=await prepareBrowserRuntime(root),server=createPreviewServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const browser=await loadPlaywright().chromium.launch({executablePath:browserExecutable(),headless:true,downloadsPath:runtime.downloadsPath});
-const worker=await readFile(path.join(root,'web/worker.js'),'utf8'),wasm=path.join(root,'build/item-use-fixtures.wasm');
+const worker=await readFile(path.join(root,'web/worker.js'),'utf8'),wasm=process.env.ROGUE_THEMES_WASM||path.join(root,'build/item-use-fixtures.wasm');
 const headers={'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'};
 const mapColors=new Set(Object.values(spec.map_colors));
 const report={checks:[],windows:[],errors:[]};let ctx,page,cfg,fixture,journal;
@@ -25,12 +25,14 @@ const paint=()=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>reque
 async function wait(kind){await page.waitForFunction(kind=>__rogueBrowserTest.frame?.ui.input.kind===kind&&!__rogueBrowserTest.queuePending,kind);await paint();}
 async function tap(id){await paint();const c=(await snap()).scene.controls.find(c=>c.id===id&&!c.disabled);assert.ok(c,id);const b=await page.locator('#rogue-canvas').boundingBox(),x=b.x+c.rect.x+c.rect.w/2,y=b.y+c.rect.y+c.rect.h/2;if(cfg.mobile)await page.touchscreen.tap(x,y);else await page.mouse.click(x,y);await paint();}
 async function key(value){await page.locator('#rogue-canvas').focus();await page.keyboard.press(value);await paint();}
+async function controlKey(id){const c=(await snap()).scene.controls.find(c=>c.id===id&&!c.disabled);assert.ok(c?.shortcut,id+' has an active visible shortcut');await key(c.shortcut);}
 async function capture(label){
  const s=await snap();assert.equal(s.state.runtimeError,null);assert.deepEqual(s.state.translationFallbacks,[]);assert.deepEqual(s.state.uiMissing,[]);
  assert.ok(!s.commands.some(c=>['color','fill','stroke'].some(k=>typeof c[k]==='string'&&c[k].startsWith('@'))),'Resolved paint roles');
  if(s.state.theme==='green-black')for(const c of s.commands.filter(c=>c.op==='text'&&!mapColors.has(c.color))){assert.equal(c.color,'#00ff66',label+': '+c.text);assert.equal(c.monochrome,true);}
- const css=await page.evaluate(()=>({foreground:getComputedStyle(document.documentElement).color,background:getComputedStyle(document.documentElement).backgroundColor,theme:document.documentElement.dataset.theme}));
+ const css=await page.evaluate(()=>{const stage=document.getElementById('canvas-stage'),heading=document.getElementById('app-heading');return {foreground:getComputedStyle(stage).color,background:getComputedStyle(stage).backgroundColor,theme:stage.dataset.theme,shellForeground:getComputedStyle(heading).color,shellBackground:getComputedStyle(document.documentElement).backgroundColor,shellTheme:document.documentElement.dataset.theme};});
  assert.equal(css.foreground,s.state.theme==='green-black'?'rgb(0, 255, 102)':'rgb(255, 255, 255)');assert.equal(css.background,'rgb(0, 0, 0)');assert.equal(css.theme,s.state.theme);
+ assert.equal(css.shellForeground,'rgb(255, 255, 255)','HTML title keeps the shell text color');assert.equal(css.shellBackground,'rgb(0, 0, 0)');assert.equal(css.shellTheme,undefined,'Game theme is scoped below the HTML shell');
  await page.screenshot({path:path.join(output,cfg.label+'-'+label+'.png')});report.windows.push({config:cfg.label,label,theme:s.state.theme,scope:s.scene.scope,text:s.scene.text,css});return s;
 }
 function mapPaint(s,rect){
@@ -39,7 +41,7 @@ function mapPaint(s,rect){
 }
 async function select(value){
  await tap('settings-toggle');
- if(cfg.mobile)await tap('select-theme');else await key('d');
+ if(cfg.mobile)await tap('select-theme');else await controlKey('select-theme');
  assert.ok((await snap()).scene.controls.some(c=>c.id==='select-theme-'+value));
  if(cfg.mobile)await tap('select-theme-'+value);else await key(value==='default'?'a':'b');
  await page.waitForFunction(value=>__rogueUiAdapter.state.theme===value,value);await paint();
@@ -70,10 +72,10 @@ try{
   assert.equal(display.fullRect.y,theme.fullRect.y+theme.fullRect.h+12,'Map display is the next row below theme');
   assert.ok(Math.abs(display.fullRect.x+display.fullRect.w-theme.fullRect.x-theme.fullRect.w)<.01,'Both dropdowns align to the right');
   assert.ok(settings.text.includes(cfg.lang==='ja'?'表示方法':'Display mode'));
-  assert.equal(theme.shortcut,cfg.mobile?undefined:'d');assert.equal(display.shortcut,cfg.mobile?undefined:'e');
+  assert.equal(Boolean(theme.shortcut),!cfg.mobile);assert.equal(Boolean(display.shortcut),!cfg.mobile);if(!cfg.mobile)assert.notEqual(theme.shortcut,display.shortcut,'Settings shortcuts remain distinct');
   await capture('settings-order');
   for(const mode of ['ascii','tiles','pixels',cfg.mode]){
-   if(cfg.mobile)await tap('select-display-mode');else await key('e');
+   if(cfg.mobile)await tap('select-display-mode');else await controlKey('select-display-mode');
    await tap('select-display-mode-'+mode);await page.waitForFunction(mode=>__rogueUiAdapter.state.displayMode===mode,mode);await paint();
    assert.deepEqual((await snap()).state.trace,before,'Display selection is local');
   }
@@ -83,7 +85,7 @@ try{
   const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('rogue-map-display-v1')));assert.equal(stored.theme,'green-black');assert.equal(stored.mode,cfg.mode);assert.equal(stored.animation,false);
   await tap('status-open');await capture('green-status');await tap('status-close');await tap('history-open');await capture('green-history');await tap('history-close');
   await key('i');journal+='i';await wait('space');await capture('green-inventory');await tap('item-c');await capture('green-actions');await tap('window-118');await capture('green-details');await tap('window-27');await tap('window-27');await tap('window-32');journal+=' ';await wait('command');
-  await key('c');journal+='c';await wait('item');await tap('item-c');journal+='c';await wait('text');await capture('green-text-input');await tap('window-27');journal+='\x1b';await wait('command');
+  await key('c');journal+='c';await wait('item');const callable=(await snap()).scene.controls.find(c=>c.id.startsWith('item-')&&!c.disabled);assert.ok(callable,'Visible callable item');await tap(callable.id);journal+=callable.id.slice(5);await wait('text');await capture('green-text-input');await tap('window-27');journal+='\x1b';await wait('command');
   await equivalent();await key('.');journal+='.';await page.waitForFunction(n=>__rogueBrowserTest.trace.input_index===n&&!__rogueBrowserTest.queuePending,journal.length);await wait('command');await equivalent();
   const after=(await snap()).state.trace;await select('default');await capture('restored-default');assert.deepEqual((await snap()).state.trace,after);await select('green-black');
   await page.reload();await page.waitForFunction(()=>__rogueBrowserTest.diagnostics?.ready);await paint();assert.equal((await snap()).state.theme,'green-black');await capture('persisted-green-top');

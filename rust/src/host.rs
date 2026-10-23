@@ -5,6 +5,8 @@ mod browser {
     unsafe extern "C" {
         #[link_name = "read_event"]
         pub fn read_event() -> i32;
+        #[link_name = "interrupt_epoch"]
+        pub fn interrupt_epoch() -> i32;
         #[link_name = "flush_input"]
         pub fn flush_input();
         #[link_name = "present"]
@@ -27,6 +29,8 @@ mod browser {
     unsafe extern "C" {
         #[link_name = "js_rg_read_event"]
         pub fn read_event() -> i32;
+        #[link_name = "js_rg_interrupt_epoch"]
+        pub fn interrupt_epoch() -> i32;
         #[link_name = "js_rg_flush_input"]
         pub fn flush_input();
         #[link_name = "js_rg_present"]
@@ -40,6 +44,10 @@ mod browser {
 pub fn read_event() -> i32 {
     // SAFETY: The synchronous host returns one opaque integer and does not re-enter C.
     unsafe { browser::read_event() }
+}
+pub fn interrupt_epoch() -> u32 {
+    // SAFETY: This reads one transport sequence without re-entering C or taking input.
+    unsafe { browser::interrupt_epoch() as u32 }
 }
 pub fn flush_input() {
     // SAFETY: This callback borrows no memory and only discards pending transport values.

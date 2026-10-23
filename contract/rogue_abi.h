@@ -22,9 +22,15 @@
 #define RG_KEY_SAVE 0x00120001
 #define RG_KEY_END_INPUT 0x00120002
 #define RG_KEY_FIRE 0x00120003
+/* UI-only requests. Only original keys selected later enter the C journal. */
+#define RG_KEY_SELECT_THROW 0x00120004
+#define RG_KEY_SELECT_ZAP 0x00120005
 #define RG_KEY_TARGET_RUN_BASE 0x00120010
 #define RG_KEY_TARGET_RUN_CONTINUE 0x00120020
 #define RG_KEY_TARGET_RUN_STOP 0x00120021
+/* Transport-only straight-run grant: 1..80 steps and one of hjklyubn. */
+#define RG_KEY_TARGET_RUN_PERMIT_BASE 0x00130000
+#define RG_TARGET_RUN_PERMIT_MAX_STEPS 80
 
 #define RG_SNAPSHOT_WORDS 20
 #define RG_SNAPSHOT_ABI 0

@@ -26,7 +26,7 @@ impl BrowserUi {
             .map(|e| s(&e["text"]).to_string());
         let notice_height = notice.as_ref().map_or(0., |text|
             12. + self.wrap(text, inner, 17.).len() as f64 * 17. * 1.6);
-        let total = 48. + 12. + 48. + 12. + 48. + 12. + 48. + 12. + 48. + 12. + return_height + notice_height;
+        let total = 120. + 48. + 12. + 48. + 12. + 48. + 12. + 48. + 12. + 48. + 12. + return_height + notice_height;
         let (panel, viewport) = self.sheet_layout(w, total);
         let max = (total - viewport.h).max(0.);
         let scroll = clamp(self.scrolls["settings"], 0., max);
@@ -95,6 +95,10 @@ impl BrowserUi {
             },
         );
         row += 60.;
+        for (id,label,index) in [("controls-placement","settings.button_placement",8),("controls-assignment","settings.button_assignment",9)] {
+            self.button(id,&self.t(label),Rect::new(viewport.x,row,viewport.w,48.),ControlStyle {size:17.,disabled:stopped,shortcut:self.choice_shortcut(index),keep_offscreen:true,..Default::default()});
+            row+=60.;
+        }
         let animated = self.model["animationEnabled"].as_bool().unwrap_or(true);
         let label = self.t("settings.animation");
         let state_label = self.t(if animated { "settings.on" } else { "settings.off" });

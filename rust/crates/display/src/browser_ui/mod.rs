@@ -1,7 +1,11 @@
 //! Browser surface composition and interaction, independent of DOM/Canvas APIs.
 mod actions;
 mod commands;
+mod control_preferences;
+mod controls_editor;
+mod keybindings;
 mod desktop;
+mod direction_overlay;
 mod dropdown;
 mod gestures;
 mod history;
@@ -80,6 +84,12 @@ struct Drag {
 pub struct BrowserUi {
     pub widgets: Widgets,
     model: Value,
+    controls_preferences: control_preferences::ControlsPreferences,
+    binding_capture: Option<keybindings::BindingCapture>,
+    direction_origin: Option<direction_overlay::DirectionOrigin>,
+    keyboard_dispatch: bool,
+    controls_editor: Option<controls_editor::ControlEditor>,
+    dock_targets: Vec<controls_editor::DockTarget>,
     view: Value,
     measure: MeasureText,
     catalogs: [Value; 2],
@@ -119,13 +129,16 @@ pub struct BrowserUi {
     selection_context: String,
 }
 impl BrowserUi {
+    pub(super) fn pc_controls(&self)->bool {!b(&self.view["coarse"])}
     /// Synchronize host lifecycle observations before an input event, even when
     /// its requested repaint has not run yet. Interaction rules stay in Rust.
     pub fn set_context(&mut self, model: Value) {
         let generation_changed = self.model["generation"] != model["generation"];
         self.model = model;
+        if generation_changed || !b(&self.model["settingsOpen"]) { self.controls_editor=None; }
         if generation_changed || self.model["frame"]["ui"]["input"]["kind"] != "item" { self.selection_context.clear(); }
-        if generation_changed { self.hover_point = None; }
+        if generation_changed { self.hover_point = None;self.binding_capture=None; }
+        self.sync_direction_origin();
         self.sync_direction_window();
         if generation_changed || !self.wait_available() {
             self.stop_hold();
@@ -133,7 +146,7 @@ impl BrowserUi {
         }
     }
     fn sync_direction_window(&mut self) {
-        if !self.mobile_controls && b(&self.model["frame"]["ui"]["movement_direction"])
+        if !self.mobile_controls && !self.pc_controls() && b(&self.model["frame"]["ui"]["movement_direction"])
             && self.model["frame"]["ui"]["window"].is_null()
         {
             // The map pad is optional, but every C direction wait needs a
@@ -147,6 +160,12 @@ impl BrowserUi {
         Self {
             widgets: Widgets::default(),
             model: Value::Null,
+            controls_preferences: control_preferences::ControlsPreferences::default(),
+            binding_capture: None,
+            direction_origin: None,
+            keyboard_dispatch: false,
+            controls_editor: None,
+            dock_targets: Vec::new(),
             view: Value::Null,
             measure,
             catalogs: [
@@ -256,6 +275,7 @@ impl BrowserUi {
             .and_then(|index| self.pc_shortcut(&((b'a' + index) as char).to_string()))
     }
     fn shortcut_context(&self, scope: &str) -> Value {
+        if self.binding_capture.is_some() {return json!("key-binding");}
         match scope {
             "dialog" => json!([scope, self.model["generation"], self.model["input"], self.model["frame"]["ui"]["window"]]),
             "dropdown" => json!([scope, self.dropdown]),
@@ -295,9 +315,16 @@ impl BrowserUi {
         self.model = model;
         self.widgets.theme = crate::theme::Theme::named(s(&self.model["theme"]));
         self.view = view;
+        let old_size=(self.width,self.height);
         self.width = n(&self.view["width"]).max(240.);
         self.height = n(&self.view["height"]).max(240.);
         let mobile = self.width < 700. || b(&self.view["coarse"]);
+        let form=self.control_form();
+        if self.controls_editor.as_ref().is_some_and(|editor|editor.form!=form) {self.controls_editor=None;}
+        if old_size!=(self.width,self.height) {
+            if let Some(editor)=self.controls_editor.as_mut() {editor.drag=None;}
+            self.widgets.pressed.clear();
+        }
         self.widgets.fit_control_captions = b(&self.view["coarse"]);
         if !self.item_selection_visible() { self.selection_context.clear(); }
         let generation = n(&self.model["generation"]) as u64;
@@ -308,6 +335,7 @@ impl BrowserUi {
             self.mobile_repeat_configured = false;
             self.mobile_repeat_open = false;
         }
+        self.sync_direction_origin();
         self.sync_direction_window();
         if b(&self.model["topOpen"]) || b(&self.model["settingsOpen"]) {
             self.commands_open = false;
@@ -327,7 +355,9 @@ impl BrowserUi {
             || b(&self.model["frame"]["ui"]["movement_direction"]) {
             self.mobile_repeat_open = false;
         }
-        let scope = if self.mobile_repeat_open {
+        let scope = if self.controls_editor.is_some() {
+            "controls-editor".into()
+        } else if self.mobile_repeat_open {
             "repeat-count".into()
         } else if self.commands_open {
             "commands".into()
@@ -367,6 +397,7 @@ impl BrowserUi {
         }
         self.fullscreen = b(&self.view["fullscreen"]) && !b(&self.model["topOpen"]);
         self.widgets.clear();
+        self.dock_targets.clear();
         self.regions.clear();
         self.map_rect = None;
         self.hud.layout = Value::Null;
@@ -392,7 +423,10 @@ impl BrowserUi {
         if self.commands_open {
             self.draw_commands();
         }
+        if self.pc_controls() && b(&self.model["frame"]["ui"]["movement_direction"]) && !b(&self.model["settingsOpen"]) && !self.commands_open && !self.history_open && !self.status_open && !self.mobile_repeat_open {self.draw_desktop_direction();}
         self.draw_dropdown();
+        if self.controls_editor.is_some() {self.draw_controls_editor();}
+        if self.binding_capture.is_some() {self.draw_binding_capture();}
         // Resolve color annotations attached after a widget was painted.
         for command in &mut self.widgets.commands { self.widgets.theme.paint(command); }
         self.paint_count += 1;
@@ -406,6 +440,6 @@ impl BrowserUi {
             "width":self.width,"height":self.height,"scope":self.scope,"statusOpen":self.status_open,"controls":self.widgets.controls,
             "text":self.widgets.text_runs.iter().map(|v|s(&v["text"])).collect::<Vec<_>>(),"icons":self.widgets.icons,"hud":self.hud.layout,
             "camera":self.camera,"mapRect":self.map_rect,"dialogRect":self.dialog_rect,"scrolls":self.scrolls,"regions":self.regions,
-            "inventory":self.inventory_preference()})
+            "inventory":self.inventory_preference(),"directionOrigin":self.direction_origin.as_ref().map(|origin|json!({"control":origin.control,"point":origin.point,"seen":origin.seen})),"controlsEditor":self.controls_editor.as_ref().map(|editor|json!({"mode":format!("{:?}",editor.mode),"form":editor.form,"selected":editor.selected,"draft":editor.draft}))})
     }
 }

@@ -97,6 +97,7 @@ impl AutoWalk {
         active
     }
     pub fn active(&self) -> bool { self.target.is_some() }
+    pub fn uses_run(&self) -> bool { self.mode != 0 }
     pub fn start(&mut self, frame: &Value, target: &Value, mode: u32) {
         self.stop("replaced");
         self.reason = "unreachable";
@@ -153,8 +154,15 @@ impl AutoWalk {
         };
         let emitted = if input["kind"] == "run-boundary" {
             if self.mode != 0 && input["direction"].as_u64() == Some(u64::from(direction)) {
-                self.expected = Some(next);
-                RG_KEY_TARGET_RUN_CONTINUE
+                let map=Map::new(frame)?;
+                let mut end=next;let mut steps=1;
+                while steps<RG_TARGET_RUN_PERMIT_MAX_STEPS && end!=target {
+                    let Some((following,next_key))=map.next(end,target) else {break;};
+                    if next_key!=key {break;}
+                    end=following;steps+=1;
+                }
+                self.expected = Some(end);
+                target_run_permit_key(direction,steps)?
             } else {
                 // A turn is an intentional end of this original straight run.
                 // Only its subsequent ordinary command wait may start the next segment.
@@ -233,18 +241,38 @@ mod tests {
         walk.tick(f,input,request,timer["token"].as_u64().unwrap())
     }
     #[test]
-    fn run_starts_without_motion_then_grants_each_original_step() {
+    fn straight_runs_request_one_bounded_permit_for_exactly_zero_one_or_two_cells() {
+        let command=json!({"kind":"command"});
+        let boundary=json!({"kind":"run-boundary","direction":108});
+        for mode in [1,2] {
+            let f=frame();
+            let mut zero=AutoWalk::default();
+            zero.start(&f,&json!({"x":1,"y":2}),mode);
+            assert_eq!(fire(&mut zero,&f,&command,1),None);
+            assert_eq!(zero.snapshot()["reason"],"arrived");
+            for steps in [1,2] {
+                let mut walk=AutoWalk::default();
+                walk.start(&f,&json!({"x":1+steps,"y":2}),mode);
+                assert_eq!(fire(&mut walk,&f,&command,1),Some(RG_KEY_TARGET_RUN_BASE+(mode-1)*8+3));
+                // Starting the original C run has moved zero cells.
+                assert_eq!(fire(&mut walk,&f,&boundary,2),target_run_permit_key(b'l',steps));
+                let mut arrived=f.clone();arrived["player"]["x"]=json!(1+steps);
+                assert_eq!(fire(&mut walk,&arrived,&boundary,3),None);
+                assert_eq!(walk.snapshot()["reason"],"arrived");
+            }
+        }
+    }
+    #[test]
+    fn run_starts_without_motion_then_grants_a_straight_segment() {
         let command=json!({"kind":"command"});
         let boundary=json!({"kind":"run-boundary","direction":108});
         for mode in [1,2] {
             let mut f=frame();let mut walk=AutoWalk::default();
             walk.start(&f,&json!({"x":3,"y":2}),mode);
             assert_eq!(fire(&mut walk,&f,&command,1),Some(RG_KEY_TARGET_RUN_BASE+(mode-1)*8+3));
-            assert_eq!(fire(&mut walk,&f,&boundary,2),Some(RG_KEY_TARGET_RUN_CONTINUE));
-            f["player"]["x"]=json!(2);
-            assert_eq!(fire(&mut walk,&f,&boundary,3),Some(RG_KEY_TARGET_RUN_CONTINUE));
+            assert_eq!(fire(&mut walk,&f,&boundary,2),target_run_permit_key(b'l',2));
             f["player"]["x"]=json!(3);
-            assert_eq!(fire(&mut walk,&f,&boundary,4),None);
+            assert_eq!(fire(&mut walk,&f,&boundary,3),None);
             assert_eq!(walk.snapshot()["reason"],"arrived");
         }
     }
@@ -268,7 +296,7 @@ mod tests {
         let gate=json!({"kind":"run-boundary","direction":108});
         walk.start(&f,&json!({"x":5,"y":2}),1);
         assert!(fire(&mut walk,&f,&command,1).is_some());
-        assert_eq!(fire(&mut walk,&f,&gate,2),Some(RG_KEY_TARGET_RUN_CONTINUE));
+        assert_eq!(fire(&mut walk,&f,&gate,2),target_run_permit_key(b'l',4));
         f["player"]=json!({"x":2,"y":3});
         assert_eq!(fire(&mut walk,&f,&gate,3),None);
         assert_eq!(walk.snapshot()["reason"],"blocked");

@@ -34,7 +34,7 @@ fn modified_key(e: &Value, code: u32) -> u32 {
         | if b(&e["altKey"]) { RG_EVENT_ALT } else { 0 }
         | if b(&e["repeat"]) { RG_EVENT_REPEAT } else { 0 }
 }
-fn game_key(e: &Value, kind: &str) -> Option<u32> {
+pub(super) fn game_key(e: &Value, kind: &str) -> Option<u32> {
     if matches!(kind, "command" | "direction") {
         // Physical codes work with NumLock on and off. The number row stays numeric.
         let code = match s(&e["code"]) {
@@ -110,13 +110,19 @@ impl BrowserUi {
         }
     }
     pub(super) fn activate(&mut self, control: &Control, _value: &Value, effects: &mut Vec<Value>) {
+        if self.editor_activate(control,effects) {return;}
         if control.disabled {
             return;
         }
+        self.remember_direction_origin(control);
         if self.mobile_activate(control, effects) {
             return;
         }
         match s(&control.action["kind"]) {
+            "command" => self.activate_command(s(&control.action["id"]),effects),
+            "binding-edit" => self.open_binding_capture(s(&control.action["id"]),n(&control.action["index"]) as usize),
+            "binding-confirm" => self.confirm_binding(),
+            "binding-cancel" => self.binding_capture=None,
             "movement" => {
                 if self.command_ready() {
                     effects.push(json!({"kind":"send","key":self.movement_key(n(&control.action["key"]) as u32)}));
@@ -176,7 +182,9 @@ impl BrowserUi {
                     && !b(&self.model["settingsOpen"])
                     && !b(&self.model["returnAfterEnd"])
                 {
-                    effects.push(control.action.clone());
+                    let mut action=control.action.clone();
+                    if let Some(key)=action["key"].as_u64() {action["key"]=json!(self.command_input_key(key as u32));}
+                    effects.push(action);
                 }
             }
             "hud" => {
@@ -202,6 +210,9 @@ impl BrowserUi {
         let y = n(&event["y"]);
         let id = event["id"].as_i64().unwrap_or(0);
         let mouse = event["pointerType"] == "mouse";
+        if let Some(consumed)=self.controls_editor_event(&event,&mut effects) {
+            return json!({"consumed":consumed,"effects":effects,"diagnostics":self.diagnostics()});
+        }
         if self.touch_gesture(&event, &mut effects) {
             return json!({"consumed":true,"effects":effects,"diagnostics":self.diagnostics()});
         }
@@ -423,7 +434,10 @@ impl BrowserUi {
             "key" => {
                 self.stop_hold();
                 self.gestures.wait_key.clear();
+                if self.command_ready() || event["key"]=="Escape" {self.direction_origin=None;}
+                self.keyboard_dispatch=true;
                 consumed = self.key_event(&event, &mut effects);
+                self.keyboard_dispatch=false;
                 if b(&event["repeat"]) && self.model["input"]["kind"] == "command"
                     && effects.iter().any(|effect| effect["kind"] == "send"
                         && effect["key"].as_u64().is_some_and(|key|
@@ -480,6 +494,7 @@ impl BrowserUi {
         } else { false }
     }
     fn key_event(&mut self, e: &Value, effects: &mut Vec<Value>) -> bool {
+        if self.binding_key(e) {return true;}
         if self.model.is_null() || b(&e["composing"]) || n(&e["keyCode"]) == 229. || b(&e["metaKey"]) {
             return false;
         }
@@ -496,7 +511,14 @@ impl BrowserUi {
                 "PageUp" => self.scroll_by("commands", -self.regions.get("commands").map_or(200., |r| r.rect.h)),
                 "Home" => self.scroll_by("commands", -f64::MAX),
                 "End" => self.scroll_by("commands", f64::MAX),
-                "Tab" => self.widgets.focus = "commands-close".into(),
+                "Tab" => {
+                    let controls:Vec<_>=self.widgets.controls.iter().filter(|c|!c.disabled).map(|c|c.id.clone()).collect();
+                    if !controls.is_empty() {
+                        let current=controls.iter().position(|id|id==&self.widgets.focus).map(|i|i as i64).unwrap_or(-1);
+                        let step=if b(&e["shiftKey"]) {-1}else{1};
+                        self.widgets.focus=controls[(current+step).rem_euclid(controls.len() as i64) as usize].clone();
+                    }
+                },
                 "Enter" | " " if self.widgets.focus == "commands-close" => self.commands_open = false,
                 _ => {}
             }
@@ -561,6 +583,7 @@ impl BrowserUi {
             self.widgets.focus = format!("inventory-tab-{}",tabs[next]);
             return true;
         }
+        if self.bound_command_key(e,effects) {return true;}
         if key == "Tab" {
             let modal =
                 self.model["frame"]["ui"]["window"].is_object() && !b(&self.model["settingsOpen"]);

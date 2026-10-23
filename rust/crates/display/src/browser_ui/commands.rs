@@ -1,5 +1,55 @@
-//! Read-only PC command reference. It never activates a listed game command.
+//! Shared command identities and the PC binding reference.
 use super::*;
+mod table;
+
+#[derive(Clone, Copy)]
+pub(super) enum CommandAction { Key(u32), Direction(u32), Web(WebAction), Context }
+#[derive(Clone)]
+pub(super) struct CommandDefinition {
+    pub id: &'static str,
+    pub label: &'static str,
+    pub group: &'static str,
+    pub action: CommandAction,
+}
+pub(super) fn key_id(key:u32)->Option<&'static str> {
+    Some(match key {
+        104=>"game.move-left",106=>"game.move-down",107=>"game.move-up",108=>"game.move-right",
+        121=>"game.move-up-left",117=>"game.move-up-right",98=>"game.move-down-left",110=>"game.move-down-right",
+        109=>"game.move-without-pickup",46=>"game.rest",115=>"game.search",44=>"game.pickup",62=>"game.downstairs",60=>"game.upstairs",94=>"game.trap",
+        102=>"game.fight-carefully",70=>"game.fight-to-death",116=>"game.throw",122=>"game.zap",113=>"game.quaff",114=>"game.read",101=>"game.eat",119=>"game.wield",87=>"game.wear",84=>"game.take-off",80=>"game.put-ring",82=>"game.remove-ring",100=>"game.drop",99=>"game.call",105=>"game.inventory",73=>"game.inventory-one",41=>"game.weapon",93=>"game.armor",61=>"game.rings",64=>"game.stats",68=>"game.discoveries",47=>"game.identify",63=>"game.help",97=>"game.again",81=>"game.quit",111=>"game.options",118=>"game.version",16=>"game.recall",18=>"game.redraw",
+        _=>return None,
+    })
+}
+pub(super) fn web_id(action:WebAction)->&'static str {
+    match action { WebAction::Movement=>"web.movement",WebAction::FullMap=>"web.full-map",WebAction::Fire=>"web.fire",WebAction::Repeat=>"web.repeat",WebAction::RepeatCount=>"web.repeat-count",WebAction::Commands=>"web.commands",WebAction::Settings=>"web.settings",WebAction::Fullscreen=>"web.fullscreen",WebAction::Controls=>"web.controls",WebAction::History=>"web.history" }
+}
+const RUN_COMMANDS: &[(&str,&str,u8)] = &[
+    ("game.run-left","help.left",b'H'),("game.run-down","help.down",b'J'),("game.run-up","help.up",b'K'),("game.run-right","help.right",b'L'),
+    ("game.run-up-left","help.up_left",b'Y'),("game.run-up-right","help.up_right",b'U'),("game.run-down-left","help.down_left",b'B'),("game.run-down-right","help.down_right",b'N'),
+    ("game.run-adjacent-left","help.left",8),("game.run-adjacent-down","help.down",10),("game.run-adjacent-up","help.up",11),("game.run-adjacent-right","help.right",12),
+    ("game.run-adjacent-up-left","help.up_left",25),("game.run-adjacent-up-right","help.up_right",21),("game.run-adjacent-down-left","help.down_left",2),("game.run-adjacent-down-right","help.down_right",14),
+];
+pub(super) fn all_commands()->Vec<CommandDefinition> {
+    let mut out=Vec::new();
+    for (group,entries) in GROUPS {
+        for entry in *entries {
+            if let Some(action)=entry.phone_action {
+                let (key,action)=match action {GameAction::Key(key)=>(key,CommandAction::Key(key)),GameAction::Direction(key)=>(key,CommandAction::Direction(key))};
+                if let Some(id)=key_id(key) {out.push(CommandDefinition {id,label:entry.description,group,action});}
+            }
+        }
+        if *group=="mobile.group.movement" {
+            for &(id,label,key) in RUN_COMMANDS {out.push(CommandDefinition {id,label,group,action:CommandAction::Key(u32::from(key))});}
+        }
+        for c in WEB_COMMANDS.iter().filter(|c| c.group==*group) {out.push(CommandDefinition {id:web_id(c.action),label:c.label,group,action:CommandAction::Web(c.action)});}
+    }
+    for (key,label,group) in [(16,"help.recall","mobile.group.info"),(111,"help.options","commands.group.system"),(18,"help.redraw","commands.group.system"),(118,"help.version","commands.group.system")] {
+        out.push(CommandDefinition {id:key_id(key).unwrap(),label,group,action:CommandAction::Key(key)});
+    }
+    out.push(CommandDefinition {id:"web.context",label:"mobile.search",group:"mobile.group.movement",action:CommandAction::Context});
+    out
+}
+pub(super) fn command(id:&str)->Option<CommandDefinition> {all_commands().into_iter().find(|c|c.id==id)}
 
 #[derive(Clone, Copy)]
 pub(super) enum GameAction { Key(u32), Direction(u32) }
@@ -111,13 +161,6 @@ pub(super) const GROUPS: &[(&str, &[ReferenceCommand])] = &[
     ),
 ];
 
-struct ReferenceRow {
-    key: Vec<String>,
-    description: Vec<String>,
-    height: f64,
-    heading: bool,
-}
-
 impl BrowserUi {
     fn reference_cell(&mut self, lines: &[String], rect: Rect, bold: bool) {
         let line_height = 26.;
@@ -138,134 +181,56 @@ impl BrowserUi {
         }
     }
 
-    pub(super) fn draw_commands(&mut self) {
-        self.begin_choices("commands");
-        self.regions.clear();
-        self.map_rect = None;
-        self.widgets.rect(
-            Rect::new(0., 0., self.width, self.height),
-            "@overlay.strong",
-        );
-        let width = (self.width - 16.).min(860.);
-        let table_width = width - 40.;
-        let key_width = (table_width * 0.38).min(280.);
-        let description_width = table_width - key_width;
-        let mut rows = Vec::new();
-        for (group, entries) in GROUPS {
-            let heading = self.wrap(&self.t(group), table_width - 20., 16.);
-            rows.push(ReferenceRow {
-                height: heading.len() as f64 * 26. + 12.,
-                key: heading,
-                description: vec![],
-                heading: true,
-            });
-            let entries = entries.iter().map(|entry| (entry.keys, entry.description)).chain(WEB_COMMANDS.iter()
-                .filter(|command| command.group == *group)
-                .map(|command| (command.key, command.label)));
-            for (key, id) in entries {
-                let mut label = if key.starts_with("commands.") {
-                    self.t(key)
-                } else {
-                    key.replace("{pad}", &self.t("commands.keypad"))
-                };
-                if matches!(key, "f" | "F" | "t" | "z" | "m" | "^") || key == web_command(WebAction::Fire).key {
-                    label.push_str(&format!(" + {}", self.t("commands.direction")));
-                }
-                let description = if id.starts_with("help.") {
-                    self.mobile_help(id)
-                } else {
-                    self.t(id)
-                };
-                let key = self.wrap(&label, key_width - 20., 16.);
-                let description = self.wrap(&description, description_width - 20., 16.);
-                let height = key.len().max(description.len()) as f64 * 26. + 12.;
-                rows.push(ReferenceRow {
-                    key,
-                    description,
-                    height,
-                    heading: false,
-                });
+
+}
+
+impl BrowserUi {
+    pub(super) fn command_bindings(&self,id:&str)->Vec<keybindings::KeyBinding> {
+        self.controls_preferences.bindings.get(id).cloned().unwrap_or_else(||keybindings::default_bindings().remove(id).unwrap_or_default())
+    }
+    pub(super) fn command_shortcut(&self,id:&str)->Option<String> {
+        if b(&self.view["coarse"]) {None} else {self.command_bindings(id).first().map(keybindings::KeyBinding::label)}
+    }
+    pub(super) fn command_label(&self,id:&str)->String {
+        let Some(c)=command(id) else{return String::new();};
+        if matches!(c.action,CommandAction::Context) {return self.t(self.mobile_context_command().1);}
+        let label=if c.label.starts_with("help.") {self.mobile_help(c.label)} else {self.t(c.label)};
+        if id.starts_with("game.run-") {format!("{} ({label})",self.mobile_help(if id.starts_with("game.run-adjacent-") {"help.run_adjacent"} else {"help.run"}))} else {label}
+    }
+    pub(super) fn command_available(&self,id:&str)->bool {
+        let Some(c)=command(id) else{return false;};
+        if let CommandAction::Web(action)=c.action {return self.web_available(action);}
+        if !self.command_ready() {return false;}
+        let ui=&self.model["frame"]["ui"];
+        match c.action {
+            CommandAction::Key(60)=>b(&ui["map_controls"]["stairs"]["ascend"]),
+            CommandAction::Key(62)=>b(&ui["map_controls"]["stairs"]["descend"]),
+            CommandAction::Key(44)=>!b(&ui["player_state"]["levitating"]) && self.model["frame"]["map_player_surface"]["tile"].as_u64().is_some_and(|tile|(14..=22).contains(&tile)),
+            _=>true,
+        }
+    }
+    pub(super) fn command_input_key(&self,key:u32)->u32 {
+        if !b(&self.view["coarse"]) && self.command_ready() {
+            match key {116=>rogue_contract::RG_KEY_SELECT_THROW,122=>rogue_contract::RG_KEY_SELECT_ZAP,_=>key}
+        } else {key}
+    }
+    pub(super) fn activate_command(&mut self,id:&str,effects:&mut Vec<Value>) {
+        if !self.command_available(id) {return;}
+        let Some(c)=command(id) else{return;};
+        self.mobile_operations=false;
+        match c.action {
+            CommandAction::Web(action)=>self.activate_web(action,effects),
+            CommandAction::Direction(key)=>effects.push(json!({"kind":"send","key":self.movement_key(key)})),
+            CommandAction::Context=>effects.push(json!({"kind":"send","key":self.command_input_key(self.mobile_context_command().0)})),
+            CommandAction::Key(key)=>{
+                if key==64 {self.open_status();}
+                effects.push(json!({"kind":"send","key":self.command_input_key(key)}));
             }
         }
-        let total: f64 = rows.iter().map(|row| row.height).sum();
-        let (panel, body) = self.sheet_layout(width, total + 40.);
-        let table = Rect::new(body.x, body.y, table_width, body.h);
-        let viewport = Rect::new(table.x, table.y + 40., table.w, (table.h - 40.).max(1.));
-        self.widgets.box_rect(panel, PANEL, Some(LINE), 0.);
-        self.widgets.text_line(
-            &self.t("commands.title"),
-            Rect::new(panel.x + 16., 16., width - 88., 48.),
-            TextStyle::new(22., TEXT, true),
-            false,
-            self.measure,
-        );
-        self.control(
-            "commands-close",
-            &self.t("action.cancel_short"),
-            Rect::new(panel.x + width - 56., 16., 48., 48.),
-            json!({"kind":"commands","open":false}),
-            ControlStyle {
-                icon: Some("close"),
-                icon_size: 24.,
-                shortcut: self.pc_shortcut("Escape"),
-                ..Default::default()
-            },
-        );
-        let header = Rect::new(table.x, table.y, table.w, 40.);
-        self.reference_cell(
-            &[self.t("commands.key")],
-            Rect::new(header.x, header.y, key_width, header.h),
-            true,
-        );
-        self.reference_cell(
-            &[self.t("commands.action")],
-            Rect::new(header.x + key_width, header.y, description_width, header.h),
-            true,
-        );
-        self.widgets.rect(
-            Rect::new(header.x, header.y + header.h - 1., header.w, 1.),
-            LINE,
-        );
-        self.widgets.rect(
-            Rect::new(header.x + key_width, header.y, 1., header.h),
-            LINE,
-        );
-        let max = (total - viewport.h).max(0.);
-        let offset = clamp(*self.scrolls.get("commands").unwrap_or(&0.), 0., max);
-        let mut y = viewport.y - offset;
-        self.widgets.begin_clip(viewport);
-        for row in rows {
-            if y + row.height > viewport.y && y < viewport.y + viewport.h {
-                if row.heading {
-                    self.reference_cell(&row.key, Rect::new(table.x, y, table.w, row.height), true);
-                } else {
-                    self.reference_cell(
-                        &row.key,
-                        Rect::new(table.x, y, key_width, row.height),
-                        false,
-                    );
-                    self.reference_cell(
-                        &row.description,
-                        Rect::new(table.x + key_width, y, description_width, row.height),
-                        false,
-                    );
-                    self.widgets
-                        .rect(Rect::new(table.x + key_width, y, 1., row.height), LINE);
-                }
-                self.widgets
-                    .rect(Rect::new(table.x, y + row.height - 1., table.w, 1.), LINE);
-            }
-            y += row.height;
-        }
-        self.widgets.end_clip();
-        self.regions.insert(
-            "commands".into(),
-            Region {
-                rect: viewport,
-                max,
-            },
-        );
-        self.scrolls.insert("commands".into(), offset);
-        self.widgets.scrollbar(viewport, total, offset);
+    }
+    pub(super) fn command_control(&mut self,command_id:&str,id:&str,rect:Rect,mut style:ControlStyle<'_>) {
+        style.shortcut=self.command_shortcut(command_id);style.disabled|=!self.command_available(command_id);style.role=ControlRole::Command;
+        if let Some(c)=command(command_id) {style.key=match c.action {CommandAction::Key(key)|CommandAction::Direction(key)=>Some(json!(self.command_input_key(key))),CommandAction::Context=>Some(json!(self.command_input_key(self.mobile_context_command().0))),_=>style.key};}
+        self.control(id,&self.command_label(command_id),rect,json!({"kind":"command","id":command_id}),style);
     }
 }

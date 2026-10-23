@@ -36,9 +36,13 @@ async function open(fixture='autowalk-clear',touch=false,mode='pixels'){
  }
  await context.addInitScript(()=>{
   const NativeWorker=window.Worker;window.__walkTimeline=[];
-  const nativeTimeout=window.setTimeout;
-  window.setTimeout=(fn,delay,...args)=>nativeTimeout(()=>{if(delay===30&&window.__pauseRunTimers)return;fn(...args);},delay);
-  window.Worker=class extends NativeWorker{constructor(...args){super(...args);this.addEventListener('message',e=>{if(['frame','input-request','player-event'].includes(e.data.type))window.__walkTimeline.push({type:e.data.type,kind:e.data.kind,sequence:e.data.sequence,at:performance.now(),player:e.data.player});});}};
+  window.Worker=class extends NativeWorker{constructor(...args){super(...args);let boundary=false;this.addEventListener('message',e=>{
+   if(e.data.type==='input-context')boundary=e.data.input.kind==='run-boundary';
+   if(['frame','input-request','player-event'].includes(e.data.type))window.__walkTimeline.push({type:e.data.type,kind:e.data.kind,sequence:e.data.sequence,at:performance.now(),player:e.data.player});
+   if(e.data.type==='input-request'&&boundary&&window.__pauseRunRequests){
+    e.stopImmediatePropagation();window.__heldRunRequest=()=>{if(boundary)this.dispatchEvent(new MessageEvent('message',{data:e.data}));};
+   }
+  });}};
  });
  page=await context.newPage();await installBrowserTestAdapter(page);page.setDefaultTimeout(15000);page.on('pageerror',e=>report.errors.push(e.message));
  await page.goto(base+'/?trace=1&lang=ja&view='+mode);await page.waitForFunction(()=>__rogueBrowserTest.diagnostics?.ready);
@@ -59,6 +63,8 @@ async function reference(fixture,s,keys){
  assert.deepEqual(s.trace.words,r.traces.at(-1).words,'Auto keys and same ordinary consumed keys preserve all C/RNG words');
 }
 async function check(label,fn){await fn();report.checks.push(label);console.log('PASS '+label);}
+async function startMotion(){await page.evaluate(()=>{window.__runMotion=[];window.__recordRunMotion=true;const sample=()=>{if(!window.__recordRunMotion)return;const s=__rogueBrowserTest.diagnostics;window.__runMotion.push({at:performance.now(),player:s.frame?.player,pose:s.animation?.find(a=>a.id===0)});requestAnimationFrame(sample);};requestAnimationFrame(sample);});}
+async function endMotion(){return page.evaluate(()=>{window.__recordRunMotion=false;return window.__runMotion;});}
 try{
  runtime=await prepareBrowserRuntime(root);browser=await loadPlaywright().chromium.launch({executablePath:browserExecutable(),headless:true,downloadsPath:runtime.downloadsPath});
  const runOnly=process.argv.includes('--run-only')||process.argv.includes('--keys-only');
@@ -66,15 +72,31 @@ try{
   const prefix=(touch?'mobile':'pc')+' run'+movement;
   await check(prefix+' original stair stopping without automatic restart',async()=>{
    await open('autowalk-clear',touch);for(let i=0;i<movement;i++)await tap('mobile-movement');
-   await target(touch?16:20,10);await stopped('natural');const after=await stable();
+   await startMotion();const before=await snap(),started=Date.now();
+   await target(touch?16:20,10);await stopped('natural');const elapsed=Date.now()-started,after=await stable(),motion=await endMotion();
+   const targetMetrics={elapsed_ms:elapsed,input_requests:after.inputRequestCount-before.inputRequestCount,frames:after.frameCount-before.frameCount,motion};
    assert.deepEqual(after.frame.player,{x:movement===1?15:14,y:10});
    const original=await runGame(path.join(root,'build/game-fixtures.wasm'),{fixture:'autowalk-clear',seed:17,name:'Player',locale:'ja',messagePaging:'log',events:[movement===1?76:12]});
    assert.deepEqual(after.trace.words,original.traces.at(-1).words,'Target run retains original stop rules, state and RNG');
    await shot(prefix.replaceAll(' ','-')+'-natural');
+   await open('autowalk-clear',touch);for(let i=0;i<movement;i++)await tap('mobile-movement');
+   await startMotion();const keyboardBefore=await snap(),keyboardStarted=Date.now();await page.keyboard.press('ArrowRight');
+   await page.waitForFunction(x=>__rogueBrowserTest.frame.player.x===x,movement===1?15:14);await idle();
+   const keyboardElapsed=Date.now()-keyboardStarted,keyboardAfter=await stable(),keyboardMotion=await endMotion();
+   assert.deepEqual(keyboardAfter.trace.words,after.trace.words,'Same-distance keyboard run and target run finish at the same C/RNG state');
+   (report.run_comparison??=[]).push({touch,movement,target:targetMetrics,keyboard:{elapsed_ms:keyboardElapsed,input_requests:keyboardAfter.inputRequestCount-keyboardBefore.inputRequestCount,frames:keyboardAfter.frameCount-keyboardBefore.frameCount,motion:keyboardMotion}});
   });
   await check(prefix+' exact target before original stop',async()=>{
    await open('autowalk-clear',touch);for(let i=0;i<movement;i++)await tap('mobile-movement');
-   await target(13,10);await stopped('arrived');const after=await stable();
+   const before=await snap(),started=Date.now();
+   await target(13,10);await stopped('arrived');const elapsed=Date.now()-started,arrived=await snap();
+   const pose=arrived.animation.find(a=>a.id===0);
+   assert.equal(pose.displayX,13,'Arrival paints the real target with no queued walking tween');assert.equal(pose.displayY,10);
+   await page.waitForTimeout(80);const still=(await snap()).animation.find(a=>a.id===0);assert.equal(still.displayX,13);assert.equal(still.displayY,10);
+   const after=await stable();
+   const requests=after.inputRequestCount-before.inputRequestCount;
+   assert.ok(requests<=3,'One straight permit avoids a host round trip for each original action');
+   (report.performance??=[]).push({touch,movement,steps:3,elapsed_ms:elapsed,input_requests:requests,frames:after.frameCount-before.frameCount});
    assert.deepEqual(after.frame.player,{x:13,y:10});
    const original=await runGame(path.join(root,'build/game-fixtures.wasm'),{fixture:'autowalk-clear',seed:17,name:'Player',locale:'ja',messagePaging:'log',events:[0x120010+(movement-1)*8+3,0x120020,0x120020,0x120020,0x120021]});
    assert.deepEqual(after.trace.words,original.traces.at(-1).words);
@@ -91,11 +113,11 @@ try{
   });
   for(const cancel of ['key','web','blur','restore'])await check(prefix+' gate cancellation '+cancel,async()=>{
    await open('autowalk-clear',touch);for(let i=0;i<movement;i++)await tap('mobile-movement');
-   // Hold only run permission timers so physical cancellation is tested at
-   // a real C gate, independent of slow screenshot/render hosts.
-   await page.evaluate(()=>window.__pauseRunTimers=true);
+   // Hold delivery of the request, leaving C at a real run gate. The same
+   // production UI handles the user's cancellation before permission is sent.
+   await page.evaluate(()=>window.__pauseRunRequests=true);
    await target(13,10);
-   await page.evaluate(()=>{const s=__rogueUiAdapter.state;__rogueUiAdapter.dispatch({type:'autowalk-tick',generation:s.generation,token:s.autowalk.scheduled.token});});
+   await page.waitForFunction(()=>typeof window.__heldRunRequest==='function');
    await page.waitForFunction(()=>__rogueUiAdapter.state.input?.kind==='run-boundary');
    if(cancel==='key')await page.keyboard.press('s');
    if(cancel==='web')await tap('mobile-movement');
@@ -105,6 +127,7 @@ try{
     await page.waitForFunction(()=>__rogueBrowserTest.topOpen&&!__rogueBrowserTest.savePending);
     await tap('load');
    }
+   await page.evaluate(()=>{window.__pauseRunRequests=false;const release=window.__heldRunRequest;window.__heldRunRequest=null;release?.();});
    await page.waitForFunction(()=>!__rogueUiAdapter.state.autowalk.active);await idle();
    const after=await stable();assert.deepEqual(after.frame.player,{x:10,y:10},'Cancellation at the first gate permits no movement');
    if(cancel==='key'){

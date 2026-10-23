@@ -4,7 +4,8 @@ use wasm_bindgen::prelude::*;
 const WRITE: u32 = 0;
 const READ: u32 = 1;
 const CLOSED: u32 = 2;
-const HEADER: u32 = 3;
+const INTERRUPT: u32 = 3;
+const HEADER: u32 = 4;
 
 #[cfg_attr(feature = "browser-test", wasm_bindgen(js_name = EventQueue))]
 pub struct Queue {
@@ -69,6 +70,14 @@ impl Queue {
             Atomics::notify_with_count(&self.words, WRITE, 1)?;
         }
         Ok(true)
+    }
+    pub fn interrupt(&self) -> Result<(), JsValue> {
+        Atomics::add(&self.words, INTERRUPT, 1)?;
+        Ok(())
+    }
+    pub fn interrupt_epoch(&self) -> Result<u32, JsValue> {
+        let epoch=self.load(INTERRUPT)?;
+        Ok(if self.load(CLOSED)? != 0 {epoch.wrapping_add(1)} else {epoch})
     }
     pub fn take(&self) -> Result<i32, JsValue> {
         loop {

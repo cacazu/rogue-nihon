@@ -24,6 +24,7 @@ struct ZoomMotion {
 impl BrowserUi {
     pub(super) fn captured_ids(&self) -> Vec<i64> {
         let mut ids: Vec<_> = self.gestures.touches.keys().copied().collect();
+        if let Some(drag)=self.controls_editor.as_ref().and_then(|editor|editor.drag.as_ref()) {ids.push(drag.id);}
         if let Some(drag) = &self.drag {
             if !ids.contains(&drag.id) {
                 ids.push(drag.id);
@@ -210,7 +211,7 @@ impl BrowserUi {
     }
 
     pub(super) fn start_hold(&mut self, control: &Control, id: i64, effects: &mut Vec<Value>) {
-        if control.id == "touch-again" && !control.disabled
+        if control.action["kind"] == "command" && control.action["id"] == "web.repeat" && !control.disabled
             && self.model["input"]["kind"] == "command" {
             self.gestures.repeat_setting_hold = Some(id);
             effects.push(json!({"kind":"hold-timer","id":id,"delay":500}));

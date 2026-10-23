@@ -158,7 +158,7 @@ impl BrowserUi {
         if self.mobile_operations && !b(&self.model["settingsOpen"]) {
             self.mobile_operations_sheet(game);
         }
-        if b(&self.model["settingsOpen"]) {
+        if b(&self.model["settingsOpen"]) && self.controls_editor.is_none() {
             self.draw_settings(game);
         }
     }
@@ -203,34 +203,18 @@ impl BrowserUi {
             .map_or(text, |(_, text)| text).trim().to_string()
     }
 
-    fn mobile_command(&mut self, id: &str, key: u32, label: &str, r: Rect, disabled: bool) {
-        self.control(
-            id,
-            label,
-            r,
-            json!({"kind":"send","key":key}),
-            ControlStyle {
-                size: FONT,
-                role: ControlRole::Command,
-                highlight: id == "touch-search" && key != 115,
-                left: self.mobile_operations,
-                shortcut: if self.mobile_operations { self.pc_shortcut(&char::from_u32(key).unwrap().to_string()) } else { None },
-                keep_offscreen: self.mobile_operations,
-                key: Some(json!(key)),
-                disabled,
-                ..Default::default()
-            },
-        );
-    }
-
-    pub(super) fn mobile_movement_control(&mut self, rect: Rect) {
-        let label = self.t(match self.mobile_movement {
+    pub(super) fn movement_caption(&self) -> String {
+        self.t(match self.mobile_movement {
             1 => "mobile.run",
             2 => "mobile.run_adjacent",
             _ => "mobile.step",
-        });
+        })
+    }
+
+    pub(super) fn movement_control(&mut self, id: &str, rect: Rect) {
+        let label = self.movement_caption();
         self.web_control(
-            WebAction::Movement, "mobile-movement",
+            WebAction::Movement, id,
             &label,
             rect,
             ControlStyle {
@@ -240,7 +224,7 @@ impl BrowserUi {
             },
         );
         self.widgets.begin_control_content(!self.web_available(WebAction::Movement));
-        let caption = Widgets::shortcut_label(&label, self.pc_shortcut(web_command(WebAction::Movement).key).as_deref());
+        let caption = Widgets::shortcut_label(&label, self.command_shortcut("web.movement").as_deref());
         self.widgets.fitted_line(
             &caption,
             Rect::new(rect.x + 4., rect.y, rect.w - 8., rect.h),
@@ -254,88 +238,8 @@ impl BrowserUi {
         self.widgets.end_control_content();
     }
 
-    fn mobile_dock(&mut self, y: f64) {
-        self.widgets
-            .rect(Rect::new(0., y, self.width, self.height - y), BG);
-        let ui = self.model["frame"]["ui"].clone();
-        let direction = b(&ui["movement_direction"]);
-        let mirrored = self.left_handed();
-        let pad_x = if mirrored { self.width - 180. } else { 12. };
-        let pad_y = y + (self.height - y - 168.)/2.;
-        let row_height = if self.width < 360. { 76. } else { 52. };
-        let row_step = row_height + 6.;
-        for a in array(&ui["map_controls"]["directions"]) {
-            let key = n(&a["key"]) as u32;
-            let emitted = self.movement_key(key);
-            let label = if key == 46 {
-                self.t("mobile.wait")
-            } else {
-                s(&a["text"]).to_string()
-            };
-            self.control(
-                &format!("touch-{}", char::from_u32(key).unwrap_or(' ')),
-                &label,
-                Rect::new(
-                    pad_x + n(&a["column"]) * 58.,
-                    pad_y + n(&a["row"]) * 58.,
-                    52.,
-                    52.,
-                ),
-                json!({"kind":"send","key":emitted}),
-                ControlStyle {
-                    size: if key == 46 { FONT } else { 26. },
-                    key: Some(json!(emitted)),
-                    throw_direction: direction,
-                    ..Default::default()
-                },
-            );
-        }
-        let x = if self.width >= 320. { 192. } else { 176. };
-        let w = self.width - x - 12.;
-        let screen_width = self.width;
-        let place = |rect: Rect| if mirrored { Rect::new(screen_width - rect.x - rect.w,rect.y,rect.w,rect.h) } else { rect };
-        if direction {
-            for action in array(&ui["map_controls"]["actions"]) {
-                self.mobile_command(
-                    &format!("touch-action-{}", s(&action["id"])),
-                    n(&action["key"]) as u32,
-                    &self.t("action.cancel_short"),
-                    place(Rect::new(x, y + 8., w, row_height)),
-                    false,
-                );
-            }
-            return;
-        }
-        let cell_width = (w - 8.) / 2.;
-        self.mobile_movement_control(place(Rect::new(x, y + 8., cell_width, row_height)));
-        self.mobile_command(
-            "touch-action-action.inventory",
-            105,
-            &self.t("action.inventory"),
-            place(Rect::new(x + cell_width + 8., y + 8., cell_width, row_height)),
-            false,
-        );
-        let (context_key, context_label) = self.mobile_context_command();
-        self.mobile_command(
-            "touch-search",
-            context_key,
-            &self.t(context_label),
-            place(Rect::new(x, y + 8. + row_step, cell_width, row_height)),
-            false,
-        );
-        self.web_control(
-            WebAction::FullMap, "mobile-full-map",
-            &self.t("mobile.full_map"),
-            place(Rect::new(x + cell_width + 8., y + 8. + row_step, cell_width, row_height)),
-            ControlStyle {size:FONT,..Default::default()},
-        );
-        self.web_control(
-            WebAction::Commands, "mobile-operations",
-            &self.t("action.help"),
-            place(Rect::new(x, y + 8. + row_step*2., cell_width, row_height)),
-            ControlStyle {size:FONT,..Default::default()},
-        );
-        self.draw_repeat_button(place(Rect::new(x + cell_width + 8., y + 8. + row_step*2., cell_width, row_height)));
+    fn mobile_dock(&mut self,y:f64) {
+        self.draw_configurable_dock(Rect::new(0.,y,self.width,self.height-y),control_preferences::ControlForm::Phone);
     }
     fn mobile_operations_sheet(&mut self, game: Rect) {
         self.begin_choices("mobile-operations");
@@ -346,8 +250,8 @@ impl BrowserUi {
         let groups: Vec<_> = commands::GROUPS.iter().filter_map(|(title, entries)| {
             let originals = entries.iter().filter_map(|entry| {
                 let (key, action) = match entry.phone_action? {
-                    commands::GameAction::Key(key) => (key,json!({"kind":"send","key":key})),
-                    commands::GameAction::Direction(key) => (key,json!({"kind":"movement","key":key})),
+                    commands::GameAction::Key(key) => (key,json!({"kind":"command","id":commands::key_id(key)})),
+                    commands::GameAction::Direction(key) => (key,json!({"kind":"command","id":commands::key_id(key)})),
                 };
                 Some((format!("mobile-op-{key}"), self.mobile_help(entry.description), action, Some(key), None))
             });
@@ -404,8 +308,8 @@ impl BrowserUi {
                 self.control(id, label, Rect::new(viewport.x, row, viewport.w, TARGET), action.clone(),
                     ControlStyle { size:FONT, left:true, role:ControlRole::Command,
                         key:key.map(|key| json!(key)), disabled:!available, keep_offscreen:true,
-                        shortcut: if let Some(action) = web { self.pc_shortcut(web_command(*action).key) }
-                            else { key.and_then(|key| char::from_u32(key)).and_then(|key| self.pc_shortcut(&key.to_string())) },
+                        shortcut: if let Some(action) = web { self.command_shortcut(commands::web_id(*action)) }
+                            else { key.and_then(|key|commands::key_id(key)).and_then(|id|self.command_shortcut(id)) },
                         ..Default::default() });
                 row += 60.;
             }
