@@ -32,8 +32,8 @@
     },
     {
       "file": "browser-ui.wasm",
-      "bytes": 5230155,
-      "sha256": "4d025fa826207c64c8654ec2817a654e89f1e0edd1593eb8644cafd52d57a72e"
+      "bytes": 5233442,
+      "sha256": "bf30968572caf41c52846e51259aa8ebda1e8158549b9679e7467d3dc82805b9"
     },
     {
       "file": "browser-ui.js",
@@ -42,7 +42,7 @@
     }
   ],
   "browser_ui": {
-    "built_at_utc": "2026-10-23T16:47:33.7864695Z",
+    "built_at_utc": "2026-10-23T16:59:54.4509148Z",
     "crate": "rogue-browser-display",
     "target": "wasm32-unknown-unknown"
   }

@@ -133,6 +133,7 @@ pub struct Widgets {
     pub hover: String,
     pub pressed: String,
     pub shortcut_context: Value,
+    pub fit_control_captions: bool,
     clip: Option<Rect>,
     clips: Vec<Option<Rect>>,
 }
@@ -267,6 +268,36 @@ impl Widgets {
         }
         self.text_line(&value, r, style, center, measure)
     }
+    /// Fit a complete logical line, keeping its normal font size as the upper bound.
+    pub fn fitted_line(
+        &mut self,
+        text: &str,
+        rect: Rect,
+        style: LineStyle<'_>,
+        measure: MeasureText,
+    ) -> Rect {
+        let value = text.split_whitespace().collect::<Vec<_>>().join(" ");
+        let mut font = style.text;
+        let width = measure(&value, font.size, font.bold, font.mono).width;
+        if width > rect.w.max(0.) {
+            font.size *= rect.w.max(0.) / width;
+        }
+        self.text_line(&value, rect, font, style.center, measure)
+    }
+    /// Phone control captions retain each logical line without wrapping or omission.
+    pub fn control_line(
+        &mut self,
+        text: &str,
+        rect: Rect,
+        style: LineStyle<'_>,
+        measure: MeasureText,
+    ) -> Rect {
+        if self.fit_control_captions {
+            self.fitted_line(text, rect, style, measure)
+        } else {
+            self.single_line(text, rect, style, measure)
+        }
+    }
     pub fn icon(&mut self, name: &str, r: Rect, color: &str) -> Rect {
         let size = r.w.min(r.h);
         let r = Rect::new(r.x + (r.w - size) / 2., r.y + (r.h - size) / 2., size, size);
@@ -396,20 +427,19 @@ impl Widgets {
             }
         } else if !style.custom {
             let size = if style.size > 0. { style.size } else { 16. };
-            let lines = Self::wrap(
-                label,
-                r.w - if style.left { 20. } else { 12. },
-                size,
-                measure,
-            );
+            let lines = if self.fit_control_captions {
+                label.split('\n').map(str::to_owned).collect()
+            } else {
+                Self::wrap(label, r.w - if style.left { 20. } else { 12. }, size, measure)
+            };
             let line_h = size * 1.6;
             for (i, line) in lines.iter().enumerate() {
-                self.single_line(
+                self.control_line(
                     line,
                     Rect::new(
-                        r.x + if style.left { 10. } else { 0. },
+                        r.x + if style.left { 10. } else if self.fit_control_captions { 6. } else { 0. },
                         r.y + (r.h - lines.len() as f64 * line_h) / 2. + i as f64 * line_h,
-                        r.w - if style.left { 20. } else { 0. },
+                        r.w - if style.left { 20. } else if self.fit_control_captions { 12. } else { 0. },
                         line_h,
                     ),
                     LineStyle {
@@ -452,9 +482,9 @@ impl Widgets {
         let state_width = (measure(state_label, 17., false, false).width + 8.).max(48.);
         let state = Rect::new(track.x - 12. - state_width, rect.y, state_width, rect.h);
         let label = Self::shortcut_label(label, shortcut.as_deref());
-        self.single_line(&label, Rect::new(rect.x + 12., rect.y, (state.x - rect.x - 24.).max(0.), rect.h),
+        self.control_line(&label, Rect::new(rect.x + 12., rect.y, (state.x - rect.x - 24.).max(0.), rect.h),
             LineStyle { text: TextStyle::new(17., TEXT, false), center: false, ellipsis: true }, measure);
-        self.single_line(state_label, state,
+        self.control_line(state_label, state,
             LineStyle { text: TextStyle::new(17., TEXT, false), center: true, ellipsis: false }, measure);
         self.box_rect(track, PANEL, Some(LINE), 0.);
         self.rect(Rect::new(track.x + if checked {32.} else {4.}, track.y + 4., 20., 24.), TEXT);

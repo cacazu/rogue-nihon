@@ -298,6 +298,7 @@ impl BrowserUi {
         self.width = n(&self.view["width"]).max(240.);
         self.height = n(&self.view["height"]).max(240.);
         let mobile = self.width < 700. || b(&self.view["coarse"]);
+        self.widgets.fit_control_captions = b(&self.view["coarse"]);
         if !self.item_selection_visible() { self.selection_context.clear(); }
         let generation = n(&self.model["generation"]) as u64;
         if b(&self.model["running"]) && generation != self.mobile_generation {

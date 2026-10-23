@@ -130,7 +130,7 @@ impl BrowserUi {
             let r = Rect::new(rect.x+left-scroll,rect.y,width,rect.h);
             self.control(&format!("inventory-tab-{tab}"),&label,r,json!({"kind":"inventory-tab","tab":tab}),
                 ControlStyle { role:ControlRole::Tab,custom:true,shortcut,keep_offscreen:true,..Default::default() });
-            self.widgets.single_line(&visible_label,r,
+            self.widgets.control_line(&visible_label,r,
                 LineStyle { text:TextStyle::new(17.,if active { ACCENT } else { TEXT },active),center:true,ellipsis:false },self.measure);
             if active { self.widgets.rect(Rect::new(r.x+6.,r.y+40.,r.w-12.,3.),ACCENT); }
         }

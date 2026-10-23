@@ -65,7 +65,7 @@ impl BrowserUi {
             },
         );
         self.widgets.commands.push(json!({"op":"save","alpha":if disabled {0.45} else {1.}}));
-        self.widgets.single_line(
+        self.widgets.control_line(
             &visible_label,
             Rect::new(rect.x + 10., rect.y, rect.w - 40., rect.h),
             LineStyle {

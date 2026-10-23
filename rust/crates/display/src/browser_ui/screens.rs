@@ -517,7 +517,7 @@ impl BrowserUi {
                 ControlStyle { custom: true, shortcut, key: if item_history { None } else { Some(json!(68)) },
                     disabled: b(&self.model["windowClosing"]), ..Default::default() },
             );
-            self.widgets.single_line(&visible_label,Rect::new(button_x,y+15.,width,title_height),
+            self.widgets.control_line(&visible_label,Rect::new(button_x,y+15.,width,title_height),
                 LineStyle { text:TextStyle::new(17.,TEXT,false),center:true,ellipsis:false },self.measure);
             if item_history { title_x += width + 8.; }
         }

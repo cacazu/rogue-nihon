@@ -1091,8 +1091,8 @@ fn narrow_phone_repeat_hint_and_count_two_stay_on_two_lines() {
 }
 
 #[test]
-fn narrow_phone_repeat_keeps_every_label_and_digit_at_seventeen_pixels() {
-    for (language,expected) in [("ja","繰返し回数255"),("en","RepeatCount255")] {
+fn narrow_phone_repeat_fits_each_complete_line_at_normal_size_or_smaller() {
+    for (language,expected) in [("ja",vec!["繰返し","回数255"]),("en",vec!["Repeat","Count 255"])] {
         let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();m["language"]=json!(language);
         let mut v=view(320.,740.);v["coarse"]=json!(true);
         ui.render(m.clone(),v.clone());
@@ -1100,11 +1100,47 @@ fn narrow_phone_repeat_keeps_every_label_and_digit_at_seventeen_pixels() {
         let output=ui.render(m,v);
         let rect=ui.widgets.controls.iter().find(|c|c.id=="touch-again").unwrap().rect;
         let lines:Vec<_>=array(&output["commands"]).iter().filter(|c| c["op"]=="text" && rect.contains(n(&c["x"]),n(&c["y"]))).collect();
-        assert_eq!(lines.iter().map(|c|s(&c["text"])).collect::<String>(),expected);
-        assert!(lines.iter().all(|c|c["size"]==17.));
+        assert_eq!(lines.iter().map(|c|s(&c["text"])).collect::<Vec<_>>(),expected);
+        assert!(lines.iter().all(|c|n(&c["size"])>0. && n(&c["size"])<=17.));
+        assert!(lines.iter().all(|c|measure(s(&c["text"]),n(&c["size"]),false,false).width<=rect.w-2.+0.001));
     }
 }
 
+
+#[test]
+fn phone_button_logical_lines_fit_without_changing_targets_or_leaking_to_desktop() {
+    for width in [320.,390.] {
+        for hand in ["right","left"] {
+            let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();m["handedness"]=json!(hand);
+            let mut v=view(width,844.);v["coarse"]=json!(true);
+            let output=ui.render(m.clone(),v);
+            for id in ["mobile-movement","touch-action-action.inventory","touch-search","mobile-full-map","mobile-operations","touch-again"] {
+                let c=ui.widgets.controls.iter().find(|c|c.id==id).unwrap();
+                assert_eq!(c.rect,c.full_rect);assert!(c.rect.w>=48. && c.rect.h>=48.);
+                let lines:Vec<_>=array(&output["commands"]).iter().filter(|run|run["op"]=="text" && c.rect.contains(n(&run["x"]),n(&run["y"]))).collect();
+                assert_eq!(lines.iter().map(|run|s(&run["text"])).collect::<Vec<_>>(),c.label.split('\n').collect::<Vec<_>>(),"{id} at {width}");
+                for run in lines {
+                    assert!(n(&run["size"])>0. && n(&run["size"])<=17.);
+                    assert!(n(&run["x"])+measure(s(&run["text"]),n(&run["size"]),false,false).width<=c.rect.x+c.rect.w+0.001);
+                }
+            }
+            let desktop=ui.render(m.clone(),view(1400.,900.));
+            let fresh=BrowserUi::new(measure).render(m,view(1400.,900.));
+            assert_eq!(desktop["commands"],fresh["commands"],"phone fitting does not leak into desktop");
+        }
+    }
+}
+
+#[test]
+fn fitted_control_line_keeps_zero_width_and_empty_labels_finite() {
+    let mut widgets=Widgets::default();widgets.fit_control_captions=true;
+    for label in ["", "持ち物"] {
+        let ink=widgets.control_line(label,Rect::new(0.,0.,0.,48.),
+            LineStyle { text:TextStyle::new(17.,TEXT,false),center:true,ellipsis:false },measure);
+        assert!(ink.x.is_finite() && ink.y.is_finite() && ink.w.is_finite() && ink.h.is_finite());
+        assert!(ink.w<=0.);
+    }
+}
 
 #[test]
 fn desktop_direction_keeps_all_constant_controls_disabled_in_place() {
@@ -1153,5 +1189,5 @@ fn desktop_direction_custom_captions_share_standard_disabled_opacity() {
     }
     let mut phone=BrowserUi::new(measure);let mut v=view(320.,568.);v["coarse"]=json!(true);
     let normal=phone.render(shortcut_model(),v);
-    assert_eq!(alpha_for(&normal,"歩く"),1.);assert_eq!(alpha_for(&normal,"回数1"),1.);
+    assert_eq!(alpha_for(&normal,"歩く"),1.);assert_eq!(alpha_for(&normal,"長押し"),1.);
 }

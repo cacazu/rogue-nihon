@@ -241,11 +241,11 @@ impl BrowserUi {
         );
         self.widgets.begin_control_content(!self.web_available(WebAction::Movement));
         let caption = Widgets::shortcut_label(&label, self.pc_shortcut(web_command(WebAction::Movement).key).as_deref());
-        self.widgets.single_line(
+        self.widgets.fitted_line(
             &caption,
-            Rect::new(rect.x + 2., rect.y, rect.w - 4., rect.h),
+            Rect::new(rect.x + 4., rect.y, rect.w - 8., rect.h),
             LineStyle {
-                text: TextStyle::new(FONT.min(FONT * (rect.w - 8.) / (self.measure)(&caption,FONT,false,false).width.max(1.)), TEXT, false),
+                text: TextStyle::new(FONT, TEXT, false),
                 center: true,
                 ellipsis: false,
             },

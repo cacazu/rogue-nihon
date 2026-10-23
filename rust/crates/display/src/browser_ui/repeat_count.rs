@@ -46,19 +46,9 @@ impl BrowserUi {
         self.web_control(WebAction::Repeat,"touch-again", &format!("{title}\n{subtitle}"), rect,
             ControlStyle { custom:true, key:Some(json!(97)), ..Default::default() });
         self.widgets.begin_control_content(!self.web_available(WebAction::Repeat));
-        if coarse {
-            let mut lines = self.wrap(&title, rect.w - 2., 17.);
-            lines.extend(self.wrap(&subtitle, rect.w - 2., 17.));
-            let line_height = rect.h / lines.len().max(1) as f64;
-            for (index, text) in lines.iter().enumerate() {
-                self.widgets.single_line(text, Rect::new(rect.x + 1., rect.y + index as f64 * line_height, rect.w - 2., line_height),
-                    LineStyle { text:TextStyle::new(17., TEXT, false), center:true, ellipsis:false }, self.measure);
-            }
-        } else {
-            for (index, text) in [&title, &subtitle].into_iter().enumerate() {
-                self.widgets.single_line(text, Rect::new(rect.x + 1., rect.y + index as f64 * rect.h / 2., rect.w - 2., rect.h / 2.),
-                    LineStyle { text:TextStyle::new(17., TEXT, false), center:true, ellipsis:false }, self.measure);
-            }
+        for (index, text) in [&title, &subtitle].into_iter().enumerate() {
+            self.widgets.control_line(text, Rect::new(rect.x + 1., rect.y + index as f64 * rect.h / 2., rect.w - 2., rect.h / 2.),
+                LineStyle { text:TextStyle::new(17., TEXT, false), center:true, ellipsis:false }, self.measure);
         }
         self.widgets.end_control_content();
     }
