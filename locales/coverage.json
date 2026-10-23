@@ -47,8 +47,8 @@
     },
     {
       "file": "fight.c",
-      "line": 566,
-      "end_line": 566,
+      "line": 574,
+      "end_line": 574,
       "function": "hit",
       "call": "addmsg",
       "argument_count": 0,
@@ -57,8 +57,8 @@
     },
     {
       "file": "fight.c",
-      "line": 580,
-      "end_line": 580,
+      "line": 588,
+      "end_line": 588,
       "function": "hit",
       "call": "addmsg",
       "argument_count": 0,
@@ -67,22 +67,12 @@
     },
     {
       "file": "fight.c",
-      "line": 582,
-      "end_line": 582,
+      "line": 590,
+      "end_line": 590,
       "function": "hit",
       "call": "addmsg",
       "argument_count": 0,
       "expression": "prname(ee,FALSE)",
-      "formats": []
-    },
-    {
-      "file": "fight.c",
-      "line": 599,
-      "end_line": 599,
-      "function": "miss",
-      "call": "addmsg",
-      "argument_count": 0,
-      "expression": "prname(er,TRUE)",
       "formats": []
     },
     {
@@ -92,13 +82,23 @@
       "function": "miss",
       "call": "addmsg",
       "argument_count": 0,
+      "expression": "prname(er,TRUE)",
+      "formats": []
+    },
+    {
+      "file": "fight.c",
+      "line": 615,
+      "end_line": 615,
+      "function": "miss",
+      "call": "addmsg",
+      "argument_count": 0,
       "expression": "m_names[i]",
       "formats": []
     },
     {
       "file": "fight.c",
-      "line": 627,
-      "end_line": 627,
+      "line": 635,
+      "end_line": 635,
       "function": "bounce",
       "call": "addmsg",
       "argument_count": 0,
@@ -107,8 +107,8 @@
     },
     {
       "file": "fight.c",
-      "line": 718,
-      "end_line": 718,
+      "line": 726,
+      "end_line": 726,
       "function": "killed",
       "call": "msg",
       "argument_count": 0,

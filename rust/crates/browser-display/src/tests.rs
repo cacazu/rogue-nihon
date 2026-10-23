@@ -669,3 +669,35 @@ fn initial_map_mode_uses_tiles_then_saved_selection_then_explicit_url() {
         }
     }
 }
+
+#[test]
+fn retired_autowalk_timer_is_ignored_while_new_target_waits_for_manual_input() {
+    let mut c=boot();start(&mut c);
+    let mut cells=vec![b'.';80*24];cells[10*80+10]=b'@';
+    let cells=String::from_utf8(cells).unwrap();
+    let mut tiles=vec![1;80*24];tiles[10*80+10]=8;
+    let frame=json!({"type":"frame","width":80,"height":24,"cells":cells,"map_cells":cells,
+        "player":{"x":10,"y":10},"map_tiles":tiles,"map_tile_ids":&rogue_display::map_tiles::IDS[..],"map_unknown_glyphs":[],
+        "map_actor_epoch":1,"map_actor_step":0,"map_actors":[{"id":0,"x":10,"y":10,"glyph":64}],"map_actor_events":[],
+        "ui":{"mode":"game","input":{"kind":"command"}}});
+    c.request(json!({"type":"worker","generation":1,"data":frame}));
+    c.request(json!({"type":"worker","generation":1,"data":{"type":"input-request"}}));
+    let r=c.request(json!({"type":"render","view":{"width":1240,"height":900}}));
+    let camera=&r["diagnostics"]["camera"];let rect=&r["diagnostics"]["mapRect"];
+    let x=rect["x"].as_f64().unwrap()+18.5*camera["size"].as_f64().unwrap()-camera["left"].as_f64().unwrap();
+    let y=rect["y"].as_f64().unwrap()+9.5*camera["cellH"].as_f64().unwrap()-camera["top"].as_f64().unwrap();
+    let target=|c:&mut Controller| {
+        event(c,json!({"type":"down","id":1,"x":x,"y":y,"button":0,"primary":true,"pointerType":"mouse"}));
+        event(c,json!({"type":"up","id":1,"x":x,"y":y,"hasCapture":true,"pointerType":"mouse"}))
+    };
+    let initial=target(&mut c);let token=initial["state"]["autowalk"]["scheduled"]["token"].clone();assert!(token.is_u64());
+    // The physical key is queued, but the Worker has not supplied its next wait.
+    event(&mut c,json!({"type":"enqueue","events":[108]}));
+    let next=target(&mut c);assert_eq!(next["state"]["autowalk"]["active"],true);
+    assert!(next["state"]["autowalk"]["scheduled"].is_null());
+    let late=event(&mut c,json!({"type":"autowalk-tick","generation":1,"token":token}));
+    assert_eq!(late["state"]["autowalk"]["active"],true);
+    assert!(late["effects"].as_array().unwrap().iter().all(|e|e["kind"]!="queue"));
+    let ready=c.request(json!({"type":"worker","generation":1,"data":{"type":"input-request"}}));
+    assert!(ready["state"]["autowalk"]["scheduled"]["token"].is_u64());
+}

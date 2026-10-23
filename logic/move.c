@@ -279,6 +279,9 @@ be_trapped(coord *tc)
 	return T_RUST;	/* anything that's not a door or teleport */
     running = FALSE;
     count = FALSE;
+#ifdef ROGUE_LAYERED
+    rg_host_player_event(RG_PLAYER_TRAP);
+#endif
     pp = INDEX(tc->y, tc->x);
     pp->p_ch = TRAP;
     tr = pp->p_flags & F_TMASK;

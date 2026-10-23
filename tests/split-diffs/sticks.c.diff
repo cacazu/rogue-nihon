@@ -167,7 +167,14 @@
  		if (!hit_hero && (tp = moat(pos.y, pos.x)) != NULL)
  		{
  		    hit_hero = TRUE;
-@@ -388,8 +455,16 @@
+@@ -384,12 +451,23 @@
+ 		}
+ 		else if (hit_hero && ce(pos, hero))
+ 		{
++#ifdef ROGUE_LAYERED
++                    if (start != &hero) rg_host_player_event(RG_PLAYER_ATTACKED);
++#endif
+ 		    hit_hero = FALSE;
  		    changed = !changed;
  		    if (!save(VS_MAGIC))
  		    {
@@ -185,7 +192,7 @@
  			    if (start == &hero)
  				death('b');
  			    else
-@@ -405,11 +480,18 @@
+@@ -405,11 +483,18 @@
  			msg("the %s whizzes by you", name);
  		}
  		mvaddch(pos.y, pos.x, dirch);

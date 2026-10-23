@@ -12,6 +12,7 @@ use std::collections::BTreeSet;
 
 pub struct Controller {
     ui: BrowserUi,
+    autowalk: crate::autowalk::AutoWalk,
     animations: Animator,
     model: Value,
     state: Value,
@@ -22,6 +23,7 @@ pub struct Controller {
     effects: Vec<Value>,
     input: Value,
     composing: bool,
+    waiting_for_request: bool,
     text_mode: bool,
     draft_dirty: bool,
     window_open: bool,
@@ -42,10 +44,11 @@ impl Controller {
     pub fn new(measure: MeasureText) -> Self {
         Self {
             ui: BrowserUi::new(measure),
+            autowalk: crate::autowalk::AutoWalk::default(),
             animations: Animator::new(tiles::animation_manifest("tiles"), tiles::animation_manifest("pixels"))
                 .expect("Character animation manifests"),
             model: json!({"language":"ja","topOpen":true,"settingsOpen":false,"starting":false,"running":false,"ready":false,"saved":false,"downloadAvailable":false,"savePending":false,"returnAfterEnd":false,"itemHistoryOpen":false,"returnToInventory":false,"generation":0,"displayMode":"tiles","tileSize":32,"animationEnabled":true,"theme":rogue_display::theme::Theme::default().id(),"frame":null,"topNotice":null,"fieldErrors":{}}),
-            state: json!({"exitCode":null,"outcome":null,"runtimeError":null,"frameCount":0,"inputRequestCount":0,"trace":null,"traces":[],"messages":[],"logs":[],"translationFallbacks":[],"savedLength":0}),
+            state: json!({"exitCode":null,"outcome":null,"runtimeError":null,"frameCount":0,"inputRequestCount":0,"trace":null,"traces":[],"playerEvents":[],"messages":[],"logs":[],"translationFallbacks":[],"savedLength":0}),
             inputs: json!({}),
             environment: Value::Null,
             history: History::default(),
@@ -53,6 +56,7 @@ impl Controller {
             effects: Vec::new(),
             input: Value::Null,
             composing: false,
+            waiting_for_request: false,
             text_mode: false,
             draft_dirty: false,
             window_open: false,
@@ -68,6 +72,26 @@ impl Controller {
             assets_error: false,
             saves: SaveOperations::default(),
             inventory_preference_cache: String::new(),
+        }
+    }
+    fn stop_autowalk(&mut self, reason: &'static str) {
+        if self.autowalk.stop(reason) {
+            self.effects.push(json!({"kind":"autowalk-timer"}));
+        }
+    }
+    fn autowalk_available(&self) -> bool {
+        flag(&self.model["running"]) && !flag(&self.model["topOpen"])
+            && !flag(&self.model["settingsOpen"]) && !flag(&self.model["savePending"])
+            && !flag(&self.model["returnAfterEnd"]) && !self.restore_pending && !self.session_ended
+            && self.input["kind"] == "command" && self.model["frame"]["ui"]["mode"] == "game"
+            && !self.model["frame"]["ui"]["window"].is_object() && self.ui.map_navigation_available()
+    }
+    fn schedule_autowalk(&mut self) {
+        if !self.autowalk.active() || self.waiting_for_request { return; }
+        if !self.autowalk_available() { self.stop_autowalk("context"); return; }
+        if let Some(mut effect) = self.autowalk.schedule(&self.model["frame"],number(&self.state["inputRequestCount"])) {
+            effect["generation"] = self.model["generation"].clone();
+            self.effects.push(effect);
         }
     }
     fn notice(&mut self, id: &str, args: Value, error: bool) {
@@ -168,6 +192,7 @@ impl Controller {
         self.effects.push(json!({"kind":"save-delete","request":pending.request,"generation":pending.generation}));
     }
     fn end_session(&mut self) {
+        self.stop_autowalk("end");
         if !self.session_ended {
             self.session_ended = true;
             self.discard_save();
@@ -202,6 +227,7 @@ impl Controller {
         });
     }
     fn settings(&mut self, open: bool) {
+        if open { self.stop_autowalk("context"); }
         self.model["settingsOpen"] = json!(open);
         self.focus(if !open && self.text_mode {
             "prompt-text"
@@ -210,6 +236,7 @@ impl Controller {
         });
     }
     fn return_top(&mut self) {
+        self.stop_autowalk("scene");
         if flag(&self.model["savePending"]) {
             return;
         }
@@ -283,6 +310,7 @@ impl Controller {
         if !flag(&self.model["running"]) {
             return;
         }
+        self.waiting_for_request = true;
         self.effects.push(json!({"kind":"queue","events":events,"after":after,"generation":self.model["generation"],"request":self.state["inputRequestCount"]}));
     }
     fn fallback(&mut self, value: &Value, location: &str) -> bool {
@@ -359,6 +387,7 @@ impl Controller {
         }
     }
     fn apply_input(&mut self, input: Value) {
+        if input["kind"] != "command" { self.stop_autowalk("context"); }
         let next = input["kind"] == "text";
         let was = self.text_mode;
         self.field(
@@ -389,6 +418,8 @@ impl Controller {
         }
     }
     fn start(&mut self, restore: bool) {
+        self.stop_autowalk("scene");
+        self.waiting_for_request = false;
         if !restore && self.composing {
             let field = if flag(&self.inputs["seed"]["active"]) { "seed" } else { "name" };
             self.field_error(field, "error.text_composing");
@@ -445,7 +476,7 @@ impl Controller {
         for key in ["trace", "outcome", "exitCode", "runtimeError"] {
             self.state[key] = Value::Null;
         }
-        for key in ["traces", "messages", "logs", "translationFallbacks"] {
+        for key in ["traces", "playerEvents", "messages", "logs", "translationFallbacks"] {
             self.state[key] = json!([]);
         }
         self.state["frameCount"] = json!(0);
@@ -645,6 +676,7 @@ impl Controller {
                     }
                     self.last_level = Some(level);
                 }
+                if self.autowalk.observe(&data) { self.effects.push(json!({"kind":"autowalk-timer"})); }
                 self.model["frame"] = data;
                 self.state["frameCount"] = json!(number(&self.state["frameCount"]) + 1);
                 self.presentation();
@@ -657,6 +689,15 @@ impl Controller {
                 if self.ending() { self.end_session(); }
                 if flag(&self.model["windowClosing"]) && flag(&self.model["frame"]["ui"]["inventory"]) {
                     self.close_window(false);
+                }
+            }
+            "player-event" => {
+                if matches!(text(&data["kind"]), "attacked" | "trap" | "attack")
+                    && data["sequence"].as_u64().is_some_and(|s| s > 0) {
+                    self.stop_autowalk(match text(&data["kind"]) {
+                        "attacked" => "attacked", "trap" => "trap", _ => "attack",
+                    });
+                    push(&mut self.state["playerEvents"], data, 128);
                 }
             }
             "trace" => {
@@ -683,6 +724,7 @@ impl Controller {
                 self.history.message(data);
             }
             "input-request" => {
+                self.waiting_for_request = false;
                 self.state["inputRequestCount"] =
                     json!(number(&self.state["inputRequestCount"]) + 1);
                 if self.restore_pending {
@@ -701,6 +743,7 @@ impl Controller {
                     }
                 }
                 self.finish_ending();
+                self.schedule_autowalk();
             }
             "input-flush" => {
                 let discarded = data["events"].as_array().cloned().unwrap_or_default();
@@ -720,6 +763,7 @@ impl Controller {
                 self.state["outcome"] = json!({"code":data["code"],"text":data["text"]});
             }
             "exit" => {
+                self.stop_autowalk("exit");
                 self.cancel_save();
                 self.state["exitCode"] = data["code"].clone();
                 self.model["running"] = json!(false);
@@ -736,6 +780,7 @@ impl Controller {
                 }
             }
             "error" => {
+                self.stop_autowalk("error");
                 self.cancel_save();
                 let starting = flag(&self.model["starting"]);
                 self.state["runtimeError"] = data["text"].clone();
@@ -776,6 +821,8 @@ impl Controller {
         match operation {
             "queue" => {
                 if !ok {
+                    self.waiting_for_request = false;
+                    if r["after"] == "autowalk" { self.stop_autowalk("queue"); }
                     if r["after"] == "save" { self.cancel_save(); }
                     self.model["windowClosing"] = json!(false);
                     if r["after"] == "submit" || (r["after"] == "save" && self.text_mode) {
@@ -1014,6 +1061,7 @@ impl Controller {
         for (k, v) in self.state.as_object().expect("State object") {
             result[k] = v.clone();
         }
+        result["autowalk"] = self.autowalk.snapshot();
         result["notice"] = json!(notice);
         result["message"] = json!(message);
         result["uiMissing"] = json!(self.catalog.missing);
@@ -1067,7 +1115,22 @@ impl Controller {
             "api" => accepted = self.api(&r, &mut redraw),
             "event" => {
                 let mut e = r["event"].clone();
+                if matches!(text(&e["type"]), "key" | "down" | "invoke" | "select" | "submit"
+                    | "enqueue" | "blur" | "pagehide" | "surface-change" | "compositionstart")
+                    || e["type"] == "visibilitychange" && flag(&e["hidden"]) {
+                    self.stop_autowalk("input");
+                }
                 match text(&e["type"]) {
+                    "autowalk-tick" => {
+                        if e["generation"] != self.model["generation"] || !self.autowalk.accepts_tick(number(&e["token"])) {
+                            // Retired timers cannot cancel a new route, even while
+                            // it is waiting for outstanding manual input to finish.
+                        } else if self.autowalk_available() && !self.waiting_for_request {
+                            if let Some(key) = self.autowalk.tick(&self.model["frame"],number(&self.state["inputRequestCount"]),number(&e["token"])) {
+                                self.queue(json!([key]), "autowalk");
+                            }
+                        } else { self.stop_autowalk("context"); }
+                    }
                     "touchstart" | "contextmenu" => consumed = true,
                     "visibilitychange" if flag(&e["hidden"]) => {
                         self.ui.event(json!({"type":"cancel"}));
@@ -1136,7 +1199,14 @@ impl Controller {
                                     }
                                 }
                                 "submit" => self.submit(text(&effect["id"])),
+                                "map-target" => {
+                                    if self.autowalk_available() {
+                                        self.autowalk.start(&self.model["frame"], effect);
+                                        self.schedule_autowalk();
+                                    }
+                                }
                                 "send" => {
+                                    self.stop_autowalk("input");
                                     if effect["redraw"] == false {
                                         redraw = false;
                                     }

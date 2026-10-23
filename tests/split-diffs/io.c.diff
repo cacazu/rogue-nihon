@@ -1,6 +1,6 @@
 --- acquired/io.c
 +++ logic/io.c
-@@ -8,7 +8,12 @@
+@@ -8,8 +8,13 @@
  #include <curses.h>
  #include <ctype.h>
  #include <string.h>
@@ -8,17 +8,20 @@
 +#include <stdlib.h>
 +#include <stdint.h>
  #include "rogue.h"
+-
 +#include "io_state.h"
 +#include "semantic.h"
- 
++#include "../contract/rogue_abi.h"
  /*
   * msg:
+  *	Display a message at the top of the screen.
 @@ -18,10 +23,11 @@
  
  static char msgbuf[2*MAXMSG+1];
  static int newpos = 0;
+-
 +static void rg_doadd(const char *file, int line, const char *fmt, va_list args);
- 
++static void rg_wait_message_ack(void);
  /* VARARGS1 */
  int
 -msg(char *fmt, ...)
@@ -57,21 +60,31 @@
      va_end(args);
  }
  
-@@ -75,6 +82,7 @@
+@@ -75,11 +82,13 @@
      {
  	look(FALSE);
  	mvaddstr(0, mpos, "--More--");
 +	rg_ui_line("more", 0, mpos, "ui.more", "[]", "--More--");
  	refresh();
  	if (!msg_esc)
- 	    wait_for(' ');
-@@ -87,18 +95,22 @@
+-	    wait_for(' ');
++	    rg_wait_message_ack();
+ 	else
+ 	{
++	    rg_ui_line("input", -2, 0, "input.next_item", "[]", "");
+ 	    while ((ch = readchar()) != ' ')
+ 		if (ch == ESCAPE)
+ 		{
+@@ -87,18 +96,25 @@
  		    mpos = 0;
  		    newpos = 0;
  		    msgbuf[0] = '\0';
 +		    rg_message_discard();
++		    rg_ui_clear("input");
++		    rg_ui_clear("more");
  		    return ESCAPE;
  		}
++	    rg_ui_clear("input");
  	}
 +	rg_ui_clear("more");
      }
@@ -90,7 +103,7 @@
      mpos = newpos;
      newpos = 0;
      msgbuf[0] = '\0';
-@@ -110,19 +122,82 @@
+@@ -110,19 +126,82 @@
   * doadd:
   *	Perform an add onto the message buffer
   */
@@ -180,7 +193,7 @@
  }
  
  /*
-@@ -167,18 +242,19 @@
+@@ -167,18 +246,38 @@
   * status:
   *	Display the important stats line.  Keep the cursor where it was.
   */
@@ -192,6 +205,25 @@
 +static int s_arm = 0;
 +static str_t s_str = 0;
 +static int s_exp = 0;
++
++/* Publish current values without changing the C screen or status cache. Death
++ * displays zero HP while the original health and score calculation stay intact. */
++void
++rg_status_publish(int hp)
++{
++    char arguments[1024];
++    int armor = cur_armor != NULL ? cur_armor->o_arm : pstats.s_arm;
++    snprintf(arguments, sizeof arguments,
++        "[{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"signed\",\"value\":%d},"
++        "{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"signed\",\"value\":%d},"
++        "{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"signed\",\"value\":%d},"
++        "{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"signed\",\"value\":%d},"
++        "{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"term\",\"value\":\"status.hunger.%d\"}]",
++        level, purse, hp, max_hp, pstats.s_str, max_stats.s_str,
++        10 - armor, pstats.s_lvl, pstats.s_exp, hungry_state);
++    rg_ui_line("status", STATLINE, 0, "ui.status", arguments, "");
++    if (stat_msg) rg_ui_line("status_message", 0, 0, "ui.status", arguments, "");
++}
 +
  void
  status()
@@ -208,26 +240,23 @@
      static char *state_name[] =
      {
  	"", "Hungry", "Weak", "Faint"
-@@ -216,6 +292,18 @@
+@@ -216,6 +315,7 @@
      s_str = pstats.s_str;
      s_exp = pstats.s_exp; 
      s_hungry = hungry_state;
-+    {
-+        char arguments[1024];
-+        snprintf(arguments, sizeof arguments,
-+            "[{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"signed\",\"value\":%d},"
-+            "{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"signed\",\"value\":%d},"
-+            "{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"signed\",\"value\":%d},"
-+            "{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"signed\",\"value\":%d},"
-+            "{\"kind\":\"signed\",\"value\":%d},{\"kind\":\"term\",\"value\":\"status.hunger.%d\"}]",
-+            level, purse, pstats.s_hpt, max_hp, pstats.s_str, max_stats.s_str,
-+            10 - s_arm, pstats.s_lvl, pstats.s_exp, hungry_state);
-+        rg_ui_line("status", STATLINE, 0, "ui.status", arguments, "");
-+    }
++    rg_status_publish(pstats.s_hpt);
  
      if (stat_msg)
      {
-@@ -239,6 +327,17 @@
+@@ -224,6 +324,7 @@
+ 	    level, purse, hpwidth, pstats.s_hpt, hpwidth, max_hp, pstats.s_str,
+ 	    max_stats.s_str, 10 - s_arm, pstats.s_lvl, pstats.s_exp,
+ 	    state_name[hungry_state]);
++        rg_ui_clear("status_message");
+     }
+     else
+     {
+@@ -239,6 +340,17 @@
      move(oy, ox);
  }
  
@@ -245,16 +274,24 @@
  /*
   * wait_for
   *	Sit around until the guy types the right key
-@@ -247,6 +346,8 @@
+@@ -246,7 +358,16 @@
+ void
  wait_for(int ch)
  {
++    rg_wait_for(ch, ch == '\n' ? "input.wait_enter" : "input.wait_space");
++}
++
++/* Publish the action the acknowledgement performs, without changing C keys. */
++void
++rg_wait_for(int ch, const char *input_id)
++{
      register char c;
 +
-+    rg_ui_line("input", -2, 0, ch == '\n' ? "input.wait_enter" : "input.wait_space", "[]", "");
++    rg_ui_line("input", -2, 0, input_id, "[]", "");
  
      if (ch == '\n')
          while ((c = readchar()) != '\n' && c != '\r')
-@@ -254,6 +355,7 @@
+@@ -254,6 +375,7 @@
      else
          while (readchar() != ch)
  	    continue;
@@ -262,7 +299,7 @@
  }
  
  /*
-@@ -268,10 +370,17 @@
+@@ -268,10 +390,29 @@
      win = hw;
      wmove(win, 0, 0);
      waddstr(win, message);
@@ -275,8 +312,21 @@
      touchwin(win);
      wmove(win, hero.y, hero.x);
      wrefresh(win);
-     wait_for(' ');
+-    wait_for(' ');
++    rg_wait_for(' ', "input.close");
 +    rg_ui_clear("game");
      clearok(curscr, TRUE);
      touchwin(stdscr);
  }
++
++/* Ordinary narration alone may continue after recorded legacy acknowledgements.
++ * Keep look(FALSE) and all message/frame state in endmsg; do not synthesize keys.
++ * Recheck at each read so a save inside an unfinished More loop can cross from
++ * its old recorded input prefix to live log presentation without swallowing it. */
++static void rg_wait_message_ack(void)
++{
++    if (!rg_host_message_requires_acknowledgement()) return;
++    rg_ui_line("input", -2, 0, "input.next_message", "[]", "");
++    while (rg_host_message_requires_acknowledgement() && readchar() != ' ') continue;
++    rg_ui_clear("input");
++}

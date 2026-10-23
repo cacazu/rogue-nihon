@@ -31,11 +31,12 @@
      wmove(hw, LINES - 1, 0);
      waddstr(hw, "--Press space to continue--");
 +#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
-+    rg_ui_line("options", LINES - 1, 0, "ui.continue", "[]", "--Press space to continue--");
-+    rg_ui_line("input", -2, 0, "input.wait_space", "[]", "");
++    rg_ui_line("options", LINES - 1, 0, "ui.close", "[]", "--Press space to continue--");
++    rg_ui_line("input", -2, 0, "input.close", "[]", "");
 +#endif
      wrefresh(hw);
-     wait_for(' ');
+-    wait_for(' ');
++    rg_wait_for(' ', "input.close");
 +#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
 +    rg_ui_clear("options");
 +    rg_ui_clear("input");
@@ -103,7 +104,7 @@
      {
 +#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
 +        rg_option_value(win, oy, ox, *bp ? "options.value.true" : "options.value.false", *bp ? "True" : "False");
-+        rg_ui_line("input", -2, 0, "input.option_bool", "[]", "");
++        rg_ui_line("input", -2, oy, "input.option_bool", "[]", "");
 +#endif
  	wmove(win, oy, ox);
  	wrefresh(win);
@@ -179,7 +180,7 @@
  		    waddch(win, '\b');
  	    }
  	    continue;
-@@ -288,23 +368,42 @@
+@@ -288,23 +368,43 @@
  		break;
  	    else if (c == '~')
  	    {
@@ -219,25 +220,26 @@
  	strucpy(opt, buf, (int) strlen(buf));
 +#ifdef ROGUE_LAYERED /* RG_UTF8_TEXT */
 +    rg_host_text_mode(0, 0, opt);
-+    if (opt == whoami) rg_host_player_name(whoami);
++    /* C owns whether this option changed; consumed navigation keys are not edits. */
++    if (opt == whoami && sp > buf) rg_host_player_name(whoami);
 +    if (win == hw) rg_ui_printf("options", oy, ox, __FILE__, __LINE__, "%s", opt);
 +#endif
      mvwprintw(win, oy, ox, "%s\n", opt);
      wrefresh(win);
      if (win == stdscr)
-@@ -333,6 +432,11 @@
+@@ -333,6 +433,11 @@
      waddstr(win, inv_t_name[*ip]);
      while (op_bad)	
      {
 +#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
 +        static const char *const ids[] = {"options.value.overlay", "options.value.slow", "options.value.clear"};
 +        rg_option_value(win, oy, ox, ids[*ip], inv_t_name[*ip]);
-+        rg_ui_line("input", -2, 0, "input.option_inventory", "[]", "");
++        rg_ui_line("input", -2, oy, "input.option_inventory", "[]", "");
 +#endif
  	wmove(win, oy, ox);
  	wrefresh(win);
  	switch (readchar())
-@@ -363,9 +467,19 @@
+@@ -363,9 +468,19 @@
  	    default:
  		wmove(win, oy, ox + 15);
  		waddstr(win, "(O, S, or C)");
@@ -257,7 +259,7 @@
      return NORM;
  }
  	
-@@ -411,7 +525,7 @@
+@@ -411,7 +526,7 @@
  	/*
  	 * Get option name
  	 */
@@ -266,7 +268,7 @@
  	    continue;
  	len = (int)(sp - str);
  	/*
-@@ -448,8 +562,8 @@
+@@ -448,8 +563,8 @@
  		     */
  		    if (op->o_putfunc == put_inv_t)
  		    {
@@ -277,7 +279,7 @@
  			for (i = inv_t_name; i <= &inv_t_name[INV_CLEAR]; i++)
  			    if (strncmp(str, *i, sp - str) == 0)
  			    {
-@@ -475,7 +589,7 @@
+@@ -475,7 +590,7 @@
  	/*
  	 * skip to start of next option name
  	 */
@@ -286,7 +288,7 @@
  	    sp++;
  	str = sp;
      }
-@@ -486,16 +600,47 @@
+@@ -486,16 +601,47 @@
   *	Copy string using unctrl for things
   */
  

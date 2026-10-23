@@ -14,10 +14,17 @@ target = ROOT / 'tests/split-diffs'
 target.mkdir(exist_ok=True)
 assert target.resolve().parent == (ROOT / 'tests').resolve()
 notes = {
+    'chase.c': 'Observe public monster movement for animation; preserve original chase, relocation and RNG.',
+    'list.c': 'Forget presentation identities before entity release; preserve original list ownership.',
+    'new_level.c': 'Reset presentation actor epoch at the original level-entry boundary.',
+    'rings.c': 'Publish and clear the original hand-selection input wait.',
+    'wizard.c': 'Handle cancelled/empty identify targets through the original empty-list result; reset presentation epoch on teleport.',
     'armor.c': 'Observe completion counters; original armor action/time operations remain.',
     'command.c': 'Persist command statics; observe ticks; literal-format safe recall; semantic help/identify/equipment UI.',
     'daemon.c': 'Use exact Wasm callback signatures; original daemon/fuse schedule retained.',
-    'fight.c': 'Observe the already selected monster/combat verb for semantic translation.',
+    'fight.c': 'Observe selected combat text, public actor animation and own-player attack/attacked interruptions, including misses; preserve rule and RNG calls.',
+    'monsters.c': 'Observe an actual medusa gaze attempt after original visibility/ISFOUND checks, before saving throw; preserve visibility, confusion and RNG.',
+    'move.c': 'Observe public player movement, HP decrease and own-player trap interruption; preserve movement, trap rules and RNG calls.',
     'io.c': 'Catalog message arguments and UTF-8 UI; bounded buffers; private paging/status runtime accessors.',
     'mach_dep.c': 'Dispatch platform operations to virtual screen and host adapters.',
     'main.c': 'Portable startup, command checkpoints and outcomes; terminal/OS process operations excluded.',
@@ -30,7 +37,7 @@ notes = {
     'save.c': 'Dispatch browser checkpoint serialization instead of native file/process restoration.',
     'state.c': 'Fixed-width portable serializer, bounded counts/IDs, atomic load and graph ownership cleanup.',
     'things.c': 'Observe item descriptors, discovery/menu rows and waits; persist pagination state.',
-    'sticks.c': 'Observe public actor actions and original magic projectile traversal; preserve hits, bounces, charges, RNG and refresh order.',
+    'sticks.c': 'Observe public actor actions, original magic projectile traversal and enemy bolt arrival at the player including saves/misses; preserve hits, bounces, charges, RNG and refresh order.',
     'weapons.c': 'Observe public actor actions and original thrown item/arrow traversal; preserve hit, fall, RNG and refresh order.',
 }
 records = []
@@ -50,10 +57,10 @@ for source in sorted(original.glob('*.c')):
 assert len(records) == 33
 new = [{'file': path.name, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
        for path in sorted((ROOT / 'logic').glob('*.c')) if not (original / path.name).exists()]
-report = {'schema': 1, 'original_source': str(original), 'original_c_files': records, 'new_c_files': new,
+report = {'schema': 1, 'original_source': Path(os.path.relpath(original, ROOT)).as_posix(), 'original_c_files': records, 'new_c_files': new,
           'limits': ['Hashes and diffs record the source boundary; runtime equivalence is demonstrated only for explicitly executed regression cases.',
                      'Japanese presentation is outside the original English screen comparison.',
                      'UTF-8 editing, safe label ownership and safe percent recall are intentional split-only behavior/extensions.',
                      'Native curses, OS shell/process startup and native score/save file operations have not been executed.']}
-(ROOT / 'tests/split-provenance.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+(ROOT / 'tests/split-provenance.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline='\n')
 print(json.dumps({'original_c_files': len(records), 'byte_identical': sum(record['byte_identical'] for record in records), 'new_c_files': len(new), 'diffs_recorded': 'pass'}))

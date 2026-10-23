@@ -160,6 +160,23 @@ impl Browser {
                     *self.animation_timer.borrow_mut() = Some((id, callback));
                 }
             }
+            "autowalk-timer" => {
+                if let Some((id, _)) = self.autowalk_timer.borrow_mut().take() {
+                    self.window.clear_timeout_with_handle(id);
+                }
+                if let Some(delay) = effect["delay"].as_u64() {
+                    let weak = Rc::downgrade(self);
+                    let event = json!({"type":"autowalk-tick","token":effect["token"],"generation":effect["generation"]});
+                    let callback = Closure::new(move || {
+                        if let Some(host) = weak.upgrade() {
+                            if let Err(e) = host.event(event.clone(), None) { error(e); }
+                        }
+                    });
+                    let id = self.window.set_timeout_with_callback_and_timeout_and_arguments_0(
+                        callback.as_ref().unchecked_ref(), delay as i32)?;
+                    *self.autowalk_timer.borrow_mut() = Some((id, callback));
+                }
+            }
             "hold-timer" => {
                 if let Some((id, _)) = self.hold.borrow_mut().take() {
                     self.window.clear_timeout_with_handle(id);

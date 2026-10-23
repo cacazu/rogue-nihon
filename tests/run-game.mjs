@@ -32,7 +32,7 @@ export async function runGame(modulePath, config = {}) {
     throw new Error('events must be uint32 browser event values');
   }
   const result = { seed: config.seed ?? 1, traces: [], frames: [], frame_contexts: [], presentations: [],
-    input_contexts: [], messages: [], reads: [], flushes: [], stores: [],
+    input_contexts: [], player_events: [], host_events: [], messages: [], reads: [], flushes: [], stores: [],
     store_contexts: [], outcomes: [], stderr: [] };
   const sourcePath = resolve(modulePath);
   const wasmPath = sourcePath.replace(/\.(?:c?js)$/, '.wasm');
@@ -60,11 +60,14 @@ export async function runGame(modulePath, config = {}) {
       // representing explicit reader responses, never production input injection.
       const more = config.acknowledgeMore && result.frames.at(-1)?.cells.includes('--More--');
       const value = more ? 32 : position < events.length ? events[position++] : END_EVENT;
+      result.host_events.push({type:"input-request",position});
       result.reads.push({ position, event: value, trace: result.traces.length - 1 });
       return value | 0;
     },
     present(raw,length) {
       const value = JSON.parse(text(raw,length));
+      result.host_events.push({type:value.type,position,...(value.type==="player-event"?value:{})});
+      if(value.type==="player-event")result.player_events.push(value);
       if (value.type === 'trace') {
         if (value.words?.length !== 20) throw new Error('Trace must contain all 20 ABI words');
         result.traces.push({ words: value.words, input_index: value.input_index });

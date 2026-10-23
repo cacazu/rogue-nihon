@@ -110,6 +110,7 @@ pub(super) struct Browser {
     connection: RefCell<Option<IdbDatabase>>,
     save_tail: RefCell<Option<js_sys::Promise>>,
     hold: RefCell<Option<Timer>>,
+    autowalk_timer: RefCell<Option<Timer>>,
     blink: RefCell<Option<Timer>>,
     animation_timer: RefCell<Option<Timer>>,
 }
@@ -119,6 +120,9 @@ impl Drop for Browser {
             let _ = self.window.cancel_animation_frame(id);
         }
         if let Some((id, _)) = self.hold.get_mut().take() {
+            self.window.clear_timeout_with_handle(id);
+        }
+        if let Some((id, _)) = self.autowalk_timer.get_mut().take() {
             self.window.clear_timeout_with_handle(id);
         }
         if let Some((id, _)) = self.blink.get_mut().take() {
@@ -239,6 +243,7 @@ async fn start_main(window: Window, document: Document) -> Result<(), JsValue> {
         connection: RefCell::new(None),
         save_tail: RefCell::new(None),
         hold: RefCell::new(None),
+        autowalk_timer: RefCell::new(None),
         blink: RefCell::new(None),
         animation_timer: RefCell::new(None),
     });

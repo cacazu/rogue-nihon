@@ -451,6 +451,9 @@ def:
 		}
 		else if (hit_hero && ce(pos, hero))
 		{
+#ifdef ROGUE_LAYERED
+                    if (start != &hero) rg_host_player_event(RG_PLAYER_ATTACKED);
+#endif
 		    hit_hero = FALSE;
 		    changed = !changed;
 		    if (!save(VS_MAGIC))

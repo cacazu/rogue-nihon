@@ -51,6 +51,9 @@
 #define RG_FLAG_AMULET 0x00040000
 
 /* Presentation actions only. These do not represent commands or game turns. */
+#define RG_PLAYER_ATTACKED 1
+#define RG_PLAYER_TRAP 2
+#define RG_PLAYER_ATTACK 3
 #define RG_ACTOR_MOVE 1
 #define RG_ACTOR_ATTACK 2
 #define RG_ACTOR_HURT 3
@@ -104,6 +107,9 @@ void rg_host_map_actor(uint32_t id, int32_t x, int32_t y, int32_t glyph,
  * bounded transient queue and sequence; each event is consumed once by the
  * next frame. Events never enter game saves, RNG, or command processing. */
 void rg_host_map_actor_event(uint32_t id, uint32_t kind);
+/* Public interruption of the player only: no attacker identity or location.
+ * Report at the rule source, including attacks that miss, before the next wait. */
+void rg_host_player_event(uint32_t kind);
 /* Presentation-only visible projectile observations. GAP carries no hidden
  * coordinate; BEGIN/POINT are checked against the last public map in Rust.
  * No item subtype, target identity, rules, RNG, or save data is transferred. */

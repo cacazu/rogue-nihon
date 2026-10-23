@@ -484,6 +484,18 @@ pub extern "C" fn rg_host_map_actor_event(id: u32, kind: u32) {
     engine::map_actor(rogue_display::map::ActorObservation::Event { id, kind });
 }
 
+/// Own-player interruptions reveal neither hidden attackers nor trap types.
+#[unsafe(no_mangle)]
+pub extern "C" fn rg_host_player_event(kind: u32) {
+    let kind = match kind {
+        RG_PLAYER_ATTACKED => "attacked",
+        RG_PLAYER_TRAP => "trap",
+        RG_PLAYER_ATTACK => "attack",
+        _ => return,
+    };
+    emit(&json!({"type":"player-event","kind":kind,"sequence":engine::player_event_sequence()}));
+}
+
 /// Observe only public projectile metadata, never a rule or input operation.
 #[unsafe(no_mangle)]
 pub extern "C" fn rg_host_map_projectile(phase: u32, kind: u32, glyph: i32, x: i32, y: i32) {

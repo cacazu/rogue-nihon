@@ -1117,7 +1117,7 @@
  
      rs_read_places(inf,places,MAXLINES*MAXCOLS);
  
-@@ -2128,7 +2223,365 @@
+@@ -2128,7 +2223,367 @@
      rs_read_coord(inf, &nh);                            /* 5.4-move.c       */
      rs_read_int(inf,&group);                            /* 5.4-weapons.c    */
      
@@ -1319,8 +1319,10 @@
 +{
 +    int limit;
 +    for (; list != NULL; list = list->l_next) {
++        /* put_things() creates the unique Amulet with calloc's zero count. */
 +        if (!rs_valid_coord(list->o_pos) || list->o_count < 0 ||
-+            (list->o_type != GOLD && list->o_count == 0)) return 0;
++            (list->o_type != GOLD && list->o_type != AMULET &&
++             list->o_count == 0)) return 0;
 +        switch (list->o_type) {
 +            case POTION: limit = MAXPOTIONS; break;
 +            case SCROLL: limit = MAXSCROLLS; break;

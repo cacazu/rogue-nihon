@@ -68,6 +68,10 @@ fight(coord *mp, THING *weap, bool thrown)
     register bool did_hit = TRUE;
     register char *mname, ch;
 
+#ifdef ROGUE_LAYERED
+    if (!thrown) rg_host_player_event(RG_PLAYER_ATTACK);
+#endif
+
     /*
      * Find the monster we want to fight
      */
@@ -142,6 +146,10 @@ attack(THING *mp)
 {
     register char *mname;
     register int oldhp;
+
+#ifdef ROGUE_LAYERED
+    rg_host_player_event(RG_PLAYER_ATTACKED);
+#endif
 
     /*
      * Since this is an attack, stop running and any healing that was

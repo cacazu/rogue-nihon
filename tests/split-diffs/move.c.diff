@@ -1,0 +1,60 @@
+--- acquired/move.c
++++ logic/move.c
+@@ -13,6 +13,7 @@
+ #include <curses.h>
+ #include <ctype.h>
+ #include "rogue.h"
++#include "semantic.h"
+ 
+ /*
+  * used to hold the new hero position
+@@ -195,7 +196,15 @@
+ 		mvaddch(hero.y, hero.x, floor_at());
+ 		if ((fl & F_PASS) && chat(oldpos.y, oldpos.x) == DOOR)
+ 		    leave_room(&nh);
++#ifdef ROGUE_LAYERED
++                {
++                    int visual_x=hero.x,visual_y=hero.y;
++                    hero=nh;
++                    rg_semantic_actor_moved(&player,visual_x,visual_y);
++                }
++#else
+ 		hero = nh;
++#endif
+ 	    }
+     }
+ }
+@@ -270,6 +279,9 @@
+ 	return T_RUST;	/* anything that's not a door or teleport */
+     running = FALSE;
+     count = FALSE;
++#ifdef ROGUE_LAYERED
++    rg_host_player_event(RG_PLAYER_TRAP);
++#endif
+     pp = INDEX(tc->y, tc->x);
+     pp->p_ch = TRAP;
+     tr = pp->p_flags & F_TMASK;
+@@ -305,7 +317,11 @@
+ 	when T_ARROW:
+ 	    if (swing(pstats.s_lvl - 1, pstats.s_arm, 1))
+ 	    {
++		int observed_hp=pstats.s_hpt;
+ 		pstats.s_hpt -= roll(1, 6);
++#ifdef ROGUE_LAYERED
++		rg_semantic_actor_damage(&player,observed_hp);
++#endif
+ 		if (pstats.s_hpt <= 0)
+ 		{
+ 		    msg("an arrow killed you");
+@@ -335,7 +351,11 @@
+ 		msg("a small dart whizzes by your ear and vanishes");
+ 	    else
+ 	    {
++		int observed_hp=pstats.s_hpt;
+ 		pstats.s_hpt -= roll(1, 4);
++#ifdef ROGUE_LAYERED
++		rg_semantic_actor_damage(&player,observed_hp);
++#endif
+ 		if (pstats.s_hpt <= 0)
+ 		{
+ 		    msg("a poisoned dart killed you");

@@ -10,7 +10,44 @@
  
  /*
   * add_pack:
-@@ -197,6 +200,22 @@
+@@ -27,6 +30,9 @@
+ {
+     THING *op, *lp;
+     bool from_floor;
++#ifdef ROGUE_LAYERED
++    int picked_count;
++#endif
+ 
+     from_floor = FALSE;
+     if (obj == NULL)
+@@ -35,6 +41,11 @@
+ 	    return;
+ 	from_floor = TRUE;
+     }
++#ifdef ROGUE_LAYERED
++    /* Retain the incoming quantity before stacking replaces obj with the pack
++     * entry and discards the floor object. This affects message metadata only. */
++    picked_count = obj->o_count > 0 ? obj->o_count : 1;
++#endif
+ 
+     /*
+      * Check for and deal with scare monster scrolls
+@@ -151,9 +162,13 @@
+      */
+     if (!silent)
+     {
++        const char *picked_name = inv_name(obj, !terse);
++#ifdef ROGUE_LAYERED
++        rg_semantic_pickup_item(picked_name, obj, !terse, picked_count);
++#endif
+ 	if (!terse)
+ 	    addmsg("you now have ");
+-	msg("%s (%c)", inv_name(obj, !terse), obj->o_packch);
++        msg("%s (%c)", picked_name, obj->o_packch);
+     }
+ }
+ 
+@@ -197,6 +212,22 @@
  leave_pack(THING *obj, bool newobj, bool all)
  {
      THING *nobj;
@@ -33,7 +70,7 @@
  
      inpack--;
      nobj = obj;
-@@ -210,6 +229,9 @@
+@@ -210,6 +241,9 @@
  	{
  	    nobj = new_item();
  	    *nobj = *obj;
@@ -43,7 +80,63 @@
  	    next(nobj) = NULL;
  	    prev(nobj) = NULL;
  	    nobj->o_count = 1;
-@@ -386,6 +408,19 @@
+@@ -348,6 +382,37 @@
+  *	Allow player to inventory a single item
+  */
+ 
++#ifdef ROGUE_LAYERED
++/* Observe exactly the public inventory descriptors; C still validates choices. */
++static void rg_item_rows(THING *list, int type, const char *scope)
++{
++    int row = 0;
++    rg_ui_clear(scope);
++    for (; list != NULL; list = next(list)) {
++        if (type && type != list->o_type && !(type == CALLABLE &&
++            list->o_type != FOOD && list->o_type != AMULET) &&
++            !(type == R_OR_S && (list->o_type == RING || list->o_type == STICK)))
++            continue;
++        rg_ui_printf(scope, row++, 0, __FILE__, __LINE__, "%c) %s",
++                     list->o_packch, inv_name(list, FALSE));
++    }
++}
++static void rg_item_choices(THING *list, int type) { rg_item_rows(list, type, "choices"); }
++
++/* Observational inventory for Rust's item menu, including empty/single packs.
++ * No look(), game mutation, RNG, or extra commands. C still executes actions. */
++void rg_inventory_browser(void)
++{
++    if (!rg_host_inventory_browser_enabled()) { inventory(pack, 0); return; }
++    rg_ui_line("browse", 0, 0, "ui.text", "[]", "");
++    rg_item_rows(pack, 0, "inventory");
++    if (pack == NULL) rg_ui_line("inventory", 0, 0, "inventory.empty", "[]", "");
++    rg_wait_for(' ', "input.close");
++    rg_ui_clear("inventory");
++    rg_ui_clear("browse");
++}
++#endif
++
+ void
+ picky_inven()
+ {
+@@ -362,7 +427,16 @@
+     {
+ 	msg(terse ? "item: " : "which item do you wish to inventory: ");
+ 	mpos = 0;
+-	if ((mch = readchar()) == ESCAPE)
++#ifdef ROGUE_LAYERED
++        rg_item_choices(pack, 0);
++        rg_ui_line("input", -2, 0, "input.inventory_one", "[]", "");
++#endif
++        mch = readchar();
++#ifdef ROGUE_LAYERED
++        rg_ui_clear("choices");
++        rg_ui_clear("input");
++#endif
++	if (mch == ESCAPE)
+ 	{
+ 	    msg("");
+ 	    return;
+@@ -386,6 +460,20 @@
  {
      THING *obj;
      char ch;
@@ -54,6 +147,7 @@
 +        {"drop", "action.drop"}, {"throw", "action.throw"}, {"wield", "action.wield"}, {"identify", "action.identify"}
 +    };
 +    size_t purpose_index;
++    bool list_requested = FALSE;
 +    for (purpose_index = 0; purpose_index < sizeof purposes / sizeof purposes[0]; ++purpose_index)
 +        if (!strcmp(purpose, purposes[purpose_index].english)) {
 +            rg_semantic_register_term(purpose, purposes[purpose_index].id);
@@ -63,23 +157,41 @@
  
      if (pack == NULL)
  	msg("you aren't carrying anything");
-@@ -398,6 +433,9 @@
+@@ -398,6 +486,12 @@
      {
  	for (;;)
  	{
 +#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
-+        rg_ui_line("input", -2, 0, "input.choose_item", "[]", "");
++        rg_item_choices(pack, !strcmp(purpose, "throw") ? 0 : type);
++        if (purpose_index < sizeof purposes / sizeof purposes[0])
++            rg_ui_line("item_action", 0, 0, purposes[purpose_index].id, "[]", "");
++        rg_ui_line("input", -2, 0, list_requested ? "input.choose_item_list" : "input.choose_item", "[]", "");
 +#endif
  	    if (!terse)
  		addmsg("which object do you want to ");
  	    addmsg(purpose);
-@@ -405,6 +443,9 @@
+@@ -405,6 +499,11 @@
  		addmsg(" what");
  	    msg("? (* for list): ");
  	    ch = readchar();
 +#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++        rg_ui_clear("choices");
++        rg_ui_clear("item_action");
 +        rg_ui_clear("input");
 +#endif
  	    mpos = 0;
  	    /*
  	     * Give the poor player a chance to abort the command
+@@ -425,6 +524,12 @@
+ 		    after = FALSE;
+ 		    return NULL;
+ 		}
++
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++                /* Single-item original lists return immediately. Preserve the
++                 * requested list in the next selection view without new input. */
++                list_requested = TRUE;
++#endif
+ 		continue;
+ 	    }
+ 	    for (obj = pack; obj != NULL; obj = next(obj))

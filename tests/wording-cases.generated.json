@@ -784,273 +784,273 @@
       ]
     },
     {
-      "case": "site:fight.c:76:fight.fight.fight_what:-7",
+      "case": "site:fight.c:80:fight.fight.fight_what:-7",
       "id": "fight.fight.fight_what",
       "negative": false,
       "site": [
         "fight.c",
-        76
+        80
       ]
     },
     {
-      "case": "site:fight.c:76:fight.fight.fight_what:0",
+      "case": "site:fight.c:80:fight.fight.fight_what:0",
       "id": "fight.fight.fight_what",
       "negative": false,
       "site": [
         "fight.c",
-        76
+        80
       ]
     },
     {
-      "case": "site:fight.c:76:fight.fight.fight_what:7",
+      "case": "site:fight.c:80:fight.fight.fight_what:7",
       "id": "fight.fight.fight_what",
       "negative": false,
       "site": [
         "fight.c",
-        76
+        80
       ]
     },
     {
-      "case": "site:fight.c:98:fight.fight.heavy_thats_a_nasty_critter:7",
+      "case": "site:fight.c:102:fight.fight.heavy_thats_a_nasty_critter:7",
       "id": "fight.fight.heavy_thats_a_nasty_critter",
       "negative": false,
       "site": [
         "fight.c",
-        98
+        102
       ]
     },
     {
-      "case": "site:fight.c:98:fight.fight.wait_thats_a_xeroc:7",
+      "case": "site:fight.c:102:fight.fight.wait_thats_a_xeroc:7",
       "id": "fight.fight.wait_thats_a_xeroc",
       "negative": false,
       "site": [
         "fight.c",
-        98
+        102
       ]
     },
     {
-      "case": "site:fight.c:120:fight.fight.your_hands_stop_glowing:7",
+      "case": "site:fight.c:124:fight.fight.your_hands_stop_glowing:7",
       "id": "fight.fight.your_hands_stop_glowing",
       "negative": false,
       "site": [
         "fight.c",
-        120
+        124
       ]
     },
     {
-      "case": "site:fight.c:125:fight.fight.appears_confused:7",
+      "case": "site:fight.c:129:fight.fight.appears_confused:7",
       "id": "fight.fight.appears_confused",
       "negative": false,
       "site": [
         "fight.c",
-        125
+        129
       ]
     },
     {
-      "case": "site:fight.c:171:fight.attack.sentence_separator:7",
+      "case": "site:fight.c:179:fight.attack.sentence_separator:7",
       "id": "fight.attack.sentence_separator",
       "negative": false,
       "site": [
         "fight.c",
-        171
+        179
       ]
     },
     {
-      "case": "site:fight.c:203:fight.attack.you_are_frozen:7",
+      "case": "site:fight.c:211:fight.attack.you_are_frozen:7",
       "id": "fight.attack.you_are_frozen",
       "negative": false,
       "site": [
         "fight.c",
-        203
+        211
       ]
     },
     {
-      "case": "site:fight.c:205:fight.attack.by_the:7",
+      "case": "site:fight.c:213:fight.attack.by_the:7",
       "id": "fight.attack.by_the",
       "negative": false,
       "site": [
         "fight.c",
-        205
+        213
       ]
     },
     {
-      "case": "site:fight.c:221:fight.attack.you_feel_a_bite_in_your_leg_and_now_feel_weaker:7",
+      "case": "site:fight.c:229:fight.attack.you_feel_a_bite_in_your_leg_and_now_feel_weaker:7",
       "id": "fight.attack.you_feel_a_bite_in_your_leg_and_now_feel_weaker",
       "negative": false,
       "site": [
         "fight.c",
-        221
+        229
       ]
     },
     {
-      "case": "site:fight.c:223:fight.attack.a_bite_has_weakened_you:7",
+      "case": "site:fight.c:231:fight.attack.a_bite_has_weakened_you:7",
       "id": "fight.attack.a_bite_has_weakened_you",
       "negative": false,
       "site": [
         "fight.c",
-        223
+        231
       ]
     },
     {
-      "case": "site:fight.c:228:fight.attack.a_bite_momentarily_weakens_you:7",
+      "case": "site:fight.c:236:fight.attack.a_bite_momentarily_weakens_you:7",
       "id": "fight.attack.a_bite_momentarily_weakens_you",
       "negative": false,
       "site": [
         "fight.c",
-        228
+        236
       ]
     },
     {
-      "case": "site:fight.c:230:fight.attack.bite_has_no_effect:7",
+      "case": "site:fight.c:238:fight.attack.bite_has_no_effect:7",
       "id": "fight.attack.bite_has_no_effect",
       "negative": false,
       "site": [
         "fight.c",
-        230
+        238
       ]
     },
     {
-      "case": "site:fight.c:270:fight.attack.you_suddenly_feel_weaker:7",
+      "case": "site:fight.c:278:fight.attack.you_suddenly_feel_weaker:7",
       "id": "fight.attack.you_suddenly_feel_weaker",
       "negative": false,
       "site": [
         "fight.c",
-        270
+        278
       ]
     },
     {
-      "case": "site:fight.c:300:fight.attack.your_purse_feels_lighter:7",
+      "case": "site:fight.c:308:fight.attack.your_purse_feels_lighter:7",
       "id": "fight.attack.your_purse_feels_lighter",
       "negative": false,
       "site": [
         "fight.c",
-        300
+        308
       ]
     },
     {
-      "case": "site:fight.c:324:fight.attack.she_stole:7",
+      "case": "site:fight.c:332:fight.attack.she_stole:7",
       "id": "fight.attack.she_stole",
       "negative": false,
       "site": [
         "fight.c",
-        324
+        332
       ]
     },
     {
-      "case": "site:fight.c:336:fight.attack.sentence_separator:7",
+      "case": "site:fight.c:344:fight.attack.sentence_separator:7",
       "id": "fight.attack.sentence_separator",
       "negative": false,
       "site": [
         "fight.c",
-        336
+        344
       ]
     },
     {
-      "case": "site:fight.c:495:fight.roll_em.damage_for_x_came_out_dplus_add_dam_def_arm:-7",
+      "case": "site:fight.c:503:fight.roll_em.damage_for_x_came_out_dplus_add_dam_def_arm:-7",
       "id": "fight.roll_em.damage_for_x_came_out_dplus_add_dam_def_arm",
       "negative": false,
       "site": [
         "fight.c",
-        495
+        503
       ]
     },
     {
-      "case": "site:fight.c:495:fight.roll_em.damage_for_x_came_out_dplus_add_dam_def_arm:0",
+      "case": "site:fight.c:503:fight.roll_em.damage_for_x_came_out_dplus_add_dam_def_arm:0",
       "id": "fight.roll_em.damage_for_x_came_out_dplus_add_dam_def_arm",
       "negative": false,
       "site": [
         "fight.c",
-        495
+        503
       ]
     },
     {
-      "case": "site:fight.c:495:fight.roll_em.damage_for_x_came_out_dplus_add_dam_def_arm:7",
+      "case": "site:fight.c:503:fight.roll_em.damage_for_x_came_out_dplus_add_dam_def_arm:7",
       "id": "fight.roll_em.damage_for_x_came_out_dplus_add_dam_def_arm",
       "negative": false,
       "site": [
         "fight.c",
-        495
+        503
       ]
     },
     {
-      "case": "site:fight.c:544:fight.thunk.the_hits:7",
+      "case": "site:fight.c:552:fight.thunk.the_hits:7",
       "id": "fight.thunk.the_hits",
       "negative": false,
       "site": [
         "fight.c",
-        544
+        552
       ]
     },
     {
-      "case": "site:fight.c:546:fight.thunk.you_hit:7",
+      "case": "site:fight.c:554:fight.thunk.you_hit:7",
       "id": "fight.thunk.you_hit",
       "negative": false,
       "site": [
         "fight.c",
-        546
+        554
       ]
     },
     {
-      "case": "site:fight.c:547:fight.thunk.string:7",
+      "case": "site:fight.c:555:fight.thunk.string:7",
       "id": "fight.thunk.string",
       "negative": false,
       "site": [
         "fight.c",
-        547
+        555
       ]
     },
     {
-      "case": "site:fight.c:609:fight.miss.string:7",
+      "case": "site:fight.c:617:fight.miss.string:7",
       "id": "fight.miss.string",
       "negative": false,
       "site": [
         "fight.c",
-        609
+        617
       ]
     },
     {
-      "case": "site:fight.c:624:fight.bounce.the_misses:7",
+      "case": "site:fight.c:632:fight.bounce.the_misses:7",
       "id": "fight.bounce.the_misses",
       "negative": false,
       "site": [
         "fight.c",
-        624
+        632
       ]
     },
     {
-      "case": "site:fight.c:626:fight.bounce.you_missed:7",
+      "case": "site:fight.c:634:fight.bounce.you_missed:7",
       "id": "fight.bounce.you_missed",
       "negative": false,
       "site": [
         "fight.c",
-        626
+        634
       ]
     },
     {
-      "case": "site:fight.c:709:fight.killed.defeated:7",
+      "case": "site:fight.c:717:fight.killed.defeated:7",
       "id": "fight.killed.defeated",
       "negative": false,
       "site": [
         "fight.c",
-        709
+        717
       ]
     },
     {
-      "case": "site:fight.c:715:fight.killed.you_have:7",
+      "case": "site:fight.c:723:fight.killed.you_have:7",
       "id": "fight.killed.you_have",
       "negative": false,
       "site": [
         "fight.c",
-        715
+        723
       ]
     },
     {
-      "case": "site:fight.c:716:fight.killed.defeated_trailing_space:7",
+      "case": "site:fight.c:724:fight.killed.defeated_trailing_space:7",
       "id": "fight.killed.defeated_trailing_space",
       "negative": false,
       "site": [
         "fight.c",
-        716
+        724
       ]
     },
     {
@@ -1270,30 +1270,30 @@
       ]
     },
     {
-      "case": "site:monsters.c:191:monsters.wake_monster.string:7",
+      "case": "site:monsters.c:194:monsters.wake_monster.string:7",
       "id": "monsters.wake_monster.string",
       "negative": false,
       "site": [
         "monsters.c",
-        191
+        194
       ]
     },
     {
-      "case": "site:monsters.c:193:monsters.wake_monster.possessive_apostrophe:7",
+      "case": "site:monsters.c:196:monsters.wake_monster.possessive_apostrophe:7",
       "id": "monsters.wake_monster.possessive_apostrophe",
       "negative": false,
       "site": [
         "monsters.c",
-        193
+        196
       ]
     },
     {
-      "case": "site:monsters.c:194:monsters.wake_monster.s_gaze_has_confused_you:7",
+      "case": "site:monsters.c:197:monsters.wake_monster.s_gaze_has_confused_you:7",
       "id": "monsters.wake_monster.s_gaze_has_confused_you",
       "negative": false,
       "site": [
         "monsters.c",
-        194
+        197
       ]
     },
     {
@@ -1315,17 +1315,8 @@
       ]
     },
     {
-      "case": "site:move.c:291:move.be_trapped.you_fell_into_a_trap:7",
+      "case": "site:move.c:294:move.be_trapped.you_fell_into_a_trap:7",
       "id": "move.be_trapped.you_fell_into_a_trap",
-      "negative": false,
-      "site": [
-        "move.c",
-        291
-      ]
-    },
-    {
-      "case": "site:move.c:294:move.be_trapped.you_are_caught_in_a_bear_trap:7",
-      "id": "move.be_trapped.you_are_caught_in_a_bear_trap",
       "negative": false,
       "site": [
         "move.c",
@@ -1333,35 +1324,17 @@
       ]
     },
     {
-      "case": "site:move.c:298:move.be_trapped.you_are_suddenly_in_a_parallel_dimension:7",
+      "case": "site:move.c:297:move.be_trapped.you_are_caught_in_a_bear_trap:7",
+      "id": "move.be_trapped.you_are_caught_in_a_bear_trap",
+      "negative": false,
+      "site": [
+        "move.c",
+        297
+      ]
+    },
+    {
+      "case": "site:move.c:301:move.be_trapped.you_are_suddenly_in_a_parallel_dimension:7",
       "id": "move.be_trapped.you_are_suddenly_in_a_parallel_dimension",
-      "negative": false,
-      "site": [
-        "move.c",
-        298
-      ]
-    },
-    {
-      "case": "site:move.c:299:move.be_trapped.the_light_in_here_suddenly_seems:7",
-      "id": "move.be_trapped.the_light_in_here_suddenly_seems",
-      "negative": false,
-      "site": [
-        "move.c",
-        299
-      ]
-    },
-    {
-      "case": "site:move.c:300:move.be_trapped.you_feel_a_sting_in_the_side_of_your_neck:7",
-      "id": "move.be_trapped.you_feel_a_sting_in_the_side_of_your_neck",
-      "negative": false,
-      "site": [
-        "move.c",
-        300
-      ]
-    },
-    {
-      "case": "site:move.c:301:move.be_trapped.multi_colored_lines_swirl_around_you_then_fade:7",
-      "id": "move.be_trapped.multi_colored_lines_swirl_around_you_then_fade",
       "negative": false,
       "site": [
         "move.c",
@@ -1369,8 +1342,8 @@
       ]
     },
     {
-      "case": "site:move.c:302:move.be_trapped.a_light_flashes_in_your_eyes:7",
-      "id": "move.be_trapped.a_light_flashes_in_your_eyes",
+      "case": "site:move.c:302:move.be_trapped.the_light_in_here_suddenly_seems:7",
+      "id": "move.be_trapped.the_light_in_here_suddenly_seems",
       "negative": false,
       "site": [
         "move.c",
@@ -1378,8 +1351,8 @@
       ]
     },
     {
-      "case": "site:move.c:303:move.be_trapped.a_spike_shoots_past_your_ear:7",
-      "id": "move.be_trapped.a_spike_shoots_past_your_ear",
+      "case": "site:move.c:303:move.be_trapped.you_feel_a_sting_in_the_side_of_your_neck:7",
+      "id": "move.be_trapped.you_feel_a_sting_in_the_side_of_your_neck",
       "negative": false,
       "site": [
         "move.c",
@@ -1387,8 +1360,8 @@
       ]
     },
     {
-      "case": "site:move.c:304:move.be_trapped.sparks_dance_across_your_armor:7",
-      "id": "move.be_trapped.sparks_dance_across_your_armor",
+      "case": "site:move.c:304:move.be_trapped.multi_colored_lines_swirl_around_you_then_fade:7",
+      "id": "move.be_trapped.multi_colored_lines_swirl_around_you_then_fade",
       "negative": false,
       "site": [
         "move.c",
@@ -1396,8 +1369,8 @@
       ]
     },
     {
-      "case": "site:move.c:305:move.be_trapped.you_suddenly_feel_very_thirsty:7",
-      "id": "move.be_trapped.you_suddenly_feel_very_thirsty",
+      "case": "site:move.c:305:move.be_trapped.a_light_flashes_in_your_eyes:7",
+      "id": "move.be_trapped.a_light_flashes_in_your_eyes",
       "negative": false,
       "site": [
         "move.c",
@@ -1405,8 +1378,8 @@
       ]
     },
     {
-      "case": "site:move.c:306:move.be_trapped.you_feel_time_speed_up_suddenly:7",
-      "id": "move.be_trapped.you_feel_time_speed_up_suddenly",
+      "case": "site:move.c:306:move.be_trapped.a_spike_shoots_past_your_ear:7",
+      "id": "move.be_trapped.a_spike_shoots_past_your_ear",
       "negative": false,
       "site": [
         "move.c",
@@ -1414,8 +1387,8 @@
       ]
     },
     {
-      "case": "site:move.c:307:move.be_trapped.time_now_seems_to_be_going_slower:7",
-      "id": "move.be_trapped.time_now_seems_to_be_going_slower",
+      "case": "site:move.c:307:move.be_trapped.sparks_dance_across_your_armor:7",
+      "id": "move.be_trapped.sparks_dance_across_your_armor",
       "negative": false,
       "site": [
         "move.c",
@@ -1423,8 +1396,8 @@
       ]
     },
     {
-      "case": "site:move.c:308:move.be_trapped.you_pack_turns:7",
-      "id": "move.be_trapped.you_pack_turns",
+      "case": "site:move.c:308:move.be_trapped.you_suddenly_feel_very_thirsty:7",
+      "id": "move.be_trapped.you_suddenly_feel_very_thirsty",
       "negative": false,
       "site": [
         "move.c",
@@ -1432,71 +1405,89 @@
       ]
     },
     {
-      "case": "site:move.c:313:move.be_trapped.a_strange_white_mist_envelops_you_and_you_fall_asleep:7",
+      "case": "site:move.c:309:move.be_trapped.you_feel_time_speed_up_suddenly:7",
+      "id": "move.be_trapped.you_feel_time_speed_up_suddenly",
+      "negative": false,
+      "site": [
+        "move.c",
+        309
+      ]
+    },
+    {
+      "case": "site:move.c:310:move.be_trapped.time_now_seems_to_be_going_slower:7",
+      "id": "move.be_trapped.time_now_seems_to_be_going_slower",
+      "negative": false,
+      "site": [
+        "move.c",
+        310
+      ]
+    },
+    {
+      "case": "site:move.c:311:move.be_trapped.you_pack_turns:7",
+      "id": "move.be_trapped.you_pack_turns",
+      "negative": false,
+      "site": [
+        "move.c",
+        311
+      ]
+    },
+    {
+      "case": "site:move.c:316:move.be_trapped.a_strange_white_mist_envelops_you_and_you_fall_asleep:7",
       "id": "move.be_trapped.a_strange_white_mist_envelops_you_and_you_fall_asleep",
       "negative": false,
       "site": [
         "move.c",
-        313
+        316
       ]
     },
     {
-      "case": "site:move.c:324:move.be_trapped.an_arrow_killed_you:7",
+      "case": "site:move.c:327:move.be_trapped.an_arrow_killed_you:7",
       "id": "move.be_trapped.an_arrow_killed_you",
       "negative": false,
       "site": [
         "move.c",
-        324
+        327
       ]
     },
     {
-      "case": "site:move.c:328:move.be_trapped.oh_no_an_arrow_shot_you:7",
+      "case": "site:move.c:331:move.be_trapped.oh_no_an_arrow_shot_you:7",
       "id": "move.be_trapped.oh_no_an_arrow_shot_you",
       "negative": false,
       "site": [
         "move.c",
-        328
+        331
       ]
     },
     {
-      "case": "site:move.c:337:move.be_trapped.an_arrow_shoots_past_you:7",
+      "case": "site:move.c:340:move.be_trapped.an_arrow_shoots_past_you:7",
       "id": "move.be_trapped.an_arrow_shoots_past_you",
       "negative": false,
       "site": [
         "move.c",
-        337
+        340
       ]
     },
     {
-      "case": "site:move.c:348:move.be_trapped.a_small_dart_whizzes_by_your_ear_and_vanishes:7",
+      "case": "site:move.c:351:move.be_trapped.a_small_dart_whizzes_by_your_ear_and_vanishes:7",
       "id": "move.be_trapped.a_small_dart_whizzes_by_your_ear_and_vanishes",
       "negative": false,
       "site": [
         "move.c",
-        348
+        351
       ]
     },
     {
-      "case": "site:move.c:358:move.be_trapped.a_poisoned_dart_killed_you:7",
+      "case": "site:move.c:361:move.be_trapped.a_poisoned_dart_killed_you:7",
       "id": "move.be_trapped.a_poisoned_dart_killed_you",
       "negative": false,
       "site": [
         "move.c",
-        358
+        361
       ]
     },
     {
-      "case": "site:move.c:363:move.be_trapped.a_small_dart_just_hit_you_in_the_shoulder:7",
+      "case": "site:move.c:366:move.be_trapped.a_small_dart_just_hit_you_in_the_shoulder:7",
       "id": "move.be_trapped.a_small_dart_just_hit_you_in_the_shoulder",
-      "negative": false,
-      "site": [
-        "move.c",
-        363
-      ]
-    },
-    {
-      "case": "site:move.c:366:move.be_trapped.a_gush_of_water_hits_you_on_the_head:7",
-      "id": "move.be_trapped.a_gush_of_water_hits_you_on_the_head",
       "negative": false,
       "site": [
         "move.c",
@@ -1504,30 +1495,39 @@
       ]
     },
     {
-      "case": "site:move.c:432:move.rust_armor.the_rust_vanishes_instantly:7",
+      "case": "site:move.c:369:move.be_trapped.a_gush_of_water_hits_you_on_the_head:7",
+      "id": "move.be_trapped.a_gush_of_water_hits_you_on_the_head",
+      "negative": false,
+      "site": [
+        "move.c",
+        369
+      ]
+    },
+    {
+      "case": "site:move.c:435:move.rust_armor.the_rust_vanishes_instantly:7",
       "id": "move.rust_armor.the_rust_vanishes_instantly",
       "negative": false,
       "site": [
         "move.c",
-        432
+        435
       ]
     },
     {
-      "case": "site:move.c:438:move.rust_armor.your_armor_appears_to_be_weaker_now_oh_my:7",
+      "case": "site:move.c:441:move.rust_armor.your_armor_appears_to_be_weaker_now_oh_my:7",
       "id": "move.rust_armor.your_armor_appears_to_be_weaker_now_oh_my",
       "negative": false,
       "site": [
         "move.c",
-        438
+        441
       ]
     },
     {
-      "case": "site:move.c:440:move.rust_armor.your_armor_weakens:7",
+      "case": "site:move.c:443:move.rust_armor.your_armor_weakens:7",
       "id": "move.rust_armor.your_armor_weakens",
       "negative": false,
       "site": [
         "move.c",
-        440
+        443
       ]
     },
     {
@@ -2512,30 +2512,30 @@
       ]
     },
     {
-      "case": "site:sticks.c:475:sticks.fire_bolt.the_hits:7",
+      "case": "site:sticks.c:478:sticks.fire_bolt.the_hits:7",
       "id": "sticks.fire_bolt.the_hits",
       "negative": false,
       "site": [
         "sticks.c",
-        475
+        478
       ]
     },
     {
-      "case": "site:sticks.c:477:sticks.fire_bolt.you_are_hit_by_the:7",
+      "case": "site:sticks.c:480:sticks.fire_bolt.you_are_hit_by_the:7",
       "id": "sticks.fire_bolt.you_are_hit_by_the",
       "negative": false,
       "site": [
         "sticks.c",
-        477
+        480
       ]
     },
     {
-      "case": "site:sticks.c:480:sticks.fire_bolt.the_whizzes_by_you:7",
+      "case": "site:sticks.c:483:sticks.fire_bolt.the_whizzes_by_you:7",
       "id": "sticks.fire_bolt.the_whizzes_by_you",
       "negative": false,
       "site": [
         "sticks.c",
-        480
+        483
       ]
     },
     {
@@ -8184,43 +8184,34 @@
       ]
     },
     {
-      "case": "dynamic:fight.c:566:prname(er,TRUE)",
+      "case": "dynamic:fight.c:574:prname(er,TRUE)",
       "id": "message.entity",
       "negative": false,
       "site": [
         "fight.c",
-        566
+        574
       ]
     },
     {
-      "case": "dynamic:fight.c:580:s",
+      "case": "dynamic:fight.c:588:s",
       "id": "message.entity",
       "negative": false,
       "site": [
         "fight.c",
-        580
+        588
       ]
     },
     {
-      "case": "dynamic:fight.c:582:prname(ee,FALSE)",
+      "case": "dynamic:fight.c:590:prname(ee,FALSE)",
       "id": "message.entity",
       "negative": false,
       "site": [
         "fight.c",
-        582
+        590
       ]
     },
     {
-      "case": "dynamic:fight.c:599:prname(er,TRUE)",
-      "id": "message.entity",
-      "negative": false,
-      "site": [
-        "fight.c",
-        599
-      ]
-    },
-    {
-      "case": "dynamic:fight.c:607:m_names[i]",
+      "case": "dynamic:fight.c:607:prname(er,TRUE)",
       "id": "message.entity",
       "negative": false,
       "site": [
@@ -8229,21 +8220,30 @@
       ]
     },
     {
-      "case": "dynamic:fight.c:627:mname",
+      "case": "dynamic:fight.c:615:m_names[i]",
       "id": "message.entity",
       "negative": false,
       "site": [
         "fight.c",
-        627
+        615
       ]
     },
     {
-      "case": "dynamic:fight.c:718:mname",
+      "case": "dynamic:fight.c:635:mname",
       "id": "message.entity",
       "negative": false,
       "site": [
         "fight.c",
-        718
+        635
+      ]
+    },
+    {
+      "case": "dynamic:fight.c:726:mname",
+      "id": "message.entity",
+      "negative": false,
+      "site": [
+        "fight.c",
+        726
       ]
     },
     {

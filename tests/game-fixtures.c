@@ -127,7 +127,59 @@ void rg_test_apply_fixture(void)
     name_length = rg_host_fixture_id(name, sizeof(name));
     if (name_length <= 0) return;
     clean_world();
-    if (!strncmp(name, "item-use-", 9)) {
+    if (!strncmp(name, "autowalk-", 9)) {
+        if (!strcmp(name,"autowalk-gaze-hit") || !strcmp(name,"autowalk-gaze-miss")) {
+            int x,y;
+            struct room *room=&rooms[0];
+            monster=monster_at('M',12,10);
+            /* Hold position to isolate gaze from a simultaneous melee attack. */
+            monster->t_flags |= ISRUN | ISHELD;monster->t_flags &= ~ISFOUND;
+            monster->t_dest=&hero;
+            if (!strcmp(name,"autowalk-gaze-miss")) {
+                object=new_item();object->o_type=RING;object->o_which=R_PROTECT;
+                object->o_count=1;object->o_arm=100;
+                strcpy(object->o_damage,"0x0");strcpy(object->o_hurldmg,"0x0");
+                add_pack(object,TRUE);cur_ring[LEFT]=object;
+            }
+            room->r_flags |= ISDARK;clear();
+            for (y=room->r_pos.y;y<room->r_pos.y+room->r_max.y;y++)
+                for (x=room->r_pos.x;x<room->r_pos.x+room->r_max.x;x++)
+                    if (chat(y,x)=='|' || chat(y,x)=='-') mvaddch(y,x,chat(y,x));
+            enter_room(&hero);
+        } else if (!strcmp(name,"autowalk-dragon-hit") || !strcmp(name,"autowalk-dragon-miss")) {
+            monster=monster_at('D',16,10);
+            monster->t_flags |= ISRUN;
+            monster->t_dest=&hero;
+            if (!strcmp(name,"autowalk-dragon-miss")) {
+                object=new_item();object->o_type=RING;object->o_which=R_PROTECT;
+                object->o_count=1;object->o_arm=100;
+                strcpy(object->o_damage,"0x0");strcpy(object->o_hurldmg,"0x0");
+                add_pack(object,TRUE);cur_ring[LEFT]=object;
+            }
+        } else if (!strcmp(name,"autowalk-trap") || !strcmp(name,"autowalk-teleport") || !strcmp(name,"autowalk-trapdoor")) {
+            chat(10,12)=FLOOR;
+            flat(10,12)=!strcmp(name,"autowalk-trap") ? T_BEAR : !strcmp(name,"autowalk-trapdoor") ? T_DOOR : T_TELEP;
+            ntraps=1;
+        } else if (!strcmp(name,"autowalk-blocked")) {
+            no_move=2;
+        } else if (!strcmp(name,"autowalk-enemy")) {
+            monster=monster_at('K',14,10);
+            monster->t_flags &= ~ISRUN;
+            monster->t_stats.s_hpt=1000;
+        } else if (!strcmp(name,"autowalk-miss") || !strcmp(name,"autowalk-hit") || !strcmp(name,"autowalk-invisible") || !strcmp(name,"autowalk-death")) {
+            monster=monster_at('K',12,11);
+            monster->t_flags |= ISRUN;
+            monster->t_dest = &hero;
+            if (!strcmp(name,"autowalk-invisible")) monster->t_flags |= ISINVIS;
+            monster->t_stats.s_lvl=10;
+            monster->t_stats.s_str=16;
+            strcpy(monster->t_stats.s_dmg,"1x1");
+            pstats.s_arm=(!strcmp(name,"autowalk-hit") || !strcmp(name,"autowalk-death")) ? 100 : -100;
+            if (cur_armor) cur_armor->o_arm=pstats.s_arm;
+            if (!strcmp(name,"autowalk-death")) pstats.s_hpt=1;
+            max_stats.s_arm=pstats.s_arm;
+        } else if (strcmp(name,"autowalk-clear")) abort();
+    } else if (!strncmp(name, "item-use-", 9)) {
         char category[16], scenario[16] = "base";
         int kind, limit = 1, n;
         struct obj_info *info = NULL;

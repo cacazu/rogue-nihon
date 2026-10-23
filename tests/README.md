@@ -41,6 +41,7 @@ Cとリンクする `rogue-layers` は独立lib testから除外します。ゲ�
 | Rust formatter・入力・保存・名称・Bevy | `tools/check-rust-layers.py` と各Binary |
 | タイル語彙・画像・重ね順 | `tests/tiles.test.mjs`、`pixels.test.mjs`、`graphics-beams.test.mjs` |
 | 実ゲーム・locale差・保存継続 | `tests/game-regression.test.mjs`、`game-ui.test.mjs`、`game-localization.test.mjs`、`game-more-localization.test.mjs`、`game-log-paging.test.mjs` |
+| 自動移動のCイベントと原作状態 | `tests/autowalk.test.mjs`。比較する変更前fixture Wasmを `ROGUE_AUTOWALK_BEFORE` へ指定。未指定時は変更前比較のみ明示skip |
 | 実ブラウザー | [Playwrightの実行とシナリオ](browser-smoke/README-ja.md) |
 
 Python検査は使用するPythonを指定し、`node tools/run-clean.mjs <Python実行ファイル> <試験ファイル>` で実行できます。

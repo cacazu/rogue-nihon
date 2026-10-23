@@ -1,16 +1,19 @@
 --- acquired/command.c
 +++ logic/command.c
-@@ -16,6 +16,9 @@
+@@ -15,6 +15,12 @@
+ #include <curses.h>
  #include <ctype.h>
  #include "rogue.h"
- 
++#ifdef ROGUE_LAYERED
++#include "semantic.h"
++#endif
++
 +/* Persistent command state; accessors permit exact outer-boundary restore. */
 +static char countch, direction, newcount = FALSE;
-+
+ 
  /*
   * command:
-  *	Process the user commands
-@@ -27,7 +30,6 @@
+@@ -27,7 +33,6 @@
      register int ntimes = 1;			/* Number of player moves */
      char *fp;
      THING *mp;
@@ -18,7 +21,49 @@
  
      if (on(player, ISHASTE))
  	ntimes++;
-@@ -284,7 +286,7 @@
+@@ -84,6 +89,10 @@
+ 	}
+ 	else
+ 	    ch = '.';
++#ifdef ROGUE_LAYERED
++        /* Read/wait is complete. A fresh original action replaces old poses. */
++        rg_semantic_actors_turn();
++#endif
+ 	if (no_command)
+ 	{
+ 	    if (--no_command == 0)
+@@ -239,10 +248,16 @@
+ 			goto over;
+ 		    }
+ 		when 't':
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++                    rg_ui_line("throw_direction", 0, 0, "ui.text", "[]", "");
++#endif
+ 		    if (!get_dir())
+ 			after = FALSE;
+ 		    else
+ 			missile(delta.y, delta.x);
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++                    rg_ui_clear("throw_direction");
++#endif
+ 		when 'a':
+ 		    if (last_comm == '\0')
+ 		    {
+@@ -261,7 +276,12 @@
+ 		    q_comm = TRUE;
+ 		    quit(0);
+ 		    q_comm = FALSE;
+-		when 'i': after = FALSE; inventory(pack, 0);
++		when 'i': after = FALSE;
++#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
++                    rg_inventory_browser();
++#else
++                    inventory(pack, 0);
++#endif
+ 		when 'I': after = FALSE; picky_inven();
+ 		when 'd': drop();
+ 		when 'r': read_scroll();
+@@ -284,7 +304,7 @@
  		    else
  			after = FALSE;
  		when 'D': after = FALSE; discovered();
@@ -27,7 +72,7 @@
  		when CTRL('R'):
  		    after = FALSE;
  		    clearok(curscr,TRUE);
-@@ -451,7 +453,19 @@
+@@ -451,7 +471,19 @@
  	search();
      else if (ISRING(RIGHT, R_TELEPORT) && rnd(50) == 0)
  	teleport();
@@ -48,7 +93,7 @@
  
  /*
   * illcom:
-@@ -534,6 +548,31 @@
+@@ -534,6 +566,31 @@
   * help:
   *	Give single character help, or the whole mess if he wants it
   */
@@ -80,7 +125,21 @@
  void
  help()
  {
-@@ -554,6 +593,9 @@
+@@ -541,7 +598,13 @@
+     register char helpch;
+     register int numprint, cnt;
+     msg("character you want help for (* for all): ");
++#ifdef ROGUE_LAYERED
++    rg_ui_line("input", -2, 0, "input.help", "[]", "");
++#endif
+     helpch = readchar();
++#ifdef ROGUE_LAYERED
++    rg_ui_clear("input");
++#endif
+     mpos = 0;
+     /*
+      * If its not a *, print the right help string
+@@ -554,6 +617,9 @@
  	    if (strp->h_ch == helpch)
  	    {
  		lower_msg = TRUE;
@@ -90,7 +149,7 @@
  		msg("%s%s", unctrl(strp->h_ch), strp->h_desc);
  		lower_msg = FALSE;
  		return;
-@@ -575,11 +617,24 @@
+@@ -575,11 +641,24 @@
      if (numprint > LINES - 1)
  	numprint = LINES - 1;
  
@@ -115,16 +174,17 @@
  	    wmove(hw, cnt % numprint, cnt >= numprint ? COLS / 2 : 0);
  	    if (strp->h_ch)
  		waddstr(hw, unctrl(strp->h_ch));
-@@ -589,8 +644,16 @@
+@@ -589,8 +668,16 @@
  	}
      wmove(hw, LINES - 1, 0);
      waddstr(hw, "--Press space to continue--");
 +#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
-+    rg_ui_line("help", LINES - 1, 0, "ui.continue", "[]", "--Press space to continue--");
-+    rg_ui_line("input", -2, 0, "input.wait_space", "[]", "");
++    rg_ui_line("help", LINES - 1, 0, "ui.close", "[]", "--Press space to continue--");
++    rg_ui_line("input", -2, 0, "input.close", "[]", "");
 +#endif
      wrefresh(hw);
-     wait_for(' ');
+-    wait_for(' ');
++    rg_wait_for(' ', "input.close");
 +#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
 +    rg_ui_clear("help");
 +    rg_ui_clear("input");
@@ -132,7 +192,21 @@
      clearok(stdscr, TRUE);
  /*
      refresh();
-@@ -652,6 +715,20 @@
+@@ -633,7 +720,13 @@
+     };
+ 
+     msg("what do you want identified? ");
++#ifdef ROGUE_LAYERED
++    rg_ui_line("input", -2, 0, "input.symbol", "[]", "");
++#endif
+     ch = readchar();
++#ifdef ROGUE_LAYERED
++    rg_ui_clear("input");
++#endif
+     mpos = 0;
+     if (ch == ESCAPE)
+     {
+@@ -652,6 +745,20 @@
  		break;
  	    }
      }
@@ -153,7 +227,7 @@
      msg("'%s': %s", unctrl(ch), str);
  }
  
-@@ -796,6 +873,12 @@
+@@ -796,6 +903,12 @@
  void
  current(THING *cur, char *how, char *where)
  {

@@ -10,7 +10,17 @@
  
  /*
   * look:
-@@ -459,12 +462,13 @@
+@@ -175,7 +178,9 @@
+     if (door_stop && !firstmove && passcount > 1)
+ 	running = FALSE;
+     if (!running || !jump)
++    {
+ 	mvaddch(hero.y, hero.x, PLAYER);
++    }
+ # ifdef DEBUG
+     done = FALSE;
+ # endif /* DEBUG */
+@@ -459,12 +464,13 @@
   *      Set up the direction co_ordinate for use in varios "prefix"
   *	commands
   */
@@ -25,7 +35,7 @@
  
      if (again && last_dir != '\0')
      {
-@@ -478,8 +482,14 @@
+@@ -478,8 +484,14 @@
  	    msg(prompt = "which direction? ");
  	else
  	    prompt = "direction: ";
@@ -40,7 +50,7 @@
  	    gotit = TRUE;
  	    switch (dir_ch = readchar())
  	    {
-@@ -491,13 +501,20 @@
+@@ -491,13 +503,20 @@
  		when 'u': case'U': delta.y = -1; delta.x =  1;
  		when 'b': case'B': delta.y =  1; delta.x = -1;
  		when 'n': case'N': delta.y =  1; delta.x =  1;
@@ -62,7 +72,7 @@
  	if (isupper(dir_ch))
  	    dir_ch = (char) tolower(dir_ch);
  	last_dir = dir_ch;
-@@ -514,6 +531,11 @@
+@@ -514,6 +533,11 @@
      return TRUE;
  }
  
@@ -74,3 +84,23 @@
  /*
   * sign:
   *	Return the sign of the number
+@@ -555,13 +579,16 @@
+     }
+     else if (!info->oi_guess)
+     {
++	/* The shared prbuf may still name the last inventory item. A new
++	 * optional name starts empty; an empty answer leaves it unnamed. */
++	char name[MAXSTR] = "";
+ 	msg(terse ? "call it: " : "what do you want to call it? ");
+-	if (get_str(prbuf, stdscr) == NORM)
++	if (get_str(name, stdscr) == NORM && name[0] != '\0')
+ 	{
+ 	    if (info->oi_guess != NULL)
+ 		free(info->oi_guess);
+-	    info->oi_guess = malloc((unsigned int) strlen(prbuf) + 1);
+-	    strcpy(info->oi_guess, prbuf);
++	    info->oi_guess = malloc((unsigned int) strlen(name) + 1);
++	    strcpy(info->oi_guess, name);
+ 	}
+     }
+ }

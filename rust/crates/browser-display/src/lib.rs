@@ -2,6 +2,7 @@
 #[cfg(target_arch = "wasm32")]
 mod browser;
 mod controller;
+mod autowalk;
 mod log_visibility;
 mod policies;
 mod save_loading;

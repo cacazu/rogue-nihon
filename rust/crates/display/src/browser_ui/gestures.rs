@@ -244,6 +244,10 @@ impl BrowserUi {
             && !self.mobile_operations && !self.mobile_repeat_open
     }
 
+    pub fn map_navigation_available(&self) -> bool {
+        self.wait_available() && !b(&self.model["frame"]["ui"]["movement_direction"])
+    }
+
     pub(super) fn holding(&self, id: i64) -> bool {
         self.gestures.hold.is_some_and(|h| h.0 == id)
     }

@@ -430,151 +430,151 @@
     },
     "fight.attack.a_bite_has_weakened_you": {
       "template": "a bite has weakened you",
-      "source": "fight.c:223",
+      "source": "fight.c:231",
       "function": "attack",
       "note": "original English printf format"
     },
     "fight.attack.a_bite_momentarily_weakens_you": {
       "template": "a bite momentarily weakens you",
-      "source": "fight.c:228",
+      "source": "fight.c:236",
       "function": "attack",
       "note": "original English printf format"
     },
     "fight.attack.bite_has_no_effect": {
       "template": "bite has no effect",
-      "source": "fight.c:230",
+      "source": "fight.c:238",
       "function": "attack",
       "note": "original English printf format"
     },
     "fight.attack.by_the": {
       "template": " by the %s",
-      "source": "fight.c:205",
+      "source": "fight.c:213",
       "function": "attack",
       "note": "original English printf format"
     },
     "fight.attack.sentence_separator": {
       "template": ".  ",
-      "source": "fight.c:171",
+      "source": "fight.c:179",
       "function": "attack",
       "note": "original English printf format"
     },
     "fight.attack.she_stole": {
       "template": "she stole %s!",
-      "source": "fight.c:324",
+      "source": "fight.c:332",
       "function": "attack",
       "note": "original English printf format"
     },
     "fight.attack.you_are_frozen": {
       "template": "you are frozen",
-      "source": "fight.c:203",
+      "source": "fight.c:211",
       "function": "attack",
       "note": "original English printf format"
     },
     "fight.attack.you_feel_a_bite_in_your_leg_and_now_feel_weaker": {
       "template": "you feel a bite in your leg and now feel weaker",
-      "source": "fight.c:221",
+      "source": "fight.c:229",
       "function": "attack",
       "note": "original English printf format"
     },
     "fight.attack.you_suddenly_feel_weaker": {
       "template": "you suddenly feel weaker",
-      "source": "fight.c:270",
+      "source": "fight.c:278",
       "function": "attack",
       "note": "original English printf format"
     },
     "fight.attack.your_purse_feels_lighter": {
       "template": "your purse feels lighter",
-      "source": "fight.c:300",
+      "source": "fight.c:308",
       "function": "attack",
       "note": "original English printf format"
     },
     "fight.bounce.the_misses": {
       "template": "the %s misses ",
-      "source": "fight.c:624",
+      "source": "fight.c:632",
       "function": "bounce",
       "note": "original English printf format"
     },
     "fight.bounce.you_missed": {
       "template": "you missed ",
-      "source": "fight.c:626",
+      "source": "fight.c:634",
       "function": "bounce",
       "note": "original English printf format"
     },
     "fight.fight.appears_confused": {
       "template": "%s appears confused",
-      "source": "fight.c:125",
+      "source": "fight.c:129",
       "function": "fight",
       "note": "original English printf format"
     },
     "fight.fight.fight_what": {
       "template": "Fight what @ %d,%d",
-      "source": "fight.c:76",
+      "source": "fight.c:80",
       "function": "fight",
       "note": "original English printf format"
     },
     "fight.fight.heavy_thats_a_nasty_critter": {
       "template": "heavy!  That's a nasty critter!",
-      "source": "fight.c:98",
+      "source": "fight.c:102",
       "function": "fight",
       "note": "original English printf format"
     },
     "fight.fight.wait_thats_a_xeroc": {
       "template": "wait!  That's a xeroc!",
-      "source": "fight.c:98",
+      "source": "fight.c:102",
       "function": "fight",
       "note": "original English printf format"
     },
     "fight.fight.your_hands_stop_glowing": {
       "template": "your hands stop glowing %s",
-      "source": "fight.c:120",
+      "source": "fight.c:124",
       "function": "fight",
       "note": "original English printf format"
     },
     "fight.killed.defeated": {
       "template": ".  Defeated ",
-      "source": "fight.c:709",
+      "source": "fight.c:717",
       "function": "killed",
       "note": "original English printf format"
     },
     "fight.killed.defeated_trailing_space": {
       "template": "defeated ",
-      "source": "fight.c:716",
+      "source": "fight.c:724",
       "function": "killed",
       "note": "original English printf format"
     },
     "fight.killed.you_have": {
       "template": "you have ",
-      "source": "fight.c:715",
+      "source": "fight.c:723",
       "function": "killed",
       "note": "original English printf format"
     },
     "fight.miss.string": {
       "template": " %s",
-      "source": "fight.c:609",
+      "source": "fight.c:617",
       "function": "miss",
       "note": "original English printf format"
     },
     "fight.roll_em.damage_for_x_came_out_dplus_add_dam_def_arm": {
       "template": "Damage for %dx%d came out %d, dplus = %d, add_dam = %d, def_arm = %d",
-      "source": "fight.c:495",
+      "source": "fight.c:503",
       "function": "roll_em",
       "note": "original English printf format"
     },
     "fight.thunk.string": {
       "template": "%s",
-      "source": "fight.c:547",
+      "source": "fight.c:555",
       "function": "thunk",
       "note": "original English printf format"
     },
     "fight.thunk.the_hits": {
       "template": "the %s hits ",
-      "source": "fight.c:544",
+      "source": "fight.c:552",
       "function": "thunk",
       "note": "original English printf format"
     },
     "fight.thunk.you_hit": {
       "template": "you hit ",
-      "source": "fight.c:546",
+      "source": "fight.c:554",
       "function": "thunk",
       "note": "original English printf format"
     },
@@ -694,19 +694,19 @@
     },
     "monsters.wake_monster.possessive_apostrophe": {
       "template": "'",
-      "source": "monsters.c:193",
+      "source": "monsters.c:196",
       "function": "wake_monster",
       "note": "original English printf format"
     },
     "monsters.wake_monster.s_gaze_has_confused_you": {
       "template": "s gaze has confused you",
-      "source": "monsters.c:194",
+      "source": "monsters.c:197",
       "function": "wake_monster",
       "note": "original English printf format"
     },
     "monsters.wake_monster.string": {
       "template": "%s",
-      "source": "monsters.c:191",
+      "source": "monsters.c:194",
       "function": "wake_monster",
       "note": "original English printf format"
     },
@@ -718,127 +718,127 @@
     },
     "move.be_trapped.a_gush_of_water_hits_you_on_the_head": {
       "template": "a gush of water hits you on the head",
-      "source": "move.c:366",
+      "source": "move.c:369",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.a_light_flashes_in_your_eyes": {
       "template": "a %s light flashes in your eyes",
-      "source": "move.c:302",
+      "source": "move.c:305",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.a_poisoned_dart_killed_you": {
       "template": "a poisoned dart killed you",
-      "source": "move.c:358",
+      "source": "move.c:361",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.a_small_dart_just_hit_you_in_the_shoulder": {
       "template": "a small dart just hit you in the shoulder",
-      "source": "move.c:363",
+      "source": "move.c:366",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.a_small_dart_whizzes_by_your_ear_and_vanishes": {
       "template": "a small dart whizzes by your ear and vanishes",
-      "source": "move.c:348",
+      "source": "move.c:351",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.a_spike_shoots_past_your_ear": {
       "template": "a spike shoots past your ear!",
-      "source": "move.c:303",
+      "source": "move.c:306",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.a_strange_white_mist_envelops_you_and_you_fall_asleep": {
       "template": "a strange white mist envelops you and you fall asleep",
-      "source": "move.c:313",
+      "source": "move.c:316",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.an_arrow_killed_you": {
       "template": "an arrow killed you",
-      "source": "move.c:324",
+      "source": "move.c:327",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.an_arrow_shoots_past_you": {
       "template": "an arrow shoots past you",
-      "source": "move.c:337",
+      "source": "move.c:340",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.multi_colored_lines_swirl_around_you_then_fade": {
       "template": "multi-colored lines swirl around you, then fade",
-      "source": "move.c:301",
+      "source": "move.c:304",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.oh_no_an_arrow_shot_you": {
       "template": "oh no! An arrow shot you",
-      "source": "move.c:328",
+      "source": "move.c:331",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.sparks_dance_across_your_armor": {
       "template": "%s sparks dance across your armor",
-      "source": "move.c:304",
+      "source": "move.c:307",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.the_light_in_here_suddenly_seems": {
       "template": "the light in here suddenly seems %s",
-      "source": "move.c:299",
+      "source": "move.c:302",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.time_now_seems_to_be_going_slower": {
       "template": "time now seems to be going slower",
-      "source": "move.c:307",
+      "source": "move.c:310",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.you_are_caught_in_a_bear_trap": {
       "template": "you are caught in a bear trap",
-      "source": "move.c:294",
+      "source": "move.c:297",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.you_are_suddenly_in_a_parallel_dimension": {
       "template": "you are suddenly in a parallel dimension",
-      "source": "move.c:298",
+      "source": "move.c:301",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.you_feel_a_sting_in_the_side_of_your_neck": {
       "template": "you feel a sting in the side of your neck",
-      "source": "move.c:300",
+      "source": "move.c:303",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.you_feel_time_speed_up_suddenly": {
       "template": "you feel time speed up suddenly",
-      "source": "move.c:306",
+      "source": "move.c:309",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.you_fell_into_a_trap": {
       "template": "you fell into a trap!",
-      "source": "move.c:291",
+      "source": "move.c:294",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.you_pack_turns": {
       "template": "you pack turns %s!",
-      "source": "move.c:308",
+      "source": "move.c:311",
       "function": "be_trapped",
       "note": "original English printf format"
     },
     "move.be_trapped.you_suddenly_feel_very_thirsty": {
       "template": "you suddenly feel very thirsty",
-      "source": "move.c:305",
+      "source": "move.c:308",
       "function": "be_trapped",
       "note": "original English printf format"
     },
@@ -856,19 +856,19 @@
     },
     "move.rust_armor.the_rust_vanishes_instantly": {
       "template": "the rust vanishes instantly",
-      "source": "move.c:432",
+      "source": "move.c:435",
       "function": "rust_armor",
       "note": "original English printf format"
     },
     "move.rust_armor.your_armor_appears_to_be_weaker_now_oh_my": {
       "template": "your armor appears to be weaker now. Oh my!",
-      "source": "move.c:438",
+      "source": "move.c:441",
       "function": "rust_armor",
       "note": "original English printf format"
     },
     "move.rust_armor.your_armor_weakens": {
       "template": "your armor weakens",
-      "source": "move.c:440",
+      "source": "move.c:443",
       "function": "rust_armor",
       "note": "original English printf format"
     },
@@ -1462,13 +1462,13 @@
     },
     "sticks.fire_bolt.the_hits": {
       "template": "the %s hits",
-      "source": "sticks.c:475",
+      "source": "sticks.c:478",
       "function": "fire_bolt",
       "note": "original English printf format"
     },
     "sticks.fire_bolt.the_whizzes_by_you": {
       "template": "the %s whizzes by you",
-      "source": "sticks.c:480",
+      "source": "sticks.c:483",
       "function": "fire_bolt",
       "note": "original English printf format"
     },
@@ -1480,7 +1480,7 @@
     },
     "sticks.fire_bolt.you_are_hit_by_the": {
       "template": "you are hit by the %s",
-      "source": "sticks.c:477",
+      "source": "sticks.c:480",
       "function": "fire_bolt",
       "note": "original English printf format"
     },

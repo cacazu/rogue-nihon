@@ -1,0 +1,20 @@
+--- acquired/list.c
++++ logic/list.c
+@@ -13,6 +13,7 @@
+ #include <stdlib.h>
+ #include <curses.h>
+ #include "rogue.h"
++#include "semantic.h"
+ 
+ #ifdef MASTER
+ int total = 0;			/* total dynamic memory bytes */
+@@ -84,6 +85,9 @@
+ void
+ discard(THING *item)
+ {
++#ifdef ROGUE_LAYERED
++    rg_semantic_actor_forget(item);
++#endif
+ #ifdef MASTER
+     total--;
+ #endif

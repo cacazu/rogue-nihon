@@ -1,0 +1,55 @@
+--- acquired/wizard.c
++++ logic/wizard.c
+@@ -16,6 +16,7 @@
+ #include <string.h>
+ #include <ctype.h>
+ #include "rogue.h"
++#include "semantic.h"
+ 
+ /*
+  * whatis:
+@@ -33,15 +34,30 @@
+ 	return;
+     }
+ 
++    /* A type-specific scroll may have no remaining eligible item. Match the
++     * original empty '*' path without requiring an invisible list command. */
++    if (insist && type)
++    {
++	for (obj = pack; obj != NULL; obj = next(obj))
++	    if (obj->o_type == type ||
++		(type == R_OR_S && (obj->o_type == RING || obj->o_type == STICK)))
++		break;
++	if (obj == NULL)
++	{
++	    n_objs = 0;
++	    after = FALSE;
++	    msg("you don't have anything in your pack to identify");
++	    return;
++	}
++    }
++
+     for (;;)
+     {
+ 	obj = get_item("identify", type);
+ 	if (insist)
+ 	{
+-	    if (n_objs == 0)
++	    if (n_objs == 0 || obj == NULL)
+ 		return;
+-	    else if (obj == NULL)
+-		msg("you must identify something");
+ 	    else if (type && obj->o_type != type &&
+ 	       !(type == R_OR_S && (obj->o_type == RING || obj->o_type == STICK)) )
+ 		    msg("you must identify a %s", type_name(type));
+@@ -200,6 +216,10 @@
+ teleport()
+ {
+     static coord c;
++
++#ifdef ROGUE_LAYERED
++    rg_semantic_actors_reset();
++#endif
+ 
+     mvaddch(hero.y, hero.x, floor_at());
+     find_floor((struct room *) NULL, &c, FALSE, TRUE);

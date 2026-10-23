@@ -41,22 +41,31 @@
  
   if (flags >= 0
  #ifdef MASTER
-@@ -73,6 +99,8 @@
+@@ -73,8 +99,12 @@
          )
      {
  	mvaddstr(LINES - 1, 0 , "[Press return to continue]");
 +        rg_ui_line("score", LINES - 1, 0, "ui.ending.return", "[]",
 +            "[Press return to continue]");
          refresh();
++        rg_ui_line("input", -2, 0, "input.show_score", "[]", "");
          wgetnstr(stdscr,prbuf,80);
++        rg_ui_clear("input");
   	endwin();
-@@ -161,16 +189,42 @@
+         printf("\n");
+         resetltchars();
+@@ -161,16 +191,47 @@
  	putchar('\n');
      printf("Top %s %s:\n", Numname, allscore ? "Scores" : "Rogueists");
      printf("   Score Name\n");
 +    rg_ending_line("score", 0, 0, "ui.score.heading", "Top %s %s:",
 +        Numname, allscore ? "Scores" : "Rogueists");
 +    rg_ui_line("score", 1, 0, "ui.score.columns", "[]", "   Score Name");
++    /* Keep an ending scope alive throughout the transition so intermediate
++     * frames never interpret the ASCII valuation as a dungeon map. */
++    rg_ui_clear("victory");
++    rg_ui_clear("death");
++    rg_ui_clear("tombstone");
      for (scp = top_ten; scp < endp; scp++)
      {
  	if (scp->sc_score) {
@@ -95,7 +104,7 @@
  #ifdef MASTER
  	    if (prflags == 1)
  	    {
-@@ -198,7 +252,7 @@
+@@ -198,7 +259,7 @@
  #endif /* MASTER */
                  printf(".");
  	    if (sc2 == scp)
@@ -104,7 +113,7 @@
              putchar('\n');
  	}
  	else
-@@ -227,15 +281,22 @@
+@@ -227,15 +288,24 @@
  void
  death(char monst)
  {
@@ -112,14 +121,18 @@
 +    rg_core_set_outcome(1, "dead");
 +#endif
      char **dp, *killer;
-     struct tm *lt;
-     static time_t date;
+-    struct tm *lt;
+-    static time_t date;
++    int calendar_year;
 +#ifndef ROGUE_LAYERED
      struct tm *localtime();
 +#endif
  
      signal(SIGINT, SIG_IGN);
      purse -= purse / 10;
++#ifdef ROGUE_LAYERED
++    rg_status_publish(0);
++#endif
      signal(SIGINT, leave);
      clear();
 +    rg_ui_clear("death");
@@ -127,7 +140,7 @@
      killer = killname(monst, FALSE);
      if (!tombstone)
      {
-@@ -244,6 +305,11 @@
+@@ -244,33 +314,54 @@
  	if (monst != 's' && monst != 'h')
  	    printw("a%s ", vowelstr(killer));
  	printw("%s with %d gold", killer, purse);
@@ -139,7 +152,16 @@
      }
      else
      {
-@@ -254,21 +320,31 @@
+-	time(&date);
+-	lt = localtime(&date);
++#if defined(ROGUE_LAYERED) && defined(__EMSCRIPTEN__)
++        calendar_year = rg_host_calendar_year();
++#else
++        time_t date = time(NULL);
++        calendar_year = 1900 + localtime(&date)->tm_year;
++#endif
+ 	move(8, 0);
+ 	dp = rip;
  	while (*dp)
  	    addstr(*dp++);
  	mvaddstr(17, center(killer), killer);
@@ -153,10 +175,11 @@
  	sprintf(prbuf, "%d Au", purse);
  	move(15, center(prbuf));
  	addstr(prbuf);
+-	sprintf(prbuf, "%4d", 1900+lt->tm_year);
 +        rg_ending_line("tombstone", 15, center(prbuf), "ui.ending.gold", "%d Au", purse);
- 	sprintf(prbuf, "%4d", 1900+lt->tm_year);
++	sprintf(prbuf, "%4d", calendar_year);
  	mvaddstr(18, 26, prbuf);
-+        rg_ending_line("tombstone", 18, 26, "ui.ending.year", "%4d", 1900+lt->tm_year);
++        rg_ending_line("tombstone", 18, 26, "ui.ending.year", "%4d", calendar_year);
 +        rg_ui_line("tombstone", 10, 26, "ui.ending.rest", "[]", "REST");
 +        rg_ui_line("tombstone", 11, 27, "ui.ending.in", "[]", "IN");
 +        rg_ui_line("tombstone", 12, 25, "ui.ending.peace", "[]", "PEACE");
@@ -169,9 +192,13 @@
 +    rg_ui_line("death", LINES - 1, 0, "ui.ending.return", "[]",
 +        "[Press return to continue]");
      fflush(stdout);
++    rg_ui_line("input", -2, 0, "input.finish_game", "[]", "");
      (void) fgets(prbuf,10,stdin);
++    rg_ui_clear("input");
      my_exit(0);
-@@ -292,12 +368,16 @@
+ }
+ 
+@@ -292,12 +383,16 @@
  void
  total_winner()
  {
@@ -188,7 +215,7 @@
      standout();
      addstr("                                                               \n");
      addstr("  @   @               @   @           @          @@@  @     @  \n");
-@@ -313,11 +393,24 @@
+@@ -313,11 +408,24 @@
      addstr("\nYou have joined the elite ranks of those who have escaped the\n");
      addstr("Dungeons of Doom alive.  You journey home and sell all your loot at\n");
      addstr("a great profit and are admitted to the Fighters' Guild.\n");
@@ -205,7 +232,8 @@
 +    rg_ui_line("victory", LINES - 1, 0, "ui.ending.space", "[]",
 +        "--Press space to continue--");
      refresh();
-     wait_for(' ');
+-    wait_for(' ');
++    rg_wait_for(' ', "input.results");
      clear();
 +    rg_ui_clear("victory");
      mvaddstr(0, 0, "   Worth  Item\n");
@@ -213,7 +241,7 @@
      oldpurse = purse;
      for (obj = pack; obj != NULL; obj = next(obj))
      {
-@@ -377,9 +470,24 @@
+@@ -377,9 +485,24 @@
  	if (worth < 0)
  	    worth = 0;
  	printw("%c) %5d  %s\n", obj->o_packch, worth, inv_name(obj, FALSE));
@@ -238,7 +266,7 @@
      refresh();
      score(purse, 2, ' ');
      my_exit(0);
-@@ -426,6 +534,7 @@
+@@ -426,6 +549,7 @@
      else
  	prbuf[0] = '\0';
      strcat(prbuf, sp);

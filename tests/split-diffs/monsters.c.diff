@@ -1,0 +1,12 @@
+--- acquired/monsters.c
++++ logic/monsters.c
+@@ -180,6 +180,9 @@
+ 	    || dist(y, x, hero.y, hero.x) < LAMPDIST)
+ 	{
+ 	    tp->t_flags |= ISFOUND;
++#ifdef ROGUE_LAYERED
++            rg_host_player_event(RG_PLAYER_ATTACKED);
++#endif
+ 	    if (!save(VS_MAGIC))
+ 	    {
+ 		if (on(player, ISHUH))

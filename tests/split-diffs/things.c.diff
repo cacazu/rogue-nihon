@@ -35,7 +35,21 @@
  
  
  void
-@@ -439,7 +453,19 @@
+@@ -353,7 +367,13 @@
+ 	if (!terse)
+ 	    addmsg(" of object do you want a list");
+ 	msg("? (* for all)");
++#ifdef ROGUE_LAYERED
++        rg_ui_line("input", -2, 0, "input.discovery", "[]", "");
++#endif
+ 	ch = readchar();
++#ifdef ROGUE_LAYERED
++        rg_ui_clear("input");
++#endif
+ 	switch (ch)
+ 	{
+ 	    case ESCAPE:
+@@ -439,7 +459,19 @@
  	    num_found++;
  	}
      if (num_found == 0)
@@ -56,7 +70,7 @@
  }
  
  /*
-@@ -475,10 +501,12 @@
+@@ -475,10 +507,12 @@
      WINDOW *tw, *sw;
      int x, y;
      char *prompt = "--Press space to continue--";
@@ -70,29 +84,40 @@
  	    wclear(hw);
  	    if (inv_type == INV_SLOW)
  		mpos = 0;
-@@ -498,6 +526,10 @@
+@@ -498,6 +532,10 @@
  	{
  	    if (inv_type == INV_OVER && fmt == NULL && !newpage)
  	    {
 +#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
-+        rg_ui_line("menu", line_cnt, 0, "ui.continue", "[]", prompt);
-+        rg_ui_line("input", -2, 0, "input.wait_space", "[]", "");
++        rg_ui_line("menu", line_cnt, 0, "ui.close", "[]", prompt);
++        rg_ui_line("input", -2, 0, "input.close", "[]", "");
 +#endif
  		msg("");
  		refresh();
  		tw = newwin(line_cnt + 1, maxlen + 2, 0, COLS - maxlen - 3);
-@@ -534,6 +566,10 @@
+@@ -522,7 +560,7 @@
+ 		}
+ 		touchwin(tw);
+ 		wrefresh(tw);
+-		wait_for(' ');
++		rg_wait_for(' ', "input.close");
+                 if (md_hasclreol())
+ 		{
+ 		    werase(tw);
+@@ -534,20 +572,32 @@
  	    }
  	    else
  	    {
 +#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
-+        rg_ui_line("menu", LINES - 1, 0, "ui.continue", "[]", prompt);
-+        rg_ui_line("input", -2, 0, "input.wait_space", "[]", "");
++        rg_ui_line("menu", LINES - 1, 0, fmt == NULL ? "ui.close" : "ui.next_page", "[]", prompt);
++        rg_ui_line("input", -2, 0, fmt == NULL ? "input.close" : "input.next_page", "[]", "");
 +#endif
  		wmove(hw, LINES - 1, 0);
  		waddstr(hw, prompt);
  		wrefresh(hw);
-@@ -542,12 +578,19 @@
+-		wait_for(' ');
++		rg_wait_for(' ', fmt == NULL ? "input.close" : "input.next_page");
+ 		clearok(curscr, TRUE);
  		wclear(hw);
  		touchwin(stdscr);
  	    }
@@ -107,12 +132,13 @@
  	if (fmt != NULL && !(line_cnt == 0 && *fmt == '\0'))
  	{
 +#ifdef ROGUE_LAYERED /* RG_UI_PRESENTATION */
-+        rg_ui_printf("menu", line_cnt, 0, __FILE__, __LINE__, fmt, arg);
++        if (*fmt != '\0')
++            rg_ui_printf("menu", line_cnt, 0, __FILE__, __LINE__, fmt, arg);
 +#endif
  	    mvwprintw(hw, line_cnt++, 0, fmt, arg);
  	    getyx(hw, y, x);
  	    if (maxlen < x)
-@@ -579,6 +622,10 @@
+@@ -579,6 +629,10 @@
      }
      line_cnt = 0;
      newpage = FALSE;

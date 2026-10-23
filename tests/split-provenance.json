@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "original_source": "../investigation-20261002-original-rogue/sources/rogue5.4.4",
+  "original_source": "upstream/rogue5.4.4",
   "original_c_files": [
     {
       "file": "armor.c",
@@ -13,15 +13,15 @@
     {
       "file": "chase.c",
       "original_sha256": "e10438a05eab60cab7ede1db2bf07d21ce6f8d0768e3491313e181cff1cca4ff",
-      "split_sha256": "e10438a05eab60cab7ede1db2bf07d21ce6f8d0768e3491313e181cff1cca4ff",
-      "byte_identical": true,
-      "review_scope": "original bytes unchanged",
+      "split_sha256": "595a55c1f8141041ffefdf8a04835494697bc7b0a6b46807aebbd0c94e624866",
+      "byte_identical": false,
+      "review_scope": "Observe public monster movement for animation; preserve original chase, relocation and RNG.",
       "diff": "split-diffs/chase.c.diff"
     },
     {
       "file": "command.c",
       "original_sha256": "398c1fc84575791ab1fbe3112c3e23c33bb1d70c68e381f6cbe406e15aa4b361",
-      "split_sha256": "4b353d1a9b7f7bedb6b8736904d41b8ec9aa5d48d5615b8f37ab9a8b7a7f1a74",
+      "split_sha256": "96f72728b9b519bd410bdb96f79dfb5f0dde4ac683bdb3ac8bb167cd76e7c511",
       "byte_identical": false,
       "review_scope": "Persist command statics; observe ticks; literal-format safe recall; semantic help/identify/equipment UI.",
       "diff": "split-diffs/command.c.diff"
@@ -53,9 +53,9 @@
     {
       "file": "fight.c",
       "original_sha256": "9d5f4f4706156167563d8f5e7557046128b9d629dbe16ffcf356a9b6dece8948",
-      "split_sha256": "092b52a76c8ac58c3e8742539e31557f3845ae6bceeb52be80abbfda1de75ca6",
+      "split_sha256": "13f4ad8e7b5df7c072e1af95b7b9b77845cb214389e1c4e55c73b0b609257d24",
       "byte_identical": false,
-      "review_scope": "Observe the already selected monster/combat verb for semantic translation.",
+      "review_scope": "Observe selected combat text, public actor animation and own-player attack/attacked interruptions, including misses; preserve rule and RNG calls.",
       "diff": "split-diffs/fight.c.diff"
     },
     {
@@ -69,7 +69,7 @@
     {
       "file": "io.c",
       "original_sha256": "01d24e08a31975d3cedc19dbd3323319f3e39cb93aadebb852b58834d822c916",
-      "split_sha256": "ab3aba93bf9aba47126db44c64ab396d2058bee4c1d0894e8579c9b59dcb87a5",
+      "split_sha256": "91e102c53e0ccbee9b3700bfe5ac5b10d99e8515825e87af7609925b91de1d3d",
       "byte_identical": false,
       "review_scope": "Catalog message arguments and UTF-8 UI; bounded buffers; private paging/status runtime accessors.",
       "diff": "split-diffs/io.c.diff"
@@ -77,9 +77,9 @@
     {
       "file": "list.c",
       "original_sha256": "e354c695ac2d1ff92fe2eeb7da3f066620804cd7e500c2e71a077ab9f10ab84c",
-      "split_sha256": "e354c695ac2d1ff92fe2eeb7da3f066620804cd7e500c2e71a077ab9f10ab84c",
-      "byte_identical": true,
-      "review_scope": "original bytes unchanged",
+      "split_sha256": "0a74f96e2b62934bf1db0262c9974ad7f92187e0c82ad1efb8fdb433089009f4",
+      "byte_identical": false,
+      "review_scope": "Forget presentation identities before entity release; preserve original list ownership.",
       "diff": "split-diffs/list.c.diff"
     },
     {
@@ -93,7 +93,7 @@
     {
       "file": "main.c",
       "original_sha256": "8e3af15fc72ec1d86026efc9117a31f3bd51ceb704ca74d2e6f4962d7f0a2a1a",
-      "split_sha256": "bf9264757a0baee476aa94d91c62f6264eca9f5fe7ee8a3b8f3452505726b20a",
+      "split_sha256": "deaf2a673d101344f783c889aac2e9c70e87819beb4e442d60ff69e638827e1c",
       "byte_identical": false,
       "review_scope": "Portable startup, command checkpoints and outcomes; terminal/OS process operations excluded.",
       "diff": "split-diffs/main.c.diff"
@@ -109,7 +109,7 @@
     {
       "file": "misc.c",
       "original_sha256": "65800383516c1ef4bee7cbc48e74dacde2867384f944bb3f355b569ddc85876c",
-      "split_sha256": "e5e07ef7cdab68847b7c1415eb5a86a36d343f62609531e2d94859188e280ab3",
+      "split_sha256": "1e012db907b96a3e3cd7afe37fa50d50c001b1781d3d1532f802d7ef3f9fc6a7",
       "byte_identical": false,
       "review_scope": "Persist last direction; observe direction prompt/input state.",
       "diff": "split-diffs/misc.c.diff"
@@ -117,31 +117,31 @@
     {
       "file": "monsters.c",
       "original_sha256": "0f033406dc9b34421e2296c553f71c55698f2bac401364261d86a6fa545da9fe",
-      "split_sha256": "0f033406dc9b34421e2296c553f71c55698f2bac401364261d86a6fa545da9fe",
-      "byte_identical": true,
-      "review_scope": "original bytes unchanged",
+      "split_sha256": "f71f7f3068e4a5ff3e9872132a225032553b50d6e5522b68df72e0a9bcfa0401",
+      "byte_identical": false,
+      "review_scope": "Observe an actual medusa gaze attempt after original visibility/ISFOUND checks, before saving throw; preserve visibility, confusion and RNG.",
       "diff": "split-diffs/monsters.c.diff"
     },
     {
       "file": "move.c",
       "original_sha256": "d6faecd2ff4aca955b31b7d134b6c499551a0aaa42f5ff1fce1748b66644f1d0",
-      "split_sha256": "d6faecd2ff4aca955b31b7d134b6c499551a0aaa42f5ff1fce1748b66644f1d0",
-      "byte_identical": true,
-      "review_scope": "original bytes unchanged",
+      "split_sha256": "6a9e7d5dddbcc60b028d39d1c42ebbed278c237383c874cce94bfe91b29e6ee8",
+      "byte_identical": false,
+      "review_scope": "Observe public player movement, HP decrease and own-player trap interruption; preserve movement, trap rules and RNG calls.",
       "diff": "split-diffs/move.c.diff"
     },
     {
       "file": "new_level.c",
       "original_sha256": "f042cec22f90cbb91ab7142b6d8d42ddf5ca4e5e3e5377deeca6061c8f95f67b",
-      "split_sha256": "f042cec22f90cbb91ab7142b6d8d42ddf5ca4e5e3e5377deeca6061c8f95f67b",
-      "byte_identical": true,
-      "review_scope": "original bytes unchanged",
+      "split_sha256": "8a0ad3e3d1f91cdeecd6a8355353a5315b6af6ac3262ea35348cff1346c38e2f",
+      "byte_identical": false,
+      "review_scope": "Reset presentation actor epoch at the original level-entry boundary.",
       "diff": "split-diffs/new_level.c.diff"
     },
     {
       "file": "options.c",
       "original_sha256": "6e9d36dc6889ae42fe366ace64c9f399cc0772e145710834e5fb9947908ebbcc",
-      "split_sha256": "efc276572e521ffada121534d73f7f13c2df214fad0e20ec0579bcaf381d1b13",
+      "split_sha256": "c0f16cac6d2a754b7414a9cfd218a5fba0ecbfe61170a2b002e721a7298cfdf4",
       "byte_identical": false,
       "review_scope": "Semantic settings UI; unsigned ctype; UTF-8 scalar editing within original 50-byte budget.",
       "diff": "split-diffs/options.c.diff"
@@ -149,7 +149,7 @@
     {
       "file": "pack.c",
       "original_sha256": "7b2158a7d75a698208b3841d12ed982f1f0a306301008a6adacd8d759c62c0c4",
-      "split_sha256": "8f3f200493ff5dde6f9ece20e0a5739b2e0c1a0155f2302d81fd8667c5052a4d",
+      "split_sha256": "a0f54b9a05fe19a956ac0ca649d187e2d7314b418e4b5bb41a242f9394128f81",
       "byte_identical": false,
       "review_scope": "Deep-copy labels on stack splitting; observe item selection purpose/input state.",
       "diff": "split-diffs/pack.c.diff"
@@ -173,15 +173,15 @@
     {
       "file": "rings.c",
       "original_sha256": "89121898d2cd0ba297e4cadbefebb779691a6612a68b1dafd9374ae9f73253f7",
-      "split_sha256": "89121898d2cd0ba297e4cadbefebb779691a6612a68b1dafd9374ae9f73253f7",
-      "byte_identical": true,
-      "review_scope": "original bytes unchanged",
+      "split_sha256": "e38a2c738554da6a0325012207ff12d6cfd594d8d4b3785a77246b70d8c29a45",
+      "byte_identical": false,
+      "review_scope": "Publish and clear the original hand-selection input wait.",
       "diff": "split-diffs/rings.c.diff"
     },
     {
       "file": "rip.c",
       "original_sha256": "f385286c82698a1281c912bc6c1565cbca165e965eeecc4d21d71fcd78210d79",
-      "split_sha256": "d466804253012f882a51fa44cd407c88587c2a77299ea98baa0f80ffb05ecef6",
+      "split_sha256": "e25e77ea911419e6c8ad07992d7b2dd26ed7e3052fe92b20bdf8a25d366554e3",
       "byte_identical": false,
       "review_scope": "Observe outcomes/death cause; semantic ending UI and browser score adapter.",
       "diff": "split-diffs/rip.c.diff"
@@ -213,7 +213,7 @@
     {
       "file": "state.c",
       "original_sha256": "c58d76d2a7cb260ca014e24c34a59110f99b16c89488e2672c510e1d3f6426bd",
-      "split_sha256": "bfb6b6bfd554d249d6039ef22d8f7b2cf6ee37bbb7dde2fcb84cf517e6d9a27d",
+      "split_sha256": "caca2a954f1eb8db93631daf55331a896f6551aff762e4a583a6d394853d73b9",
       "byte_identical": false,
       "review_scope": "Fixed-width portable serializer, bounded counts/IDs, atomic load and graph ownership cleanup.",
       "diff": "split-diffs/state.c.diff"
@@ -221,15 +221,15 @@
     {
       "file": "sticks.c",
       "original_sha256": "2ae39b1244daa71f4da527875f8e7832f72ebb4bbf149336e87f02d656763d55",
-      "split_sha256": "3e7569d3061603ff3234a33284cd5a5eb41c8db74567ac62334e5ad24ef3c0ab",
+      "split_sha256": "f41a79259a6a8462ec979efb86d884a81f5ca9953b3c61ea697e68553921a5fd",
       "byte_identical": false,
-      "review_scope": "Observe public actor actions and original projectile traversal for rendering; original movement, hits, bounces, charges, RNG and refresh order retained.",
+      "review_scope": "Observe public actor actions, original magic projectile traversal and enemy bolt arrival at the player including saves/misses; preserve hits, bounces, charges, RNG and refresh order.",
       "diff": "split-diffs/sticks.c.diff"
     },
     {
       "file": "things.c",
       "original_sha256": "2cd25aae96054aa252c3c797ba1e4bb533f984c3335a3bf3222d1a5536ee63ce",
-      "split_sha256": "697ceb4925af34ee8236395f9cd1e84f9f528cd10068b0a1b10dc29f10e1a494",
+      "split_sha256": "cfc678fd896c227986a9ab4234c56fba7a424d3f849e538847563acaefb557d9",
       "byte_identical": false,
       "review_scope": "Observe item descriptors, discovery/menu rows and waits; persist pagination state.",
       "diff": "split-diffs/things.c.diff"
@@ -247,15 +247,15 @@
       "original_sha256": "db4bd8337bf8c60fe8042e2142112610fa473babc2321bd9f5cffe8a728d74ed",
       "split_sha256": "14a9d2162fed81f7a566b9f05b6bf3eb2abfc86aa3ca2520e36079304b1556f7",
       "byte_identical": false,
-      "review_scope": "Observe public actor actions and original projectile traversal for rendering; original movement, hits, bounces, charges, RNG and refresh order retained.",
+      "review_scope": "Observe public actor actions and original thrown item/arrow traversal; preserve hit, fall, RNG and refresh order.",
       "diff": "split-diffs/weapons.c.diff"
     },
     {
       "file": "wizard.c",
       "original_sha256": "1a5482788f37e684fc447a90307be58f6bfad3979c334e50d27bbc3079a54f79",
-      "split_sha256": "1a5482788f37e684fc447a90307be58f6bfad3979c334e50d27bbc3079a54f79",
-      "byte_identical": true,
-      "review_scope": "original bytes unchanged",
+      "split_sha256": "af702ffaa2a6d313875a06f9fa2f6787a674a3e5f0dfd0ff5e0ca84486ece7bf",
+      "byte_identical": false,
+      "review_scope": "Handle cancelled/empty identify targets through the original empty-list result; reset presentation epoch on teleport.",
       "diff": "split-diffs/wizard.c.diff"
     },
     {
@@ -270,11 +270,11 @@
   "new_c_files": [
     {
       "file": "core.c",
-      "sha256": "db2c18d82ccb0ff2da0657693dbdecfff13aaa1fb3f319d59a1f622723964be7"
+      "sha256": "48f7d782ce4e9de196d61fb1efea24064450aad15538132c7901697639794b9c"
     },
     {
       "file": "knowledge.c",
-      "sha256": "4c06f3c9beab76f761396f4be6c2add05865d636c1c1ea71856b3282556e3a78"
+      "sha256": "ee4b7331437b72d3b2f96bd9f5d489e38e2f15247a0e7262993ce099cd85c45e"
     },
     {
       "file": "message.c",
@@ -282,11 +282,11 @@
     },
     {
       "file": "save_adapter.c",
-      "sha256": "1df5367eba3169af250315c48f418c4f8e3d70dfc263776b2fdabc1bf2338668"
+      "sha256": "3f7b76f1b9ca22ec75d0922e6fe995af3683f3aa48b803410547d54860b754e3"
     },
     {
       "file": "semantic.c",
-      "sha256": "54b3dbf90073e3e39f4ac2cf3d27dfe77a986e97ba100c9969c8f2ee98a8a12d"
+      "sha256": "7f0c2de652aa4fed0963e661ee5f15ac61fdf470772bcacc31208fd71a66d10b"
     }
   ],
   "limits": [

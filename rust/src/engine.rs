@@ -15,6 +15,7 @@ use std::cell::RefCell;
 
 struct Runtime {
     app: App,
+    player_event_sequence: u64,
 }
 impl Default for Runtime {
     fn default() -> Self {
@@ -49,7 +50,7 @@ impl Default for Runtime {
         // winit, TimePlugin and an autonomous App runner must not step C.
         app.finish();
         app.cleanup();
-        Self { app }
+        Self { app, player_event_sequence: 0 }
     }
 }
 thread_local! { static RUNTIME: RefCell<Runtime> = RefCell::new(Runtime::default()); }
@@ -149,6 +150,14 @@ pub(crate) fn present(frame: Value) -> Value {
             .ready
             .take()
             .expect("Bevy frame system must complete its request")
+    })
+}
+/// Presentation metadata is reset with this instance and excluded from saves.
+pub(crate) fn player_event_sequence() -> u64 {
+    RUNTIME.with(|runtime| {
+        let mut runtime = runtime.borrow_mut();
+        runtime.player_event_sequence = runtime.player_event_sequence.saturating_add(1);
+        runtime.player_event_sequence
     })
 }
 pub(crate) fn map_effect(x: i32, y: i32, glyph: i32, active: i32) {

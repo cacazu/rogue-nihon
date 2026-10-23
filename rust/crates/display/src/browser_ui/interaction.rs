@@ -451,33 +451,7 @@ impl BrowserUi {
         {
             return;
         }
-        let dx = n(&cell["x"]) - n(&f["player"]["x"]);
-        let dy = n(&cell["y"]) - n(&f["player"]["y"]);
-        if dx.abs() > 1. || dy.abs() > 1. || (dx == 0. && dy == 0.) {
-            return;
-        }
-        let key = if dy < 0. {
-            if dx < 0. {
-                RG_KEY_HOME
-            } else if dx > 0. {
-                RG_KEY_PAGE_UP
-            } else {
-                RG_KEY_UP
-            }
-        } else if dy > 0. {
-            if dx < 0. {
-                RG_KEY_END
-            } else if dx > 0. {
-                RG_KEY_PAGE_DOWN
-            } else {
-                RG_KEY_DOWN
-            }
-        } else if dx < 0. {
-            RG_KEY_LEFT
-        } else {
-            RG_KEY_RIGHT
-        };
-        effects.push(json!({"kind":"send","key":key}));
+        effects.push(json!({"kind":"map-target","x":cell["x"],"y":cell["y"]}));
     }
     fn activate_shortcut(&mut self, event: &Value, scope: &str, effects: &mut Vec<Value>) -> bool {
         if b(&self.view["coarse"]) || b(&event["ctrlKey"]) || b(&event["altKey"])
