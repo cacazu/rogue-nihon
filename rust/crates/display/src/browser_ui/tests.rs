@@ -1009,7 +1009,7 @@ fn handed_docks_mirror_action_columns_and_keep_natural_directions_and_live_hitbo
         if coarse {assert!(right_pad.x<left_pad.x);} else {assert!(right_pad.x>left_pad.x);}
         let ids = if coarse {vec!["mobile-movement","touch-action-action.inventory","touch-search","mobile-full-map","mobile-operations","touch-again"]}
             else {vec!["mobile-movement","pc-inventory","pc-search","pc-wield","pc-throw","pc-zap","mobile-full-map","touch-again","pc-armor","pc-quaff","pc-ring","pc-read","pc-eat"]};
-        for id in ids {
+        for id in ids.into_iter().filter(|id| *id!="pc-ring" || width>=980. || coarse) {
             let a=get(&right,id);let b=get(&left,id);
             assert!((a.rect.x+b.rect.x+a.rect.w-width).abs()<0.001,"{id} reflected at {width}");
             assert_eq!(a.action,b.action);assert_eq!(a.shortcut,b.shortcut);
@@ -1021,10 +1021,12 @@ fn handed_docks_mirror_action_columns_and_keep_natural_directions_and_live_hitbo
             let cell=get(&right,"pc-inventory").rect;
             for id in ["mobile-movement","pc-search","pc-wield","pc-throw","pc-zap","mobile-full-map","touch-again","pc-armor","pc-quaff","pc-ring","pc-read","pc-eat"] {
                 for ui in [&right,&left] {
+                    if id=="pc-ring" && width<980. {continue;}
                     let button=get(ui,id).rect;assert_eq!((button.w,button.h),(cell.w,cell.h),"{id} uses one cell at {width}");
                 }
             }
             for (id,key) in [("pc-armor",87),("pc-quaff",113),("pc-ring",80),("pc-read",114),("pc-eat",101)] {
+                if id=="pc-ring" && width<980. {continue;}
                 assert_eq!(get(&left,id).shortcut,Some(char::from_u32(key).unwrap().to_string()));
                 assert_eq!(game_effects(click(&mut left,id)),json!([{"kind":"send","key":key}]));
             }
@@ -1154,7 +1156,7 @@ fn desktop_direction_keeps_all_constant_controls_disabled_in_place() {
         let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();
         ui.render(m.clone(),view(width,900.));
         let ids=["mobile-movement","pc-inventory","pc-search","pc-wield","pc-throw","pc-zap","mobile-full-map","touch-again","pc-armor","pc-quaff","pc-ring","pc-read","pc-eat"];
-        let controls:Vec<_>=ids.iter().map(|id|ui.widgets.controls.iter().find(|c|c.id==*id).unwrap().clone()).collect();
+        let controls:Vec<_>=ids.iter().filter_map(|id|ui.widgets.controls.iter().find(|c|c.id==*id).cloned()).collect();
         m["input"]=json!({"kind":"direction"});m["frame"]["ui"]["input"]=m["input"].clone();
         m["frame"]["ui"]["movement_direction"]=json!(true);m["frame"]["ui"]["map_controls"]=crate::game_window::map_controls(&m["frame"]["ui"],false);
         ui.render(m,view(width,900.));
@@ -1196,4 +1198,24 @@ fn desktop_direction_custom_captions_share_standard_disabled_opacity() {
     let mut phone=BrowserUi::new(measure);let mut v=view(320.,568.);v["coarse"]=json!(true);
     let normal=phone.render(shortcut_model(),v);
     assert_eq!(alpha_for(&normal,"歩く"),1.);assert_eq!(alpha_for(&normal,"長押し"),1.);
+}
+
+#[test]
+fn desktop_resize_removes_hidden_hitboxes_and_keeps_the_reference_and_keys() {
+    let mut ui=BrowserUi::new(measure);let m=shortcut_model();
+    for width in [1400.,980.,979.,900.,700.,699.,700.,980.] {
+        ui.render(m.clone(),view(width,900.));
+        let has_ring=ui.widgets.controls.iter().any(|c|c.id=="pc-ring");
+        assert_eq!(has_ring,width>=980.);
+        if width<700. {assert!(ui.widgets.controls.iter().any(|c|c.id=="mobile-operations"));continue;}
+        let controls:Vec<_>=ui.widgets.controls.iter().filter(|c|matches!(c.id.as_str(),"mobile-movement"|"pc-inventory"|"pc-search"|"pc-wield"|"pc-throw"|"pc-zap"|"mobile-full-map"|"touch-again"|"pc-armor"|"pc-quaff"|"pc-ring"|"pc-read"|"pc-eat")).collect();
+        assert_eq!(controls.len(),if width>=980. {13}else{12});
+        let mut rows:Vec<_>=controls.iter().map(|c|c.rect.y as i32).collect();rows.sort_unstable();rows.dedup();assert_eq!(rows.len(),3);
+        assert!(controls.iter().all(|c|c.rect==c.full_rect));
+    }
+    assert!(commands::GROUPS.iter().flat_map(|(_,entries)|entries.iter()).any(|entry|entry.keys=="P"));
+    ui.render(m.clone(),view(700.,900.));ui.event(json!({"type":"key","key":"C"}));
+    ui.render(m.clone(),view(700.,900.));assert_eq!(ui.scope,"commands");
+    ui.event(json!({"type":"key","key":"Escape"}));ui.render(m,view(700.,900.));
+    assert_eq!(game_effects(ui.event(json!({"type":"key","key":"P"}))),json!([{"kind":"send","key":80,"redraw":false}]));
 }
