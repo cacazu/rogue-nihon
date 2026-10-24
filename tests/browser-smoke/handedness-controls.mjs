@@ -62,7 +62,7 @@ function layout(s){
   const c=controls[i];assert.deepEqual(c.rect,c.fullRect,c.id);assert.ok(c.rect.w>=48&&c.rect.h>=48,c.id+' target');assert.ok(c.rect.x>=0&&c.rect.y>=0&&c.rect.x+c.rect.w<=cfg.width&&c.rect.y+c.rect.h<=cfg.height,c.id+' fits');
   for(const b of controls.slice(i+1)){const a=c.rect,r=b.rect;assert.ok(a.x+a.w<=r.x||r.x+r.w<=a.x||a.y+a.h<=r.y||r.y+r.h<=a.y,c.id+' avoids '+b.id);}
  }
- if(!cfg.phone)for(const [id,key]of [['mobile-movement','g'],['pc-inventory','i'],['pc-search','s'],['pc-wield','w'],['pc-throw','t'],['pc-zap','z'],['mobile-full-map','p'],['touch-again','E'],['pc-armor','W'],['pc-quaff','q'],['pc-ring','P'],['pc-read','r'],['pc-eat','e']])assert.equal(get(id)?.shortcut,key,id+' command shortcut');
+ if(!cfg.phone)for(const [id,key]of [['mobile-movement','g'],['pc-inventory','i'],['pc-search','s'],['pc-wield','w'],['pc-throw','t'],['pc-zap','z'],['mobile-full-map','p'],['touch-again','E'],['pc-explore','v'],['pc-quaff','q'],['pc-ring','P'],['pc-read','r'],['pc-eat','e']])assert.equal(get(id)?.shortcut,key,id+' command shortcut');
  return controls;
 }
 try{
@@ -100,7 +100,8 @@ try{
    await tap('settings-toggle');await tap('mobile-controls');await key('t');await wait('direction');s=await snap();assert.ok(s.scene.controls.find(c=>c.id==='window-104').rect.x<s.scene.controls.find(c=>c.id==='window-108').rect.x);await shot(value+'-hidden-direction');await key('Escape','\x1b');await wait();await tap('settings-toggle');await tap('mobile-controls');
   }
   if(!cfg.phone){
-   for(const [id,verb,filter]of [['pc-armor','W','armor'],['pc-quaff','q','potion'],['pc-ring','P','ring'],['pc-read','r','scroll'],['pc-eat','e','food']]){
+   await key('W');await wait('item');assert.equal((await snap()).state.input.filter,'armor');await tap('window-27');journal+='\x1b';await wait();
+   for(const [id,verb,filter]of [['pc-quaff','q','potion'],['pc-ring','P','ring'],['pc-read','r','scroll'],['pc-eat','e','food']]){
     await tap(id);journal+=verb;await wait('item');s=await snap();assert.equal(s.state.input.filter,filter);assert.ok(s.scene.controls.some(c=>c.id==='inventory-tab-'+filter));await tap('window-27');journal+='\x1b';await wait();
    }
    for(const k of ['T','W','k','P','h','l','R','q','f','r','g','e','a']){await key(k);await paint();}

@@ -1,7 +1,7 @@
 //! Public-route walking, or one permission per original C run boundary.
 use rogue_contract::*;
 use serde_json::{Value, json};
-use std::collections::VecDeque;
+use std::collections::{BTreeMap, VecDeque};
 
 pub(crate) const STEP_DELAY_MS: u32 = 100;
 pub(crate) const RUN_DELAY_MS: u32 = 30;
@@ -48,6 +48,45 @@ impl<'a> Map<'a> {
         matches!(self.cells[i],b'.' | b'#' | b'+' | b'%' | b'^' | b'@' | b'*' | b'!' | b'?' |
             b':' | b')' | b']' | b'=' | b'/' | b',') || p==target && self.attack_goal(p)
     }
+    fn visibility(&self) -> Option<&[Value]> {
+        self.frame["map_visible"].as_array().filter(|v|v.len()==self.cells.len() && v.iter().all(Value::is_boolean)).map(Vec::as_slice)
+    }
+    fn visible_enemy(&self) -> Option<bool> {
+        let visible=self.visibility()?;
+        Some(self.frame["map_actors"].as_array().is_some_and(|actors|actors.iter().any(|actor| {
+            let Some(p)=point(actor) else {return false;};
+            let Some(i)=self.index(p) else {return false;};
+            actor["id"].as_u64().is_some_and(|id|id!=0) && visible[i]==true
+                && self.cells[i].is_ascii_uppercase() && actor["glyph"].as_u64()==Some(u64::from(self.cells[i]))
+        })))
+    }
+    fn item(&self,p:Point) -> bool {
+        self.index(p).is_some_and(|i|matches!(self.cells[i],b'*'|b'!'|b'?'|b':'|b')'|b']'|b'='|b'/'|b','))
+            || point(&self.frame["player"])==Some(p)
+                && matches!(self.frame["map_player_surface"]["tile"].as_u64(),Some(14..=22))
+    }
+    fn frontier(&self,p:Point) -> [bool;8] {
+        DIRECTIONS.map(|(dx,dy,_)|self.index((p.0+dx,p.1+dy)).is_some_and(|i|self.cells[i]==b' '))
+    }
+    fn exploration_goal(&self,start:Point,examined:&BTreeMap<Point,[bool;8]>) -> Option<Point> {
+        let mut queue=VecDeque::from([start]);
+        let mut seen=vec![false;self.cells.len()];
+        seen[self.index(start)?]=true;
+        let mut frontier=None;
+        while let Some(p)=queue.pop_front() {
+            if self.item(p) {return Some(p);}
+            let edge=self.frontier(p);
+            if frontier.is_none() && edge.contains(&true) && examined.get(&p)!=Some(&edge) {frontier=Some(p);}
+            for (dx,dy,_) in DIRECTIONS {
+                let next=(p.0+dx,p.1+dy);
+                let Some(i)=self.index(next) else {continue;};
+                if seen[i] || !self.walkable(next,start)
+                    || dx!=0 && dy!=0 && (!self.walkable((p.0+dx,p.1),start) || !self.walkable((p.0,p.1+dy),start)) {continue;}
+                seen[i]=true;queue.push_back(next);
+            }
+        }
+        frontier
+    }
     fn next(&self, start: Point, target: Point) -> Option<(Point,u32)> {
         if start == target || !self.walkable(target,target) { return None; }
         let origin = self.index(start)?;
@@ -82,6 +121,9 @@ impl<'a> Map<'a> {
 #[derive(Default)]
 pub(crate) struct AutoWalk {
     target: Option<Point>,
+    exploring: bool,
+    examined: BTreeMap<Point,[bool;8]>,
+    pickup_attempt: Option<Point>,
     mode: u32,
     running: bool,
     epoch: Option<u64>,
@@ -93,7 +135,10 @@ pub(crate) struct AutoWalk {
 }
 impl AutoWalk {
     pub fn stop(&mut self, reason: &'static str) -> bool {
-        let active = self.target.take().is_some();
+        let active = self.target.take().is_some() || self.exploring;
+        self.exploring = false;
+        self.examined.clear();
+        self.pickup_attempt = None;
         self.running = false;
         self.expected = None;
         self.sent_request = None;
@@ -101,10 +146,10 @@ impl AutoWalk {
         if active { self.reason = reason; }
         active
     }
-    pub fn active(&self) -> bool { self.target.is_some() }
+    pub fn active(&self) -> bool { self.target.is_some() || self.exploring }
     pub fn uses_run(&self) -> bool { self.mode != 0 }
     pub fn same_target(&self, frame:&Value, target:&Value, mode:u32) -> bool {
-        self.active() && point(target)==self.target && self.mode==mode.min(2)
+        !self.exploring && self.active() && point(target)==self.target && self.mode==mode.min(2)
             && self.epoch==frame["map_actor_epoch"].as_u64()
     }
     pub fn start(&mut self, frame: &Value, target: &Value, mode: u32) {
@@ -120,15 +165,47 @@ impl AutoWalk {
         self.epoch = frame["map_actor_epoch"].as_u64();
         self.reason = "";
     }
+    pub fn start_explore(&mut self,frame:&Value) {
+        self.stop("replaced");
+        self.reason="unreachable";
+        let Some(map)=Map::new(frame) else {return;};
+        let Some(enemy)=map.visible_enemy() else {return;};
+        if enemy {self.reason="enemy";return;}
+        let Some(here)=point(&frame["player"]).filter(|p|map.index(*p).is_some()) else {return;};
+        self.mode=0;self.exploring=true;self.target=Some(here);
+        self.epoch=frame["map_actor_epoch"].as_u64();self.reason="";
+    }
+    fn check_exploration(&mut self,frame:&Value) -> bool {
+        if !self.exploring {return true;}
+        match Map::new(frame).and_then(|map|map.visible_enemy()) {
+            Some(false)=>true,
+            Some(true)=>{self.stop("enemy");false},
+            None=>{self.stop("unreachable");false},
+        }
+    }
+    fn plan_exploration(&mut self,frame:&Value,here:Point) -> bool {
+        let Some(map)=Map::new(frame) else {self.stop("unreachable");return false;};
+        if self.pickup_attempt.take()==Some(here) && map.item(here) {
+            self.stop("pickup");return false;
+        }
+        // Only the local unknown-neighbour pattern is remembered. New public
+        // terrain can reopen an examined frontier; moving @ never changes it.
+        self.examined.insert(here,map.frontier(here));
+        self.target=map.exploration_goal(here,&self.examined);
+        if self.target.is_none() {self.stop("complete");return false;}
+        true
+    }
     pub fn observe(&mut self, frame: &Value) -> bool {
         if self.active() && (frame["map_actor_epoch"].as_u64() != self.epoch
             || frame["ui"]["mode"] != "game" || frame["ui"]["window"].is_object()) {
             return self.stop("scene");
         }
-        false
+        let active=self.active();
+        self.check_exploration(frame);
+        active && !self.active()
     }
     pub fn schedule(&mut self, frame: &Value, input: &Value, request: u64) -> Option<Value> {
-        let target = self.target?;
+        if !self.active() || !self.check_exploration(frame) {return None;}
         if self.sent_request == Some(request) || self.scheduled.is_some_and(|(_,r)| r == request) { return None; }
         // A run which returned to command by itself must never restart.
         if self.running && input["kind"] == "command" {
@@ -138,8 +215,10 @@ impl AutoWalk {
         if let Some(expected) = self.expected.take() && here != expected {
             self.stop("blocked"); return None;
         }
-        if here == target { self.stop("arrived"); return None; }
-        if Map::new(frame).and_then(|m| m.next(here,target)).is_none() {
+        if self.exploring && !self.plan_exploration(frame,here) {return None;}
+        let target=self.target?;
+        if here == target && !self.exploring { self.stop("arrived"); return None; }
+        if here!=target && Map::new(frame).and_then(|m| m.next(here,target)).is_none() {
             self.stop("unreachable"); return None;
         }
         self.token = self.token.wrapping_add(1);
@@ -152,8 +231,13 @@ impl AutoWalk {
     pub fn tick(&mut self, frame: &Value, input: &Value, request: u64, token: u64) -> Option<u32> {
         if self.scheduled != Some((token,request)) { return None; }
         self.scheduled = None;
+        if !self.check_exploration(frame) {return None;}
         let target = self.target?;
         let here = point(&frame["player"])?;
+        if self.exploring && here==target && Map::new(frame).is_some_and(|map|map.item(here)) {
+            self.pickup_attempt=Some(here);self.expected=Some(here);self.sent_request=Some(request);
+            return Some(u32::from(b','));
+        }
         let Some((next,key)) = Map::new(frame).and_then(|m| m.next(here,target)) else {
             self.stop("unreachable"); return None;
         };
@@ -193,7 +277,7 @@ impl AutoWalk {
         Some(emitted)
     }
     pub fn snapshot(&self) -> Value {
-        json!({"active":self.active(),"mode":self.mode,"target":self.target.map(|(x,y)|json!({"x":x,"y":y})),
+        json!({"active":self.active(),"exploring":self.exploring,"mode":self.mode,"target":self.target.map(|(x,y)|json!({"x":x,"y":y})),
             "reason":self.reason,"scheduled":self.scheduled.map(|(token,request)|json!({"token":token,"request":request}))})
     }
 }
@@ -350,4 +434,77 @@ mod tests {
         assert_eq!(walk.snapshot()["reason"],"blocked");
     }
 
+}
+
+#[cfg(test)]
+mod exploration_tests {
+    use super::*;
+    fn frame(rows: &[&str], player: Point) -> Value {
+        let width=rows[0].len();
+        json!({"width":width,"height":rows.len(),"map_actor_epoch":1,
+            "player":{"x":player.0,"y":player.1},"map_cells":rows.join(""),
+            "map_visible":vec![true;width*rows.len()],"map_actors":[],"ui":{"mode":"game"}})
+    }
+    fn fire(walk:&mut AutoWalk,f:&Value,request:u64)->Option<u32> {
+        let command=json!({"kind":"command"});
+        let timer=walk.schedule(f,&command,request)?;
+        walk.tick(f,&command,request,timer["token"].as_u64().unwrap())
+    }
+    #[test]
+    fn exploration_prioritizes_known_items_and_uses_the_existing_single_timer() {
+        let mut f=frame(&["       ","|.....|","|@.!..|","|... .|","       "],(1,2));
+        let mut walk=AutoWalk::default();walk.start_explore(&f);
+        assert_eq!(fire(&mut walk,&f,1),Some(RG_KEY_RIGHT));
+        assert!(fire(&mut walk,&f,1).is_none());
+        f["player"]["x"]=json!(2);
+        assert_eq!(fire(&mut walk,&f,2),Some(RG_KEY_RIGHT));
+        f["player"]["x"]=json!(3);f["map_cells"]=json!("       |.....||..@..||... .|       ");
+        assert!(fire(&mut walk,&f,3).is_some(),"Other public frontiers are still explored");
+        walk.stop("input");assert!(!walk.active());
+    }
+    #[test]
+    fn exploration_never_walks_unknown_cells_and_stops_on_uncollected_items() {
+        let mut f=frame(&["     ","|@! |","     "],(1,1));
+        let mut walk=AutoWalk::default();walk.start_explore(&f);
+        assert_eq!(fire(&mut walk,&f,1),Some(RG_KEY_RIGHT));
+        f["player"]["x"]=json!(2);f["map_cells"]=json!("     |.@ |     ");
+        f["map_player_surface"]=json!({"tile":15});
+        assert_eq!(fire(&mut walk,&f,2),Some(44),"Retry pickup once after automatic pickup failed");
+        assert_eq!(fire(&mut walk,&f,3),None);assert_eq!(walk.snapshot()["reason"],"pickup");
+        assert!(!walk.active());
+        walk.start_explore(&f);assert_eq!(fire(&mut walk,&f,4),Some(44),"Explicit restart retries after manual inventory changes");
+        f["map_player_surface"]=json!({"tile":1});
+        assert_eq!(fire(&mut walk,&f,5),None);assert_eq!(walk.snapshot()["reason"],"complete");
+    }
+    #[test]
+    fn exploration_checks_visible_actors_on_start_and_before_queued_step() {
+        let mut f=frame(&["       ","|@!..A|","       "],(1,1));
+        f["map_actors"]=json!([{"id":9,"x":5,"y":1,"glyph":65}]);
+        let mut walk=AutoWalk::default();walk.start_explore(&f);
+        assert!(!walk.active());assert_eq!(walk.snapshot()["reason"],"enemy");
+        f["map_visible"][12]=json!(false);walk.start_explore(&f);
+        let command=json!({"kind":"command"});let timer=walk.schedule(&f,&command,1).unwrap();
+        f["map_visible"][12]=json!(true);
+        assert_eq!(walk.tick(&f,&command,1,timer["token"].as_u64().unwrap()),None);
+        assert_eq!(walk.snapshot()["reason"],"enemy");
+        f["map_visible"]=json!([]);walk.start_explore(&f);assert!(!walk.active());
+    }
+    #[test]
+    fn exploration_replans_when_new_public_terrain_reveals_another_branch() {
+        let mut f=frame(&["       ","|@..  |","       "],(1,1));
+        let mut walk=AutoWalk::default();walk.start_explore(&f);
+        assert_eq!(fire(&mut walk,&f,1),Some(RG_KEY_RIGHT));
+        f["player"]["x"]=json!(2);f["map_cells"]=json!("       |.@.  |       ");
+        assert_eq!(fire(&mut walk,&f,2),Some(RG_KEY_RIGHT));
+        f["player"]["x"]=json!(3);f["map_cells"]=json!("       |..@.!|       ");
+        assert_eq!(fire(&mut walk,&f,3),Some(RG_KEY_RIGHT));
+        f["player"]["x"]=json!(4);
+        assert_eq!(fire(&mut walk,&f,4),Some(RG_KEY_RIGHT));
+        f["player"]["x"]=json!(5);f["map_cells"]=json!("       |....@|       ");
+        for request in 5..30 {
+            let Some(key)=fire(&mut walk,&f,request) else {break;};
+            f["player"]["x"]=json!(f["player"]["x"].as_i64().unwrap()+if key==RG_KEY_LEFT {-1}else{1});
+        }
+        assert!(!walk.active());assert_eq!(walk.snapshot()["reason"],"complete");
+    }
 }

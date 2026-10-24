@@ -25,7 +25,7 @@ impl BrowserUi {
             if y == 0 || y > height as usize || glyph == b' ' {
                 continue;
             }
-            let color = match glyph {
+            let color = if map_cell_remembered(&frame,index) && !map_public_actor(&frame,index) { "@map.memory" } else { match glyph {
                 b'@' => "@map.overview.player",
                 b'%' => "@map.overview.stairs",
                 b'A'..=b'Z' => "@map.overview.enemy",
@@ -33,7 +33,7 @@ impl BrowserUi {
                 b'+' | b'#' => "@map.overview.passage",
                 b'.' => "@map.overview.floor",
                 _ => "@map.overview.item",
-            };
+            } };
             ui.widgets.rect(
                 Rect::new(
                     map.x + x as f64 * size - camera.left,

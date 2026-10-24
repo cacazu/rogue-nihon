@@ -134,6 +134,19 @@ void rg_semantic_map_actors(const uint8_t *cells,uint32_t rows,uint32_t columns)
     visual_player_observed=0;
     for (i=0;i<RG_ACTOR_SLOTS;i++) visual_actors[i].observed=0;
     if (!cells || rows<2 || !columns || rows>MAXLINES || columns>MAXCOLS) return;
+    {
+        uint8_t visible[MAXLINES * MAXCOLS];
+        memset(visible,0,rows*columns);
+        /* Only observe the accepted game map, never overlay text. cansee's
+         * roomin fallback emits a message for invalid coordinates; an actual
+         * nonblank map surface guards that fallback without exporting it. */
+        if (proom) for (y=1;(uint32_t)y<rows-1;y++) for (x=0;(uint32_t)x<columns;x++) {
+            if (x==hero.x && y==hero.y) visible[y*columns+x]=1;
+            else if (cells[y*columns+x]!=' ' && chat(y,x)!=' ' && cansee(y,x))
+                visible[y*columns+x]=1;
+        }
+        rg_host_map_visibility(visible,rows,columns);
+    }
     for (actor=&player;actor;actor=actor==&player?mlist:next(actor)) {
         x=actor->t_pos.x;y=actor->t_pos.y;
         if (x<0 || (uint32_t)x>=columns || y<=0 || (uint32_t)y>=rows-1) continue;

@@ -29,6 +29,9 @@ node tests/run.mjs --keep-artifacts --env ROGUE_MOBILE_WINDOWS_WASM=build/game-f
 
 | script（tests/browser-smoke/） | 確認対象 |
 |---|---|
+| `autoexplore.mjs` | 暗い部屋の到達可能な全範囲の公開・全アイテム回収、同じ通常入力とのC/RNG比較、可視敵・満杯・罠・手入力による停止と再開、保存後の新Workerで探索予約を復元しないこと。`game-fixtures.wasm` を使用し、`ROGUE_AUTOEXPLORE_OUTPUT` で出力先を指定 |
+| `autoexplore-controls.mjs` | PCのボタン・キーとスマホの探索操作、パッドに対応する側への半幅配置、弓と矢の状態、コマンド割当と旧設定の移行。`game-fixtures.wasm` を使用 |
+| `map-memory.mjs` | PC・スマホと3表示方式で、現在視界の色、視界外の公開記憶の灰色、未知の黒、全体図と実RGBAを確認。C状態と保存の比較は `tests/map-memory.test.mjs` を併用 |
 | `canvas.mjs` | PC・スマホ・日英の開始、単一Canvas、持ち物・ヘルプ・設定、IME編集、保存復元、終了、全画面、フッターのリンク |
 | `desktop-dock.mjs` | PC下部の方向・主要操作とキー表記、Web操作の厳密大小shortcut・パッド非表示時の入力・無効射撃・設定回数Eと原作aの区別、700px以上の日英配置と地図・ログの分離、実クリックから探索・待機・武器変更・投射・杖の方向取消・射撃・繰返し、履歴・設定・持ち物の背景遮断、全体図・全画面・PC/スマホ切替、旧UI/通常キーとのC・RNG比較。`ROGUE_PC_DOCK_BEFORE` に変更前buildを含む作品コピーを指定可能。 |
 | `control-customization.mjs` | PC・スマホの配置／コマンド編集、ボタン交換・パッド列交換、決定・取消・項目別の既定復元、保存再読込・画面種別の分離、編集中のゲーム入力遮断、PCのボタン起点・キーボード起点の方向選択。 |

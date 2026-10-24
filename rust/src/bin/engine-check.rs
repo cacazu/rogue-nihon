@@ -161,6 +161,10 @@ fn main() {
     glyphs[2 * 80 + 4] = b' ';
     engine::map_terrain(glyphs);
     let actors = String::from_utf8(actors).unwrap();
+    engine::map_actor(rogue_display::map::ActorObservation::Begin);
+    for (id,x,glyph) in [(0,2,64),(1,3,69),(2,4,90)] {
+        engine::map_actor(rogue_display::map::ActorObservation::Actor{id,x,y:2,glyph,facing:1,stopped:false});
+    }
     let observed = engine::present(frame(actors.clone()));
     assert_eq!(
         observed["map_underlays"],

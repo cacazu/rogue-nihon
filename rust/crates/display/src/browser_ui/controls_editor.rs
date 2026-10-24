@@ -369,7 +369,7 @@ impl BrowserUi {
                         let contextual=profile.contextual_search.contains(button);
                         self.dock_targets.push(DockTarget{button:*button,rect:r});
                         let id=match form {
-                            ControlForm::Desktop=>["mobile-movement","pc-inventory","pc-wield","pc-armor","pc-search","pc-throw","pc-zap","pc-read","touch-again","mobile-full-map","pc-eat","pc-quaff"][*button],
+                            ControlForm::Desktop=>["mobile-movement","pc-inventory","pc-wield","pc-explore","pc-search","pc-throw","pc-zap","pc-read","touch-again","mobile-full-map","pc-eat","pc-quaff"][*button],
                             ControlForm::Phone=>["mobile-movement","touch-action-action.inventory","touch-search","mobile-full-map","mobile-operations","touch-again"][*button],
                         };
                         if !editing && direction && !self.pc_controls() {

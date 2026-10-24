@@ -193,7 +193,12 @@ impl Envelope {
                 .presentation
                 .as_object()
                 .ok_or("invalid saved presentation")?;
-            if object.len() != 4
+            let memory_valid=object.get("map_memory").is_none_or(|memory| {
+                memory.as_object().is_some_and(|object| object.len()==2)
+                    && memory["level"].as_u64().zip(memory["cells"].as_str())
+                        .is_some_and(|(level,cells)| rogue_contract::valid_map_memory(level,cells))
+            });
+            if !memory_valid || !(object.len() == 4 || object.len() == 5 && object.contains_key("map_memory"))
                 || !["lines", "input", "history", "last_message"]
                     .iter()
                     .all(|key| object.contains_key(*key))
@@ -312,6 +317,23 @@ pub fn hex_decode(value: &str) -> Result<Vec<u8>, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn visibility_memory_save_accepts_legacy_and_bounded_static_observations_only() {
+        let mut view=serde_json::json!({"lines":[],"input":null,"history":[],"last_message":null});
+        assert!(Envelope::new_with_presentation(7,"Player".into(),&[1],vec![],0,view.clone()).is_ok());
+        let mut cells=vec![b' ';80*24];cells[2*80+3]=b'.';cells[2*80+4]=b'!';
+        view["map_memory"]=serde_json::json!({"level":1,"cells":String::from_utf8(cells).unwrap()});
+        let saved=Envelope::new_with_presentation(7,"Player".into(),&[1],vec![],0,view.clone()).unwrap();
+        assert_eq!(Envelope::parse(&saved.bytes().unwrap()).unwrap().presentation["map_memory"],view["map_memory"]);
+        for invalid in [serde_json::json!({"level":0,"cells":" ".repeat(1920)}),
+            serde_json::json!({"level":1,"cells":" ".repeat(1919)}),
+            serde_json::json!({"level":1,"cells":"A".repeat(1920)}),
+            serde_json::json!({"level":1,"cells":" ".repeat(1920),"enemy":true}),serde_json::Value::Null] {
+            view["map_memory"]=invalid;
+            assert!(Envelope::new_with_presentation(7,"Player".into(),&[1],vec![],0,view.clone()).is_err());
+        }
+    }
+
     #[test]
     fn target_run_v3_whitelist_and_legacy_checksums() {
         use rogue_contract::*;

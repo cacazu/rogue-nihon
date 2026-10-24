@@ -577,6 +577,14 @@ fn parse_observation(frame: &Value) -> Result<Option<Observation>, String> {
             }
         }
     }
+    // Current sight is distinct from static observed memory. Preserve the
+    // existing ground check for detection-only actors and older fixture frames.
+    if let Some(visible)=frame["map_visible"].as_array() {
+        if visible.len()!=length || visible.iter().any(|value| !value.is_boolean()) {
+            return Err("Invalid animation map visibility".into());
+        }
+        for (known,visible) in known.iter_mut().zip(visible) { *known &= visible==true; }
+    }
     let raw_actors = frame["map_actors"]
         .as_array()
         .filter(|actors| actors.len() <= MAX_ACTORS)
@@ -844,6 +852,17 @@ mod tests {
             assert_eq!(pose(&a.sample(220., mode)), ("idle", 1));
         }
     }
+    #[test]
+    fn animation_visibility_memory_uses_sight_changes_when_the_map_stays_remembered() {
+        let mut a=animator();let mut first=frame(1,1,false,json!([]));
+        first["map_visible"]=json!([true,true,true,false,false,false]);
+        a.observe(&first,0.).unwrap();
+        let mut next=frame(2,2,false,json!([]));next["map_visible"]=first["map_visible"].clone();
+        a.observe(&next,10.).unwrap();assert_eq!(a.sample(70.,"pixels").frames[0]["displayX"],1.5);
+        next["map_visible"]=json!([false,true,true,true,false,false]);
+        a.observe(&next,70.).unwrap();assert_eq!(a.sample(70.,"pixels").frames[0]["displayX"],2.);
+    }
+
     #[test]
     fn animation_late_visibility_refresh_aligns_an_already_moving_player() {
         let mut a = animator();

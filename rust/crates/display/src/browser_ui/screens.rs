@@ -192,7 +192,9 @@ impl BrowserUi {
                         py + size * 0.125,
                         TextStyle {
                             size: size * 0.75,
-                            color: Self::map_glyph_color(glyph),
+                            color: if map_cell_remembered(&f,index) && !map_public_actor(&f,index) {
+                                "@map.memory"
+                            } else { Self::map_glyph_color(glyph) },
                             bold: false,
                             mono: true,
                         },
@@ -779,7 +781,7 @@ mod palette_tests {
             assert!(!before.is_empty(),"Explicit map palette scope: {kind}/{mode}");
             assert_eq!(before,after,"Map paint stays in the original palette: {kind}/{mode}");
             let outside=green.iter().find(|c|c["text"]=="Outside UI").unwrap();
-            assert_eq!(outside["color"],"#00ff66");assert_eq!(outside["monochrome"],true);
+            assert_eq!(outside["color"],crate::theme::Theme::named("green-black").color("@text.primary"));assert_eq!(outside["monochrome"],true);
             assert!(after.iter().all(|c|c["tint"].is_null()&&c["monochrome"].is_null()));
         } }
     }

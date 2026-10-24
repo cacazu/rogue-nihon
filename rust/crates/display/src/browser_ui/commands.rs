@@ -21,7 +21,7 @@ pub(super) fn key_id(key:u32)->Option<&'static str> {
     })
 }
 pub(super) fn web_id(action:WebAction)->&'static str {
-    match action { WebAction::Movement=>"web.movement",WebAction::FullMap=>"web.full-map",WebAction::Fire=>"web.fire",WebAction::Repeat=>"web.repeat",WebAction::RepeatCount=>"web.repeat-count",WebAction::Commands=>"web.commands",WebAction::Settings=>"web.settings",WebAction::Fullscreen=>"web.fullscreen",WebAction::Controls=>"web.controls",WebAction::History=>"web.history" }
+    match action { WebAction::Explore=>"web.explore",WebAction::Movement=>"web.movement",WebAction::FullMap=>"web.full-map",WebAction::Fire=>"web.fire",WebAction::Repeat=>"web.repeat",WebAction::RepeatCount=>"web.repeat-count",WebAction::Commands=>"web.commands",WebAction::Settings=>"web.settings",WebAction::Fullscreen=>"web.fullscreen",WebAction::Controls=>"web.controls",WebAction::History=>"web.history" }
 }
 const RUN_COMMANDS: &[(&str,&str,u8)] = &[
     ("game.run-left","help.left",b'H'),("game.run-down","help.down",b'J'),("game.run-up","help.up",b'K'),("game.run-right","help.right",b'L'),

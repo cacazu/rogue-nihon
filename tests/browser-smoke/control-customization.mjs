@@ -141,7 +141,7 @@ try{
   await page.waitForFunction(()=>__rogueBrowserTest.diagnostics?.ready);await page.locator('#name').fill('Controls');await page.locator('#seed').fill('17');await tap('new-game');await wait();
   const baseline=await game();
   if(!phone){
-   const rows=[['mobile-movement','pc-inventory','pc-wield','pc-armor'],['pc-search','pc-throw','pc-zap','pc-read'],['touch-again','mobile-full-map','pc-eat','pc-quaff']];
+   const rows=[['mobile-movement','pc-inventory','pc-wield','pc-explore'],['pc-search','pc-throw','pc-zap','pc-read'],['touch-again','mobile-full-map','pc-eat','pc-quaff']];
    const labels=[['歩く','持ち物','武器','防具'],['探す','投げる','杖','巻物'],['繰返し','全体図','食べる','飲む']];
    for(const hand of ['right','left']){
     await tap('settings-toggle');if((await snap()).state.handedness!==hand)await tap('handedness-toggle');await tap('settings-close');

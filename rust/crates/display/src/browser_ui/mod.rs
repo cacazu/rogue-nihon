@@ -48,6 +48,15 @@ pub(crate) fn s(v: &Value) -> &str {
 pub(crate) fn n(v: &Value) -> f64 {
     v.as_f64().unwrap_or(0.)
 }
+pub(crate) fn map_cell_remembered(frame: &Value, index: usize) -> bool {
+    frame["map_visible"].get(index).and_then(Value::as_bool) == Some(false)
+        && frame["map_tiles"].get(index).and_then(Value::as_u64).is_some_and(|tile| tile!=0)
+}
+pub(crate) fn map_public_actor(frame: &Value, index: usize) -> bool {
+    let width=frame["width"].as_u64().unwrap_or(0) as usize;
+    width>0 && array(&frame["map_actors"]).iter().any(|actor|
+        actor["x"].as_u64()==Some((index%width) as u64) && actor["y"].as_u64()==Some((index/width) as u64))
+}
 pub(crate) fn b(v: &Value) -> bool {
     v.as_bool().unwrap_or(false)
 }

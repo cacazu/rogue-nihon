@@ -909,38 +909,38 @@ fn physical_directions_follow_selected_mode_without_changing_other_inputs() {
             for event in [json!({"type":"key","key":name}),
                 json!({"type":"key","key":name,"code":format!("Numpad{digit}")}),
                 json!({"type":"key","key":digit.to_string(),"code":format!("Numpad{digit}")})] {
-                assert_eq!(ui.event(event)["effects"],send(expected),"mode {mode}, {name}");
+                assert_eq!(game_effects(ui.event(event)),send(expected),"mode {mode}, {name}");
             }
             let expected=match mode {1=>u32::from(letter.to_ascii_uppercase()),2=>u32::from(letter)|RG_EVENT_CTRL,_=>u32::from(letter)};
-            assert_eq!(ui.event(json!({"type":"key","key":char::from(letter).to_string()}))["effects"],send(expected));
+            assert_eq!(game_effects(ui.event(json!({"type":"key","key":char::from(letter).to_string()}))),send(expected));
             for (field,flag) in [("shiftKey",RG_EVENT_SHIFT),("ctrlKey",RG_EVENT_CTRL),("altKey",RG_EVENT_ALT)] {
                 let mut event=json!({"type":"key","key":name});event[field]=json!(true);
-                assert_eq!(ui.event(event)["effects"],send(symbol|flag),"{field}, mode {mode}");
+                assert_eq!(game_effects(ui.event(event)),send(symbol|flag),"{field}, mode {mode}");
             }
-            assert_eq!(ui.event(json!({"type":"key","key":char::from(letter.to_ascii_uppercase()).to_string()}))["effects"],send(u32::from(letter.to_ascii_uppercase())));
+            assert_eq!(game_effects(ui.event(json!({"type":"key","key":char::from(letter.to_ascii_uppercase()).to_string()}))),send(u32::from(letter.to_ascii_uppercase())));
         }
         for digit in 0..10 {
-            assert_eq!(ui.event(json!({"type":"key","key":digit.to_string(),"code":format!("Digit{digit}")}))["effects"],send(48+digit));
+            assert_eq!(game_effects(ui.event(json!({"type":"key","key":digit.to_string(),"code":format!("Digit{digit}")}))),send(48+digit));
         }
         for key in ["5","Clear"] {
-            assert_eq!(ui.event(json!({"type":"key","key":key,"code":"Numpad5"}))["effects"],send(46));
+            assert_eq!(game_effects(ui.event(json!({"type":"key","key":key,"code":"Numpad5"}))),send(46));
         }
         for field in ["metaKey","composing","keyCode","native"] {
             let mut event=json!({"type":"key","key":"ArrowRight"});
             event[field]=match field {"keyCode"=>json!(229),"native"=>json!("prompt-text"),_=>json!(true)};
-            assert_eq!(ui.event(event)["effects"],json!([]),"{field}");
+            assert_eq!(game_effects(ui.event(event)),json!([]),"{field}");
         }
     }
     for kind in ["direction","item","confirm","text","space","enter"] {
         let mut m=shortcut_model();m["input"]["kind"]=json!(kind);
         ui.render(m,view(1400.,1000.));ui.mobile_movement=2;
         for (key,expected) in [("ArrowRight",RG_KEY_RIGHT),("l",108)] {
-            assert_eq!(ui.event(json!({"type":"key","key":key}))["effects"],send(expected),"{kind}");
+            assert_eq!(game_effects(ui.event(json!({"type":"key","key":key}))),send(expected),"{kind}");
         }
     }
     let mut m=shortcut_model();m["frame"]["ui"]["movement_direction"]=json!(true);
     ui.render(m,view(1400.,1000.));ui.mobile_movement=2;
-    assert_eq!(ui.event(json!({"type":"key","key":"ArrowRight"}))["effects"],send(108));
+    assert_eq!(game_effects(ui.event(json!({"type":"key","key":"ArrowRight"}))),send(108));
 }
 
 #[test]
@@ -1015,7 +1015,7 @@ fn handed_docks_mirror_action_columns_and_keep_natural_directions_and_live_hitbo
         let right_pad=get(&right,"touch-h").rect;let left_pad=get(&left,"touch-h").rect;
         if coarse {assert!(right_pad.x<left_pad.x);} else {assert!(right_pad.x>left_pad.x);}
         let ids = if coarse {vec!["mobile-movement","touch-action-action.inventory","touch-search","mobile-full-map","mobile-operations","touch-again"]}
-            else {vec!["mobile-movement","pc-inventory","pc-search","pc-wield","pc-throw","pc-zap","mobile-full-map","touch-again","pc-armor","pc-quaff","pc-read","pc-eat"]};
+            else {vec!["mobile-movement","pc-inventory","pc-search","pc-wield","pc-throw","pc-zap","mobile-full-map","touch-again","pc-explore","pc-quaff","pc-read","pc-eat"]};
         for id in ids.into_iter().filter(|id| *id!="pc-ring" || width>=980. || coarse) {
             let a=get(&right,id);let b=get(&left,id);
             assert!((a.rect.x+b.rect.x+a.rect.w-width).abs()<0.001,"{id} reflected at {width}");
@@ -1026,13 +1026,13 @@ fn handed_docks_mirror_action_columns_and_keep_natural_directions_and_live_hitbo
         assert_eq!(game_effects(click(&mut left,search)),json!([{"kind":"send","key":115}]));
         if !coarse {
             let cell=get(&right,"pc-inventory").rect;
-            for id in ["mobile-movement","pc-search","pc-wield","pc-throw","pc-zap","mobile-full-map","touch-again","pc-armor","pc-quaff","pc-read","pc-eat"] {
+            for id in ["mobile-movement","pc-search","pc-wield","pc-throw","pc-zap","mobile-full-map","touch-again","pc-explore","pc-quaff","pc-read","pc-eat"] {
                 for ui in [&right,&left] {
                     if id=="pc-ring" && width<980. {continue;}
                     let button=get(ui,id).rect;assert_eq!((button.w,button.h),(cell.w,cell.h),"{id} uses one cell at {width}");
                 }
             }
-            for (id,key) in [("pc-armor",87),("pc-quaff",113),("pc-read",114),("pc-eat",101)] {
+            for (id,key) in [("pc-quaff",113),("pc-read",114),("pc-eat",101)] {
                 if id=="pc-ring" && width<980. {continue;}
                 assert_eq!(get(&left,id).shortcut,Some(char::from_u32(key).unwrap().to_string()));
                 assert_eq!(game_effects(click(&mut left,id)),json!([{"kind":"send","key":key}]));
@@ -1166,7 +1166,7 @@ fn desktop_direction_removes_all_background_hitboxes_while_showing_the_selector(
     for width in [700.,900.,1400.] {
         let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();
         ui.render(m.clone(),view(width,900.));
-        let ids=["mobile-movement","pc-inventory","pc-search","pc-wield","pc-throw","pc-zap","mobile-full-map","touch-again","pc-armor","pc-quaff","pc-read","pc-eat"];
+        let ids=["mobile-movement","pc-inventory","pc-search","pc-wield","pc-throw","pc-zap","mobile-full-map","touch-again","pc-explore","pc-quaff","pc-read","pc-eat"];
         assert!(ids.iter().all(|id|ui.widgets.controls.iter().any(|c|c.id==*id)));
         m["input"]=json!({"kind":"direction"});m["frame"]["ui"]["input"]=m["input"].clone();
         m["frame"]["ui"]["movement_direction"]=json!(true);m["frame"]["ui"]["map_controls"]=crate::game_window::map_controls(&m["frame"]["ui"],false);
@@ -1226,7 +1226,7 @@ fn desktop_resize_removes_hidden_hitboxes_and_keeps_the_reference_and_keys() {
         let has_ring=ui.widgets.controls.iter().any(|c|c.id=="pc-ring");
         assert!(!has_ring,"Ring is assignable from the list, never an extra default button");
         if width<700. {assert!(ui.widgets.controls.iter().any(|c|c.id=="mobile-operations"));continue;}
-        let controls:Vec<_>=ui.widgets.controls.iter().filter(|c|matches!(c.id.as_str(),"mobile-movement"|"pc-inventory"|"pc-search"|"pc-wield"|"pc-throw"|"pc-zap"|"mobile-full-map"|"touch-again"|"pc-armor"|"pc-quaff"|"pc-ring"|"pc-read"|"pc-eat")).collect();
+        let controls:Vec<_>=ui.widgets.controls.iter().filter(|c|matches!(c.id.as_str(),"mobile-movement"|"pc-inventory"|"pc-search"|"pc-wield"|"pc-throw"|"pc-zap"|"mobile-full-map"|"touch-again"|"pc-explore"|"pc-quaff"|"pc-ring"|"pc-read"|"pc-eat")).collect();
         assert_eq!(controls.len(),12);
         let mut rows:Vec<_>=controls.iter().map(|c|c.rect.y as i32).collect();rows.sort_unstable();rows.dedup();assert_eq!(rows.len(),3);
         assert!(controls.iter().all(|c|c.rect==c.full_rect));
@@ -1853,4 +1853,91 @@ fn map_pointer_lifecycle_cancels_only_interruption_and_first_drag_threshold() {
         let late=ui.event(json!({"type":"move","id":1,"x":40.,"y":15.,"pointerType":"mouse","buttons":1,"captured":true}));assert_eq!(cancels(&late),0);
         let cancel=ui.event(json!({"type":"cancel","id":1}));assert_eq!(cancels(&cancel),0);
     }
+}
+
+
+#[test]
+fn exploration_has_one_command_for_buttons_keys_and_feedback() {
+    for (width,coarse,id) in [(1400.,false,"pc-explore"),(650.,false,"touch-explore"),(390.,true,"touch-explore")] {
+        let mut ui=BrowserUi::new(measure);let mut v=view(width,900.);v["coarse"]=json!(coarse);
+        let m=shortcut_model();ui.render(m.clone(),v.clone());
+        let control=ui.widgets.controls.iter().find(|c|c.id==id).unwrap().clone();
+        assert_eq!(control.shortcut.as_deref(),if coarse {None}else{Some("v")});
+        assert_eq!(json!(array(&click(&mut ui,id)["effects"]).iter().filter(|e|e["kind"]=="invoke").collect::<Vec<_>>()),json!([{"kind":"invoke","id":"auto-explore"}]));
+        assert_eq!(ui.feedback_diagnostics()["intent"],json!({"kind":"command","id":"web.explore"}));
+        if !coarse {assert_eq!(ui.event(json!({"type":"key","key":"v"}))["effects"],json!([{"kind":"invoke","id":"auto-explore"}]));}
+        for kind in ["item","direction","confirm","space"] {
+            let mut blocked=m.clone();blocked["input"]["kind"]=json!(kind);ui.render(blocked,v.clone());
+            assert!(!ui.command_available("web.explore"));
+            let mut effects=Vec::new();ui.activate_command("web.explore",&mut effects);assert!(effects.is_empty());
+        }
+    }
+    let mut ui=BrowserUi::new(measure);ui.render(shortcut_model(),view(1400.,900.));
+    assert_eq!(game_effects(ui.event(json!({"type":"key","key":"~","shiftKey":true}))),json!([{"kind":"send","key":118,"redraw":false}]),"Version keeps its original C command");
+    assert!(ui.event(json!({"type":"key","key":"v","repeat":true}))["effects"].as_array().unwrap().is_empty());
+}
+
+#[test]
+fn exploration_preferences_migrate_once_and_preserve_custom_bindings_and_layout() {
+    let mut old=serde_json::to_value(control_preferences::ControlsPreferences::default()).unwrap();
+    old["bindings"].as_object_mut().unwrap().remove("web.explore");old["bindings"]["game.version"]=json!([{"key":"v"}]);
+    old["desktop"]["assignments"][3]=json!("game.wear");old["desktop"]["assignments"][1]=json!("game.search");
+    old["desktop"]["columns"].as_array_mut().unwrap().swap(0,2);
+    old["bindings"]["game.search"]=json!([{"key":"F20"}]);
+    let mut ui=BrowserUi::new(measure);ui.load_control_preferences(&old.to_string());let saved=ui.control_preferences();
+    assert_eq!(saved["desktop"]["columns"],old["desktop"]["columns"]);assert_eq!(saved["desktop"]["assignments"][1],"game.search");
+    assert_eq!(saved["desktop"]["assignments"][3],"web.explore");
+    assert_eq!(ui.command_bindings("game.version"),vec![keybindings::KeyBinding::plain("~")]);
+    assert_eq!(ui.command_bindings("web.explore"),vec![keybindings::KeyBinding::plain("v")]);
+    assert_eq!(ui.command_bindings("game.search"),vec![keybindings::KeyBinding::plain("F20")]);
+    let mut edited=saved;edited["desktop"]["assignments"][3]=json!("game.wear");ui.load_control_preferences(&edited.to_string());
+    assert_eq!(ui.control_preferences()["desktop"]["assignments"][3],"game.wear","A later explicit Wear assignment survives reload");
+    old["bindings"]["game.search"]=json!([{"key":"v"}]);old["bindings"]["game.version"]=json!([{"key":"F21"}]);
+    old["bindings"]["game.inventory"]=json!([{"key":"~"}]);ui.load_control_preferences(&old.to_string());
+    assert!(ui.command_bindings("web.explore").is_empty());
+    assert_eq!(ui.command_bindings("game.search"),vec![keybindings::KeyBinding::plain("v")]);
+    assert_eq!(ui.command_bindings("game.version"),vec![keybindings::KeyBinding::plain("F21")]);
+    assert_eq!(ui.command_bindings("game.inventory"),vec![keybindings::KeyBinding::plain("~")]);
+    let unbound=ui.control_preferences();assert_eq!(unbound["bindings"]["web.explore"],json!([]));
+    ui.load_control_preferences(&unbound.to_string());assert_eq!(ui.control_preferences(),unbound,"Empty exploration binding persists and prevents a second migration");
+    old["bindings"]["game.version"]=json!([{"key":"v"}]);old["bindings"]["game.search"]=json!([{"key":"F20"}]);ui.load_control_preferences(&old.to_string());
+    assert!(ui.command_bindings("game.version").is_empty());assert_eq!(ui.command_bindings("game.inventory"),vec![keybindings::KeyBinding::plain("~")]);
+}
+
+#[test]
+fn exploration_migration_preserves_retired_context_custom_aliases() {
+    let raw=json!({"game.version":[{"key":"F21"}],"game.search":[{"key":"F20"}],"web.context":[{"key":"v"},{"key":"~"}]});
+    let bindings=keybindings::sanitize_bindings(&raw);
+    assert!(bindings["web.explore"].is_empty());
+    assert_eq!(bindings["game.search"].iter().map(keybindings::KeyBinding::label).collect::<Vec<_>>(),["F20","v","~"]);
+    assert_eq!(bindings["game.version"],vec![keybindings::KeyBinding::plain("F21")]);
+    let raw=json!({"game.version":[{"key":"v"}],"game.search":[{"key":"F20"}],"web.context":[{"key":"~"}]});
+    let bindings=keybindings::sanitize_bindings(&raw);assert!(bindings["game.version"].is_empty());
+    assert_eq!(bindings["game.search"].iter().map(keybindings::KeyBinding::label).collect::<Vec<_>>(),["F20","~"]);
+    assert_eq!(bindings["web.explore"],vec![keybindings::KeyBinding::plain("v")]);
+}
+
+#[test]
+fn phone_exploration_row_follows_the_real_pad_and_keeps_half_width_without_a_bow() {
+    for width in [320.,390.,650.] {for hand in ["right","left"] {for pad_column in 0..3 {
+        let mut ui=BrowserUi::new(measure);let mut v=view(width,900.);v["coarse"]=json!(width<600.);
+        let profile=ui.controls_preferences.profile_mut(control_preferences::ControlForm::Phone);
+        let current=profile.columns.iter().position(|c|matches!(c,control_preferences::Column::Pad)).unwrap();profile.columns.swap(current,pad_column);
+        let mut m=shortcut_model();m["handedness"]=json!(hand);ui.render(m.clone(),v.clone());
+        let explore=ui.widgets.controls.iter().find(|c|c.id=="touch-explore").unwrap().clone();
+        let fire=ui.widgets.controls.iter().find(|c|c.id=="touch-fire").unwrap().clone();
+        let pad=ui.dock_targets.iter().find(|t|t.button==usize::MAX).unwrap().rect;
+        assert_eq!(explore.rect.w,fire.rect.w);assert_eq!(explore.rect.h,52.);assert!(!explore.rect.overlaps(fire.rect));
+        assert!(explore.rect.y+explore.rect.h<=pad.y);assert_eq!(explore.rect,explore.full_rect);
+        if (pad.x+pad.w/2.-width/2.).abs()>0.001 {assert_eq!(explore.rect.x<fire.rect.x,pad.x+pad.w/2.<width/2.);}
+        assert_eq!(ui.hit(explore.rect.x+explore.rect.w/2.,explore.rect.y+explore.rect.h/2.).unwrap().id,"touch-explore");
+        let mut unavailable=m.clone();unavailable["frame"]["ui"]["ranged"]["arrow_key"]=Value::Null;ui.render(unavailable,v.clone());
+        assert!(ui.widgets.controls.iter().find(|c|c.id=="touch-fire").unwrap().disabled);
+        unavailable=m.clone();unavailable["frame"]["ui"]["movement_direction"]=json!(true);ui.render(unavailable,v.clone());
+        assert!(!ui.web_available(WebAction::Fire));
+        assert!(ui.widgets.controls.iter().find(|c|c.id=="touch-fire").is_none_or(|c|c.disabled));
+        m["frame"]["ui"]["ranged"]["bow"]=json!(false);ui.render(m,v);
+        assert!(!ui.widgets.controls.iter().any(|c|c.id=="touch-fire"));
+        assert_eq!(ui.widgets.controls.iter().find(|c|c.id=="touch-explore").unwrap().rect,explore.rect);
+    }}}
 }

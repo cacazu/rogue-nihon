@@ -3,6 +3,8 @@
   "default": "default",
   "map_colors": {
     "background": "#000000",
+    "memory": "#808080",
+    "memory.tint": "#b0b0b0",
     "projectile.arrow": "#ebcf91",
     "ascii.player": "#9ef0c3",
     "ascii.item": "#ebcf91",
@@ -109,6 +111,8 @@
       },
       "map_colors": {
         "background": "#000000",
+        "memory": "#808080",
+        "memory.tint": "#b0b0b0",
         "projectile.arrow": "#00ff66",
         "ascii.player": "#00ff66",
         "ascii.item": "#00ff66",

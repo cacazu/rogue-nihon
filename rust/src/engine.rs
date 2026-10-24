@@ -170,6 +170,31 @@ pub(crate) fn map_effect(x: i32, y: i32, glyph: i32, active: i32) {
         runtime.app.update();
     });
 }
+pub(crate) fn map_visibility(visible: Vec<u8>) {
+    RUNTIME.with(|runtime| {
+        let mut runtime=runtime.borrow_mut();
+        runtime.app.world_mut().resource_mut::<FramePort>().visibility=Some(visible);
+        runtime.app.update();
+    });
+}
+pub(crate) fn map_memory() -> Option<Value> {
+    RUNTIME.with(|runtime| {
+        let mut runtime=runtime.borrow_mut(); let world=runtime.app.world_mut();
+        world.query::<&ObservedMap>().single(world).expect("one observed map").memory_snapshot()
+    })
+}
+pub(crate) fn restore_map_memory(memory: &Value) {
+    RUNTIME.with(|runtime| {
+        let mut runtime=runtime.borrow_mut(); let world=runtime.app.world_mut();
+        world.query::<&mut ObservedMap>().single_mut(world).expect("one observed map").restore_memory(memory);
+    });
+}
+pub(crate) fn map_restore_ready() {
+    RUNTIME.with(|runtime| {
+        let mut runtime=runtime.borrow_mut(); let world=runtime.app.world_mut();
+        world.query::<&mut ObservedMap>().single_mut(world).expect("one observed map").restore_ready();
+    });
+}
 pub(crate) fn map_terrain(glyphs: Vec<u8>) {
     RUNTIME.with(|runtime| {
         let mut runtime = runtime.borrow_mut();

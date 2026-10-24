@@ -42,6 +42,11 @@ pub struct ObservedMap {
     effects: Vec<(u32, u32, u8)>,
     projectiles: crate::projectile::ObservedFlights,
     terrain: Vec<u8>,
+    visibility: Option<Vec<u8>>,
+    memory: Vec<u8>,
+    memory_level: Option<u32>,
+    pending_memory: Option<(u32, Vec<u8>)>,
+    restore_ready: bool,
     actors: Vec<Value>,
     actor_events: Vec<(u64, u32, &'static str)>,
     actor_epoch: u32,
@@ -72,6 +77,24 @@ impl ObservedMap {
             .as_ref()
             .is_some_and(|frame| frame["map_player_underlay"]["tile"] == 6)
     }
+    pub fn visibility(&mut self, visible: Vec<u8>) {
+        self.visibility = (visible.len() == (COLUMNS*ROWS) as usize && visible.iter().all(|value| *value <= 1)).then_some(visible);
+    }
+    pub fn memory_snapshot(&self) -> Option<Value> {
+        if self.restore_ready && let Some((level,cells))=&self.pending_memory {
+            return Some(json!({"level":level,"cells":String::from_utf8_lossy(cells)}));
+        }
+        self.memory_level.zip((self.memory.len() == (COLUMNS*ROWS) as usize).then_some(&self.memory))
+            .map(|(level,cells)| json!({"level":level,"cells":String::from_utf8_lossy(cells)}))
+    }
+    pub fn restore_memory(&mut self, memory: &Value) {
+        self.pending_memory = memory["level"].as_u64().zip(memory["cells"].as_str())
+            .filter(|(level,cells)| rogue_contract::valid_map_memory(*level,cells))
+            .map(|(level,cells)| (level as u32,cells.as_bytes().to_vec()));
+    }
+    /// C has successfully loaded its checkpoint. Startup's provisional screen
+    /// cannot consume the pending memory before this explicit success signal.
+    pub fn restore_ready(&mut self) { self.restore_ready = true; }
     pub fn terrain(&mut self, glyphs: Vec<u8>) {
         self.terrain = glyphs;
     }
@@ -203,6 +226,7 @@ impl ObservedMap {
         {
             for key in [
                 "map_cells",
+                "map_visible",
                 "map_tiles",
                 "map_tile_ids",
                 "map_unknown_glyphs",
@@ -239,7 +263,40 @@ impl ObservedMap {
                 let y = frame["player"]["y"].as_u64().unwrap();
                 cells[(y * u64::from(columns) + x) as usize] = b'@';
             }
+            let raw_tiles = map_tiles::map(&cells, columns, rows, &self.effects).0;
+            let visible: Vec<bool> = self.visibility.take().unwrap_or_else(|| vec![0;cells.len()])
+                .iter().zip(&cells).map(|(visible,glyph)| *visible==1 && *glyph!=b' ').collect();
+            if ui["mode"] == "game" {
+                let level = frame["stats"]["level"].as_u64().and_then(|level| u32::try_from(level).ok());
+                if self.memory.len() != cells.len() || self.memory_level != level {
+                    self.memory = vec![b' ';cells.len()];
+                    self.memory_level = level;
+                }
+                if self.restore_ready && let Some((saved_level,memory)) = self.pending_memory.take() {
+                    if Some(saved_level) == level { self.memory = memory; }
+                }
+                for index in columns as usize..(cells.len()-columns as usize) {
+                    let glyph = cells[index];
+                    let tile = raw_tiles[index];
+                    if rogue_contract::map_memory_glyph(glyph) && glyph != b' ' && !(10..=13).contains(&tile) {
+                        self.memory[index] = glyph;
+                    } else if tile == 8 || tile >= 23 {
+                        // Dynamic characters never become static memory. Their
+                        // surface must itself have crossed the public boundary.
+                        if let Some(glyph) = self.terrain.get(index).copied()
+                            .filter(|glyph| *glyph != b' ' && rogue_contract::map_memory_glyph(*glyph)) {
+                            self.memory[index] = glyph;
+                        }
+                        let x=index%columns as usize; let y=index/columns as usize;
+                        let current = self.actors.iter().any(|actor| actor["x"]==x && actor["y"]==y
+                            && actor["glyph"].as_u64()==Some(u64::from(glyph)));
+                        if tile>=23 && !current { cells[index]=self.memory[index]; }
+                    }
+                    if cells[index] == b' ' { cells[index] = self.memory[index]; }
+                }
+            }
             let (tiles, unknown) = map_tiles::map(&cells, columns, rows, &self.effects);
+            frame["map_visible"] = json!(visible);
             let underlays: Vec<Value> = self
                 .terrain
                 .iter()
@@ -371,6 +428,80 @@ mod tests {
             facing: 1,
             stopped: false,
         });
+    }
+
+    #[test]
+    fn visibility_memory_masks_only_current_public_cells_and_survives_windows() {
+        let mut map=ObservedMap::default(); let ui=json!({"mode":"game"});
+        let index=2*COLUMNS as usize+3;
+        let mut raw=frame();raw["stats"]=json!({"level":1});
+        let mut cells=raw["cells"].as_str().unwrap().as_bytes().to_vec();cells[index]=b'.';
+        raw["cells"]=json!(String::from_utf8(cells).unwrap());
+        map.visibility(vec![1;(COLUMNS*ROWS) as usize]);
+        let seen=map.present(raw,&ui,"test");
+        assert_eq!(seen["map_visible"].as_array().unwrap().len(),(COLUMNS*ROWS) as usize);
+        assert_eq!(seen["map_visible"][index],true);assert_eq!(seen["map_visible"][index+1],false);
+        let window=map.present(frame(),&json!({"mode":"inventory"}),"test");
+        assert_eq!(window["map_visible"],seen["map_visible"]);
+        map.visibility(vec![0;(COLUMNS*ROWS) as usize]);
+        let mut dark=frame();dark["stats"]=json!({"level":1});
+        let remembered=map.present(dark,&ui,"test");
+        assert_eq!(remembered["map_cells"].as_str().unwrap().as_bytes()[index],b'.');
+        assert_eq!(remembered["map_visible"][index],false);
+    }
+
+    #[test]
+    fn visibility_memory_restore_waits_for_c_success_and_keeps_same_floor_teleports() {
+        let mut cells=vec![b' ';(COLUMNS*ROWS) as usize];let index=2*COLUMNS as usize+3;cells[index]=b'.';
+        let memory=json!({"level":1,"cells":String::from_utf8(cells).unwrap()});
+        let mut map=ObservedMap::default();map.restore_memory(&memory);
+        let mut raw=frame();raw["stats"]=json!({"level":1});
+        let before=map.present(raw.clone(),&json!({"mode":"game"}),"test");
+        assert_eq!(before["map_cells"].as_str().unwrap().as_bytes()[index],b' ');
+        map.restore_ready();
+        map.present(raw.clone(),&json!({"mode":"inventory"}),"test");
+        assert_eq!(map.memory_snapshot(),Some(memory.clone()),"An immediate checkpoint retains pending restored memory");
+        let restored=map.present(raw.clone(),&json!({"mode":"game"}),"test");
+        assert_eq!(restored["map_cells"].as_str().unwrap().as_bytes()[index],b'.');
+        map.observe_actor(ActorObservation::Reset(9));
+        let teleported=map.present(raw.clone(),&json!({"mode":"game"}),"test");
+        assert_eq!(teleported["map_cells"],restored["map_cells"]);
+        raw["stats"]["level"]=json!(2);
+        let next=map.present(raw.clone(),&json!({"mode":"game"}),"test");
+        assert_eq!(next["map_cells"].as_str().unwrap().as_bytes()[index],b' ');
+        let mut other=ObservedMap::default();other.restore_memory(&memory);other.restore_ready();
+        assert_eq!(other.present(raw,&json!({"mode":"game"}),"test")["map_tiles"][index],0);
+    }
+
+    #[test]
+    fn visibility_memory_keeps_public_terrain_and_items_without_ghost_actors() {
+        let mut map = ObservedMap::default();
+        let ui = json!({"mode":"game"});
+        let index = |x:usize| 2 * COLUMNS as usize + x;
+        let mut raw = actors_frame(2, 5);
+        raw["stats"] = json!({"level":1});
+        let mut cells = raw["cells"].as_str().unwrap().as_bytes().to_vec();
+        cells[index(3)] = b'.';
+        cells[index(4)] = b'!';
+        raw["cells"] = json!(String::from_utf8(cells).unwrap());
+        let mut terrain = vec![255; (COLUMNS * ROWS) as usize];
+        terrain[index(2)] = b'.';
+        terrain[index(5)] = b'.';
+        map.terrain(terrain);
+        observe_positions(&mut map, 2, 5);
+        let first = map.present(raw.clone(), &ui, "test");
+        assert_eq!(first["cells"], raw["cells"]);
+        let mut next = frame(); next["stats"] = json!({"level":1});
+        let remembered = map.present(next.clone(), &ui, "test");
+        let cells = remembered["map_cells"].as_str().unwrap().as_bytes();
+        assert_eq!(cells[index(3)], b'.', "Previously observed dark-room floor remains public memory");
+        assert_eq!(cells[index(4)], b'!', "Only the last public item appearance is remembered");
+        assert_eq!(cells[index(5)], b'.', "A monster leaves only its public terrain, never a ghost");
+        assert_eq!(cells[index(6)], b' ', "Unobserved darkness stays unknown");
+        assert_eq!(remembered["cells"], next["cells"], "C comparison screen stays unchanged");
+        next["stats"]["level"] = json!(2);
+        let fresh = map.present(next, &ui, "test");
+        assert_eq!(fresh["map_cells"].as_str().unwrap().as_bytes()[index(3)], b' ');
     }
 
     #[test]

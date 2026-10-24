@@ -1,4 +1,14 @@
 //! Generated ABI and shared Bevy schedule contract.
+/// Static map memory contains only publicly observed terrain/item glyphs.
+/// Actor identities, effects and unknown bytes cannot enter a saved memory.
+pub fn map_memory_glyph(glyph: u8) -> bool {
+    b" .#+-|%^*!?:)]/=,".contains(&glyph)
+}
+pub fn valid_map_memory(level: u64, cells: &str) -> bool {
+    level > 0 && level <= u64::from(u32::MAX) && cells.len() == 80 * 24
+        && cells.is_ascii() && cells.bytes().all(map_memory_glyph)
+        && cells.as_bytes()[..80].iter().chain(&cells.as_bytes()[80*23..]).all(|glyph| *glyph == b' ')
+}
 mod abi;
 pub use abi::*;
 

@@ -205,6 +205,43 @@ void rg_test_apply_fixture(void)
                 strcmp(scenario,"door") && strcmp(scenario,"bolt") && strcmp(scenario,"blocked-called")) abort();
         }
         clear(); enter_room(&hero);
+    } else if (!strncmp(name, "autoexplore-", 12)) {
+        int x,y,n;
+        struct room *room=&rooms[0];
+        for (y=1;y<NUMLINES-1;y++) for (x=0;x<NUMCOLS;x++) {
+            chat(y,x)=' ';flat(y,x)=F_REAL;
+        }
+        room->r_pos.x=8;room->r_pos.y=8;room->r_max.x=9;room->r_max.y=7;
+        room->r_flags=ISDARK;draw_room(room);proom=oldrp=room;
+        hero.x=10;hero.y=10;oldpos=hero;stairs.x=15;stairs.y=12;
+        chat(stairs.y,stairs.x)=STAIRS;
+        for(n=0;n<2;n++) {
+            object=new_item();object->o_type=FOOD;object->o_which=n;
+            object->o_count=1;object->o_pos.x=n?14:11;object->o_pos.y=n?12:10;
+            attach(lvl_obj,object);chat(object->o_pos.y,object->o_pos.x)=FOOD;
+        }
+        if (!strcmp(name,"autoexplore-enemy")) {
+            monster=monster_at('K',14,10);monster->t_flags|=ISHELD;
+            monster->t_flags&=~ISRUN;monster->t_stats.s_hpt=1000;
+        } else if (!strcmp(name,"autoexplore-full")) {
+            /* Capacity is rule-owned; a real non-stackable food pickup fails. */
+            for(object=pack;object;object=next(object)) if(object->o_type==FOOD) object->o_which=0;
+            while(inpack<MAXPACK) {
+                object=new_item();object->o_type=ARMOR;object->o_which=LEATHER;
+                object->o_count=1;object->o_arm=8;add_pack(object,TRUE);
+            }
+            for(object=lvl_obj;object;object=next(object)) object->o_which=1;
+        } else if (!strcmp(name,"autoexplore-trap")) {
+            /* Any first public direction reaches a real, undiscovered trap. */
+            for(y=9;y<=11;y++) for(x=9;x<=11;x++) if(x!=10 || y!=10) flat(y,x)=T_BEAR;
+            ntraps=8;
+            /* Keep the first item off the trap's visible floor glyph. */
+            for(object=lvl_obj;object;object=next(object)) if(object->o_pos.x==11) {
+                object->o_pos.x=12;chat(10,12)=FOOD;break;
+            }
+            chat(10,11)=FLOOR;
+        } else if (strcmp(name,"autoexplore-clear")) abort();
+        clear();enter_room(&hero);
     } else if (!strncmp(name, "autowalk-", 9)) {
         if (!strcmp(name,"autowalk-gaze-hit") || !strcmp(name,"autowalk-gaze-miss")) {
             int x,y;

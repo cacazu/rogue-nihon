@@ -2,7 +2,7 @@
 use super::*;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum WebAction { Movement, FullMap, Fire, Repeat, RepeatCount, Commands, Settings, Fullscreen, Controls, History }
+pub(super) enum WebAction { Explore, Movement, FullMap, Fire, Repeat, RepeatCount, Commands, Settings, Fullscreen, Controls, History }
 
 pub(super) struct WebCommand {
     pub action: WebAction,
@@ -13,6 +13,7 @@ pub(super) struct WebCommand {
 }
 
 pub(super) const WEB_COMMANDS: &[WebCommand] = &[
+    WebCommand { action:WebAction::Explore, id:"explore", key:"v", label:"mobile.explore", group:"mobile.group.movement" },
     WebCommand { action:WebAction::Movement, id:"movement", key:"g", label:"commands.movement_mode", group:"mobile.group.movement" },
     WebCommand { action:WebAction::FullMap, id:"full-map", key:"p", label:"mobile.full_map", group:"mobile.group.info" },
     WebCommand { action:WebAction::Fire, id:"fire", key:"x", label:"mobile.fire", group:"mobile.group.combat" },
@@ -47,7 +48,7 @@ impl BrowserUi {
 
     pub(super) fn web_available(&self, action: WebAction) -> bool {
         if b(&self.model["frame"]["ui"]["movement_direction"]) && (self.pc_controls() || action == WebAction::FullMap) { return false; }
-        if matches!(action, WebAction::Movement | WebAction::Fire | WebAction::Repeat | WebAction::RepeatCount)
+        if matches!(action, WebAction::Explore | WebAction::Movement | WebAction::Fire | WebAction::Repeat | WebAction::RepeatCount)
             && !self.command_ready() { return false; }
         action != WebAction::Fire || (b(&self.model["frame"]["ui"]["ranged"]["bow"])
             && self.model["frame"]["ui"]["ranged"]["arrow_key"].as_u64().is_some_and(|key| (97..=122).contains(&key)))
@@ -64,6 +65,10 @@ impl BrowserUi {
         if !self.web_available(action) { return; }
         self.feedback_command(commands::web_id(action));
         match action {
+            WebAction::Explore => {
+                self.mobile_operations = false;
+                effects.push(json!({"kind":"invoke","id":"auto-explore"}));
+            },
             WebAction::Movement => {
                 self.mobile_operations = false;
                 self.mobile_movement = (self.mobile_movement + 1) % 3;

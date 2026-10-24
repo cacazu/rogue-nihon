@@ -34,6 +34,7 @@ pub struct FramePort {
     pub ready: Option<Value>,
     pub effect: Option<(i32, i32, i32, i32)>,
     pub terrain: Option<Vec<u8>>,
+    pub visibility: Option<Vec<u8>>,
     pub actors: Vec<crate::map::ActorObservation>,
 }
 
@@ -101,6 +102,7 @@ fn render_frame(
     for observation in port.actors.drain(..) {
         map.observe_actor(observation);
     }
+    if let Some(visible) = port.visibility.take() { map.visibility(visible); }
     if let Some(terrain) = port.terrain.take() {
         map.terrain(terrain);
     }
@@ -215,6 +217,9 @@ mod tests {
         app.world_mut().resource_mut::<ViewPort>().requested = true;
         let mut port = app.world_mut().resource_mut::<FramePort>();
         port.terrain = Some(terrain);
+        port.actors = vec![crate::map::ActorObservation::Begin,
+            crate::map::ActorObservation::Actor{id:0,x:2,y:2,glyph:64,facing:1,stopped:false},
+            crate::map::ActorObservation::Actor{id:1,x:3,y:2,glyph:68,facing:1,stopped:false}];
         port.requested = Some(
             json!({"width":80,"height":24,"cells":String::from_utf8(cells).unwrap(),"player":{"x":2,"y":2}}),
         );

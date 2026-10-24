@@ -16,7 +16,7 @@ pub(super) struct ControlProfile {
 impl ControlProfile {
     pub fn defaults(form:ControlForm)->Self {
         let commands: &[&str] = match form {
-            ControlForm::Desktop => &["web.movement","game.inventory","game.wield","game.wear","game.search","game.throw","game.zap","game.read","web.repeat","web.full-map","game.eat","game.quaff"],
+            ControlForm::Desktop => &["web.movement","game.inventory","game.wield","web.explore","game.search","game.throw","game.zap","game.read","web.repeat","web.full-map","game.eat","game.quaff"],
             ControlForm::Phone => &["web.movement","game.inventory","game.search","web.full-map","web.commands","web.repeat"],
         };
         let count=commands.len()/3;
@@ -50,7 +50,7 @@ mod tests {
     fn desktop_default_is_exact_twelve_in_three_rows_and_four_columns() {
         let p=ControlProfile::defaults(ControlForm::Desktop);
         assert_eq!(p.columns,vec![Column::Pad,Column::Buttons([0,4,8]),Column::Buttons([1,5,9]),Column::Buttons([2,6,10]),Column::Buttons([3,7,11])]);
-        assert_eq!(p.assignments,["web.movement","game.inventory","game.wield","game.wear","game.search","game.throw","game.zap","game.read","web.repeat","web.full-map","game.eat","game.quaff"]);
+        assert_eq!(p.assignments,["web.movement","game.inventory","game.wield","web.explore","game.search","game.throw","game.zap","game.read","web.repeat","web.full-map","game.eat","game.quaff"]);
     }
     #[test]
     fn pad_swaps_a_whole_column_while_buttons_swap_individually() {
@@ -87,10 +87,14 @@ impl BrowserUi {
         let Ok(value)=serde_json::from_str::<Value>(raw) else{return;};
         if value["version"]!=1 {return;}
         let mut prefs=ControlsPreferences::default();
+        let legacy=value["bindings"].get("web.explore").is_none();
         for (form,key) in [(ControlForm::Desktop,"desktop"),(ControlForm::Phone,"phone")] {
             if let Ok(mut profile)=serde_json::from_value::<ControlProfile>(value[key].clone()) {
                 if profile.valid(form) {
                     let defaults=ControlProfile::defaults(form);
+                    if legacy && form==ControlForm::Desktop && profile.assignments[3]=="game.wear" {
+                        profile.assignments[3]="web.explore".into();
+                    }
                     for (index,id) in profile.assignments.iter_mut().enumerate() {
                         if id=="web.context" {*id="game.search".into();profile.contextual_search.push(index);}
                         if commands::command(id).is_none() {*id=defaults.assignments[index].clone();}

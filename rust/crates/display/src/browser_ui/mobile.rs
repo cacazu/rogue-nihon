@@ -94,7 +94,7 @@ impl BrowserUi {
             && !self.model["frame"]["ui"]["window"].is_object();
         let dock_height = if dock { if self.width < 360. { 256. } else { 184. } } else { 0. };
         let bow = dock && b(&self.model["frame"]["ui"]["ranged"]["bow"]);
-        let fire_height = if bow { 58. } else { 0. };
+        let fire_height = if dock { 58. } else { 0. };
         let map = Rect::new(
             0.,
             0.,
@@ -119,18 +119,21 @@ impl BrowserUi {
             self.draw_dialog(game);
         }
         if dock && !b(&self.model["settingsOpen"]) {
-            if bow {
-                let y = self.height - dock_height - fire_height;
-                self.widgets.rect(Rect::new(0., y, self.width, fire_height), BG);
-                let ready = self.model["input"]["kind"] == "command"
-                    && self.model["frame"]["ui"]["ranged"]["arrow_key"].as_u64().is_some_and(|key| (97..=122).contains(&key));
-                self.web_control(
-                    WebAction::Fire, "touch-fire", &self.t("mobile.fire"),
-                    Rect::new(12., y + 3., self.width - 24., 52.),
-                    ControlStyle { size: FONT, role: ControlRole::Command, disabled: !ready, ..Default::default() },
-                );
-            }
             self.mobile_dock(self.height - dock_height);
+            let y = self.height - dock_height - fire_height;
+            self.widgets.rect(Rect::new(0., y, self.width, fire_height), BG);
+            let pad=self.dock_targets.iter().find(|target|target.button==usize::MAX).map(|target|target.rect);
+            let explore_left=pad.map_or(!self.left_handed(),|pad| {
+                let offset=pad.x+pad.w/2.-self.width/2.;
+                if offset.abs()<0.001 {!self.left_handed()} else {offset<0.}
+            });
+            let half=(self.width-32.)/2.;
+            let rect=|left:bool|Rect::new(if left {12.}else{20.+half},y+3.,half,52.);
+            self.command_control("web.explore","touch-explore",rect(explore_left),ControlStyle{size:FONT,..Default::default()});
+            if bow {
+                self.web_control(WebAction::Fire,"touch-fire",&self.t("mobile.fire"),rect(!explore_left),
+                    ControlStyle{size:FONT,role:ControlRole::Command,..Default::default()});
+            }
         }
         if b(&self.model["loading"]) {
             self.text(

@@ -44,6 +44,8 @@ Cとリンクする `rogue-layers` は独立lib testから除外します。ゲ�
 | タイル語彙・画像・重ね順 | `tests/tiles.test.mjs`、`pixels.test.mjs`、`graphics-beams.test.mjs` |
 | 実ゲーム・locale差・保存継続 | `tests/game-regression.test.mjs`、`game-ui.test.mjs`、`game-localization.test.mjs`、`game-more-localization.test.mjs`、`game-log-paging.test.mjs` |
 | PCの品物先行・終了待ち | `tests/item-first.test.mjs` と `tests/quit-flow.test.mjs`。品物先行の使用・取消・新instance保存継続と、Q肯定時の得点表示・死亡／勝利の意味待ちを実Cで検査。通常buildとfixture buildを先に用意する |
+| 公開地図の記憶・現在視界・保存境界 | `tests/map-memory.test.mjs`。変更前fixture Wasmを `ROGUE_MAP_MEMORY_BEFORE` に指定し、同じ消費済み入力のC状態・RNG・原画面を比較。未指定時は変更前比較のみ明示skip |
+| 自動探索・操作・地図記憶の実ブラウザー | `tests/browser-smoke/autoexplore.mjs`、`autoexplore-controls.mjs`、`map-memory.mjs`。先に通常・fixture・browser-testの生成物を用意し、[ブラウザー手順](browser-smoke/README-ja.md)から対象を選択 |
 | 自動移動のCイベントと原作状態 | `tests/autowalk.test.mjs`。比較する変更前fixture Wasmを `ROGUE_AUTOWALK_BEFORE` へ指定。未指定時は変更前比較のみ明示skip |
 | 目的地走行の原作run・保存再生 | `tests/target-run.test.mjs`。走る1/2の停止・区間切替・専用待ち・取消・保存復元を検査。`ROGUE_TARGET_RUN_MODULE` に現行fixture Wasm（既定 `build/game-fixtures.wasm`）、`ROGUE_TARGET_RUN_BEFORE` に変更前fixture Wasm、`ROGUE_TARGET_RUN_ORIGINAL` に固定原典fixture Wasmを指定すると全検査を実行。比較先未指定時は該当比較のみ明示skip。契約は[実装資料](../docs/IMPLEMENTATION-ja.md#目的地への自動移動)を参照 |
 | 実ブラウザー | [Playwrightの実行とシナリオ](browser-smoke/README-ja.md) |

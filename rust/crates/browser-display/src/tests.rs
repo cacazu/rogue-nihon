@@ -722,3 +722,53 @@ fn handedness_switch_persists_defaults_and_never_sends_game_input() {
     assert_eq!(r["state"]["handedness"], "left");
     assert_eq!(event(&mut c,json!({"type":"invoke","id":"handedness-toggle"}))["state"]["handedness"], "right");
 }
+
+fn exploration_controller() -> Controller {
+    let mut c=boot();start(&mut c);
+    let mut cells=vec![b' ';80*24];
+    for x in 10..=14 {cells[10*80+x]=b'.';}
+    cells[10*80+10]=b'@';cells[10*80+14]=b'!';
+    let tiles:Vec<_>=cells.iter().map(|ch|rogue_display::map_tiles::glyph(*ch).unwrap()).collect();
+    let cells=String::from_utf8(cells).unwrap();
+    c.request(json!({"type":"worker","generation":1,"data":{"type":"frame","width":80,"height":24,
+        "cells":cells,"map_cells":cells,"map_tiles":tiles,"map_visible":vec![true;80*24],
+        "map_tile_ids":&rogue_display::map_tiles::IDS[..],"map_unknown_glyphs":[],
+        "player":{"x":10,"y":10},"map_actor_epoch":1,"map_actor_step":0,
+        "map_actors":[{"id":0,"x":10,"y":10,"glyph":64}],"map_actor_events":[],
+        "ui":{"mode":"game","input":{"kind":"command"}}}}));
+    c.request(json!({"type":"worker","generation":1,"data":{"type":"input-request"}}));
+    c.request(json!({"type":"render","view":{"width":1240,"height":900}}));
+    c
+}
+#[test]
+fn exploration_controller_command_timer_and_manual_interruption_share_the_walk_path() {
+    let mut c=exploration_controller();
+    let begun=event(&mut c,json!({"type":"key","key":"v"}));
+    assert_eq!(begun["state"]["autowalk"]["exploring"],true);
+    let token=begun["state"]["autowalk"]["scheduled"]["token"].clone();assert!(token.is_u64());
+    let moved=event(&mut c,json!({"type":"autowalk-tick","generation":1,"token":token}));
+    assert_eq!(queue_effect(&moved)["events"],json!([rogue_contract::RG_KEY_RIGHT]));
+    let stopped=event(&mut c,json!({"type":"key","key":"."}));
+    assert_eq!(stopped["state"]["autowalk"]["active"],false);
+    assert_eq!(stopped["state"]["autowalk"]["reason"],"input");
+    assert_eq!(queue_effect(&stopped)["events"],json!([46]));
+    let stale=event(&mut c,json!({"type":"autowalk-tick","generation":1,"token":token}));
+    assert!(!stale["effects"].as_array().unwrap().iter().any(|e|e["kind"]=="queue"));
+}
+#[test]
+fn exploration_controller_player_events_and_lifecycle_cancel_pending_steps() {
+    for kind in ["attacked","attack","trap"] {
+        let mut c=exploration_controller();
+        let begun=event(&mut c,json!({"type":"invoke","id":"auto-explore"}));
+        let token=begun["state"]["autowalk"]["scheduled"]["token"].clone();
+        let stopped=c.request(json!({"type":"worker","generation":1,"data":{"type":"player-event","kind":kind,"sequence":1}}));
+        assert_eq!(stopped["state"]["autowalk"]["active"],false);
+        assert_eq!(stopped["state"]["autowalk"]["reason"],kind);
+        let stale=event(&mut c,json!({"type":"autowalk-tick","generation":1,"token":token}));
+        assert!(!stale["effects"].as_array().unwrap().iter().any(|e|e["kind"]=="queue"));
+    }
+    for action in [json!({"type":"blur"}),json!({"type":"visibilitychange","hidden":true}),json!({"type":"invoke","id":"settings-toggle"})] {
+        let mut c=exploration_controller();event(&mut c,json!({"type":"invoke","id":"auto-explore"}));
+        assert_eq!(event(&mut c,action)["state"]["autowalk"]["active"],false);
+    }
+}

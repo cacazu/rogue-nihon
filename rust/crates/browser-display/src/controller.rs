@@ -673,6 +673,10 @@ impl Controller {
     }
     fn invoke(&mut self, id: &str) {
         match id {
+            "auto-explore" if self.autowalk_available() => {
+                self.autowalk.start_explore(&self.model["frame"]);
+                self.schedule_autowalk();
+            },
             "handedness-toggle" if !flag(&self.model["starting"]) && !flag(&self.model["savePending"]) && !flag(&self.model["returnAfterEnd"]) => {
                 self.model["handedness"] = json!(if self.model["handedness"] == "left" { "right" } else { "left" });
                 self.persist_view();

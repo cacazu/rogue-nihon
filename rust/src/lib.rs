@@ -20,6 +20,7 @@ use std::cell::RefCell;
 unsafe extern "C" {
     fn rg_core_start(seed: u32, name: *const c_char) -> i32;
     fn rg_core_inspect(out: *mut u32, capacity: u32) -> u32;
+    fn rg_core_was_restored() -> i32;
     fn rg_core_save_bytes(out: *mut *mut u8, length: *mut u32) -> i32;
     #[cfg(feature = "test-hooks")]
     fn rg_core_load_bytes(bytes: *const u8, length: u32) -> i32;
@@ -295,6 +296,7 @@ pub unsafe extern "C" fn rg_run(seed: u32, name: *const c_char) -> i32 {
     let trace_enabled = startup.trace;
     session.platform.set_trace_enabled(trace_enabled);
     session.platform.set_message_paging(startup.message_paging);
+    let mut restored_memory=Value::Null;
     if let Some(bytes) = startup.restore {
         match platform::Envelope::parse(&bytes).and_then(|saved| {
             let restore_index = saved.input_index;
@@ -306,6 +308,7 @@ pub unsafe extern "C" fn rg_run(seed: u32, name: *const c_char) -> i32 {
                 session.input.inventory =
                     inventory::Inventory::restore(&mut presentation, restore_index);
                 session.platform = platform;
+                if let Some(object)=presentation.as_object_mut() { restored_memory=object.remove("map_memory").unwrap_or(Value::Null); }
                 if !presentation.is_null() {
                     match serde_json::from_value(presentation) {
                         Ok(presentation) => session.display.presentation = presentation,
@@ -335,6 +338,7 @@ pub unsafe extern "C" fn rg_run(seed: u32, name: *const c_char) -> i32 {
         Err(_) => return -2,
     };
     engine::reset(session);
+    engine::restore_map_memory(&restored_memory);
     engine::map_actor(rogue_display::map::ActorObservation::Replay(
         engine::with_session(|session| !session.platform.restore_data().is_empty()),
     ));
@@ -562,6 +566,8 @@ pub unsafe extern "C" fn rg_host_present(cells: *const u8, rows: u32, columns: u
             snapshot[RG_SNAPSHOT_FLAGS as usize],
         );
     });
+    // SAFETY: Read-only C restore-success flag; it never advances the game.
+    if unsafe { rg_core_was_restored() } != 0 { engine::map_restore_ready(); }
     let value = engine::present(value);
     emit_game_frame(value);
 }
@@ -617,6 +623,19 @@ pub extern "C" fn rg_host_player_event(kind: u32) {
 #[unsafe(no_mangle)]
 pub extern "C" fn rg_host_map_projectile(phase: u32, kind: u32, glyph: i32, x: i32, y: i32) {
     engine::map_projectile(rogue_display::projectile::Observation { phase, kind, glyph, x, y });
+}
+
+/// Copies C's accepted current sight, independently of remembered map cells.
+///
+/// # Safety
+/// `visible` borrows exactly rows*columns bytes for this synchronous callback.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rg_host_map_visibility(visible: *const u8, rows: u32, columns: u32) {
+    if rows!=24 || columns!=80 || visible.is_null() { return; }
+    // SAFETY: C supplies the fixed bounded screen slice for this call.
+    let visible=unsafe {std::slice::from_raw_parts(visible,(rows*columns) as usize)};
+    if visible.iter().any(|value| *value>1) { return; }
+    engine::map_visibility(visible.to_vec());
 }
 
 /// Observes terrain beneath currently perceived actors without changing C state.
@@ -697,10 +716,14 @@ pub extern "C" fn rg_host_checkpoint() {
     match CoreSaveBuffer::capture() {
         Ok(buffer) => {
             let bytes = buffer.bytes().to_vec();
+            let current_level=words()[RG_SNAPSHOT_LEVEL as usize];
+            let memory=engine::map_memory().filter(|memory| memory["level"] == current_level);
             engine::with_session_mut(|session| {
+                let mut presentation=serde_json::to_value(&session.display.presentation).unwrap_or(Value::Null);
+                if let Some(memory)=memory { presentation["map_memory"]=memory; }
                 session.platform.capture_checkpoint(
                     bytes,
-                    serde_json::to_value(&session.display.presentation).unwrap_or(Value::Null),
+                    presentation,
                 );
             });
         }

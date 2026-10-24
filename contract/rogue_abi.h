@@ -102,6 +102,9 @@ void rg_host_map_effect(int32_t x, int32_t y, int32_t glyph, int32_t active);
 /* Per-frame terrain beneath perceived actors. 255 means no observation.
  * Borrows rows*columns bytes; never changes world, RNG, or saved state. */
 void rg_host_map_terrain(const uint8_t *glyphs, uint32_t rows, uint32_t columns);
+/* Current ordinary sight of public map cells, 0/1 per cell. Detection-only
+ * actors remain separate public foreground observations. No hidden terrain. */
+void rg_host_map_visibility(const uint8_t *visible, uint32_t rows, uint32_t columns);
 /* Public character observations. Player ID is 0; enemy IDs are opaque and
  * valid only while continuously observed in this epoch. Begin replaces the
  * next frame's actor set. Only already displayed @/A-Z glyphs may be supplied;

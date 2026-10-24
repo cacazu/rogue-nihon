@@ -50,6 +50,7 @@ pub(super) fn default_bindings()->BTreeMap<String,Vec<KeyBinding>> {
                 aliases
             },
             CommandAction::Key(key) if key<32=>vec![KeyBinding {key:char::from_u32(key+96).unwrap().to_string(),ctrl:true,alt:false,shift:false}],
+            CommandAction::Key(118)=>vec![KeyBinding::plain("~")],
             CommandAction::Key(46)=>vec![KeyBinding::plain("."),KeyBinding::plain("Numpad5")],
             CommandAction::Key(key)=>vec![KeyBinding::plain(&char::from_u32(key).unwrap().to_string())],
         };(c.id.into(),keys)
@@ -65,11 +66,27 @@ pub(super) fn sanitize_bindings(value:&Value)->BTreeMap<String,Vec<KeyBinding>> 
             }
         }
     }
+    let legacy_context=value.get("web.context").and_then(|value|serde_json::from_value::<Vec<KeyBinding>>(value.clone()).ok())
+        .filter(|keys|keys.len()<=8 && keys.iter().all(KeyBinding::valid));
+    // Old preferences had no exploration command and reserved v for Version.
+    // Resolve only the newly introduced defaults; explicit aliases keep ownership.
+    if value.get("web.explore").is_none() {
+        let old_version=value.get("game.version").is_none()
+            || out.get("game.version")==Some(&vec![KeyBinding::plain("v")]);
+        if old_version {
+            let occupied=out.iter().any(|(id,keys)|id!="game.version" && id!="web.explore" && keys.contains(&KeyBinding::plain("~")))
+                || legacy_context.as_ref().is_some_and(|keys|keys.contains(&KeyBinding::plain("~")));
+            out.insert("game.version".into(),if occupied {vec![]}else{vec![KeyBinding::plain("~")]});
+        }
+        if out.iter().any(|(id,keys)|id!="web.explore" && keys.contains(&KeyBinding::plain("v")))
+            || legacy_context.as_ref().is_some_and(|keys|keys.contains(&KeyBinding::plain("v"))) {
+            out.insert("web.explore".into(),vec![]);
+        }
+    }
     let mut used=std::collections::BTreeSet::new();
     if out.values().flatten().any(|key|!used.insert(key.clone())) {return defaults;}
     // A retired UI command is accepted only when loading older preferences.
-    if let Some(keys)=value.get("web.context").and_then(|value|serde_json::from_value::<Vec<KeyBinding>>(value.clone()).ok())
-        .filter(|keys|keys.len()<=8 && keys.iter().all(KeyBinding::valid)) {
+    if let Some(keys)=legacy_context {
         let search=out.get_mut("game.search").expect("Search command");
         for key in keys {if search.len()==8 {break;} if used.insert(key.clone()) {search.push(key);}}
     }
@@ -180,7 +197,7 @@ impl BrowserUi {
                     for effect in &mut effects[start..] {
                         if effect["kind"]=="send" {
                             if let Some(raw)=original {
-                                if !matches!(c.id,"game.throw"|"game.zap") {effect["key"]=json!(self.movement_key(raw));}
+                                if !matches!(c.id,"game.throw"|"game.zap"|"game.version") {effect["key"]=json!(self.movement_key(raw));}
                             } else if b(&event["repeat"]) {
                                 if let Some(raw)=effect["key"].as_u64() {effect["key"]=json!(raw as u32 | rogue_contract::RG_EVENT_REPEAT);}
                             }

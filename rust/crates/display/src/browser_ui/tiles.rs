@@ -316,9 +316,12 @@ pub fn plan(frame: &Value, camera: &Value, rect: Rect, ratio: f64, mode: &str) -
             {
                 continue;
             }
-            let command = json!({"op":"image","set":if mode=="pixels" {"pixels"} else {"tiles"},"image":image,
+            let mut command = json!({"op":"image","set":if mode=="pixels" {"pixels"} else {"tiles"},"image":image,
                     "rotation":entries[tile]["rotation"].as_f64().unwrap_or(0.),"pixelArt":m["tile_pixels"]==32,"flipX":flip,
                     "rect":Rect::new(rect.x+draw_x,rect.y+draw_y,w/ratio,h/ratio)});
+            if !actor && map_cell_remembered(frame,y*width+x) {
+                command["tint"] = json!(crate::theme::Theme::default().color("@map.memory.tint"));
+            }
             if actor {
                 actors.push(command);
             } else {
@@ -345,6 +348,25 @@ mod animation_tests {
             "map_underlays":[{"x":1,"y":1,"tile":3}],
             "map_actors":[{"id":0,"x":1,"y":1,"glyph":64}],
             "map_animation":[{"id":0,"x":1,"y":1,"state":"hurt","frame":2}]})
+    }
+
+    #[test]
+    fn visibility_memory_grays_only_remembered_images_and_keeps_unknown_black() {
+        for mode in ["tiles", "pixels"] {
+            let mut frame = sample_frame(mode);
+            frame["map_tiles"] = json!([0,0,0,1,8,0,0,0,0]);
+            frame["map_underlays"] = json!([]);
+            frame["map_visible"] = json!([false,false,false,false,true,false,false,false,false]);
+            let commands = plan(&frame, &json!({"size":32,"left":0,"top":0,"width":96,"height":32}),
+                Rect::new(0.,0.,96.,32.), 1., mode);
+            let remembered = commands.iter().find(|c| c["image"] == "terrain.floor.png" && c["rect"]["x"] == 0.).unwrap();
+            assert_eq!(remembered["tint"], crate::theme::Theme::default().color("@map.memory.tint"));
+            let player = commands.iter().find(|c| s(&c["image"]).contains("actor.player")).unwrap();
+            assert!(player["tint"].is_null(), "Current public actors keep their colors");
+            let unknown = commands.iter().find(|c| c["op"] == "rect" && c["rect"]["x"] == 64.).unwrap();
+            assert_eq!(unknown["color"], crate::widgets::MAP);
+            assert!(unknown["tint"].is_null());
+        }
     }
 
     #[test]
