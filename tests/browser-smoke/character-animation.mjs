@@ -101,7 +101,8 @@ async function multiStageThrow(){
  await shot('multi-stage-throw');report.checks.push({mode:'pixels',check:'Direction/item follow-up inputs still animate the actual thrown weapon'});
 }
 async function heldAnimation(){
- for(const config of [{mode:'pixels',mobile:true},{mode:'tiles',mobile:true},{mode:'pixels',mobile:false},{mode:'pixels',mobile:true,disabled:true}]){
+ const configs=process.argv.includes('--hold-tiles-keyboard-only')?[{mode:'tiles',mobile:false}]:[{mode:'pixels',mobile:true},{mode:'tiles',mobile:true},{mode:'pixels',mobile:false},{mode:'pixels',mobile:true,disabled:true}];
+ for(const config of configs){
   const label=config.mode+'-'+(config.mobile?'touch':'keyboard')+(config.disabled?'-off':'');
   await open(config.mode,config.mobile);
   if(config.disabled){await tap('settings-toggle',true);await tap('animation-toggle',true);await tap('settings-close',true);await page.locator('[data-control="settings-close"]').waitFor({state:'detached'});}
@@ -149,13 +150,13 @@ async function heldAnimation(){
   if(!config.disabled){
    assert.ok(retargets>=3,'Multiple consecutive original moves were presented');
    const firstMove=held.find(f=>f.pose.x<10).step;
-   assert.ok(new Set(held.filter(f=>f.step>firstMove).map(f=>f.pose.frame)).size>=2,'Held movement must not reset idle to frame zero every turn');
+   assert.ok(new Set(held.filter(f=>f.step>firstMove&&f.pose.state==='move').map(f=>f.pose.frame)).size>=2,'Held movement must not reset the walking clip to frame zero every turn');
   }
   const player=released.animation.find(a=>a.id===0);assert.equal(player.displayX,player.x,'Release finishes at the real final C position');
-  await shot('hold-'+label);report.checks.push({mode:label,check:'Real held input retargets continuously, preserves idle frames and stops on release',retargets,frames:held});
+  await shot('hold-'+label);report.checks.push({mode:label,check:'Real held input retargets continuously, preserves walking frames and stops on release',retargets,frames:held});
  }
 }
-const holdOnly=process.argv.includes('--hold-only');
+const holdOnly=process.argv.includes('--hold-only')||process.argv.includes('--hold-tiles-keyboard-only');
 const throwOnly=process.argv.includes('--throw-only');
 try{
  runtime=await prepareBrowserRuntime(root);browser=await loadPlaywright().chromium.launch({executablePath:browserExecutable(),headless:true,downloadsPath:runtime.downloadsPath});

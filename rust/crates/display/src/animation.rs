@@ -60,6 +60,8 @@ struct Actor {
     chosen: State,
     started: Option<f64>,
     idle_started: Option<f64>,
+    move_started: Option<f64>,
+    move_received: Option<f64>,
     motion: Option<Motion>,
     last_pose: (State, usize),
 }
@@ -74,6 +76,8 @@ impl Actor {
             chosen: State::Idle,
             started: None,
             idle_started: None,
+            move_started: None,
+            move_received: None,
             motion: None,
             last_pose: (State::Idle, 0),
         }
@@ -81,6 +85,8 @@ impl Actor {
     fn finish(&mut self) {
         self.finish_action();
         self.idle_started = None;
+        self.move_started = None;
+        self.move_received = None;
         self.motion = None;
     }
     fn finish_action(&mut self) {
@@ -92,11 +98,13 @@ impl Actor {
     }
     fn choose(&mut self, state: State) {
         let priority = |state| match state {
-            State::Attack => 2,
-            State::Hurt => 1,
-            _ => 0,
+            State::Attack => 3,
+            State::Hurt => 2,
+            State::Move => 1,
+            State::Idle => 0,
         };
         if !self.stopped && priority(state) > priority(self.chosen) {
+            if state != State::Move { self.move_started = None; self.move_received = None; }
             self.chosen = state;
             self.started = None;
             self.idle_started = None;
@@ -115,15 +123,18 @@ impl Actor {
         let clip = &clips[state.index()];
         let duration = f64::from(clip.frame_ms) * clip.frames.len() as f64;
         let started = if state != State::Idle && now - started >= duration {
+            self.move_started = None;
+            self.move_received = None;
             state = State::Idle;
             *self.idle_started.get_or_insert(started + duration)
         } else {
             started
         };
         let clip = &clips[state.index()];
-        let elapsed = (now - started).max(0.);
+        let phase_started = if state == State::Move { *self.move_started.get_or_insert(started) } else { started };
+        let elapsed = (now - phase_started).max(0.);
         let step = (elapsed / f64::from(clip.frame_ms)).floor() as usize;
-        let index = if state == State::Idle && clip.looping {
+        let index = if matches!(state, State::Idle | State::Move) && clip.looping {
             step % clip.frames.len()
         } else {
             step.min(clip.frames.len() - 1)
@@ -260,7 +271,11 @@ impl Animator {
         let now = self.time(now);
         self.flights.observe(frame, now, self.enabled)?;
         if self.step != Some(observation.step) {
-            for actor in self.actors.values_mut() {
+            let moves: BTreeSet<_> = observation.events.iter()
+                .filter(|(sequence, _, state)| *sequence > self.sequence && *state == State::Move)
+                .map(|(_, id, _)| *id).collect();
+            for (id, actor) in &mut self.actors {
+                if !moves.contains(id) { actor.move_started = None; actor.move_received = None; }
                 actor.finish_action();
             }
             self.step = Some(observation.step);
@@ -300,6 +315,7 @@ impl Animator {
             actor.y = data.y;
             actor.facing = data.facing;
             actor.stopped = data.stopped;
+            if actor.stopped { actor.move_started = None; actor.move_received = None; }
             // Terrain is the latest public C screen, not an animation snapshot.
             // Its revealed/unlit boundary must share the player's position.
             // A later look()/refresh can change it without another actor move.
@@ -314,6 +330,12 @@ impl Animator {
             self.sequence = sequence;
             if self.enabled {
                 if let Some(actor) = self.actors.get_mut(&id) {
+                    if state == State::Move && !actor.stopped && matches!(actor.chosen, State::Idle | State::Move) {
+                        let clip = &self.tiles[&actor.tile][State::Move.index()];
+                        let duration = f64::from(clip.frame_ms) * clip.frames.len() as f64;
+                        if actor.move_received.is_none_or(|last| now - last >= duration) { actor.move_started = None; }
+                        actor.move_received = Some(now);
+                    }
                     actor.choose(state);
                 }
             }
@@ -654,10 +676,50 @@ mod tests {
         )
     }
     #[test]
-    fn animation_priority_is_attack_hurt_idle_without_a_queue() {
+    fn walking_event_selects_all_move_frames_then_returns_to_idle() {
+        let mut a = animator();
+        a.observe(&frame(1, 0, false, json!([])), 0.).unwrap();
+        a.sample(0., "tiles");
+        a.observe(&frame(2, 1, false, json!([event(1, "move")])), 10.).unwrap();
+        for (time, expected) in [(10., ("move", 0)), (130., ("move", 1)), (250., ("move", 2)), (370., ("idle", 0))] {
+            assert_eq!(pose(&a.sample(time, "tiles")), expected, "at {time}ms");
+        }
+    }
+    #[test]
+    fn consecutive_walk_events_keep_the_move_phase_until_a_nonmove_action() {
+        let mut a = animator();
+        a.observe(&frame(1, 0, false, json!([])), 0.).unwrap();
+        a.sample(0., "tiles");
+        a.observe(&frame(2, 1, false, json!([event(1, "move")])), 10.).unwrap();
+        assert_eq!(pose(&a.sample(10., "tiles")), ("move", 0));
+        for (step, time, expected) in [(3, 110., 0), (4, 210., 1), (5, 310., 2), (6, 410., 0)] {
+            a.interrupt();
+            a.observe(&frame(step, (step-1)%6, false, json!([event(step-1, "move")])), time).unwrap();
+            assert_eq!(pose(&a.sample(time, "tiles")), ("move", expected), "at {time}ms");
+        }
+        assert_eq!(pose(&a.sample(770., "tiles")), ("idle", 0));
+        a.interrupt();
+        a.observe(&frame(7, 5, false, json!([])), 800.).unwrap();
+        assert_eq!(pose(&a.sample(800., "tiles")).0, "idle");
+        a.observe(&frame(8, 4, false, json!([event(6, "move")])), 810.).unwrap();
+        assert_eq!(pose(&a.sample(810., "tiles")), ("move", 0));
+        // A hidden tab can receive the next move without painting the old clip's end.
+        a.interrupt();
+        a.observe(&frame(9, 3, false, json!([event(7, "move")])), 1410.).unwrap();
+        assert_eq!(pose(&a.sample(1410., "tiles")), ("move", 0));
+        a.interrupt();
+        a.observe(&frame(10, 3, false, json!([event(7, "move")])), 1510.).unwrap();
+        a.sample(1510., "tiles");
+        a.observe(&frame(11, 2, false, json!([event(8, "move")])), 1610.).unwrap();
+        assert_eq!(pose(&a.sample(1610., "tiles")), ("move", 0));
+    }
+    #[test]
+    fn animation_priority_is_attack_hurt_move_idle_without_a_queue() {
         for events in [
             json!([event(1, "attack"), event(2, "hurt")]),
             json!([event(1, "hurt"), event(2, "attack")]),
+            json!([event(1, "move"), event(2, "attack")]),
+            json!([event(1, "attack"), event(2, "move")]),
         ] {
             let mut a = animator();
             a.observe(&frame(1, 0, false, events), 0.).unwrap();
@@ -667,6 +729,11 @@ mod tests {
             a.observe(&frame(1, 0, false, json!([event(3, "hurt")])), 0.)
                 .unwrap();
             assert_eq!(pose(&a.sample(400., "tiles")), ("idle", 0));
+        }
+        for events in [json!([event(1, "move"), event(2, "hurt")]), json!([event(1, "hurt"), event(2, "move")])] {
+            let mut a = animator();
+            a.observe(&frame(1, 0, false, events), 0.).unwrap();
+            assert_eq!(pose(&a.sample(0., "tiles")), ("hurt", 0));
         }
         let mut a = animator();
         a.observe(&frame(1, 0, false, json!([event(1, "hurt")])), 0.)
@@ -703,7 +770,7 @@ mod tests {
         assert_eq!(a.sample(10., "tiles").frames[0]["displayX"], 0.);
         let mid = a.sample(70., "tiles");
         assert_eq!(mid.frames[0]["displayX"], 0.5);
-        assert_eq!(pose(&mid).0, "idle");
+        assert_eq!(pose(&mid).0, "move");
         assert_eq!(mid.next_delay_ms, Some(16));
         a.interrupt();
         assert_eq!(a.sample(70., "tiles").frames[0]["displayX"], 0.5);
