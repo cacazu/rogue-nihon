@@ -1056,7 +1056,7 @@ fn context_candidates_are_additive_on_desktop_and_highlight_the_phone_replacemen
     let mut phone=BrowserUi::new(measure);let mut v=view(390.,844.);v["coarse"]=json!(true);
     let output=phone.render(m.clone(),v.clone());
     let c=phone.widgets.controls.iter().find(|c|c.id=="touch-search").unwrap();
-    assert_eq!(c.action,json!({"kind":"command","id":"web.context"}));
+    assert_eq!(c.action,json!({"kind":"command","id":"game.upstairs"}));
     assert_eq!(c.key,Some(json!(60)));
     let painted=|output:&Value,c:&Control| array(&output["commands"]).iter().find(|v|v["op"]=="box"&&v["rect"]==json!(c.full_rect)).unwrap()["fill"].clone();
     assert_eq!(painted(&output,c),phone.widgets.theme.color("@accent"));
@@ -1065,7 +1065,7 @@ fn context_candidates_are_additive_on_desktop_and_highlight_the_phone_replacemen
     m["frame"]["ui"]["map_controls"]=crate::game_window::map_controls(&m["frame"]["ui"],false);
     let output=phone.render(m,v);
     let c=phone.widgets.controls.iter().find(|c|c.id=="touch-search").unwrap();
-    assert_eq!(c.action,json!({"kind":"command","id":"web.context"}));
+    assert_eq!(c.action,json!({"kind":"command","id":"game.search"}));
     assert_eq!(c.key,Some(json!(115)));
     assert_eq!(painted(&output,c),phone.widgets.theme.color("@button.background"));
 }
@@ -1318,18 +1318,12 @@ fn binding_capture_treats_modified_enter_as_a_candidate_until_plain_enter_confir
 
 
 #[test]
-fn responsive_pc_context_shortcut_tracks_the_resolved_command_and_explicit_override() {
+fn search_unification_resolved_button_keys_do_not_inherit_retired_context_aliases() {
     for (width,coarse) in [(390.,false),(699.,false),(700.,false),(390.,true)] {
-        for (key,hint,surface,ascend,descend) in [(115,"s",1,false,false),(62,">",1,false,true),(60,"<",1,true,false),(44,",",17,false,false),(94,"^",7,false,false)] {
-            let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();let mut v=view(width,900.);v["coarse"]=json!(coarse);
-            m["frame"]["map_player_surface"]=json!({"tile":surface});m["frame"]["ui"]["map_controls"]["stairs"]=json!({"ascend":ascend,"descend":descend});
-            ui.render(m.clone(),v.clone());let form=ui.control_form();ui.controls_preferences.profile_mut(form).assignments[1]="web.context".into();
-            ui.render(m.clone(),v.clone());let id=if width>=700. && !coarse {"pc-inventory"}else{"touch-action-action.inventory"};
-            let c=ui.widgets.controls.iter().find(|c|c.id==id).unwrap().clone();assert_eq!(c.shortcut.as_deref(),if coarse {None}else{Some(hint)});
-            let mut effects=Vec::new();ui.activate(&c,&Value::Null,&mut effects);assert_eq!(effects,vec![json!({"kind":"send","key":key})]);
-            ui.controls_preferences.bindings.insert("web.context".into(),vec![keybindings::KeyBinding::plain("F20")]);
-            ui.render(m,v);let c=ui.widgets.controls.iter().find(|c|c.id==id).unwrap();assert_eq!(c.shortcut.as_deref(),if coarse {None}else{Some("F20")});
-        }
+        let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();let mut v=view(width,900.);v["coarse"]=json!(coarse);m["frame"]["ui"]["map_controls"]["stairs"]=json!({"ascend":false,"descend":true});
+        let mut old=serde_json::to_value(control_preferences::ControlsPreferences::default()).unwrap();let form=if width<700.||coarse {"phone"}else{"desktop"};old[form]["assignments"][1]=json!("web.context");old["bindings"]["web.context"]=json!([{"key":"F20"}]);ui.load_control_preferences(&old.to_string());ui.render(m,v);
+        let id=if form=="phone" {"touch-action-action.inventory"}else{"pc-inventory"};let c=ui.widgets.controls.iter().find(|c|c.id==id).unwrap().clone();assert_eq!(c.shortcut.as_deref(),if coarse {None}else{Some(">")});assert_eq!(c.action,json!({"kind":"command","id":"game.downstairs"}));
+        if !coarse {let alias=ui.event(json!({"type":"key","key":"F20"}));assert!(array(&alias["effects"]).iter().any(|e|e["kind"]=="send"&&e["key"]==115));}
     }
 }
 
@@ -1445,4 +1439,67 @@ fn pad_hold_direction_choice_remains_a_single_release_activation() {
 fn responsive_phone_direction_preserves_full_map_unavailability() {
     let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();m["frame"]["ui"]["movement_direction"]=json!(true);let mut v=view(390.,900.);v["coarse"]=json!(true);ui.render(m,v);
     assert!(!ui.web_available(WebAction::FullMap));assert!(ui.web_available(WebAction::Settings));let mut effects=Vec::new();ui.activate_web(WebAction::FullMap,&mut effects);assert!(!ui.mobile_full_map);assert!(effects.is_empty());
+}
+
+#[test]
+fn search_unification_has_one_registry_and_picker_command() {
+    assert!(commands::command("web.context").is_none());
+    assert_eq!(commands::all_commands().iter().filter(|c|c.id=="game.search").count(),1);
+    assert!(!keybindings::default_bindings().contains_key("web.context"));
+    let mut ui=BrowserUi::new(measure);let m=shortcut_model();let v=view(390.,900.);ui.render(m.clone(),v.clone());
+    ui.open_controls_editor(controls_editor::EditMode::Assignment);ui.controls_editor.as_mut().unwrap().selected=Some(2);ui.render(m,v);
+    assert_eq!(ui.widgets.controls.iter().filter(|c|c.id=="control-pick-game.search").count(),1);
+    assert!(!ui.widgets.controls.iter().any(|c|c.id=="control-pick-web.context"));
+}
+
+#[test]
+fn search_unification_migrates_old_roles_and_bindings_without_losing_layout() {
+    use control_preferences::ControlForm;
+    let mut old=serde_json::to_value(control_preferences::ControlsPreferences::default()).unwrap();
+    for form in ["desktop","phone"] {old[form].as_object_mut().unwrap().remove("contextual_search");}
+    old["desktop"]["assignments"][1]=json!("web.context");old["phone"]["assignments"][2]=json!("game.search");old["phone"]["assignments"][4]=json!("web.context");
+    old["bindings"]["game.search"]=json!([{"key":"s","ctrl":true}]);old["bindings"]["web.context"]=json!([{"key":"F20"}]);old["bindings"]["game.inventory"]=json!([{"key":"F21"}]);
+    let mut ui=BrowserUi::new(measure);ui.load_control_preferences(&old.to_string());let saved=ui.control_preferences();
+    for (form,index) in [("desktop",1),("phone",4)] {assert_eq!(saved[form]["assignments"][index],"game.search");assert_eq!(saved[form]["contextual_search"],json!([index]));assert_eq!(saved[form]["columns"],old[form]["columns"]);}
+    assert_eq!(saved["phone"]["assignments"][2],"game.search","An explicitly fixed old Search remains fixed");
+    assert_eq!(ui.command_bindings("game.search").iter().map(keybindings::KeyBinding::label).collect::<Vec<_>>(),["Ctrl+s","F20"]);
+    assert_eq!(ui.command_bindings("game.inventory"),vec![keybindings::KeyBinding::plain("F21")]);assert!(saved["bindings"].get("web.context").is_none());
+    let mut reload=BrowserUi::new(measure);reload.load_control_preferences(&saved.to_string());assert_eq!(reload.control_preferences(),saved);
+    reload.controls_preferences.profile_mut(ControlForm::Phone).swap(4,0);
+    assert_eq!(reload.control_preferences()["phone"]["contextual_search"],json!([4]),"The role moves with its logical button when columns exchange it");
+}
+
+#[test]
+fn search_unification_binding_merge_preserves_conflicts_and_eight_alias_limit() {
+    let mut raw=serde_json::to_value(keybindings::default_bindings()).unwrap();raw["game.search"]=json!([{"key":"s","ctrl":true}]);raw["web.context"]=json!([{"key":"i"},{"key":"s","ctrl":true},{"key":"F20"}]);
+    let bindings=keybindings::sanitize_bindings(&raw);
+    assert!(!bindings.contains_key("web.context"));assert_eq!(bindings["game.search"].iter().map(keybindings::KeyBinding::label).collect::<Vec<_>>(),["Ctrl+s","F20"]);assert_eq!(bindings["game.inventory"],vec![keybindings::KeyBinding::plain("i")]);
+    raw["game.search"]=json!((5..=12).map(|i|json!({"key":format!("F{i}")})).collect::<Vec<_>>());raw["web.context"]=json!([{"key":"F20"}]);let bindings=keybindings::sanitize_bindings(&raw);
+    assert_eq!(bindings["game.search"].len(),8);assert_eq!(bindings["game.search"][0].label(),"F5");assert_eq!(bindings["game.search"][7].label(),"F12");assert_eq!(bindings["game.inventory"],vec![keybindings::KeyBinding::plain("i")]);
+}
+
+#[test]
+fn search_unification_ui_role_resolves_labels_keys_and_actions_but_search_stays_fixed() {
+    for (width,coarse) in [(1240.,false),(390.,false),(390.,true)] {
+        for (key,resolved,surface,ascend,descend) in [(115,"game.search",1,false,false),(62,"game.downstairs",1,false,true),(60,"game.upstairs",1,true,false),(44,"game.pickup",17,false,false),(94,"game.trap",7,false,false)] {
+            let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();let mut v=view(width,900.);v["coarse"]=json!(coarse);
+            m["frame"]["map_player_surface"]=json!({"tile":surface});m["frame"]["ui"]["map_controls"]["stairs"]=json!({"ascend":ascend,"descend":descend});
+            let mut prefs=serde_json::to_value(control_preferences::ControlsPreferences::default()).unwrap();let form=if width<700.||coarse {"phone"}else{"desktop"};prefs[form]["assignments"][1]=json!("game.search");prefs[form]["assignments"][2]=json!("game.search");prefs[form]["contextual_search"]=json!([2]);prefs["bindings"]["game.downstairs"]=json!([{"key":"F20"}]);ui.load_control_preferences(&prefs.to_string());ui.render(m,v);
+            let fixed_id=if form=="phone" {"touch-action-action.inventory"}else{"pc-inventory"};let adaptive_id=if form=="phone" {"touch-search"}else{"pc-wield"};
+            let fixed=ui.widgets.controls.iter().find(|c|c.id==fixed_id).unwrap().clone();let adaptive=ui.widgets.controls.iter().find(|c|c.id==adaptive_id).unwrap().clone();
+            assert_eq!(fixed.action,json!({"kind":"command","id":"game.search"}));assert_eq!(fixed.key,Some(json!(115)));assert_eq!(fixed.shortcut.as_deref(),if coarse {None}else{Some("s")});
+            assert_eq!(adaptive.action,json!({"kind":"command","id":resolved}));assert_eq!(adaptive.key,Some(json!(key)));assert!(adaptive.label.contains(&ui.t(ui.mobile_context_command().1)));
+            assert_eq!(adaptive.shortcut,if coarse {None}else{ui.command_shortcut(resolved)});
+            let mut effects=Vec::new();ui.activate(&adaptive,&Value::Null,&mut effects);assert_eq!(effects,vec![json!({"kind":"send","key":key})]);
+            let physical=ui.event(json!({"type":"key","key":"s"}));assert!(array(&physical["effects"]).iter().any(|e|e["kind"]=="send"&&e["key"]==115));
+        }
+    }
+}
+
+#[test]
+fn search_unification_editor_clears_changed_role_and_restores_the_default_role() {
+    let mut ui=BrowserUi::new(measure);let m=shortcut_model();let mut v=view(390.,900.);v["coarse"]=json!(true);ui.render(m.clone(),v.clone());ui.open_controls_editor(controls_editor::EditMode::Assignment);
+    for command in ["game.inventory","game.search"] {ui.controls_editor.as_mut().unwrap().selected=Some(2);ui.render(m.clone(),v.clone());let c=ui.widgets.controls.iter().find(|c|c.id==format!("control-pick-{command}")).unwrap().clone();ui.editor_activate(&c,&mut Vec::new());}
+    let draft=serde_json::to_value(&ui.controls_editor.as_ref().unwrap().draft).unwrap();assert_eq!(draft["assignments"][2],"game.search");assert_eq!(draft["contextual_search"],json!([]));
+    ui.render(m,v);let c=ui.widgets.controls.iter().find(|c|c.id=="controls-default").unwrap().clone();ui.editor_activate(&c,&mut Vec::new());let draft=serde_json::to_value(&ui.controls_editor.as_ref().unwrap().draft).unwrap();assert_eq!(draft["assignments"][2],"game.search");assert_eq!(draft["contextual_search"],json!([2]));
 }

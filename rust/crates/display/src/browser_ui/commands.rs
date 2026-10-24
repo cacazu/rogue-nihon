@@ -3,7 +3,7 @@ use super::*;
 mod table;
 
 #[derive(Clone, Copy)]
-pub(super) enum CommandAction { Key(u32), Direction(u32), Web(WebAction), Context }
+pub(super) enum CommandAction { Key(u32), Direction(u32), Web(WebAction) }
 #[derive(Clone)]
 pub(super) struct CommandDefinition {
     pub id: &'static str,
@@ -46,7 +46,6 @@ pub(super) fn all_commands()->Vec<CommandDefinition> {
     for (key,label,group) in [(16,"help.recall","mobile.group.info"),(111,"help.options","commands.group.system"),(18,"help.redraw","commands.group.system"),(118,"help.version","commands.group.system")] {
         out.push(CommandDefinition {id:key_id(key).unwrap(),label,group,action:CommandAction::Key(key)});
     }
-    out.push(CommandDefinition {id:"web.context",label:"mobile.search",group:"mobile.group.movement",action:CommandAction::Context});
     out
 }
 pub(super) fn command(id:&str)->Option<CommandDefinition> {all_commands().into_iter().find(|c|c.id==id)}
@@ -190,15 +189,10 @@ impl BrowserUi {
     }
     pub(super) fn command_shortcut(&self,id:&str)->Option<String> {
         if !self.pc_controls() {return None;}
-        let keys=self.command_bindings(id);
-        keys.first().map(keybindings::KeyBinding::label).or_else(|| {
-            if id!="web.context" {return None;}
-            key_id(self.mobile_context_command().0).and_then(|resolved|self.command_bindings(resolved).first().map(keybindings::KeyBinding::label))
-        })
+        self.command_bindings(id).first().map(keybindings::KeyBinding::label)
     }
     pub(super) fn command_label(&self,id:&str)->String {
         let Some(c)=command(id) else{return String::new();};
-        if matches!(c.action,CommandAction::Context) {return self.t(self.mobile_context_command().1);}
         let label=if c.label.starts_with("help.") {self.mobile_help(c.label)} else {self.t(c.label)};
         if id.starts_with("game.run-") {format!("{} ({label})",self.mobile_help(if id.starts_with("game.run-adjacent-") {"help.run_adjacent"} else {"help.run"}))} else {label}
     }
@@ -226,7 +220,6 @@ impl BrowserUi {
         match c.action {
             CommandAction::Web(action)=>self.activate_web(action,effects),
             CommandAction::Direction(key)=>effects.push(json!({"kind":"send","key":self.movement_key(key)})),
-            CommandAction::Context=>effects.push(json!({"kind":"send","key":self.command_input_key(self.mobile_context_command().0)})),
             CommandAction::Key(key)=>{
                 if key==64 {self.open_status();}
                 effects.push(json!({"kind":"send","key":self.command_input_key(key)}));
@@ -235,7 +228,7 @@ impl BrowserUi {
     }
     pub(super) fn command_control(&mut self,command_id:&str,id:&str,rect:Rect,mut style:ControlStyle<'_>) {
         style.shortcut=self.command_shortcut(command_id);style.disabled|=!self.command_available(command_id);style.role=ControlRole::Command;
-        if let Some(c)=command(command_id) {style.key=match c.action {CommandAction::Key(key)|CommandAction::Direction(key)=>Some(json!(self.command_input_key(key))),CommandAction::Context=>Some(json!(self.command_input_key(self.mobile_context_command().0))),_=>style.key};}
+        if let Some(c)=command(command_id) {style.key=match c.action {CommandAction::Key(key)|CommandAction::Direction(key)=>Some(json!(self.command_input_key(key))),_=>style.key};}
         self.control(id,&self.command_label(command_id),rect,json!({"kind":"command","id":command_id}),style);
     }
 }

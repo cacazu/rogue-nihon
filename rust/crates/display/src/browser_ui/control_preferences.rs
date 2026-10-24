@@ -10,17 +10,19 @@ pub(super) enum Column { Pad, Buttons([usize;3]) }
 pub(super) struct ControlProfile {
     pub columns: Vec<Column>,
     pub assignments: Vec<String>,
+    #[serde(default)]
+    pub contextual_search: Vec<usize>,
 }
 impl ControlProfile {
     pub fn defaults(form:ControlForm)->Self {
         let commands: &[&str] = match form {
             ControlForm::Desktop => &["web.movement","game.inventory","game.wield","game.wear","game.search","game.throw","game.zap","game.read","web.repeat","web.full-map","game.eat","game.quaff"],
-            ControlForm::Phone => &["web.movement","game.inventory","web.context","web.full-map","web.commands","web.repeat"],
+            ControlForm::Phone => &["web.movement","game.inventory","game.search","web.full-map","web.commands","web.repeat"],
         };
         let count=commands.len()/3;
         let mut columns=(0..count).map(|column|Column::Buttons([column,column+count,column+count*2])).collect::<Vec<_>>();
         match form { ControlForm::Desktop=>columns.insert(0,Column::Pad),ControlForm::Phone=>{columns.reverse();columns.push(Column::Pad);} }
-        Self {columns,assignments:commands.iter().map(|id|(*id).into()).collect()}
+        Self {columns,assignments:commands.iter().map(|id|(*id).into()).collect(),contextual_search:if form==ControlForm::Phone {vec![2]}else{vec![]}}
     }
     pub fn swap(&mut self,from:usize,to:usize) {
         let locate=|id|self.columns.iter().enumerate().find_map(|(column,value)|match value {
@@ -90,8 +92,11 @@ impl BrowserUi {
                 if profile.valid(form) {
                     let defaults=ControlProfile::defaults(form);
                     for (index,id) in profile.assignments.iter_mut().enumerate() {
+                        if id=="web.context" {*id="game.search".into();profile.contextual_search.push(index);}
                         if commands::command(id).is_none() {*id=defaults.assignments[index].clone();}
                     }
+                    profile.contextual_search.retain(|index|profile.assignments.get(*index).is_some_and(|id|id=="game.search"));
+                    profile.contextual_search.sort_unstable();profile.contextual_search.dedup();
                     *prefs.profile_mut(form)=profile;
                 }
             }

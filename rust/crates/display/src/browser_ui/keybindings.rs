@@ -42,7 +42,6 @@ pub(super) fn default_bindings()->BTreeMap<String,Vec<KeyBinding>> {
     commands::all_commands().into_iter().map(|c| {
         let keys=match c.action {
             CommandAction::Web(action)=>vec![KeyBinding::plain(web_command(action).key)],
-            CommandAction::Context=>Vec::new(),
             CommandAction::Direction(key)=>direction_aliases(key),
             CommandAction::Key(key) if c.id.starts_with("game.run-")=>{
                 let ctrl=key<32;let letter=if ctrl {key+96} else {key+32};
@@ -67,7 +66,14 @@ pub(super) fn sanitize_bindings(value:&Value)->BTreeMap<String,Vec<KeyBinding>> 
         }
     }
     let mut used=std::collections::BTreeSet::new();
-    if out.values().flatten().any(|key|!used.insert(key.clone())) {defaults} else {out}
+    if out.values().flatten().any(|key|!used.insert(key.clone())) {return defaults;}
+    // A retired UI command is accepted only when loading older preferences.
+    if let Some(keys)=value.get("web.context").and_then(|value|serde_json::from_value::<Vec<KeyBinding>>(value.clone()).ok())
+        .filter(|keys|keys.len()<=8 && keys.iter().all(KeyBinding::valid)) {
+        let search=out.get_mut("game.search").expect("Search command");
+        for key in keys {if search.len()==8 {break;} if used.insert(key.clone()) {search.push(key);}}
+    }
+    out
 }
 #[derive(Clone)]
 pub(super) struct BindingCapture {pub command:String,pub index:usize,pub candidate:Option<KeyBinding>,pub error:Option<String>}

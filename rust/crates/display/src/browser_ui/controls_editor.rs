@@ -40,14 +40,17 @@ impl BrowserUi {
                 let editor=self.controls_editor.as_mut().unwrap();
                 let defaults=ControlProfile::defaults(editor.form);
                 if editor.mode==EditMode::Placement {editor.draft.columns=defaults.columns;}
-                else {editor.draft.assignments=defaults.assignments;}
+                else {editor.draft.assignments=defaults.assignments;editor.draft.contextual_search=defaults.contextual_search;}
                 editor.selected=None;
             },
             "editor-select"=>self.controls_editor.as_mut().unwrap().selected=control.action["button"].as_u64().map(|n|n as usize),
             "editor-command"=>{
                 let id=s(&control.action["command"]).to_string();
                 let editor=self.controls_editor.as_mut().unwrap();
-                if let Some(button)=editor.selected.take() {editor.draft.assignments[button]=id;}
+                if let Some(button)=editor.selected.take() {
+                    if editor.draft.assignments[button]!=id {editor.draft.contextual_search.retain(|index|*index!=button);}
+                    editor.draft.assignments[button]=id;
+                }
             },
             "editor-picker-close"=>{self.controls_editor.as_mut().unwrap().selected=None;},
             _=>{}
@@ -352,6 +355,7 @@ impl BrowserUi {
                     for (row,button) in buttons.iter().enumerate() {
                         let r=place(Rect::new(x,top+row as f64*step,button_width,button_height));
                         let command=&profile.assignments[*button];
+                        let contextual=profile.contextual_search.contains(button);
                         self.dock_targets.push(DockTarget{button:*button,rect:r});
                         let id=match form {
                             ControlForm::Desktop=>["mobile-movement","pc-inventory","pc-wield","pc-armor","pc-search","pc-throw","pc-zap","pc-read","touch-again","mobile-full-map","pc-eat","pc-quaff"][*button],
@@ -367,11 +371,11 @@ impl BrowserUi {
                         if editing {
                             let action=json!({"kind":"editor-select","button":button});
                             if command=="web.repeat" {self.repeat_control(id,r,action,true);}
-                            else {self.control(id,&self.dock_command_label(command),r,action,ControlStyle{size:17.,..Default::default()});}
+                            else {let (_,label,_)=self.dock_presentation(command,contextual);self.control(id,&label,r,action,ControlStyle{size:17.,..Default::default()});}
                         } else if command=="web.movement" {self.movement_control(id,r);}
                         else if command=="web.repeat" {self.repeat_control(id,r,json!({"kind":"command","id":"web.repeat"}),false);}
                         else {
-                            self.dock_command(command,id,r);
+                            self.dock_command(command,id,r,contextual);
                         }
                     }
                     x+=button_width;
@@ -434,13 +438,19 @@ impl BrowserUi {
         else if id=="game.quaff" {self.mobile_help("action.quaff")}
         else {self.t(label)}
     }
-    fn dock_command(&mut self,command:&str,id:&str,rect:Rect) {
-        let key=commands::command(command).and_then(|definition|match definition.action {
+    fn dock_presentation<'a>(&self,command:&'a str,contextual:bool)->(&'a str,String,bool) {
+        if contextual && command=="game.search" {
+            let (key,label)=self.mobile_context_command();
+            (commands::key_id(key).unwrap_or("game.search"),self.t(label),key!=115)
+        } else {(command,self.dock_command_label(command),false)}
+    }
+    fn dock_command(&mut self,command:&str,id:&str,rect:Rect,contextual:bool) {
+        let (resolved,label,highlight)=self.dock_presentation(command,contextual);
+        let key=commands::command(resolved).and_then(|definition|match definition.action {
             commands::CommandAction::Key(key)|commands::CommandAction::Direction(key)=>Some(json!(self.command_input_key(key))),
-            commands::CommandAction::Context=>Some(json!(self.mobile_context_command().0)),
             _=>None,
         });
-        self.control(id,&self.dock_command_label(command),rect,json!({"kind":"command","id":command}),
-            ControlStyle{size:17.,role:ControlRole::Command,key,shortcut:self.command_shortcut(command),disabled:!self.command_available(command),highlight:command=="web.context"&&self.mobile_context_command().0!=115,..Default::default()});
+        self.control(id,&label,rect,json!({"kind":"command","id":resolved}),
+            ControlStyle{size:17.,role:ControlRole::Command,key,shortcut:self.command_shortcut(resolved),disabled:!self.command_available(resolved),highlight,..Default::default()});
     }
 }
