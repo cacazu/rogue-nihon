@@ -1189,14 +1189,24 @@ fn desktop_direction_custom_captions_share_standard_disabled_opacity() {
         }
         panic!("Missing caption {prefix}");
     }
-    for width in [700.,1400.] {
+    for width in [390.,700.,1400.] {
         let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();
         let normal=ui.render(m.clone(),view(width,900.));
-        for prefix in ["g)","E)","A)"] {assert_eq!(alpha_for(&normal,prefix),1.);}
+        for prefix in ["g)","E)","A)","p)"] {assert_eq!(alpha_for(&normal,prefix),1.);}
         m["input"]=json!({"kind":"direction"});m["frame"]["ui"]["input"]=m["input"].clone();
         m["frame"]["ui"]["movement_direction"]=json!(true);m["frame"]["ui"]["map_controls"]=crate::game_window::map_controls(&m["frame"]["ui"],false);
-        let direction=ui.render(m,view(width,900.));
-        for prefix in ["g)","E)","A)","s)"] {assert_eq!(alpha_for(&direction,prefix),0.45,"{prefix}");}
+        let direction=ui.render(m.clone(),view(width,900.));
+        for prefix in ["g)","E)","A)","s)","p)"] {
+            if width>=700. || prefix!="s)" {assert_eq!(alpha_for(&direction,prefix),0.45,"{prefix} at {width}");}
+        }
+        let form=ui.control_form();ui.controls_preferences.profile_mut(form).assignments[1]="web.full-map".into();
+        let custom=ui.render(m.clone(),view(width,900.));assert_eq!(alpha_for(&custom,"p)"),0.45,"Custom full-map assignment");
+        let mut effects=Vec::new();ui.activate_web(WebAction::FullMap,&mut effects);
+        assert!(!ui.mobile_full_map,"Direction selection blocks the full-map action");assert!(effects.is_empty());
+        m["input"]=json!({"kind":"command"});m["frame"]["ui"]["input"]=m["input"].clone();m["frame"]["ui"]["movement_direction"]=json!(false);
+        m["frame"]["ui"]["map_controls"]=crate::game_window::map_controls(&m["frame"]["ui"],false);
+        let restored=ui.render(m,view(width,900.));assert_eq!(alpha_for(&restored,"p)"),1.);
+        ui.activate_web(WebAction::FullMap,&mut effects);assert!(ui.mobile_full_map);assert!(effects.is_empty());
     }
     let mut phone=BrowserUi::new(measure);let mut v=view(320.,568.);v["coarse"]=json!(true);
     let normal=phone.render(shortcut_model(),v);

@@ -46,6 +46,7 @@ impl BrowserUi {
     }
 
     pub(super) fn web_available(&self, action: WebAction) -> bool {
+        if action == WebAction::FullMap && b(&self.model["frame"]["ui"]["movement_direction"]) { return false; }
         if matches!(action, WebAction::Movement | WebAction::Fire | WebAction::Repeat | WebAction::RepeatCount)
             && !self.command_ready() { return false; }
         action != WebAction::Fire || (b(&self.model["frame"]["ui"]["ranged"]["bow"])
