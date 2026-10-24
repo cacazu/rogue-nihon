@@ -86,6 +86,8 @@ pub struct Control {
     pub shortcut: Option<String>,
     #[serde(skip)]
     pub action: Value,
+    #[serde(skip)]
+    pub feedback_command: Option<String>,
 }
 /// Visual roles are independent of the surrounding window and input action.
 #[derive(Clone, Copy, Default)]
@@ -112,6 +114,8 @@ pub struct ControlStyle<'a> {
     pub left: bool,
     pub throw_direction: bool,
     pub highlight: bool,
+    pub focus_fill: bool,
+    pub feedback_command: Option<&'a str>,
     pub size: f64,
     pub icon: Option<&'a str>,
     pub icon_size: f64,
@@ -397,10 +401,13 @@ impl Widgets {
             field: style.field.map(str::to_owned),
             shortcut: style.shortcut.clone(),
             action,
+            feedback_command: style.feedback_command.map(str::to_owned),
         });
         self.begin_control_content(style.disabled);
         let selected = self.focus == id || self.hover == id || self.pressed == id;
-        if (style.throw_direction || style.highlight) && !style.disabled {
+        if style.focus_fill && self.focus == id && !style.disabled {
+            self.box_rect(r, "@row.selected", Some("@accent"), 0.);
+        } else if (style.throw_direction || style.highlight) && !style.disabled {
             self.box_rect(r, "@accent", Some("@button.border"), 0.);
             if selected {
                 self.box_rect(Rect::new(r.x + 3., r.y + 3., r.w - 6., r.h - 6.), "transparent", Some("@background"), 0.);
@@ -515,6 +522,7 @@ impl Widgets {
             field: None,
             shortcut: None,
             action,
+            feedback_command: None,
         });
     }
     pub fn field(

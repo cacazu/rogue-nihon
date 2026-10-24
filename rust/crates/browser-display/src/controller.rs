@@ -42,6 +42,13 @@ pub struct Controller {
     inventory_preference_cache: String,
     inventory_lifetime: crate::inventory_lifetime::InventoryLifetime,
     control_preference_cache: String,
+    ranking_book: crate::rankings::Book,
+    ranking_pending: Vec<crate::rankings::Score>,
+    ranking_request: u64,
+    ranking_io: Option<(u64,Option<String>)>,
+    ranking_finalized: BTreeSet<String>,
+    adventure_id: String,
+    restore_adventure: Option<String>,
 }
 impl Controller {
     pub fn new(measure: MeasureText) -> Self {
@@ -78,6 +85,48 @@ impl Controller {
             inventory_preference_cache: String::new(),
             inventory_lifetime: Default::default(),
             control_preference_cache: String::new(),
+            ranking_book: Default::default(),ranking_pending:Vec::new(),ranking_request:0,ranking_io:None,
+            ranking_finalized:BTreeSet::new(),adventure_id:String::new(),restore_adventure:None,
+        }
+    }
+    fn ranking_preview(&mut self) {
+        let mut book=self.ranking_book.clone();
+        for score in &self.ranking_pending {if let Ok(next)=book.merge(score.clone()) {book=next;}}
+        self.model["rankings"]=book.value();
+    }
+    fn ranking_begin(&mut self) {
+        if self.ranking_io.is_some() {return;}
+        self.ranking_request=self.ranking_request.wrapping_add(1);
+        self.model["rankingLoading"]=json!(true);
+        if let Some(score)=self.ranking_pending.first() {
+            self.ranking_io=Some((self.ranking_request,Some(score.adventure.clone())));
+            self.effects.push(json!({"kind":"rankings-write","request":self.ranking_request,"score":score.value()}));
+        } else {
+            self.ranking_io=Some((self.ranking_request,None));
+            self.effects.push(json!({"kind":"rankings-read","request":self.ranking_request}));
+        }
+    }
+    fn ranking_result(&mut self,data:&Value) {
+        if self.restore_pending || self.ranking_finalized.contains(&self.adventure_id) {return;}
+        let Some(score)=crate::rankings::Score::from_result(data,&self.adventure_id) else {return;};
+        self.ranking_finalized.insert(self.adventure_id.clone());self.ranking_pending.push(score);
+        self.ranking_preview();self.ranking_begin();
+    }
+    fn ranking_api(&mut self,r:&Value)->bool {
+        let Some((request,adventure))=self.ranking_io.clone() else {return false;};
+        if r["request"].as_u64()!=Some(request) {return false;}
+        self.ranking_io=None;self.model["rankingLoading"]=json!(false);
+        let loaded=if flag(&r["ok"]) {crate::rankings::Book::parse(Some(&r["rankings"].to_string()))} else {Err("Ranking IO failed".into())};
+        match loaded {
+            Ok(book)=>{
+                self.ranking_book=book;self.model["rankingError"]=json!(false);self.model["rankingErrorId"]=Value::Null;
+                if let Some(id)=adventure {self.ranking_pending.retain(|score|score.adventure!=id);}
+                self.ranking_preview();if !self.ranking_pending.is_empty() {self.ranking_begin();}true
+            },
+            Err(_)=>{
+                self.model["rankingError"]=json!(true);self.model["rankingErrorId"]=json!(if adventure.is_some(){"error.rankings_save"}else{"error.rankings_load"});self.ranking_preview();
+                self.notice(if adventure.is_some() {"error.rankings_save"}else{"error.rankings_load"},json!({}),true);false
+            }
         }
     }
     fn stop_autowalk(&mut self, reason: &'static str) {
@@ -283,6 +332,7 @@ impl Controller {
         self.composing = false;
         self.restore_pending = false;
         self.inventory_lifetime.cancel_restore();
+        self.restore_adventure=None;
         self.last_level = None;
         self.autosave_due = false;
         self.return_after_save = false;
@@ -496,6 +546,7 @@ impl Controller {
             "Player".into()
         };
         self.field("command-key", json!({"value":""}));
+        if !restore {self.adventure_id=format!("{}:{}",text(&self.environment["instanceId"]),number(&self.model["generation"])+1);self.restore_adventure=None;}
         self.inventory_lifetime.start(restore);
         if !restore { self.ui.reset_adventure_view(); }
         self.retire_saves();
@@ -638,6 +689,7 @@ impl Controller {
                 self.effects.push(json!({"kind":"save-import","request":pending.request,"generation":pending.generation}));
             },
             "credits-repository"=>self.effects.push(json!({"kind":"open","url":"https://github.com/cacazu/rogue-nihon"})),
+            "rankings-read"=>self.ranking_begin(),
             "new-game" if flag(&self.model["topOpen"]) && !flag(&self.model["starting"]) && flag(&self.model["ready"]) =>self.start(false),
             "load" if flag(&self.model["topOpen"]) && !flag(&self.model["starting"]) => {
                 self.model["starting"]=json!(true);self.read_save(SaveOperation::Load);
@@ -781,6 +833,7 @@ impl Controller {
                     let view=self.inventory_lifetime.restored();self.ui.reset_inventory_view();
                     if let Some(view)=view {self.ui.load_inventory_preference(&view.to_string());}
                     self.restore_pending = false;
+                    self.adventure_id=self.restore_adventure.take().unwrap_or_else(||format!("{}:restore:{}",text(&self.environment["instanceId"]),number(&self.model["generation"])));
                     self.discard_save();
                 }
                 if self.autosave_due && !flag(&self.model["savePending"]) {
@@ -808,8 +861,9 @@ impl Controller {
             }
             "save" if !self.session_ended => {
                 let pending = self.save_operation(SaveOperation::Write);
-                self.effects.push(json!({"kind":"save-write","request":pending.request,"generation":pending.generation,"bytes":data["bytes"],"inventory":{"version":1,"view":self.ui.inventory_preference()}}));
+                self.effects.push(json!({"kind":"save-write","request":pending.request,"generation":pending.generation,"bytes":data["bytes"],"inventory":{"version":1,"view":self.ui.inventory_preference(),"adventure":self.adventure_id}}));
             }
+            "score-result" => self.ranking_result(&data),
             "outcome" => {
                 if data["code"].as_i64().is_some_and(|code| code >= 0) { self.end_session(); }
                 self.state["outcome"] = json!({"code":data["code"],"text":data["text"]});
@@ -862,6 +916,7 @@ impl Controller {
     fn api(&mut self, r: &Value, redraw: &mut bool) -> bool {
         let ok = flag(&r["ok"]);
         let operation = text(&r["operation"]);
+        if matches!(operation,"rankings-read"|"rankings-write") {return self.ranking_api(r);}
         if matches!(operation, "init" | "load" | "import" | "save-write" | "save-delete") {
             if self.saves.finish(r, number(&self.model["generation"])).is_none() {
                 self.save_candidate(&r["request"], false);
@@ -916,6 +971,7 @@ impl Controller {
                     if let Some(length) = self.validate_save(&r["bytes"]) {
                         self.saved(&r["request"], length);
                         self.inventory_lifetime.stage_restore(&r["inventory"]);
+                        self.restore_adventure=crate::rankings::restored_id(&r["inventory"]);
                         self.start(true);
                     } else {
                         self.save_candidate(&r["request"], false);
@@ -944,6 +1000,7 @@ impl Controller {
                     if operation == "load" {
                         if flag(&self.model["saved"]) {
                             self.inventory_lifetime.stage_restore(&r["inventory"]);
+                            self.restore_adventure=crate::rankings::restored_id(&r["inventory"]);
                             self.start(true);
                         } else {
                             self.model["starting"] = json!(false);
@@ -1182,7 +1239,7 @@ impl Controller {
             "api" => accepted = self.api(&r, &mut redraw),
             "event" => {
                 let mut e = r["event"].clone();
-                if matches!(text(&e["type"]), "key" | "down" | "invoke" | "select" | "submit"
+                if matches!(text(&e["type"]), "key" | "invoke" | "select" | "submit"
                     | "enqueue" | "blur" | "pagehide" | "surface-change" | "compositionstart")
                     || e["type"] == "visibilitychange" && flag(&e["hidden"]) {
                     self.stop_autowalk("input");
@@ -1250,7 +1307,10 @@ impl Controller {
                         }
                         self.sync_model();
                         self.ui.set_context(self.model.clone());
+                        let pointer_down=e["type"]=="down";
                         let response = self.ui.event(e);
+                        if pointer_down && !response["effects"].as_array().into_iter().flatten().any(|effect|effect["kind"]=="map-contact"
+                            && self.autowalk.same_target(&self.model["frame"],effect,number(&effect["movement"]) as u32)) {self.stop_autowalk("input");}
                         consumed = flag(&response["consumed"]);
                         raw = response["raw"].clone();
                         for effect in response["effects"].as_array().into_iter().flatten() {
@@ -1266,6 +1326,8 @@ impl Controller {
                                     }
                                 }
                                 "submit" => self.submit(text(&effect["id"])),
+                                "map-contact"=>{},
+                                "map-cancel"=>self.stop_autowalk("input"),
                                 "map-target" => {
                                     if self.autowalk_available() {
                                         self.autowalk.start(&self.model["frame"], effect,number(&effect["movement"]) as u32);
@@ -1294,6 +1356,7 @@ impl Controller {
                                 _ => self.effects.push(effect.clone()),
                             }
                         }
+                        if flag(&response["feedbackChanged"]) {redraw=true;}
                     }
                 }
             }
@@ -1319,10 +1382,10 @@ impl Controller {
                 let animated_map = commands.as_array().into_iter().flatten().any(|command| {
                     (command["op"] == "image" && text(&command["image"]).starts_with("animations-v1/")) || flag(&command["projectile"])
                 });
-                self.effects.push(json!({"kind":"animation-wake","delay":
-                    if visible && animated_map && flag(&self.model["running"]) && !flag(&self.model["topOpen"]) {
-                        animation.next_delay_ms
-                    } else { None }}));
+                let actor_delay=if visible && animated_map && flag(&self.model["running"]) && !flag(&self.model["topOpen"]) {animation.next_delay_ms.map(f64::from)}else{None};
+                let ui_delay=visible.then(||result["nextUiDelayMs"].as_f64()).flatten().filter(|v|v.is_finite()&&*v>=0.);
+                let delay=match (actor_delay,ui_delay) {(Some(a),Some(b))=>Some(a.min(b)),(a,b)=>a.or(b)};
+                self.effects.push(json!({"kind":"animation-wake","delay":delay}));
                 if flag(&result["animate"]) {
                     self.effects.push(json!({"kind":"animation-frame"}));
                 }
@@ -1560,4 +1623,51 @@ mod adventure_boundary_tests {
         }
         let mut c=prepared();c.request(json!({"type":"event","event":{"type":"hover","x":0,"y":0}}));assert_eq!(c.inputs["command-key"]["value"],"Z");
     }
+}
+
+#[cfg(test)]
+mod rankings_boundary_tests {
+ use super::*;
+ fn measure(text:&str,size:f64,_:bool,_:bool)->rogue_display::widgets::TextSize {rogue_display::widgets::TextSize{width:text.len() as f64*size,ascent:0.,descent:size}}
+ #[test] fn rankings_final_result_records_a_zero_point_adventure_only_once() {
+    let mut c=Controller::new(measure);c.request(json!({"type":"boot","environment":{"isolated":true,"instanceId":"test-instance","parameters":{}}}));c.start(false);
+    let generation=c.model["generation"].clone();let result=json!({"type":"score-result","score":0,"flags":1,"level":1,"monster":0,"name":"Player","eligible":true});
+    let out=c.request(json!({"type":"worker","generation":generation,"data":result}));assert!(out["effects"].as_array().unwrap().iter().any(|e|e["kind"]=="rankings-write"),"A finalized zero-point adventure is recorded");
+    let duplicate=c.request(json!({"type":"worker","generation":generation,"data":result}));assert!(!duplicate["effects"].as_array().unwrap().iter().any(|e|e["kind"]=="rankings-write"));
+ }
+}
+
+#[cfg(test)]
+mod rankings_lifecycle_tests {
+ use super::*;
+ fn measure(text:&str,size:f64,_:bool,_:bool)->rogue_display::widgets::TextSize {rogue_display::widgets::TextSize{width:text.len() as f64*size,ascent:0.,descent:size}}
+ fn fresh()->Controller {let mut c=Controller::new(measure);c.request(json!({"type":"boot","environment":{"isolated":true,"instanceId":"test-runtime","parameters":{}}}));c.start(false);c}
+ fn score(c:&mut Controller)->Value {let generation=c.model["generation"].clone();c.request(json!({"type":"worker","generation":generation,"data":{"type":"score-result","score":0,"flags":1,"name":"Player","level":1,"monster":0,"eligible":true}}))}
+ fn io(c:&mut Controller,operation:&str,request:u64,ok:bool,book:Value)->Value {c.request(json!({"type":"api","operation":operation,"request":request,"ok":ok,"rankings":book}))}
+ #[test] fn rankings_failed_write_retries_same_result_and_global_callbacks_do_not_change_the_new_adventure() {
+    let mut c=fresh();let active=c.adventure_id.clone();score(&mut c);let first=c.ranking_io.as_ref().unwrap().0;
+    io(&mut c,"rankings-write",first,false,Value::Null);assert_eq!(c.ranking_pending.len(),1);assert_eq!(c.model["rankingErrorId"],"error.rankings_save");
+    c.start(false);let next=c.adventure_id.clone();assert_ne!(active,next);assert_eq!(c.ranking_pending[0].adventure,active);
+    io(&mut c,"rankings-write",first,true,crate::rankings::Book::default().value());assert_eq!(c.ranking_pending.len(),1,"A retired response cannot lose the candidate");
+    c.request(json!({"type":"event","event":{"type":"invoke","id":"rankings-read"}}));let retry=c.ranking_io.as_ref().unwrap().0;assert_ne!(first,retry);
+    let committed=c.ranking_book.merge(c.ranking_pending[0].clone()).unwrap();io(&mut c,"rankings-write",retry,true,committed.value());
+    assert!(c.ranking_pending.is_empty());assert_eq!(c.ranking_book.entries[0].adventure,active);assert_eq!(c.adventure_id,next);assert_eq!(c.model["rankingErrorId"],Value::Null);
+    score(&mut c);let current=c.ranking_io.as_ref().unwrap().0;io(&mut c,"rankings-write",retry,true,crate::rankings::Book::default().value());assert_eq!(c.ranking_io.as_ref().unwrap().0,current);assert_eq!(c.ranking_pending[0].adventure,next);
+ }
+ #[test] fn rankings_read_failure_preserves_history_and_uses_read_error_and_save_does_not_score() {
+    let mut c=fresh();c.ranking_begin();let request=c.ranking_io.as_ref().unwrap().0;io(&mut c,"rankings-read",request,false,Value::Null);
+    assert_eq!(c.model["rankingErrorId"],"error.rankings_load");assert!(c.ranking_pending.is_empty());
+    let generation=c.model["generation"].clone();let saved=c.request(json!({"type":"worker","generation":generation,"data":{"type":"save","bytes":[1]}}));
+    let effect=saved["effects"].as_array().unwrap().iter().find(|e|e["kind"]=="save-write").unwrap();assert_eq!(effect["inventory"]["adventure"],c.adventure_id);assert!(c.ranking_pending.is_empty());
+    c.request(json!({"type":"worker","generation":generation,"data":{"type":"outcome","code":-1,"text":"input ended"}}));assert!(c.ranking_pending.is_empty());
+ }
+ #[test] fn rankings_restore_identity_waits_for_c_success_for_slot_and_import() {
+    for operation in [SaveOperation::Load,SaveOperation::Import] {for success in [false,true] {
+        let mut c=fresh();let previous=c.adventure_id.clone();let generation=number(&c.model["generation"]);let pending=c.saves.begin(operation,generation);
+        let bytes=rogue_platform::Envelope::new(17,"Player".into(),&[1],vec![],0).unwrap().bytes().unwrap();
+        c.request(json!({"type":"api","operation":operation.name(),"request":pending.request,"generation":generation,"ok":true,"bytes":bytes,"length":bytes.len(),"inventory":{"version":1,"token":"slot-A","adventure":"saved-A","view":{"version":1,"tab":"all","positions":{},"horizontal":0}}}));
+        assert_eq!(c.adventure_id,previous);score(&mut c);assert!(c.ranking_pending.is_empty(),"Replay is not a new ending");
+        let generation=c.model["generation"].clone();if success {c.request(json!({"type":"worker","generation":generation,"data":{"type":"input-request"}}));assert_eq!(c.adventure_id,"saved-A");}else{c.request(json!({"type":"worker","generation":generation,"data":{"type":"error","text":"restore failed"}}));assert_eq!(c.adventure_id,previous);assert!(c.restore_adventure.is_none());}
+    }}
+ }
 }

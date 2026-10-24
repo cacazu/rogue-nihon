@@ -67,6 +67,7 @@ impl BrowserUi {
     }
     fn region_at(&self, x: f64, y: f64) -> String {
         [
+            "rankings",
             "commands",
             "status",
             "settings",
@@ -83,7 +84,7 @@ impl BrowserUi {
         .unwrap_or("")
         .into()
     }
-    fn scroll_by(&mut self, id: &str, delta: f64) {
+    pub(super) fn scroll_by(&mut self, id: &str, delta: f64) {
         if let Some(region) = self.regions.get(id).copied() {
             let scroll = clamp(
                 self.scrolls.get(id).copied().unwrap_or(0.) + delta,
@@ -99,8 +100,12 @@ impl BrowserUi {
         }
     }
     fn cancel_pointer(&mut self, clear_hover: bool, effects: &mut Vec<Value>) {
+        self.release_pointer(clear_hover,true,effects);
+    }
+    fn release_pointer(&mut self, clear_hover: bool, cancel_map: bool, effects: &mut Vec<Value>) {
         self.stop_pointer_hold();
         if let Some(drag) = self.drag.take() {
+            if cancel_map && drag.region=="map" && drag.hit.is_none() && !drag.moved {effects.push(json!({"kind":"map-cancel"}));}
             effects.push(json!({"kind":"release","id":drag.id}));
         }
         self.widgets.pressed.clear();
@@ -109,22 +114,34 @@ impl BrowserUi {
             self.hover_point = None;
         }
     }
-    pub(super) fn activate(&mut self, control: &Control, _value: &Value, effects: &mut Vec<Value>) {
-        if self.editor_activate(control,effects) {return;}
-        if control.disabled {
-            return;
+    /// The execution branch and its feedback use the same current availability.
+    pub(super) fn control_action_available(&self,control:&Control)->bool {
+        if control.disabled {return false;}
+        if let Some(id)=commands::control_command_id(control) {return self.command_available(id);}
+        match s(&control.action["kind"]) {
+            "movement"=>self.command_ready(),
+            "send"=>b(&self.model["running"]) && !b(&self.model["topOpen"])
+                && !b(&self.model["settingsOpen"]) && !b(&self.model["returnAfterEnd"]),
+            _=>true,
         }
+    }
+    pub(super) fn activate(&mut self, control: &Control, _value: &Value, effects: &mut Vec<Value>) {
+        if control.disabled {return;}
+        if commands::control_command_id(control).is_some() && !self.control_action_available(control) {return;}
+        self.feedback_control(control);
+        if self.editor_activate(control,effects) {return;}
         self.remember_direction_origin(control);
         if self.mobile_activate(control, effects) {
             return;
         }
         match s(&control.action["kind"]) {
+            "rankings" => self.activate_rankings(b(&control.action["open"]),effects),
             "command" => self.activate_command(s(&control.action["id"]),effects),
             "binding-edit" => self.open_binding_capture(s(&control.action["id"]),n(&control.action["index"]) as usize),
             "binding-confirm" => self.confirm_binding(),
             "binding-cancel" => self.binding_capture=None,
             "movement" => {
-                if self.command_ready() {
+                if self.control_action_available(control) {
                     effects.push(json!({"kind":"send","key":self.movement_key(n(&control.action["key"]) as u32)}));
                 }
             }
@@ -173,11 +190,7 @@ impl BrowserUi {
                 if control.action["key"] == 64 && self.model["input"]["kind"] == "command" {
                     self.open_status();
                 }
-                if b(&self.model["running"])
-                    && !b(&self.model["topOpen"])
-                    && !b(&self.model["settingsOpen"])
-                    && !b(&self.model["returnAfterEnd"])
-                {
+                if self.control_action_available(control) {
                     let mut action=control.action.clone();
                     if let Some(key)=action["key"].as_u64() {action["key"]=json!(self.command_input_key(key as u32));}
                     effects.push(action);
@@ -199,7 +212,7 @@ impl BrowserUi {
         }
     }
     /// Raw browser observations in; host API effects out. Never calls C or RNG.
-    pub fn event(&mut self, event: Value) -> Value {
+    pub(super) fn event_core(&mut self, event: Value) -> Value {
         let mut effects = Vec::new();
         let mut consumed = false;
         let x = n(&event["x"]);
@@ -241,6 +254,7 @@ impl BrowserUi {
                     self.stop_hold();
                     consumed = true;
                     let hit = self.hit(x, y);
+                    if let Some(contact)=self.map_contact(x,y) {effects.push(contact);}
                     if !hit.as_ref().is_some_and(|c| c.id.starts_with("hud-")) {
                         self.hud.selected.clear();
                     }
@@ -316,7 +330,9 @@ impl BrowserUi {
                             let dy = y - drag.last_y;
                             drag.last_x = x;
                             drag.last_y = y;
-                            drag.moved |= (x - drag.x).hypot(y - drag.y) > 6.;
+                            let moved=(x - drag.x).hypot(y - drag.y) > 6.;
+                            if moved && !drag.moved && drag.region=="map" && drag.hit.is_none() {effects.push(json!({"kind":"map-cancel"}));}
+                            drag.moved |= moved;
                             self.widgets.pressed = drag
                                 .hit
                                 .as_ref()
@@ -372,7 +388,7 @@ impl BrowserUi {
             "up" => {
                 if self.drag.as_ref().is_some_and(|d| d.id == id) {
                     let drag = self.drag.clone().unwrap();
-                    self.cancel_pointer(!mouse, &mut effects);
+                    self.release_pointer(!mouse,!b(&event["captured"]), &mut effects);
                     if b(&event["captured"])
                         && drag.scope == self.scope
                         && !drag.activated
@@ -446,20 +462,10 @@ impl BrowserUi {
         }
         json!({"consumed":consumed,"effects":effects,"diagnostics":self.diagnostics()})
     }
-    fn move_to_cell(&self, cell: &Value, effects: &mut Vec<Value>) {
-        let f = &self.model["frame"];
-        if !b(&self.model["running"])
-            || f["ui"]["mode"] != "game"
-            || b(&self.model["returnAfterEnd"])
-            || b(&self.model["topOpen"])
-            || b(&self.model["settingsOpen"])
-            || self.mobile_operations
-        {
-            return;
-        }
-        effects.push(json!({"kind":"map-target","x":cell["x"],"y":cell["y"],"movement":self.mobile_movement}));
+    fn move_to_cell(&mut self, cell: &Value, effects: &mut Vec<Value>) {
+        self.commit_map_intent(cell,effects);
     }
-    fn activate_shortcut(&mut self, event: &Value, scope: &str, effects: &mut Vec<Value>) -> bool {
+    pub(super) fn activate_shortcut(&mut self, event: &Value, scope: &str, effects: &mut Vec<Value>) -> bool {
         if b(&self.view["coarse"]) || self.widgets.shortcut_context != self.shortcut_context(scope) { return false; }
         let key = s(&event["key"]);
         let literal=!b(&event["ctrlKey"]) && !b(&event["altKey"]);
@@ -491,6 +497,7 @@ impl BrowserUi {
         }
         let key = s(&e["key"]);
         let native = s(&e["native"]);
+        if self.rankings_key(e,effects) {return true;}
         if self.commands_open {
             if self.web_modal_close_key(e, WebAction::Commands) { self.commands_open = false; return true; }
             if self.activate_shortcut(e, "commands", effects) { return true; }
@@ -564,18 +571,9 @@ impl BrowserUi {
             }
             return true;
         }
-        if self.inventory_list_visible() && self.widgets.focus.starts_with("inventory-tab-")
-            && matches!(key,"ArrowLeft" | "ArrowRight") {
-            let tabs = self.inventory_available_tabs(&self.model["frame"]["ui"]);
-            let index = tabs.iter().position(|tab| *tab == self.list_tabs().tab).unwrap_or(0);
-            let next = (index as i64 + if key == "ArrowRight" { 1 } else { -1 }).rem_euclid(tabs.len() as i64) as usize;
-            self.list_tabs_mut().tab = tabs[next].into();
-            self.list_tabs_mut().reveal = true;
-            self.widgets.focus = format!("inventory-tab-{}",tabs[next]);
-            return true;
-        }
         if self.direction_key(e,effects) {return true;}
         if self.bound_command_key(e,effects) {return true;}
+        if self.item_navigation_key(e,effects) {return true;}
         if key == "Tab" {
             let modal =
                 self.model["frame"]["ui"]["window"].is_object() && !b(&self.model["settingsOpen"]);
@@ -619,6 +617,7 @@ impl BrowserUi {
             let next = &controls[(index + step).rem_euclid(controls.len() as i64) as usize];
             self.widgets.focus = next.id.clone();
             if next.id.starts_with("inventory-tab-") { self.list_tabs_mut().reveal = true; }
+            self.reveal_item_focus();
             if next.id.starts_with("hud-") {
                 let row: Rect =
                     serde_json::from_value(self.hud.layout["row"].clone()).expect("HUD row");

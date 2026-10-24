@@ -2,6 +2,10 @@
   "version": 1,
   "locale": "ja",
   "messages": {
+    "rankings.title": "ランキング",
+    "rankings.empty": "まだ成績はありません。",
+    "error.rankings_save": "ランキングを保存できませんでした。",
+    "error.rankings_load": "ランキングを読み込めませんでした。",
     "keybindings.prompt": "使用するキーを押してください",
     "keybindings.conflict": "{command}に割り当てられています",
     "keybindings.unbound": "未割当",

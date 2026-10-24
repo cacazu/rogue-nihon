@@ -325,7 +325,8 @@ impl BrowserUi {
         self.widgets.rect(game, "@overlay.soft");
         // Keep the in-game buttons visible and clear of modal contents.
         let game = Rect::new(game.x, game.y + 60., game.w, (game.h - 60.).max(1.));
-        let ui = self.model["frame"]["ui"].clone();
+        let mut ui = self.model["frame"]["ui"].clone();
+        self.project_ranking_score(&mut ui);
         let d = &ui["window"];
         let inventory_list = self.inventory_list_visible();
         let inventory_browse = self.inventory_browse_visible();
@@ -561,7 +562,8 @@ impl BrowserUi {
         self.widgets.begin_clip(viewport);
         for (text, line, height, top, map) in rows {
             let ry = viewport.y + top - scroll;
-            if ry + height < viewport.y || ry > viewport.y + viewport.h {
+            if (ry + height < viewport.y || ry > viewport.y + viewport.h)
+                && !(self.item_navigation_visible() && b(&line["selectable"])) {
                 continue;
             }
             if b(&line["tombstone"]) {
@@ -596,6 +598,8 @@ impl BrowserUi {
                     ControlStyle {
                         left: true,
                         role: ControlRole::ListItem,
+                        focus_fill: self.item_navigation_visible(),
+                        keep_offscreen: self.item_navigation_visible(),
                         size: font,
                         custom: line["item_runs"].is_array(),
                         key: Some(json!(key)),
@@ -683,6 +687,7 @@ impl BrowserUi {
                     disabled: !b(&self.model["running"]) || b(&self.model["returnAfterEnd"]) || b(&self.model["windowClosing"]),
                     role,
                     throw_direction: direction_choices && a.key != 27,
+                    focus_fill: d["kind"] == "inventory_actions",
                     left: matches!(role, ControlRole::ListItem),
                     size: if mobile { 17. } else { 16. },
                     key: Some(json!(a.key)),
@@ -691,6 +696,7 @@ impl BrowserUi {
                 },
             );
         }
+        self.sync_item_focus();
         self.dialog_rect = Some(panel);
     }
     fn detection_map(&mut self, r: Rect) {

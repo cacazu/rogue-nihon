@@ -37,6 +37,8 @@ Cとリンクする `rogue-layers` は独立lib testから除外します。ゲ�
 |---|---|
 | カタログ・翻訳・Cヘルプ対応 | `tests/catalog.test.py`、`localization.test.py`、`ui-game-catalog.test.py` |
 | Cメッセージ・ページ送り・意味捕捉・UTF-8 | `tests/build-message-tests.py` |
+| 確定得点の観測・C状態保持 | `tests/score-results.test.mjs`。quit/death/winner、取消・保存を検査し、変更前baselineがあればC状態・RNG・フレームも比較 |
+| 個人ランキングの永続化・再試行・表示 | `tests/browser-smoke/rankings.mjs`（独立context、fixture C + browser-test UI） |
 | C保存codec・参照・失敗時rollback | `tests/build-save-adapter.py`。必要時に `--diagnostics` |
 | Rust formatter・入力・保存・名称・Bevy | `tools/check-rust-layers.py` と各Binary |
 | タイル語彙・画像・重ね順 | `tests/tiles.test.mjs`、`pixels.test.mjs`、`graphics-beams.test.mjs` |

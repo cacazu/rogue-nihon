@@ -31,17 +31,22 @@ impl<'a> Map<'a> {
         (p.0 >= 0 && p.0 < self.width && p.1 > 0 && p.1 < self.height-1)
             .then_some((p.1*self.width+p.0) as usize)
     }
+    fn attack_goal(&self, p: Point) -> bool {
+        let Some(i)=self.index(p) else {return false;};
+        let glyph=self.cells[i];
+        if !glyph.is_ascii_uppercase() {return false;}
+        // Public actor identity is enough to attempt the final collision. Its
+        // hidden floor/item is neither traversed nor exposed as route data.
+        self.frame["map_actors"].as_array().is_some_and(|actors|actors.iter().any(|actor|
+            actor["id"].as_u64().is_some_and(|id|id!=0) && point(actor)==Some(p)
+                && actor["glyph"].as_u64()==Some(u64::from(glyph))))
+            || self.frame["map_underlays"].as_array().is_some_and(|underlays|underlays.iter().any(|v|
+                point(v)==Some(p) && matches!(v["tile"].as_u64(),Some(1..=3 | 6..=7))))
+    }
     fn walkable(&self, p: Point, target: Point) -> bool {
-        let Some(i) = self.index(p) else { return false; };
-        match self.cells[i] {
-            b'.' | b'#' | b'+' | b'%' | b'^' | b'@' | b'*' | b'!' | b'?' |
-            b':' | b')' | b']' | b'=' | b'/' | b',' => true,
-            // A perceived monster may be the final collision, never a shortcut.
-            b'A'..=b'Z' if p == target => self.frame["map_underlays"].as_array()
-                .is_some_and(|a| a.iter().any(|v| point(v) == Some(p)
-                    && matches!(v["tile"].as_u64(), Some(1..=3 | 6..=7)))),
-            _ => false,
-        }
+        let Some(i)=self.index(p) else {return false;};
+        matches!(self.cells[i],b'.' | b'#' | b'+' | b'%' | b'^' | b'@' | b'*' | b'!' | b'?' |
+            b':' | b')' | b']' | b'=' | b'/' | b',') || p==target && self.attack_goal(p)
     }
     fn next(&self, start: Point, target: Point) -> Option<(Point,u32)> {
         if start == target || !self.walkable(target,target) { return None; }
@@ -98,7 +103,12 @@ impl AutoWalk {
     }
     pub fn active(&self) -> bool { self.target.is_some() }
     pub fn uses_run(&self) -> bool { self.mode != 0 }
+    pub fn same_target(&self, frame:&Value, target:&Value, mode:u32) -> bool {
+        self.active() && point(target)==self.target && self.mode==mode.min(2)
+            && self.epoch==frame["map_actor_epoch"].as_u64()
+    }
     pub fn start(&mut self, frame: &Value, target: &Value, mode: u32) {
+        if self.same_target(frame,target,mode) {return;}
         self.stop("replaced");
         self.reason = "unreachable";
         let Some(target) = point(target) else { return; };
@@ -195,6 +205,44 @@ mod tests {
         json!({"width":8,"height":6,"map_actor_epoch":1,"player":{"x":1,"y":2},
             "map_cells":"        |......||@.....||......||......|        ",
             "ui":{"mode":"game"}})
+    }
+    #[test]
+    fn repeated_map_goal_keeps_its_timer_and_inflight_request() {
+        let mut f=frame();let target=json!({"x":5,"y":2});let command=json!({"kind":"command"});let mut walk=AutoWalk::default();
+        walk.start(&f,&target,0);let timer=walk.schedule(&f,&command,1).unwrap();
+        walk.start(&f,&target,0);
+        assert_eq!(walk.snapshot()["scheduled"],json!({"token":timer["token"],"request":1}),"The same tap cannot postpone the scheduled step");
+        assert_eq!(walk.tick(&f,&command,1,timer["token"].as_u64().unwrap()),Some(RG_KEY_RIGHT));
+        walk.start(&f,&target,0);assert!(walk.schedule(&f,&command,1).is_none(),"The in-flight request remains owned");
+        f["player"]["x"]=json!(2);assert!(walk.schedule(&f,&command,2).is_some());
+        let old=walk.snapshot()["scheduled"].clone();walk.start(&f,&json!({"x":4,"y":2}),0);
+        assert!(walk.snapshot()["scheduled"].is_null());assert_ne!(walk.schedule(&f,&command,2).unwrap()["token"],old["token"]);
+        walk.start(&f,&json!({"x":4,"y":2}),1);assert!(walk.snapshot()["scheduled"].is_null());assert_eq!(walk.snapshot()["mode"],1);
+        let mode_timer=walk.schedule(&f,&command,2).unwrap();f["map_actor_epoch"]=json!(2);walk.start(&f,&json!({"x":4,"y":2}),1);
+        assert!(walk.snapshot()["scheduled"].is_null());assert_ne!(walk.schedule(&f,&command,2).unwrap()["token"],mode_timer["token"]);
+    }
+    #[test]
+    fn repeated_map_goal_preserves_original_run_boundaries() {
+        for mode in [1,2] {
+            let mut f=frame();let target=json!({"x":3,"y":2});let command=json!({"kind":"command"});let boundary=json!({"kind":"run-boundary","direction":108});let mut walk=AutoWalk::default();
+            walk.start(&f,&target,mode);let first=walk.schedule(&f,&command,1).unwrap();
+            let start=RG_KEY_TARGET_RUN_BASE+(mode-1)*8+3;assert_eq!(walk.tick(&f,&command,1,first["token"].as_u64().unwrap()),Some(start));
+            walk.start(&f,&target,mode);assert!(walk.schedule(&f,&command,1).is_none());
+            let next=walk.schedule(&f,&boundary,2).unwrap();assert_eq!(walk.tick(&f,&boundary,2,next["token"].as_u64().unwrap()),target_run_permit_key(b'l',2));
+            walk.start(&f,&target,mode);f["player"]["x"]=json!(3);assert!(walk.schedule(&f,&boundary,3).is_none());assert_eq!(walk.snapshot()["reason"],"arrived");
+        }
+    }
+    #[test]
+    fn public_enemy_is_a_terminal_goal_even_without_an_item_underlay() {
+        let mut f=frame();f["map_cells"]=json!("        |......||@...A.||......||......|        ");
+        f["map_actors"]=json!([{"id":7,"x":5,"y":2,"glyph":65}]);
+        let map=Map::new(&f).unwrap();assert!(map.walkable((5,2),(5,2)),"A public enemy over an item has no terrain underlay");
+        assert!(!map.walkable((5,2),(6,2)),"Enemies never become intermediate floor");assert!(map.next((1,2),(5,2)).is_some());
+        for actor in [json!({"id":7,"x":4,"y":2,"glyph":65}),json!({"id":7,"x":5,"y":2,"glyph":66}),json!({"id":0,"x":5,"y":2,"glyph":65})] {
+            f["map_actors"]=json!([actor]);assert!(!Map::new(&f).unwrap().walkable((5,2),(5,2)),"Only the same published enemy qualifies");
+        }
+        f["map_actors"]=json!([{"id":7,"x":5,"y":2,"glyph":65}]);let cells=f["map_cells"].as_str().unwrap().replace('.'," ");f["map_cells"]=json!(cells);
+        assert!(Map::new(&f).unwrap().next((1,2),(5,2)).is_none(),"An enemy goal reveals no route over unknown cells");
     }
     #[test]
     fn bounded_public_paths_and_single_request_cadence() {

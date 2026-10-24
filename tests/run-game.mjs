@@ -71,7 +71,7 @@ export async function runGame(modulePath, config = {}) {
     },
     present(raw,length) {
       const value = JSON.parse(text(raw,length));
-      result.host_events.push({type:value.type,position,...(value.type==="player-event"?value:{})});
+      result.host_events.push({type:value.type,position,...(["player-event","score-result"].includes(value.type)?value:{})});
       if(value.type==="player-event")result.player_events.push(value);
       if (value.type === 'trace') {
         if (value.words?.length !== 20) throw new Error('Trace must contain all 20 ABI words');

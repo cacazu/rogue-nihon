@@ -23,6 +23,8 @@ impl BrowserUi {
         self.dropdown.clear();
     }
     pub(super) fn editor_activate(&mut self,control:&Control,effects:&mut Vec<Value>)->bool {
+        if control.disabled {return self.controls_editor.is_some();}
+        if self.controls_editor.is_some() || matches!(control.id.as_str(),"controls-placement"|"controls-assignment") {self.feedback_control(control);}
         match control.id.as_str() {
             "controls-placement"=>{self.open_controls_editor(EditMode::Placement);return true;},
             "controls-assignment"=>{self.open_controls_editor(EditMode::Assignment);return true;},

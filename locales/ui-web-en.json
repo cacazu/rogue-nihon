@@ -2,6 +2,10 @@
   "version": 1,
   "locale": "en",
   "messages": {
+    "rankings.title": "Rankings",
+    "rankings.empty": "No scores yet.",
+    "error.rankings_save": "Could not save the rankings.",
+    "error.rankings_load": "Could not load the rankings.",
     "keybindings.prompt": "Press the key you want to use",
     "keybindings.conflict": "Already assigned to {command}",
     "keybindings.unbound": "Unassigned",

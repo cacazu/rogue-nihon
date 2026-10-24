@@ -8,6 +8,7 @@ mod policies;
 mod save_loading;
 mod save_operations;
 mod inventory_lifetime;
+mod rankings;
 #[cfg(test)]
 mod tests;
 use controller::Controller;

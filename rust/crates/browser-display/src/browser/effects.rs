@@ -147,7 +147,7 @@ impl Browser {
                 if let Some((id, _)) = self.animation_timer.borrow_mut().take() {
                     self.window.clear_timeout_with_handle(id);
                 }
-                if let Some(delay) = effect["delay"].as_u64() {
+                if let Some(delay) = crate::policies::animation_wake_delay(&effect["delay"]) {
                     let weak = Rc::downgrade(self);
                     let callback = Closure::new(move || {
                         if let Some(host) = weak.upgrade() {
@@ -155,7 +155,7 @@ impl Browser {
                         }
                     });
                     let id = self.window.set_timeout_with_callback_and_timeout_and_arguments_0(
-                        callback.as_ref().unchecked_ref(), delay.clamp(1, 200) as i32,
+                        callback.as_ref().unchecked_ref(), delay,
                     )?;
                     *self.animation_timer.borrow_mut() = Some((id, callback));
                 }
@@ -283,6 +283,12 @@ impl Browser {
                 *self.saved.borrow_mut() = None;
                 self.candidates.borrow_mut().clear();
             }
+            "rankings-read" | "rankings-write"=>{
+                let effect=effect.clone();let host=self.clone();
+                let score=if effect["kind"]=="rankings-write" {crate::rankings::Score::from_result(&json!({"score":effect["score"]["score"],"flags":effect["score"]["flags"],"name":effect["score"]["name"],"level":effect["score"]["level"],"monster":effect["score"]["monster"],"eligible":true}),text(&effect["score"]["adventure"]))}else{None};
+                if effect["kind"]=="rankings-write" && score.is_none() {return self.api(&effect,"rankings-write",false,json!({"error":"Invalid score"})).map(Some);}
+                wasm_bindgen_futures::spawn_local(async move {let result=host.rankings_io(score).await.map(|book|json!({"rankings":book}));host.completed(&effect,text(&effect["kind"]),result);});
+            }
             "save-read" | "save-write" | "save-delete" => {
                 let effect = effect.clone();
                 let host = self.clone();
@@ -331,6 +337,9 @@ impl Browser {
                     match result {
                         Ok(bytes) => {
                             let cancelled = bytes.is_none();
+                            let inventory=if let Some(bytes)=&bytes {
+                                match host.saved_identity(bytes,Value::Null).await {Ok(value)=>value,Err(e)=>{host.completed(&effect,"import",Err(e));return;}}
+                            }else{Value::Null};
                             host.candidates
                                 .borrow_mut()
                                 .insert(effect["request"].as_u64().unwrap_or(0), bytes.clone());
@@ -338,7 +347,7 @@ impl Browser {
                                 &effect,
                                 "import",
                                 !cancelled,
-                                json!({"cancelled":cancelled,"bytes":bytes}),
+                                json!({"cancelled":cancelled,"bytes":bytes,"inventory":inventory}),
                             ) {
                                 error(e);
                             }

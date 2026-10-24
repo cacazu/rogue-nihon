@@ -142,6 +142,8 @@ void rg_host_text_mode(int32_t enabled, uint32_t limit_bytes, const char *initia
 /* C calls only when its editor actually replaces whoami with a nonempty edit. */
 void rg_host_player_name(const char *utf8_name);
 void rg_host_outcome(int32_t code, const char *message);
+/* Observe a finalized original score; borrowed UTF-8 is copied during the call. */
+void rg_host_score(int32_t amount, uint32_t flags, uint32_t monster, int32_t level, const uint8_t *name, uint32_t length, uint32_t eligible);
 /* Called only at a command's outer boundary, before BEFORE/AFTER processing. */
 void rg_host_checkpoint(void);
 /* Calendar observation only: the original C tombstone chooses when to use it. */

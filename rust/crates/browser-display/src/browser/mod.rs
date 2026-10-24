@@ -5,6 +5,7 @@ mod images;
 mod paint;
 mod queue;
 mod saves;
+mod rankings;
 mod values;
 mod worker;
 use js_sys::{Function, Reflect};
@@ -26,6 +27,11 @@ thread_local! {
     static HOST: RefCell<Option<Rc<Browser>>> = const { RefCell::new(None) };
     #[cfg(feature = "browser-test")]
     static PAINT_TIMINGS: RefCell<Vec<[f64; 6]>> = const { RefCell::new(Vec::new()) };
+}
+pub(super) fn opaque_id(window:&Window)->Result<String,JsValue> {
+    let crypto=Reflect::get(window,&JsValue::from_str("crypto"))?;
+    let uuid:Function=Reflect::get(&crypto,&JsValue::from_str("randomUUID"))?.dyn_into()?;
+    uuid.call0(&crypto)?.as_string().ok_or_else(||JsValue::from_str("Identifier unavailable"))
 }
 pub(super) fn js(value: &Value) -> Result<JsValue, JsValue> {
     values::to_js(value)
@@ -263,7 +269,7 @@ async fn start_main(window: Window, document: Document) -> Result<(), JsValue> {
         .as_bool()
         .unwrap_or(false)
         && !Reflect::get(&host.window, &JsValue::from_str("SharedArrayBuffer"))?.is_undefined();
-    host.dispatch(json!({"type":"boot","preference":preference,"inventoryPreference":inventory,"controlsPreference":controls,"environment":{"parameters":parameters,"isolated":isolated}}))?;
+    host.dispatch(json!({"type":"boot","preference":preference,"inventoryPreference":inventory,"controlsPreference":controls,"environment":{"parameters":parameters,"isolated":isolated,"instanceId":opaque_id(&host.window)?}}))?;
     Ok(())
 }
 fn query_parameters(search: &str) -> Value {

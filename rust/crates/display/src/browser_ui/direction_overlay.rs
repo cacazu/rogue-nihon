@@ -29,7 +29,7 @@ impl BrowserUi {
         let emitted=self.movement_key(key);
         let shortcut=commands::key_id(key).and_then(|id|self.command_shortcut(id));
         self.control(id,label,rect,json!({"kind":"send","key":emitted}),
-            ControlStyle{size:if key==46 {17.}else{26.},custom:pc,key:Some(json!(emitted)),throw_direction:direction,shortcut:shortcut.clone(),..Default::default()});
+            ControlStyle{feedback_command:commands::key_id(key),size:if key==46 {17.}else{26.},custom:pc,key:Some(json!(emitted)),throw_direction:direction,shortcut:shortcut.clone(),..Default::default()});
         if pc {
             let color=if direction {"@background"}else{"@button.text"};
             self.widgets.single_line(label,Rect::new(rect.x,rect.y+2.,rect.w,27.),

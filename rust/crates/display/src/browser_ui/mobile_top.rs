@@ -13,7 +13,7 @@ impl BrowserUi {
         let error_heights: Vec<_> = errors.iter().map(|text| if text.is_empty() { 0. } else {
             self.wrap(text, total, 17.).len() as f64 * 26. + 6.
         }).collect();
-        let content_height = 350. + section_gap + error_heights.iter().sum::<f64>();
+        let content_height = 404. + section_gap + error_heights.iter().sum::<f64>();
         let notice = if b(&self.model["topNotice"]["error"]) {
             self.model["topNotice"].clone()
         } else {
@@ -91,6 +91,8 @@ impl BrowserUi {
         );
         y += 54. + section_gap;
         self.resume_buttons(Rect::new(action_x, y, width, 48.), busy);
+        y += 54.;
+        self.rankings_button(Rect::new(action_x, y, width, 48.), busy);
         y += 54.;
         self.button(
             "credits-repository",

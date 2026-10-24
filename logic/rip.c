@@ -89,6 +89,12 @@ score(int amount, int flags, char monst)
 	"killed with Amulet"
     };
 
+#ifdef ROGUE_LAYERED
+    if (flags >= 0 && flags <= 3)
+        rg_host_score((int32_t)amount, (uint32_t)flags, (unsigned char)monst,
+            flags == 2 ? max_level : level, (const uint8_t *)whoami,
+            (uint32_t)strlen(whoami), !noscore);
+#endif
     start_score();
 #ifdef ROGUE_LAYERED
     /* Quit's summary owns the ending scope through terminal cleanup. */

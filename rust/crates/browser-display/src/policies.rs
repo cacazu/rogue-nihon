@@ -10,6 +10,8 @@ pub fn flag(v: &Value) -> bool {
 pub fn number(v: &Value) -> u64 {
     v.as_u64().unwrap_or(0)
 }
+/// Convert the shared animation/UI wake deadline at the host timer boundary.
+pub fn animation_wake_delay(value:&Value)->Option<i32> {value.as_f64().filter(|ms|ms.is_finite() && *ms>=0.).map(|ms|ms.ceil().clamp(1.,200.) as i32)}
 pub fn valid_text(value: &str, limit: usize, empty: bool) -> bool {
     (empty || !value.is_empty())
         && value.len() <= limit
@@ -127,4 +129,16 @@ mod all_catalog {
         assert_eq!(rendered, "画面を表示できませんでした。");
         assert_eq!(catalog.missing.len(),1);
     }
+}
+
+#[cfg(test)]
+mod wake_contract_tests {
+ use super::*;
+ #[test] fn animation_wake_delay_accepts_integer_and_fractional_ui_deadlines() {
+    assert_eq!(animation_wake_delay(&json!(120)),Some(120));
+    assert_eq!(animation_wake_delay(&json!(160.0)),Some(160));
+    assert_eq!(animation_wake_delay(&json!(159.2)),Some(160));
+    assert_eq!(animation_wake_delay(&json!(0.)),Some(1));
+    assert_eq!(animation_wake_delay(&json!(-1.)),None);assert_eq!(animation_wake_delay(&Value::Null),None);
+ }
 }

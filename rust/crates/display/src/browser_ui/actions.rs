@@ -62,6 +62,7 @@ impl BrowserUi {
 
     pub(super) fn activate_web(&mut self, action: WebAction, effects: &mut Vec<Value>) {
         if !self.web_available(action) { return; }
+        self.feedback_command(commands::web_id(action));
         match action {
             WebAction::Movement => {
                 self.mobile_operations = false;

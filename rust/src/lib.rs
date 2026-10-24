@@ -733,6 +733,19 @@ pub unsafe extern "C" fn rg_host_restore_data(out: *mut *const u8, length: *mut 
     })
 }
 
+/// Copies C's already-finalized score without changing game or RNG state.
+///
+/// # Safety
+/// `name` points to `length` readable UTF-8 bytes for this call.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn rg_host_score(amount:i32, flags:u32, monster:u32, level:i32, name:*const u8, length:u32, eligible:u32) {
+    if name.is_null() || length>80 {return;}
+    // SAFETY: The C caller owns the live bounded name for this observation.
+    let bytes=unsafe {std::slice::from_raw_parts(name,length as usize)};
+    let Ok(name)=std::str::from_utf8(bytes) else {return;};
+    emit(&json!({"type":"score-result","score":amount,"flags":flags,"monster":monster,"level":level,"name":name,"eligible":eligible!=0}));
+}
+
 /// Reports a game outcome after C has completed its state updates.
 ///
 /// # Safety

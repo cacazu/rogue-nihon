@@ -4,7 +4,7 @@ use js_sys::{Array, Promise, Uint8Array};
 use wasm_bindgen_futures::{JsFuture, future_to_promise};
 type Callback = Closure<dyn FnMut(Event)>;
 impl Browser {
-    fn database(&self) -> Result<Promise, JsValue> {
+    pub(super) fn database(&self) -> Result<Promise, JsValue> {
         if let Some(promise) = self.database.borrow().as_ref() {
             return Ok(promise.clone());
         }
@@ -90,9 +90,7 @@ impl Browser {
         mut inventory: Value,
     ) -> Result<(Option<Vec<u8>>, Value), JsValue> {
         if bytes.is_some() {
-            let crypto=Reflect::get(&self.window,&JsValue::from_str("crypto"))?;
-            let uuid:Function=Reflect::get(&crypto,&JsValue::from_str("randomUUID"))?.dyn_into()?;
-            let token=uuid.call0(&crypto)?.as_string().ok_or_else(||JsValue::from_str("Save token unavailable"))?;
+            let token=opaque_id(&self.window)?;
             inventory["token"]=json!(token);
         }
         let database: IdbDatabase = JsFuture::from(self.database()?).await?.dyn_into()?;
@@ -148,9 +146,22 @@ impl Browser {
         if remove {return Ok((None,Value::Null));}
         let stored=request.result()?;
         let bytes=if stored.is_undefined() || stored.is_null() {None}else{Some(Uint8Array::new(&stored).to_vec())};
-        let inventory=inventory_request.unwrap().result()?.as_string()
+        let mut inventory=inventory_request.unwrap().result()?.as_string()
             .and_then(|raw|serde_json::from_str::<Value>(&raw).ok()).unwrap_or(Value::Null);
+        if let Some(bytes)=&bytes {inventory=self.saved_identity(bytes,inventory).await?;}
         Ok((bytes,inventory))
+    }
+    pub(super) async fn saved_identity(&self,bytes:&[u8],mut inventory:Value)->Result<Value,JsValue> {
+        if crate::rankings::restored_id(&inventory).is_none() {
+            let crypto=Reflect::get(&self.window,&JsValue::from_str("crypto"))?;
+            let subtle=Reflect::get(&crypto,&JsValue::from_str("subtle"))?;
+            let digest:Function=Reflect::get(&subtle,&JsValue::from_str("digest"))?.dyn_into()?;
+            let promise:Promise=digest.call2(&subtle,&JsValue::from_str("SHA-256"),&Uint8Array::from(bytes))?.dyn_into()?;
+            let hash=Uint8Array::new(&JsFuture::from(promise).await?).to_vec();
+            if !inventory.is_object() {inventory=json!({});}
+            inventory["legacyDigest"]=json!(hash.iter().map(|byte|format!("{byte:02x}")).collect::<String>());
+        }
+        Ok(inventory)
     }
     pub(super) fn download(&self, effect: &Value) -> Result<(), JsValue> {
         let bytes = self.saved.borrow();

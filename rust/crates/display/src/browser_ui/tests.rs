@@ -1678,3 +1678,173 @@ fn nonmovement_modal_preserves_control_order_when_a_command_alias_matches_a_c_ch
     let choice=ui.widgets.controls.iter().find(|c|c.id=="window-121").unwrap().clone();let alias=choice.shortcut.clone().unwrap();ui.controls_preferences.bindings.insert("web.settings".into(),vec![keybindings::KeyBinding::plain(&alias)]);ui.render(m,view(1400.,1000.));
     let result=ui.event(json!({"type":"key","key":alias}));assert_eq!(result["effects"],json!([choice.action]),"A later header command cannot steal the earlier C choice alias");
 }
+
+#[test]
+fn item_navigation_consumes_arrows_and_keypad_and_uses_the_click_action() {
+    for browse in [false,true] {
+        let mut m=selection_model("action.drop","all",&["weapon","food","potion"]);
+        if browse { m["input"]=json!({"kind":"space_cancel"});m["frame"]["ui"]["input"]=m["input"].clone();m["frame"]["ui"]["inventory"]=json!(true); m["frame"]["ui"]["window"]["kind"]=json!("menu"); }
+        let mut ui=BrowserUi::new(measure);ui.render(m.clone(),view(1400.,1050.));
+        for (key,code,focus) in [("ArrowDown","ArrowDown","item-a"),("2","Numpad2","item-b"),("ArrowUp","Numpad8","item-a"),("ArrowUp","ArrowUp","item-a")] {
+            let r=ui.event(json!({"type":"key","key":key,"code":code}));
+            assert!(r["consumed"]==true,"navigation must be consumed: {r}");
+            assert!(!array(&r["effects"]).iter().any(|e|e["kind"]=="send"));
+            assert_eq!(ui.widgets.focus,focus);
+        }
+        let r=ui.event(json!({"type":"key","key":"ArrowDown","ctrlKey":true}));
+        assert_eq!(r["consumed"],true);assert!(game_effects(r).as_array().unwrap().is_empty());assert_eq!(ui.widgets.focus,"item-a");
+        let painted=ui.render(m.clone(),view(1400.,1050.));
+        let selected=ui.widgets.controls.iter().find(|c|c.id=="item-a").unwrap().full_rect;
+        assert!(array(&painted["commands"]).iter().any(|c|c["op"]=="box" && c["rect"]==json!(selected) && c["fill"]==ui.widgets.theme.color("@row.selected")));
+        let expected=game_effects(click(&mut ui,"item-a"));
+        ui.widgets.focus="item-a".into();
+        let r=ui.event(json!({"type":"key","key":"Enter","code":"Enter"}));
+        assert_eq!(game_effects(r),expected);
+        ui.render(m.clone(),view(1400.,1050.));ui.widgets.focus.clear();
+        ui.event(json!({"type":"key","key":"ArrowUp"}));assert_eq!(ui.widgets.focus,"item-c");
+        if browse {
+            assert!(game_effects(ui.event(json!({"type":"key","key":"ArrowRight"}))).as_array().unwrap().is_empty());
+            assert_eq!(ui.inventory_tabs.tab,"food");ui.render(m,view(1400.,1050.));
+            ui.event(json!({"type":"key","key":"ArrowDown"}));assert_eq!(ui.widgets.focus,"item-b");
+        }
+    }
+}
+
+#[test]
+fn item_navigation_reveals_offscreen_rows_and_consumes_empty_single_tab() {
+    let mut ui=BrowserUi::new(measure);
+    let m=selection_model("action.drop","all",&vec!["food";24]);
+    ui.render(m.clone(),view(850.,600.));
+    for _ in 0..30 { ui.event(json!({"type":"key","key":"ArrowDown"}));ui.render(m.clone(),view(850.,600.)); }
+    assert_eq!(ui.widgets.focus,"item-x");
+    let c=ui.widgets.controls.iter().find(|c|c.id=="item-x").unwrap();let viewport=ui.regions["dialog"].rect;
+    assert!(c.full_rect.y>=viewport.y && c.full_rect.y+c.full_rect.h<=viewport.y+viewport.h+0.01);
+    assert!(ui.scrolls["dialog"]>0.);
+    ui.render(selection_model("action.eat","food",&[]),view(850.,600.));
+    for (key,code) in [("ArrowUp","ArrowUp"),("ArrowDown","ArrowDown"),("4","Numpad4"),("6","Numpad6"),("Enter","Enter")] {
+        let r=ui.event(json!({"type":"key","key":key,"code":code}));assert!(r["consumed"]==true);
+        assert!(!array(&r["effects"]).iter().any(|e|e["kind"]=="send"));
+    }
+    assert!(!ui.widgets.focus.starts_with("item-"));
+}
+
+#[test]
+fn item_navigation_actions_use_actions_and_exclude_details_and_native_input() {
+    let mut m=model();m["input"]=json!({"kind":"item"});
+    m["frame"]["ui"]["input"]=json!({"kind":"inventory"});
+    m["frame"]["ui"]["window"]=json!({"kind":"inventory_actions","title":"item","lines":[],"actions":[{"key":101,"label":"eat"},{"key":27,"label":"back"}]});
+    let mut ui=BrowserUi::new(measure);ui.render(m.clone(),view(1400.,1050.));
+    let r=ui.event(json!({"type":"key","key":"ArrowDown"}));assert!(r["consumed"]==true);assert_eq!(ui.widgets.focus,"window-101");
+    let r=ui.event(json!({"type":"key","key":"ArrowRight"}));assert!(!array(&r["effects"]).iter().any(|e|e["kind"]=="send"));
+    let click_effects=game_effects(click(&mut ui,"window-101"));ui.widgets.focus="window-101".into();
+    assert_eq!(game_effects(ui.event(json!({"type":"key","key":"Enter"}))),click_effects);
+    ui.widgets.focus.clear();ui.event(json!({"type":"key","key":"ArrowDown","native":"prompt-text"}));assert!(ui.widgets.focus.is_empty());
+    m["frame"]["ui"]["window"]["kind"]=json!("inventory_details");ui.render(m,view(1400.,1050.));ui.widgets.focus.clear();
+    ui.event(json!({"type":"key","key":"ArrowDown"}));assert!(ui.widgets.focus.is_empty());
+}
+
+#[test]
+fn ui_feedback_shares_visible_semantics_for_mouse_touch_and_rebound_keys() {
+    for width in [1400.,600.] {
+        for pointer in ["mouse","touch"] {
+            let mut m=shortcut_model();m["animation"]=json!(false);
+            let mut ui=BrowserUi::new(measure);ui.render(m.clone(),view(width,900.));
+            let control=ui.widgets.controls.iter().find(|c|commands::control_command_id(c)==Some("game.search") && !c.disabled).unwrap().clone();
+            let x=control.rect.x+control.rect.w/2.;let y=control.rect.y+control.rect.h/2.;
+            ui.event(json!({"type":"down","id":1,"x":x,"y":y,"pointerType":pointer,"button":0,"primary":true}));
+            ui.event(json!({"type":"up","id":1,"x":x,"y":y,"pointerType":pointer,"captured":true}));
+            assert!(ui.widgets.pressed.is_empty());
+            let pointer_feedback=ui.diagnostics()["feedback"].clone();
+            assert_eq!(pointer_feedback["intent"],json!({"kind":"command","id":"game.search"}));
+            assert!(array(&pointer_feedback["controls"]).iter().any(|id|id==&control.id));
+            let mut keyboard=BrowserUi::new(measure);
+            keyboard.controls_preferences.bindings.insert("game.search".into(),vec![keybindings::KeyBinding::plain("v")]);
+            keyboard.render(m,view(width,900.));keyboard.event(json!({"type":"key","key":"v","code":"KeyV"}));
+            assert_eq!(keyboard.diagnostics()["feedback"]["intent"],pointer_feedback["intent"]);
+            assert_eq!(keyboard.diagnostics()["feedback"]["controls"],pointer_feedback["controls"]);
+        }
+    }
+    let mut ui=BrowserUi::new(measure);ui.mobile_movement=1;
+    ui.controls_preferences.profile_mut(control_preferences::ControlForm::Desktop).assignments[0]="game.move-left".into();
+    ui.render(shortcut_model(),view(1400.,900.));
+    let custom=ui.widgets.controls.iter().find(|c|commands::control_command_id(c)==Some("game.move-left")).unwrap().id.clone();
+    click(&mut ui,"touch-h");let pulse=ui.diagnostics()["feedback"].clone();
+    assert_eq!(pulse["intent"],json!({"kind":"command","id":"game.move-left"}));
+    assert!(array(&pulse["controls"]).iter().any(|id|id=="touch-h"));assert!(array(&pulse["controls"]).iter().any(|id|id==&custom));
+    ui.event(json!({"type":"key","key":"ArrowLeft","code":"ArrowLeft"}));assert_eq!(ui.diagnostics()["feedback"]["controls"],pulse["controls"]);
+}
+
+#[test]
+fn ui_feedback_fast_tap_survives_scope_change_and_expires_without_waiting_for_game() {
+    let mut ui=BrowserUi::new(measure);let m=shortcut_model();let mut v=view(1400.,900.);v["now"]=json!(1.);
+    ui.render(m.clone(),v.clone());click(&mut ui,"commands-open");
+    v["now"]=json!(5000.);let r=ui.render(m.clone(),v.clone());
+    assert!(!r["diagnostics"]["feedback"].is_null());assert!(n(&r["nextUiDelayMs"])>0.);
+    assert!(array(&r["commands"]).iter().any(|c|c["feedback"]==true));
+    v["now"]=json!(5000.+n(&r["nextUiDelayMs"])+1.);let end=ui.render(m.clone(),v.clone());
+    assert!(end["diagnostics"]["feedback"].is_null());assert!(end["nextUiDelayMs"].is_null());
+    click(&mut ui,"commands-close");ui.event(json!({"type":"cancel","clearFocus":true}));assert!(ui.diagnostics()["feedback"].is_null());
+    ui.render(m.clone(),v);click(&mut ui,"commands-open");let mut next=m;next["generation"]=json!(9);ui.set_context(next);
+    assert!(ui.diagnostics()["feedback"].is_null());
+    // The same raw key in a different item window is a different choice.
+    let mut choice=BrowserUi::new(measure);let mut items=selection_model("action.drop","all",&["food"]);
+    choice.render(items.clone(),view(1400.,900.));let old=choice.widgets.controls.iter().find(|c|c.id=="item-a").unwrap().rect;
+    click(&mut choice,"item-a");items["frame"]["ui"]["lines"]=json!([]);items["frame"]["ui"]["input"]=json!({"kind":"inventory"});
+    items["frame"]["ui"]["window"]=json!({"kind":"inventory_actions","title":"actions","lines":[],"actions":[{"key":97,"text":"choose"},{"key":27,"text":"back"}]});
+    let transitioned=choice.render(items,view(1400.,900.));
+    assert!(array(&transitioned["commands"]).iter().any(|c|c["feedback"]==true && c["rect"]==json!(old)));
+}
+
+#[test]
+fn ui_feedback_focus_and_held_key_repeat_have_independent_lifetimes() {
+    let mut ui=BrowserUi::new(measure);let item=selection_model("action.drop","all",&["food","potion"]);
+    ui.render(item.clone(),view(1400.,900.));ui.event(json!({"type":"key","key":"ArrowDown"}));
+    assert_eq!(ui.widgets.focus,"item-a");assert!(ui.diagnostics()["feedback"].is_null());
+    ui.event(json!({"type":"key","key":"Enter"}));assert!(!ui.diagnostics()["feedback"].is_null());
+    let mut v=view(1400.,900.);v["now"]=json!(10.);ui.render(item.clone(),v.clone());v["now"]=json!(1000.);ui.render(item,v);
+    assert_eq!(ui.widgets.focus,"item-a");assert!(ui.diagnostics()["feedback"].is_null());
+    let mut held=BrowserUi::new(measure);let m=shortcut_model();let mut v=view(1400.,900.);v["now"]=json!(1000.);
+    held.render(m.clone(),v.clone());held.event(json!({"type":"key","key":"ArrowLeft","code":"ArrowLeft"}));held.render(m,v);
+    let pulse=held.diagnostics()["feedback"].clone();assert!(!pulse.is_null());
+    let repeated=held.event(json!({"type":"key","key":"ArrowLeft","code":"ArrowLeft","repeat":true}));
+    assert!(game_effects(repeated).as_array().unwrap().is_empty());assert_eq!(held.diagnostics()["feedback"],pulse);
+    let mut unavailable=BrowserUi::new(measure);let mut pending=shortcut_model();unavailable.render(pending.clone(),view(1400.,900.));
+    unavailable.widgets.focus=unavailable.widgets.controls.iter().find(|c|commands::control_command_id(c)==Some("game.search")).unwrap().id.clone();
+    pending["savePending"]=json!(true);unavailable.set_context(pending);
+    let rejected=unavailable.event(json!({"type":"key","key":"Enter"}));assert!(game_effects(rejected).as_array().unwrap().is_empty());
+    assert!(unavailable.diagnostics()["feedback"].is_null(),"consumed but rejected commands must not pulse");
+    for kind in ["send","movement"] {
+        let mut raw=BrowserUi::new(measure);let mut m=if kind=="send" {selection_model("action.drop","all",&["food"])}else{shortcut_model()};
+        raw.render(m.clone(),view(1400.,900.));let id=if kind=="send" {"item-a"}else{"touch-h"};raw.widgets.focus=id.into();
+        if kind=="movement" {raw.widgets.controls.iter_mut().find(|c|c.id==id).unwrap().action=json!({"kind":"movement","key":104});m["savePending"]=json!(true);}
+        else {m["running"]=json!(false);}
+        raw.set_context(m);let rejected=raw.event(json!({"type":"key","key":"Enter"}));
+        assert!(game_effects(rejected).as_array().unwrap().is_empty());assert!(raw.diagnostics()["feedback"].is_null(),"{kind} rejected by current availability must not pulse");
+    }
+}
+
+#[test]
+fn map_pointer_lifecycle_cancels_only_interruption_and_first_drag_threshold() {
+    fn ui()->BrowserUi {
+        let mut ui=BrowserUi::new(measure);ui.model=shortcut_model();ui.scope="game".into();ui.view=json!({"coarse":false});
+        let r=Rect::new(0.,0.,80.,40.);ui.map_rect=Some(r);ui.regions.insert("map".into(),Region{rect:r,max:0.});
+        ui.camera=Some(Camera{size:10.,cell_h:10.,width:80.,height:40.,..Camera::default()});ui
+    }
+    fn cancels(r:&Value)->usize {array(&r["effects"]).iter().filter(|e|e["kind"]=="map-cancel").count()}
+    for interruption in ["up","drag","cancel","lostcapture"] {
+        let mut ui=ui();
+        let down=ui.event(json!({"type":"down","id":1,"x":15.,"y":15.,"pointerType":"mouse","button":0,"primary":true}));
+        assert!(array(&down["effects"]).iter().any(|e|e["kind"]=="map-contact"));assert_eq!(cancels(&down),0);
+        let small=ui.event(json!({"type":"move","id":1,"x":17.,"y":15.,"pointerType":"mouse","buttons":1,"captured":true}));assert_eq!(cancels(&small),0);
+        let expected=usize::from(interruption!="up");
+        let result=match interruption {
+            "up"=>ui.event(json!({"type":"up","id":1,"x":15.,"y":15.,"pointerType":"mouse","captured":true})),
+            "drag"=>ui.event(json!({"type":"move","id":1,"x":30.,"y":15.,"pointerType":"mouse","buttons":1,"captured":true})),
+            "cancel"=>ui.event(json!({"type":"cancel","id":1})),
+            _=>ui.event(json!({"type":"move","id":1,"x":17.,"y":15.,"pointerType":"mouse","buttons":1,"captured":false})),
+        };
+        assert_eq!(cancels(&result),expected,"{interruption}");
+        let late=ui.event(json!({"type":"move","id":1,"x":40.,"y":15.,"pointerType":"mouse","buttons":1,"captured":true}));assert_eq!(cancels(&late),0);
+        let cancel=ui.event(json!({"type":"cancel","id":1}));assert_eq!(cancels(&cancel),0);
+    }
+}

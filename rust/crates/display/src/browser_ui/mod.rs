@@ -8,17 +8,21 @@ mod desktop;
 mod direction_overlay;
 mod dropdown;
 mod gestures;
+mod feedback;
 mod history;
 pub mod hud;
 mod interaction;
 mod inventory_tabs;
 mod inventory_item;
+mod item_navigation;
 mod log_text;
+mod map_intent;
 mod mobile;
 mod mobile_dialog;
 mod mobile_map;
 mod mobile_top;
 mod projectiles;
+mod rankings;
 mod repeat_count;
 mod resume;
 mod screens;
@@ -89,6 +93,8 @@ pub struct BrowserUi {
     direction_origin: Option<direction_overlay::DirectionOrigin>,
     keyboard_dispatch: bool,
     hold_nonce: u64,
+    feedback: Option<feedback::Feedback>,
+    feedback_nonce: u64,
     movement_presses: std::collections::BTreeSet<String>,
     controls_editor: Option<controls_editor::ControlEditor>,
     dock_targets: Vec<controls_editor::DockTarget>,
@@ -129,6 +135,7 @@ pub struct BrowserUi {
     inventory_tabs: inventory_tabs::InventoryTabs,
     selection_tabs: inventory_tabs::InventoryTabs,
     selection_context: String,
+    rankings_open: bool,
 }
 impl BrowserUi {
     /// Begin a new adventure without changing player preferences.
@@ -147,9 +154,10 @@ impl BrowserUi {
     pub fn set_context(&mut self, model: Value) {
         let generation_changed = self.model["generation"] != model["generation"];
         self.model = model;
+        if !b(&self.model["topOpen"]) {self.rankings_open=false;}
         if generation_changed || !b(&self.model["settingsOpen"]) { self.controls_editor=None; }
         if generation_changed || self.model["frame"]["ui"]["input"]["kind"] != "item" { self.selection_context.clear(); }
-        if generation_changed { self.hover_point = None;self.binding_capture=None; }
+        if generation_changed { self.hover_point = None;self.binding_capture=None;self.feedback=None; }
         self.sync_direction_origin();
         self.sync_direction_window();
         if generation_changed || !self.wait_available() {
@@ -176,6 +184,8 @@ impl BrowserUi {
             direction_origin: None,
             keyboard_dispatch: false,
             hold_nonce: 0,
+            feedback: None,
+            feedback_nonce: 0,
             movement_presses: Default::default(),
             controls_editor: None,
             dock_targets: Vec::new(),
@@ -224,6 +234,7 @@ impl BrowserUi {
             inventory_tabs: inventory_tabs::InventoryTabs::default(),
             selection_tabs: inventory_tabs::InventoryTabs::default(),
             selection_context: String::new(),
+            rankings_open: false,
         }
     }
     fn t(&self, id: &str) -> String {
@@ -324,6 +335,7 @@ impl BrowserUi {
         Widgets::wrap(text, w, size, self.measure)
     }
     pub fn render(&mut self, model: Value, view: Value) -> Value {
+        if self.model["generation"]!=model["generation"] || view["visible"]==false {self.feedback=None;}
         if self.model["generation"] != model["generation"] || b(&model["topOpen"]) { self.hover_point = None; }
         self.model = model;
         self.widgets.theme = crate::theme::Theme::named(s(&self.model["theme"]));
@@ -368,7 +380,9 @@ impl BrowserUi {
             || b(&self.model["frame"]["ui"]["movement_direction"]) {
             self.mobile_repeat_open = false;
         }
-        let scope = if self.controls_editor.is_some() {
+        let scope = if self.rankings_open {
+            "rankings".into()
+        } else if self.controls_editor.is_some() {
             "controls-editor".into()
         } else if self.mobile_repeat_open {
             "repeat-count".into()
@@ -440,17 +454,19 @@ impl BrowserUi {
         self.draw_dropdown();
         if self.controls_editor.is_some() {self.draw_controls_editor();}
         if self.binding_capture.is_some() {self.draw_binding_capture();}
+        if self.rankings_open {self.draw_rankings();}
+        let next_ui_delay=self.paint_feedback();
         // Resolve color annotations attached after a widget was painted.
         for command in &mut self.widgets.commands { self.widgets.theme.paint(command); }
         self.paint_count += 1;
-        let mut result = json!({"diagnostics":self.diagnostics(),"animate":self.zoom_animating()});
+        let mut result = json!({"diagnostics":self.diagnostics(),"animate":self.zoom_animating(),"nextUiDelayMs":next_ui_delay});
         result["commands"] = Value::Array(std::mem::take(&mut self.widgets.commands));
         result
     }
     pub fn diagnostics(&self) -> Value {
         json!({"renderer":"canvas2d","uiOwner":"rust","paintCount":self.paint_count,"fullscreen":self.fullscreen,
             "pointer":{"activeId":self.drag.as_ref().map(|d|d.id),"capturedIds":self.captured_ids(),"pressedId":self.widgets.pressed,"hoverId":self.widgets.hover,"focusId":self.widgets.focus},
-            "width":self.width,"height":self.height,"scope":self.scope,"statusOpen":self.status_open,"controls":self.widgets.controls,
+            "feedback":self.feedback_diagnostics(),"width":self.width,"height":self.height,"scope":self.scope,"statusOpen":self.status_open,"controls":self.widgets.controls,
             "text":self.widgets.text_runs.iter().map(|v|s(&v["text"])).collect::<Vec<_>>(),"icons":self.widgets.icons,"hud":self.hud.layout,
             "camera":self.camera,"mapRect":self.map_rect,"dialogRect":self.dialog_rect,"scrolls":self.scrolls,"regions":self.regions,
             "inventory":self.inventory_preference(),"directionOrigin":self.direction_origin.as_ref().map(|origin|json!({"control":origin.control,"point":origin.point,"seen":origin.seen})),"controlsEditor":self.controls_editor.as_ref().map(|editor|json!({"mode":format!("{:?}",editor.mode),"form":editor.form,"selected":editor.selected,"draft":editor.draft}))})

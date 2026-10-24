@@ -223,6 +223,7 @@ impl BrowserUi {
     pub(super) fn activate_command(&mut self,id:&str,effects:&mut Vec<Value>) {
         if !self.command_available(id) {return;}
         let Some(c)=command(id) else{return;};
+        self.feedback_command(id);
         self.mobile_operations=false;
         match c.action {
             CommandAction::Web(action)=>self.activate_web(action,effects),
