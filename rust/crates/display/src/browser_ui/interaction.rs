@@ -140,11 +140,7 @@ impl BrowserUi {
             }
             "dropdown" => {
                 self.dropdown = s(&control.action["id"]).into();
-                let selected = s(&self.model[if self.dropdown == "language" {
-                    "language"
-                } else {
-                    "displayMode"
-                }]);
+                let selected = self.dropdown_value(&self.dropdown);
                 self.widgets.focus = format!("select-{}-{selected}", self.dropdown);
             }
             "dropdown-close" => self.dropdown.clear(),
@@ -464,28 +460,30 @@ impl BrowserUi {
         effects.push(json!({"kind":"map-target","x":cell["x"],"y":cell["y"],"movement":self.mobile_movement}));
     }
     fn activate_shortcut(&mut self, event: &Value, scope: &str, effects: &mut Vec<Value>) -> bool {
-        if b(&self.view["coarse"]) || b(&event["ctrlKey"]) || b(&event["altKey"])
-            || self.widgets.shortcut_context != self.shortcut_context(scope) { return false; }
+        if b(&self.view["coarse"]) || self.widgets.shortcut_context != self.shortcut_context(scope) { return false; }
         let key = s(&event["key"]);
-        // Enter/Space still activate a choice explicitly focused with Tab.
-        if matches!(key, "Enter" | " ")
-            && let Some(control) = self.widgets.controls.iter().find(|control|
-                !control.disabled && control.kind != "field" && control.id == self.widgets.focus).cloned()
-        {
-            self.activate(&control, &Value::Null, effects);
-            return true;
-        }
-        let controls = &self.widgets.controls;
-        // Exact case takes priority: f and F are distinct original commands.
-        let control = controls.iter().find(|c| !c.disabled && c.shortcut.as_deref() == Some(key))
-            .or_else(|| controls.iter().find(|c| !c.disabled && key.len() == 1
-                && c.shortcut.as_deref().is_some_and(|shortcut| shortcut.len() == 1
-                    && shortcut.as_bytes()[0].is_ascii_lowercase() && shortcut.eq_ignore_ascii_case(key)))).cloned();
-        if let Some(control) = control {
-            self.activate(&control, &Value::Null, effects);
+        let literal=!b(&event["ctrlKey"]) && !b(&event["altKey"]);
+        let binding=keybindings::KeyBinding::from_event(event);
+        // Keep explicit focus and visible-control order ahead of later aliases.
+        let focused=if literal && matches!(key,"Enter"|" ") {
+            self.widgets.controls.iter().find(|c|!c.disabled && c.kind!="field" && c.id==self.widgets.focus).cloned()
+        } else {None};
+        let control=focused.or_else(||self.widgets.controls.iter().find(|c|!c.disabled
+            && if let Some(id)=commands::control_command_id(c) {
+                binding.as_ref().is_some_and(|key|self.command_bindings(id).contains(key))
+            } else {literal && c.shortcut.as_deref()==Some(key)}).cloned())
+            .or_else(||self.widgets.controls.iter().find(|c|!c.disabled && literal
+                && commands::control_command_id(c).is_none() && key.len()==1
+                && c.shortcut.as_deref().is_some_and(|shortcut|shortcut.len()==1
+                    && shortcut.as_bytes()[0].is_ascii_lowercase() && shortcut.eq_ignore_ascii_case(key))).cloned());
+        if let Some(control)=control {
+            let web=commands::control_command_id(&control).and_then(commands::command)
+                .is_some_and(|c|matches!(c.action,commands::CommandAction::Web(_)));
+            if !web || !b(&event["repeat"]) {self.activate(&control,&Value::Null,effects);}
             true
-        } else { false }
+        } else {false}
     }
+
     fn key_event(&mut self, e: &Value, effects: &mut Vec<Value>) -> bool {
         if self.binding_key(e) {return true;}
         if self.model.is_null() || b(&e["composing"]) || n(&e["keyCode"]) == 229. || b(&e["metaKey"]) {
@@ -739,7 +737,7 @@ impl BrowserUi {
             self.widgets.focus.clear();
             return true;
         }
-        if matches!(key, "Enter" | " ")
+        if matches!(key, "Enter" | " ") && !b(&e["ctrlKey"]) && !b(&e["altKey"])
             && let Some(c) = self
                 .widgets
                 .controls

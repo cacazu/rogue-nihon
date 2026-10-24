@@ -48,6 +48,13 @@ pub(super) fn all_commands()->Vec<CommandDefinition> {
     }
     out
 }
+pub(super) fn control_command_id(control:&Control)->Option<&str> {
+    match s(&control.action["kind"]) {
+        "command"=>Some(s(&control.action["id"])),
+        "web"=>WEB_COMMANDS.iter().find(|c|c.id==s(&control.action["id"])).map(|c|web_id(c.action)),
+        _=>None,
+    }
+}
 pub(super) fn command(id:&str)->Option<CommandDefinition> {all_commands().into_iter().find(|c|c.id==id)}
 
 #[derive(Clone, Copy)]

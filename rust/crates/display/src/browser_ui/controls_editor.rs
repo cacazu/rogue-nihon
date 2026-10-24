@@ -43,7 +43,13 @@ impl BrowserUi {
                 else {editor.draft.assignments=defaults.assignments;editor.draft.contextual_search=defaults.contextual_search;}
                 editor.selected=None;
             },
-            "editor-select"=>self.controls_editor.as_mut().unwrap().selected=control.action["button"].as_u64().map(|n|n as usize),
+            "editor-select"=>{
+                let editor=self.controls_editor.as_mut().unwrap();
+                if editor.mode==EditMode::Assignment {
+                    editor.selected=control.action["button"].as_u64().map(|n|n as usize);
+                    self.scrolls.insert("control-picker".into(),0.);
+                }
+            },
             "editor-command"=>{
                 let id=s(&control.action["command"]).to_string();
                 let editor=self.controls_editor.as_mut().unwrap();
@@ -114,9 +120,11 @@ impl BrowserUi {
                                 let editor=self.controls_editor.as_mut().unwrap();
                                 if editor.mode==EditMode::Placement || drag.button==usize::MAX || target.button==usize::MAX {editor.draft.swap(drag.button,target.button);}
                             }
-                        } else if drag.button!=usize::MAX && self.controls_editor.as_ref().unwrap().mode==EditMode::Assignment {
-                            self.controls_editor.as_mut().unwrap().selected=Some(drag.button);
-                            self.scrolls.insert("control-picker".into(),0.);
+                        } else if drag.button!=usize::MAX {
+                            if let Some(control)=self.widgets.controls.iter().find(|c|c.action["kind"]=="editor-select"
+                                && c.action["button"].as_u64()==Some(drag.button as u64)).cloned() {
+                                self.editor_activate(&control,effects);
+                            }
                         }
                     }
                 }

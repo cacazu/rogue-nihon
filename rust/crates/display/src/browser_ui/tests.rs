@@ -130,19 +130,19 @@ fn desktop_and_phone_share_status_rows_gauges_and_icon_colors() {
     }
 }
 #[test]
-fn status_click_and_escape_are_local_on_desktop_and_phone() {
+fn status_click_uses_stats_and_escape_closes_locally_on_desktop_and_phone() {
     for width in [390., 1400.] {
-        let mut ui = BrowserUi::new(measure);
-        ui.render(model(), view(width, 844.));
+        let mut ui = BrowserUi::new(measure);let m=shortcut_model();
+        ui.render(m.clone(), view(width, 844.));
         let clicked = click(&mut ui, "status-open");
-        assert!(array(&clicked["effects"]).iter().all(|e| e["kind"] != "send"));
-        let output = ui.render(model(), view(width, 844.));
+        assert_eq!(held_sends(&clicked),vec![64]);
+        let output = ui.render(m.clone(), view(width, 844.));
         assert_eq!(output["diagnostics"]["scope"], "status");
         assert!(ui.widgets.text_runs.iter().any(|t| t["text"] == "16 / 16"));
         let escape = ui.event(json!({"type":"key","key":"Escape"}));
         assert_eq!(escape["consumed"], true);
         assert!(array(&escape["effects"]).is_empty());
-        assert_eq!(ui.render(model(),view(width,844.))["diagnostics"]["scope"], "game");
+        assert_eq!(ui.render(m.clone(),view(width,844.))["diagnostics"]["scope"], "game");
     }
 }
 #[test]
@@ -1610,4 +1610,71 @@ fn keyboard_hold_pointer_leave_and_old_release_do_not_end_keyboard_movement() {
         ui.event(json!({"type":stop,"id":1,"x":x,"y":y,"pointerType":"mouse","captured":true}));
         m["inputRequests"]=json!(2);ui.set_context(m);assert_eq!(held_sends(&held_tick(&mut ui,&timer)),vec![108|u64::from(rogue_contract::RG_EVENT_REPEAT)],"{stop} belongs to the old pointer source");
     }
+}
+
+#[test]
+fn nonmovement_editor_selection_has_the_same_mode_policy_for_click_and_enter() {
+    for mode in [controls_editor::EditMode::Placement,controls_editor::EditMode::Assignment] {
+        for keyboard in [false,true] {
+            let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();m["settingsOpen"]=json!(true);ui.render(m.clone(),view(1400.,1000.));ui.open_controls_editor(mode);ui.render(m,view(1400.,1000.));
+            let c=ui.widgets.controls.iter().find(|c|c.action["kind"]=="editor-select").unwrap().clone();let button=c.action["button"].as_u64().unwrap() as usize;
+            if keyboard {ui.widgets.focus=c.id.clone();ui.event(json!({"type":"key","key":"Enter"}));} else {let x=c.rect.x+c.rect.w/2.;let y=c.rect.y+c.rect.h/2.;ui.event(json!({"type":"down","id":1,"x":x,"y":y,"button":0,"primary":true,"pointerType":"mouse"}));ui.event(json!({"type":"up","id":1,"x":x,"y":y,"captured":true,"pointerType":"mouse"}));}
+            assert_eq!(ui.controls_editor.as_ref().unwrap().selected,if mode==controls_editor::EditMode::Assignment {Some(button)}else{None},"keyboard={keyboard}");
+        }
+    }
+}
+#[test]
+fn nonmovement_theme_open_focus_navigation_and_confirmation_use_current_value() {
+    let themes=crate::theme::Theme::options();assert!(themes.len()>1);let current=themes[1].0;let next=themes[2%themes.len()].0;
+    let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();m["settingsOpen"]=json!(true);m["theme"]=json!(current);ui.render(m.clone(),view(1400.,1400.));
+    let selector=ui.widgets.controls.iter().find(|c|c.id=="select-theme").unwrap().clone();let mut effects=Vec::new();ui.activate(&selector,&Value::Null,&mut effects);assert_eq!(ui.widgets.focus,format!("select-theme-{current}"));ui.render(m.clone(),view(1400.,1400.));
+    let chosen=ui.event(json!({"type":"key","key":"Enter"}));assert!(array(&chosen["effects"]).iter().any(|e|e["kind"]=="select"&&e["id"]=="theme"&&e["value"]==current));
+    ui.render(m.clone(),view(1400.,1400.));ui.activate(&selector,&Value::Null,&mut Vec::new());ui.render(m.clone(),view(1400.,1400.));ui.event(json!({"type":"key","key":"ArrowDown"}));assert_eq!(ui.widgets.focus,format!("select-theme-{next}"));
+    let cancel=ui.event(json!({"type":"key","key":"Escape"}));assert!(array(&cancel["effects"]).is_empty());assert_eq!(ui.model["theme"],current);
+}
+#[test]
+fn nonmovement_modal_visible_web_commands_accept_typed_bindings_and_aliases() {
+    use keybindings::KeyBinding;
+    for event in [json!({"key":"F8","ctrlKey":true}),json!({"key":"F9","altKey":true,"shiftKey":true}),json!({"key":"F10","shiftKey":true}),json!({"key":"PageUp","code":"Numpad9"})] {
+        let mut ui=BrowserUi::new(measure);ui.controls_preferences.bindings.insert("web.settings".into(),vec![KeyBinding{key:"F8".into(),ctrl:true,alt:false,shift:false},KeyBinding{key:"F9".into(),ctrl:false,alt:true,shift:true},KeyBinding{key:"F10".into(),ctrl:false,alt:false,shift:true},KeyBinding::plain("Numpad9")]);
+        ui.controls_preferences.bindings.insert("game.move-up-right".into(),vec![KeyBinding::plain("u"),KeyBinding::plain("PageUp")]);
+        let mut m=shortcut_model();m["input"]=json!({"kind":"confirm","id":"input.test"});m["frame"]["ui"]["input"]=m["input"].clone();m["frame"]["ui"]["window"]=crate::game_window::render(&m["frame"]["ui"],"ja");ui.render(m,view(1400.,1000.));
+        let control=ui.widgets.controls.iter().find(|c|c.id=="settings-toggle").unwrap().clone();assert!(!control.disabled);let mut clicked=Vec::new();ui.activate(&control,&Value::Null,&mut clicked);
+        let mut key=event.clone();key["type"]=json!("key");let got=ui.event(key);assert_eq!(got["effects"],json!(clicked),"{event}");
+    }
+}
+#[test]
+fn nonmovement_status_header_uses_the_same_stats_command_and_availability() {
+    for coarse in [false,true] {
+        let mut ui=BrowserUi::new(measure);let m=shortcut_model();let mut v=view(if coarse {390.}else{1400.},1000.);v["coarse"]=json!(coarse);ui.render(m.clone(),v.clone());
+        let clicked=click(&mut ui,"status-open");assert_eq!(held_sends(&clicked),vec![64]);assert!(ui.status_open);
+        let mut key_ui=BrowserUi::new(measure);key_ui.render(m.clone(),v.clone());let keyed=key_ui.event(json!({"type":"key","key":"@"}));assert_eq!(held_sends(&keyed),held_sends(&clicked));assert!(key_ui.status_open);
+        let mut direction=m;direction["input"]=json!({"kind":"direction"});direction["frame"]["ui"]["input"]=direction["input"].clone();direction["frame"]["ui"]["movement_direction"]=json!(true);ui.status_open=false;ui.render(direction,v);
+        assert!(!ui.widgets.controls.iter().any(|c|c.id=="status-open"&&!c.disabled));ui.event(json!({"type":"key","key":"@"}));assert!(!ui.status_open);
+    }
+}
+
+#[test]
+fn nonmovement_modal_focused_choices_keep_priority_over_unmodified_command_aliases() {
+    let mut ui=BrowserUi::new(measure);ui.controls_preferences.bindings.insert("web.settings".into(),vec![keybindings::KeyBinding::plain("Enter")]);
+    let mut m=shortcut_model();m["input"]=json!({"kind":"confirm","id":"input.test"});m["frame"]["ui"]["input"]=m["input"].clone();m["frame"]["ui"]["window"]=crate::game_window::render(&m["frame"]["ui"],"ja");ui.render(m,view(1400.,1000.));
+    let choice=ui.widgets.controls.iter().find(|c|c.id=="window-121").unwrap().clone();ui.widgets.focus=choice.id;
+    let result=ui.event(json!({"type":"key","key":"Enter"}));assert_eq!(result["effects"],json!([choice.action]),"Explicitly focused C choices keep their Enter activation");
+}
+
+#[test]
+fn nonmovement_modal_typed_commands_reject_wrong_modifiers_and_repeated_web_toggles() {
+    let mut ui=BrowserUi::new(measure);ui.controls_preferences.bindings.insert("web.settings".into(),vec![keybindings::KeyBinding::plain("F8")]);
+    let mut m=shortcut_model();m["input"]=json!({"kind":"confirm","id":"input.test"});m["frame"]["ui"]["input"]=m["input"].clone();m["frame"]["ui"]["window"]=crate::game_window::render(&m["frame"]["ui"],"ja");ui.render(m,view(1400.,1000.));ui.widgets.focus="window-121".into();
+    for event in [json!({"type":"key","key":"F8","shiftKey":true}),json!({"type":"key","key":"F8","repeat":true}),json!({"type":"key","key":"F8","native":"command-key"})] {
+        assert!(!array(&ui.event(event)["effects"]).iter().any(|e|e["kind"]=="invoke"));
+    }
+    assert!(!held_sends(&ui.event(json!({"type":"key","key":"Enter","ctrlKey":true}))).contains(&121),"Ctrl+Enter must not activate the focused literal choice");
+}
+
+#[test]
+fn nonmovement_modal_preserves_control_order_when_a_command_alias_matches_a_c_choice() {
+    let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();m["input"]=json!({"kind":"confirm","id":"input.test"});m["frame"]["ui"]["input"]=m["input"].clone();m["frame"]["ui"]["window"]=crate::game_window::render(&m["frame"]["ui"],"ja");ui.render(m.clone(),view(1400.,1000.));
+    let choice=ui.widgets.controls.iter().find(|c|c.id=="window-121").unwrap().clone();let alias=choice.shortcut.clone().unwrap();ui.controls_preferences.bindings.insert("web.settings".into(),vec![keybindings::KeyBinding::plain(&alias)]);ui.render(m,view(1400.,1000.));
+    let result=ui.event(json!({"type":"key","key":alias}));assert_eq!(result["effects"],json!([choice.action]),"A later header command cannot steal the earlier C choice alias");
 }

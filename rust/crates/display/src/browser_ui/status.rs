@@ -159,12 +159,10 @@ impl BrowserUi {
             }
         }
         self.widgets.end_clip();
-        self.widgets.hit_target(
-            "status-open",
-            &self.t("status.title"),
-            rect,
-            json!({"kind":"status","open":true}),
-        );
+        let available=self.command_available("game.stats");
+        self.widgets.hit_target("status-open",&self.t("status.title"),rect,
+            json!({"kind":"command","id":"game.stats"}));
+        if let Some(control)=self.widgets.controls.last_mut() {control.disabled=!available;}
         self.hud.layout = json!({"row":rect,"rows":[top,bottom],"metrics":["depth","hp","strength","hunger","level","experience","armor","gold"],
             "items":{"depth":depth_cell,"armor":armor_cell,"hunger":hunger_cell,"strength":strength_cell,"gold":gold_cell},
             "hp":{"rect":hp_gauge,"current":current_hp,"maximum":max_hp,"progress":hp_progress,"label":hp_label},

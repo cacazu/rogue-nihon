@@ -18,9 +18,12 @@ impl BrowserUi {
         }
     }
 
+    pub(super) fn dropdown_value(&self, id: &str) -> &str {
+        let value=s(&self.model[match id {"language"=>"language","theme"=>"theme",_=>"displayMode"}]);
+        if id=="theme" {crate::theme::Theme::named(value).id()} else {value}
+    }
     fn dropdown_label(&self, id: &str) -> String {
-        let value = s(&self.model[match id { "language" => "language", "theme" => "theme", _ => "displayMode" }]);
-        let value = if id == "theme" { crate::theme::Theme::named(value).id() } else { value };
+        let value = self.dropdown_value(id);
         self.dropdown_options(id)
             .into_iter()
             .find(|(key, _)| *key == value)
@@ -112,8 +115,7 @@ impl BrowserUi {
             json!({"kind":"dropdown-close"}),
         );
         self.widgets.box_rect(rect, PANEL, Some(LINE), 0.);
-        let selected = s(&self.model[match id.as_str() { "language" => "language", "theme" => "theme", _ => "displayMode" }])
-        .to_string();
+        let selected = self.dropdown_value(&id).to_string();
         for (index, (value, label)) in options.into_iter().enumerate() {
             self.control(
                 &format!("select-{id}-{value}"),
@@ -170,8 +172,7 @@ impl BrowserUi {
                     })
                     .cloned()
                 {
-                    self.dropdown.clear();
-                    effects.push(json!({"kind":"select","id":control.action["id"],"value":control.action["value"]}));
+                    self.activate(&control,&Value::Null,effects);
                 }
             }
             _ => {}
