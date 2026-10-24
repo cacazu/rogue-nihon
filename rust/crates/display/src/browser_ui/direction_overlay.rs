@@ -22,6 +22,22 @@ pub(super) struct DirectionOrigin {
     pub request:u64,
 }
 impl BrowserUi {
+    /// Both map pads use the same direction intent, key caption and highlight.
+    pub(super) fn direction_control(&mut self,id:&str,key:u32,label:&str,rect:Rect) {
+        let pc=self.pc_controls();
+        let direction=b(&self.model["frame"]["ui"]["movement_direction"]);
+        let emitted=self.movement_key(key);
+        let shortcut=commands::key_id(key).and_then(|id|self.command_shortcut(id));
+        self.control(id,label,rect,json!({"kind":"send","key":emitted}),
+            ControlStyle{size:if key==46 {17.}else{26.},custom:pc,key:Some(json!(emitted)),throw_direction:direction,shortcut:shortcut.clone(),..Default::default()});
+        if pc {
+            let color=if direction {"@background"}else{"@button.text"};
+            self.widgets.single_line(label,Rect::new(rect.x,rect.y+2.,rect.w,27.),
+                LineStyle{text:TextStyle::new(if key==46 {15.}else{24.},color,false),center:true,ellipsis:false},self.measure);
+            self.widgets.fitted_line(shortcut.as_deref().unwrap_or(""),Rect::new(rect.x+1.,rect.y+rect.h-18.,rect.w-2.,15.),
+                LineStyle{text:TextStyle::new(12.,color,false),center:true,ellipsis:false},self.measure);
+        }
+    }
     pub(super) fn remember_direction_origin(&mut self,control:&Control) {
         if self.keyboard_dispatch || !self.pc_controls() {return;}
         if control.action["key"]==27 {self.direction_origin=None;return;}
@@ -58,8 +74,31 @@ impl BrowserUi {
             let key=n(&direction["key"]) as u32;
             if key==46 {continue;}
             let rect=Rect::new(pad.x+n(&direction["column"])*58.,pad.y+n(&direction["row"])*58.,52.,52.);
-            self.control(&format!("touch-{}",char::from_u32(key).unwrap()),s(&direction["text"]),rect,json!({"kind":"send","key":key}),ControlStyle{size:26.,key:Some(json!(key)),throw_direction:true,..Default::default()});
+            self.direction_control(&format!("touch-{}",char::from_u32(key).unwrap()),key,s(&direction["text"]),rect);
         }
         self.control("pc-cancel",&self.t("action.cancel_short"),Rect::new(pad.x+58.,pad.y+58.,52.,52.),json!({"kind":"send","key":27}),ControlStyle{size:17.,key:Some(json!(27)),shortcut:self.pc_shortcut("Escape"),..Default::default()});
+    }
+}
+
+
+#[cfg(test)]
+mod direction_contract_tests {
+    use super::*;
+    fn measure(text:&str,size:f64,_bold:bool,_mono:bool)->TextSize {TextSize{width:text.chars().count() as f64*size*0.55,ascent:0.,descent:size}}
+    #[test]
+    fn pc_direction_selector_exposes_and_paints_each_direction_shortcut() {
+        for width in [320.,390.,700.,1400.] {
+            let mut ui=BrowserUi::new(measure);ui.width=width;ui.height=900.;ui.view=json!({"coarse":false});
+            ui.model=json!({"running":true,"language":"ja","input":{"kind":"direction"},"frame":{"ui":{"mode":"game","input":{"kind":"direction"},"movement_direction":true}}});
+            ui.model["frame"]["ui"]["map_controls"]=crate::game_window::map_controls(&ui.model["frame"]["ui"],false);
+            ui.draw_desktop_direction();
+            for letter in ['y','k','u','h','l','b','j','n'] {
+                let c=ui.widgets.controls.iter().find(|c|c.id==format!("touch-{letter}")).unwrap();
+                assert_eq!(c.shortcut.as_deref(),Some(letter.to_string().as_str()),"{width}: {letter}");
+                assert_eq!(c.action["key"],json!(letter as u32));
+                assert!(ui.widgets.commands.iter().any(|c|c["op"]=="text"&&c["text"]==letter.to_string()&&c["color"]==ui.widgets.theme.color("@background")),"The highlighted pad paints its real key: {letter}");
+            }
+            assert_eq!(ui.widgets.controls.iter().find(|c|c.id=="pc-cancel").unwrap().shortcut.as_deref(),Some("Escape"));
+        }
     }
 }

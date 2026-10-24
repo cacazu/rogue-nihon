@@ -2,22 +2,26 @@
 use super::*;
 
 impl BrowserUi {
+    pub(super) fn history_hint_width(&self)->f64 {
+        self.command_shortcut("web.history").map(|hint|((self.measure)(&hint,13.,false,false).width+8.).max(22.)).unwrap_or(0.)
+    }
     pub(super) fn history_target(&mut self, rect: Rect) {
-        self.widgets.hit_target(
-            "history-open",
-            &self.t("mobile.log"),
-            rect,
-            json!({"kind":"web","id":web_command(WebAction::History).id}),
-        );
-        if self.width >= 700. && !b(&self.view["coarse"]) {
-            if let Some(control) = self.widgets.controls.last_mut() {
-                control.shortcut = Some(web_command(WebAction::History).key.into());
-                control.label = Widgets::shortcut_label(&control.label, control.shortcut.as_deref());
-            }
-            let badge = Rect::new(rect.x + rect.w - 26., rect.y + 4., 22., 20.);
-            self.widgets.box_rect(badge, BG, Some(LINE), 0.);
-            self.widgets.single_line(web_command(WebAction::History).key, badge,
-                LineStyle { text:TextStyle::new(13.,TEXT,false),center:true,ellipsis:false },self.measure);
+        let shortcut=self.command_shortcut("web.history");
+        let disabled=!self.web_available(WebAction::History);
+        self.widgets.hit_target("history-open",&self.t("mobile.log"),rect,
+            json!({"kind":"web","id":web_command(WebAction::History).id}));
+        if let Some(control)=self.widgets.controls.last_mut() {
+            control.disabled=disabled;control.shortcut=shortcut.clone();
+            control.label=Widgets::shortcut_label(&control.label,shortcut.as_deref());
+        }
+        if let Some(shortcut)=shortcut {
+            self.widgets.begin_control_content(disabled);
+            let width=self.history_hint_width().min((rect.w-8.).max(1.));
+            let badge=Rect::new(rect.x+rect.w-width-4.,rect.y+4.,width,20.);
+            self.widgets.box_rect(badge,BG,Some(LINE),0.);
+            self.widgets.fitted_line(&shortcut,badge,
+                LineStyle{text:TextStyle::new(13.,TEXT,false),center:true,ellipsis:false},self.measure);
+            self.widgets.end_control_content();
         }
     }
 

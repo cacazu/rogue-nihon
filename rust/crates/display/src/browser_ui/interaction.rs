@@ -583,6 +583,7 @@ impl BrowserUi {
             self.widgets.focus = format!("inventory-tab-{}",tabs[next]);
             return true;
         }
+        if self.direction_key(e,effects) {return true;}
         if self.bound_command_key(e,effects) {return true;}
         if key == "Tab" {
             let modal =

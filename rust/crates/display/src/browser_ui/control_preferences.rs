@@ -100,7 +100,7 @@ impl BrowserUi {
         self.controls_preferences=prefs;
     }
     pub(super) fn control_form(&self)->ControlForm {
-        if self.width<700. || b(&self.view["coarse"]) {ControlForm::Phone} else {ControlForm::Desktop}
+        if self.compact_layout() {ControlForm::Phone} else {ControlForm::Desktop}
     }
     pub(super) fn dock_profile(&self,form:ControlForm)->ControlProfile {
         self.controls_editor.as_ref().filter(|e|e.form==form).map(|e|e.draft.clone()).unwrap_or_else(||self.controls_preferences.profile(form).clone())

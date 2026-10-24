@@ -46,7 +46,7 @@ impl BrowserUi {
     }
 
     pub(super) fn web_available(&self, action: WebAction) -> bool {
-        if action == WebAction::FullMap && b(&self.model["frame"]["ui"]["movement_direction"]) { return false; }
+        if b(&self.model["frame"]["ui"]["movement_direction"]) && (self.pc_controls() || action == WebAction::FullMap) { return false; }
         if matches!(action, WebAction::Movement | WebAction::Fire | WebAction::Repeat | WebAction::RepeatCount)
             && !self.command_ready() { return false; }
         action != WebAction::Fire || (b(&self.model["frame"]["ui"]["ranged"]["bow"])
@@ -91,7 +91,7 @@ impl BrowserUi {
             }
             WebAction::Commands => {
                 self.stop_hold();
-                if self.width < 700. || b(&self.view["coarse"]) {
+                if !self.pc_controls() {
                     self.mobile_operations = !self.mobile_operations;
                     self.scrolls.insert("mobile-operations".into(), 0.);
                 } else {

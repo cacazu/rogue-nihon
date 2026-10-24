@@ -148,13 +148,11 @@ impl BrowserUi {
             &self.t("action.settings"),
             Rect::new(self.width - 56., 8., TARGET, TARGET),
             ControlStyle {
-                icon: Some("settings"),
-                icon_size: 22.,
+                icon: Some("settings-expand"),
+                icon_size: 40.,
                 ..Default::default()
             },
         );
-        self.widgets
-            .icon("expand", Rect::new(self.width - 52., 12., 40., 40.), TEXT);
         if self.mobile_operations && !b(&self.model["settingsOpen"]) {
             self.mobile_operations_sheet(game);
         }
@@ -165,15 +163,15 @@ impl BrowserUi {
 
     fn mobile_message(&mut self, y: f64) {
         // The message area opens history without a game command.
-        let width = self.width - 24.;
+        let width = self.width - 24. - if self.pc_controls() {self.history_hint_width()+8.}else{0.};
         self.history_target(Rect::new(0., y, self.width, 64.));
         let mut lines = Vec::new();
         for entry in array(&self.model["entries"])
             .iter()
             .rev()
-            .filter(|e| matches!(s(&e["source"]), "game" | "system") && !b(&e["transient_prompt"]) && !b(&e["mobile_keyboard_hint"]) && !s(&e["text"]).trim().is_empty())
+            .filter(|e| matches!(s(&e["source"]), "game" | "system") && !b(&e["transient_prompt"]) && (self.pc_controls() || !b(&e["mobile_keyboard_hint"])) && !s(&e["text"]).trim().is_empty())
         {
-            for line in self.log_lines(&self.log_runs(entry,true),width,FONT).into_iter().rev() {
+            for line in self.log_lines(&self.log_runs(entry,!self.pc_controls()),width,FONT).into_iter().rev() {
                 if !line.is_empty() {
                     lines.push(line);
                 }
@@ -298,13 +296,8 @@ impl BrowserUi {
             self.text(&self.t(title), viewport.x, row + 6., viewport.w, FONT, ACCENT, true);
             row += 36.;
             for (id, label, action, key, web) in operations {
-                let ui = &self.model["frame"]["ui"];
-                let available = self.command_ready() && match key {
-                    Some(60) => b(&ui["map_controls"]["stairs"]["ascend"]),
-                    Some(62) => b(&ui["map_controls"]["stairs"]["descend"]),
-                    Some(44) => !b(&ui["player_state"]["levitating"]) && self.model["frame"]["map_player_surface"]["tile"].as_u64().is_some_and(|tile| (14..=22).contains(&tile)),
-                    _ => true,
-                } && web.is_none_or(|action| self.web_available(action));
+                let available=if let Some(action)=web {self.command_ready() && self.command_available(commands::web_id(*action))}
+                    else {key.and_then(|key|commands::key_id(key)).is_some_and(|id|self.command_available(id))};
                 self.control(id, label, Rect::new(viewport.x, row, viewport.w, TARGET), action.clone(),
                     ControlStyle { size:FONT, left:true, role:ControlRole::Command,
                         key:key.map(|key| json!(key)), disabled:!available, keep_offscreen:true,

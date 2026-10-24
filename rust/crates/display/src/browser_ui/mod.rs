@@ -130,6 +130,7 @@ pub struct BrowserUi {
 }
 impl BrowserUi {
     pub(super) fn pc_controls(&self)->bool {!b(&self.view["coarse"])}
+    pub(super) fn compact_layout(&self)->bool {self.width<700. || !self.pc_controls()}
     /// Synchronize host lifecycle observations before an input event, even when
     /// its requested repaint has not run yet. Interaction rules stay in Rust.
     pub fn set_context(&mut self, model: Value) {
@@ -318,14 +319,14 @@ impl BrowserUi {
         let old_size=(self.width,self.height);
         self.width = n(&self.view["width"]).max(240.);
         self.height = n(&self.view["height"]).max(240.);
-        let mobile = self.width < 700. || b(&self.view["coarse"]);
+        let mobile = self.compact_layout();
         let form=self.control_form();
         if self.controls_editor.as_ref().is_some_and(|editor|editor.form!=form) {self.controls_editor=None;}
         if old_size!=(self.width,self.height) {
             if let Some(editor)=self.controls_editor.as_mut() {editor.drag=None;}
             self.widgets.pressed.clear();
         }
-        self.widgets.fit_control_captions = b(&self.view["coarse"]);
+        self.widgets.fit_control_captions = self.compact_layout();
         if !self.item_selection_visible() { self.selection_context.clear(); }
         let generation = n(&self.model["generation"]) as u64;
         if b(&self.model["running"]) && generation != self.mobile_generation {
@@ -345,7 +346,7 @@ impl BrowserUi {
         if !b(&self.model["settingsOpen"]) && !b(&self.model["topOpen"]) {
             self.dropdown.clear();
         }
-        if !mobile || b(&self.model["topOpen"]) || !b(&self.model["running"]) {
+        if self.pc_controls() || b(&self.model["topOpen"]) || !b(&self.model["running"]) {
             self.mobile_operations = false;
         }
         if b(&self.model["topOpen"]) || !b(&self.model["running"]) {

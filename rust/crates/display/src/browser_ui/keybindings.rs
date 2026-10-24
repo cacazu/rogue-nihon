@@ -189,3 +189,99 @@ impl BrowserUi {
         default_bindings().values().any(|keys|keys.contains(&key))
     }
 }
+
+
+impl BrowserUi {
+    /// Resolve only direction bindings while C owns a get_dir() wait.
+    pub(super) fn direction_key(&mut self,event:&Value,effects:&mut Vec<Value>)->bool {
+        if !self.pc_controls() || !b(&self.model["running"]) || !b(&self.model["frame"]["ui"]["movement_direction"])
+            || b(&self.model["topOpen"]) || b(&self.model["starting"]) || b(&self.model["savePending"])
+            || b(&self.model["returnAfterEnd"]) || !s(&event["native"]).is_empty()
+            || self.commands_open || self.mobile_operations || self.history_open || self.status_open
+            || self.mobile_repeat_open || !self.dropdown.is_empty() || b(&self.model["settingsOpen"]) {return false;}
+        let Some(key)=KeyBinding::from_event(event) else{return false;};
+        if key.key=="Escape" {return false;}
+        let directions:Vec<_>=commands::all_commands().into_iter().filter_map(|c|match c.action {
+            commands::CommandAction::Direction(direction)=>Some((c.id,direction)),_=>None,
+        }).collect();
+        let send=|effects:&mut Vec<Value>,direction:u32|effects.push(json!({"kind":"send","key":direction | if b(&event["repeat"]) {rogue_contract::RG_EVENT_REPEAT} else {0},"redraw":false}));
+        // Exact configured aliases, including Ctrl/Alt and focus keys, take priority.
+        if let Some((_,direction))=directions.iter().find(|(id,_)|self.command_bindings(id).contains(&key)) {
+            send(effects,*direction);return true;
+        }
+        // Preserve original Shift/Ctrl direction variants only while their base
+        // alias still belongs to that direction. Removed aliases cannot revive.
+        if !key.alt {
+            let mut base=key.clone();base.ctrl=false;base.shift=false;
+            if base.key=="Backspace" {base.key="h".into();}
+            else if base.key.len()==1 {base.key=base.key.to_ascii_lowercase();}
+            let defaults=default_bindings();
+            if let Some((id,direction))=directions.iter().find(|(id,_)|defaults.get(*id).is_some_and(|keys|keys.contains(&base))) {
+                if self.command_bindings(id).contains(&base) {send(effects,*direction);}
+                return true;
+            }
+        }
+        false
+    }
+}
+
+#[cfg(test)]
+mod direction_binding_tests {
+    use super::*;
+    fn measure(text:&str,size:f64,_bold:bool,_mono:bool)->TextSize {TextSize{width:text.len() as f64*size*0.55,ascent:0.,descent:size}}
+    fn ui()->BrowserUi {
+        let mut ui=BrowserUi::new(measure);ui.view=json!({"coarse":false});
+        ui.model=json!({"running":true,"input":{"kind":"direction"},"frame":{"ui":{"movement_direction":true}}});ui
+    }
+    fn expect(ui:&mut BrowserUi,event:Value,key:u32) {
+        let mut effects=Vec::new();assert!(ui.direction_key(&event,&mut effects),"{event}");
+        assert_eq!(effects,vec![json!({"kind":"send","key":key,"redraw":false})]);
+    }
+    #[test]
+    fn direction_bindings_send_raw_directions_for_every_alias_and_movement_mode() {
+        for mode in 0..3 {
+            let mut ui=ui();ui.mobile_movement=mode;
+            for (letter,arrow,pad) in [('h',"ArrowLeft",4),('j',"ArrowDown",2),('k',"ArrowUp",8),('l',"ArrowRight",6),('y',"Home",7),('u',"PageUp",9),('b',"End",1),('n',"PageDown",3)] {
+                for event in [json!({"key":letter.to_string()}),json!({"key":arrow}),json!({"key":pad.to_string(),"code":format!("Numpad{pad}")}),json!({"key":arrow,"code":format!("Numpad{pad}")})] {expect(&mut ui,event,letter as u32);}
+                expect(&mut ui,json!({"key":letter.to_ascii_uppercase().to_string(),"shiftKey":true}),letter as u32);
+                expect(&mut ui,json!({"key":letter.to_string(),"ctrlKey":true}),letter as u32);
+                expect(&mut ui,json!({"key":arrow,"ctrlKey":true,"shiftKey":true}),letter as u32);
+            }
+            expect(&mut ui,json!({"key":"h","repeat":true}),104|rogue_contract::RG_EVENT_REPEAT);
+        }
+    }
+    #[test]
+    fn direction_bindings_honor_custom_modifiers_and_block_removed_default_aliases() {
+        let mut ui=ui();
+        ui.controls_preferences.bindings.insert("game.move-left".into(),vec![KeyBinding::plain("F2"),KeyBinding{key:"F3".into(),ctrl:true,alt:false,shift:false},KeyBinding{key:"F4".into(),ctrl:false,alt:true,shift:false}]);
+        for event in [json!({"key":"F2"}),json!({"key":"F3","ctrlKey":true}),json!({"key":"F4","altKey":true})] {expect(&mut ui,event,104);}
+        for event in [json!({"key":"h"}),json!({"key":"H","shiftKey":true}),json!({"key":"h","ctrlKey":true}),json!({"key":"ArrowLeft"}),json!({"key":"ArrowLeft","ctrlKey":true}),json!({"key":"4","code":"Numpad4"})] {
+            let mut effects=Vec::new();assert!(ui.direction_key(&event,&mut effects));assert!(effects.is_empty(),"Removed alias must not fall through: {event}");
+        }
+        ui.controls_preferences.bindings.insert("game.move-left".into(),vec![KeyBinding::plain("Tab"),KeyBinding::plain("Enter"),KeyBinding::plain(" ")]);
+        for key in ["Tab","Enter"," "] {expect(&mut ui,json!({"key":key}),104);}
+        // A custom exact modifier binding wins before a legacy direction variant.
+        ui.controls_preferences.bindings.insert("game.move-right".into(),vec![KeyBinding{key:"h".into(),ctrl:true,alt:false,shift:false}]);
+        expect(&mut ui,json!({"key":"h","ctrlKey":true}),108);
+    }
+    #[test]
+    fn direction_backspace_legacy_cannot_revive_a_removed_h_alias() {
+        let mut ui=ui();expect(&mut ui,json!({"key":"Backspace"}),104);
+        ui.controls_preferences.bindings.insert("game.move-left".into(),vec![KeyBinding::plain("F2")]);
+        let mut effects=Vec::new();assert!(ui.direction_key(&json!({"key":"Backspace"}),&mut effects));assert!(effects.is_empty());
+        ui.controls_preferences.bindings.insert("game.move-right".into(),vec![KeyBinding::plain("Backspace")]);
+        expect(&mut ui,json!({"key":"Backspace"}),108);
+    }
+    #[test]
+    fn direction_bindings_leave_cancellation_other_waits_and_background_commands_alone() {
+        for event in [json!({"key":"Escape"}),json!({"key":"f"}),json!({"key":"t"}),json!({"key":"C"}),json!({"key":"O"}),json!({"key":"G"})] {
+            let mut ui=ui();let mut effects=Vec::new();assert!(!ui.direction_key(&event,&mut effects));assert!(effects.is_empty());
+        }
+        for field in ["coarse","settingsOpen","commands","native","starting","savePending","topOpen","returnAfterEnd"] {
+            let mut ui=ui();let mut event=json!({"key":"h"});
+            match field {"coarse"=>ui.view["coarse"]=json!(true),"commands"=>ui.commands_open=true,"native"=>event["native"]=json!("prompt-text"),other=>ui.model[other]=json!(true)}
+            let mut effects=Vec::new();assert!(!ui.direction_key(&event,&mut effects),"{field}");assert!(effects.is_empty());
+        }
+        let mut ui=ui();ui.model["frame"]["ui"]["movement_direction"]=json!(false);let mut effects=Vec::new();assert!(!ui.direction_key(&json!({"key":"h"}),&mut effects));assert!(effects.is_empty());
+    }
+}

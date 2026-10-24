@@ -189,7 +189,12 @@ impl BrowserUi {
         self.controls_preferences.bindings.get(id).cloned().unwrap_or_else(||keybindings::default_bindings().remove(id).unwrap_or_default())
     }
     pub(super) fn command_shortcut(&self,id:&str)->Option<String> {
-        if b(&self.view["coarse"]) {None} else {self.command_bindings(id).first().map(keybindings::KeyBinding::label)}
+        if !self.pc_controls() {return None;}
+        let keys=self.command_bindings(id);
+        keys.first().map(keybindings::KeyBinding::label).or_else(|| {
+            if id!="web.context" {return None;}
+            key_id(self.mobile_context_command().0).and_then(|resolved|self.command_bindings(resolved).first().map(keybindings::KeyBinding::label))
+        })
     }
     pub(super) fn command_label(&self,id:&str)->String {
         let Some(c)=command(id) else{return String::new();};

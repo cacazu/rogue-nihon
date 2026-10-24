@@ -29,7 +29,7 @@ impl BrowserUi {
         b(&ui["inventory"]) && ui["window"]["kind"] == "menu"
     }
     pub(super) fn item_selection_visible(&self) -> bool {
-        self.width >= 700. && !b(&self.view["coarse"])
+        self.pc_controls()
             && self.model["frame"]["ui"]["input"]["kind"] == "item"
     }
     pub(super) fn inventory_list_visible(&self) -> bool {

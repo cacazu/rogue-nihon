@@ -340,16 +340,11 @@ impl BrowserUi {
                         let emitted=self.movement_key(key);
                         let r=Rect::new(rect.x+col as f64*spacing,rect.y+row as f64*spacing,cell,cell);
                         let label=if key==46 {self.t("mobile.wait")}else{text.into()};
-                        self.control(&format!("touch-{}",char::from_u32(key).unwrap()),&label,r,
-                            if editing {json!({"kind":"editor-pad"})}else{json!({"kind":"send","key":emitted})},
-                            ControlStyle{size:if key==46 {17.}else{26.},custom:self.pc_controls() && !editing,key:Some(json!(emitted)),throw_direction:b(&self.model["frame"]["ui"]["movement_direction"]),shortcut:if editing {None}else{commands::key_id(key).and_then(|id|self.command_shortcut(id))},..Default::default()});
-                        if self.pc_controls() && !editing {
-                            self.widgets.single_line(&label,Rect::new(r.x,r.y+2.,r.w,27.),
-                                LineStyle{text:TextStyle::new(if key==46 {15.}else{24.},TEXT,false),center:true,ellipsis:false},self.measure);
-                            let hint=commands::key_id(key).and_then(|id|self.command_shortcut(id)).unwrap_or_default();
-                            self.widgets.fitted_line(&hint,Rect::new(r.x+1.,r.y+30.,r.w-2.,15.),
-                                LineStyle{text:TextStyle::new(12.,TEXT,false),center:true,ellipsis:false},self.measure);
-                        }
+                        let id=format!("touch-{}",char::from_u32(key).unwrap());
+                        if editing {
+                            self.control(&id,&label,r,json!({"kind":"editor-pad"}),
+                                ControlStyle{size:if key==46 {17.}else{26.},key:Some(json!(emitted)),..Default::default()});
+                        } else {self.direction_control(&id,key,&label,r);}
                     }
                     x+=pad_width;
                 },

@@ -62,7 +62,7 @@ impl BrowserUi {
         );
     }
     pub(super) fn draw_game(&mut self) {
-        let mobile = self.width < 700. || b(&self.view["coarse"]);
+        let mobile = self.compact_layout();
         let game = Rect::new(0., 0., self.width, self.height);
         let dock = self.mobile_controls && b(&self.model["running"])
             && !self.model["frame"]["ui"]["window"].is_object();
@@ -122,7 +122,7 @@ impl BrowserUi {
         }
         let f = self.model["frame"].clone();
         let ascii = self.model["displayMode"] == "ascii";
-        let size = if self.mobile_overview && (self.width < 700. || b(&self.view["coarse"])) {
+        let size = if self.mobile_overview && (self.compact_layout()) {
             16.
         } else {
             n(&self.model["tileSize"])
@@ -227,11 +227,11 @@ impl BrowserUi {
         let mut total = 0.;
         for e in array(&self.model["entries"]) {
             if b(&e["transient_prompt"])
-                || (self.width < 700. || b(&self.view["coarse"])) && b(&e["mobile_keyboard_hint"])
+                || !self.pc_controls() && b(&e["mobile_keyboard_hint"])
             {
                 continue;
             }
-            let mut runs = self.log_runs(e,self.width < 700. || b(&self.view["coarse"]));
+            let mut runs = self.log_runs(e,!self.pc_controls());
             if e["source"] == "system" { runs.insert(0,json!({"text":"ⓘ "})); }
             let lines = self.log_lines(&runs,width-8.,18.);
             let height = lines.len() as f64 * 30. + 8.;
@@ -242,7 +242,7 @@ impl BrowserUi {
     }
     pub(super) fn draw_log(&mut self, r: Rect) {
         self.widgets.box_rect(r, PANEL, Some(LINE), 0.);
-        let heading_image = self.width >= 700. && !b(&self.view["coarse"]) && !self.history_open;
+        let heading_image = !self.compact_layout() && !self.history_open;
         let mode = if self.model["displayMode"] == "pixels" { "pixels" } else { "tiles" };
         let manifest = tiles::manifest_ref(mode);
         let entry = self.hover_point.and_then(|(px,py)| {
@@ -330,8 +330,8 @@ impl BrowserUi {
         let inventory_list = self.inventory_list_visible();
         let inventory_browse = self.inventory_browse_visible();
         if inventory_list { self.sync_inventory_tabs(&ui); }
-        let mobile = self.width < 700. || b(&self.view["coarse"]);
-        let touch = b(&self.view["coarse"]);
+        let mobile = self.compact_layout();
+        let touch = !self.pc_controls();
         let w = if b(&d["map_view"]) { 920_f64 } else { 600_f64 }.min(self.width - 28.);
         let x = if !mobile && ui["input"]["kind"] == "direction" && !self.left_handed() {
             self.width - w - 14.
@@ -350,7 +350,7 @@ impl BrowserUi {
             rows.push((label, json!({"naming_effect_label":true}), height, total, false));
             total += height;
             for entry in naming_effects {
-                let lines = self.log_lines(&self.log_runs(&entry, mobile), inner - 8., font);
+                let lines = self.log_lines(&self.log_runs(&entry, !self.pc_controls()), inner - 8., font);
                 let height = lines.len() as f64 * line_h + 16.;
                 rows.push((String::new(), json!({"naming_effect":entry}), height, total, false));
                 total += height;
@@ -390,7 +390,7 @@ impl BrowserUi {
             {
                 continue;
             }
-            if mobile
+            if touch
                 && line["id"] == "ui.help.entry"
                 && matches!(
                     s(&line["args"][1]["value"]),
@@ -399,7 +399,7 @@ impl BrowserUi {
             {
                 continue;
             }
-            let text = if mobile && line["id"] == "ui.help.entry" {
+            let text = if touch && line["id"] == "ui.help.entry" {
                 self.mobile_help(s(&line["args"][1]["value"]))
             } else if touch && b(&line["selectable"]) && !s(&line["key"]).is_empty() {
                 let prefix = format!("{}) ", s(&line["key"]));
@@ -407,7 +407,7 @@ impl BrowserUi {
                     .strip_prefix(&prefix)
                     .unwrap_or(s(&line["text"]))
                     .to_string()
-            } else if mobile && s(&line["id"]).starts_with("help.") {
+            } else if touch && s(&line["id"]).starts_with("help.") {
                 self.mobile_help(s(&line["id"]))
             } else {
                 s(&line["text"]).to_string()
@@ -439,7 +439,7 @@ impl BrowserUi {
         }
         if ui["mode"] == "game"
             && !s(&d["message"]["text"]).is_empty()
-            && !(mobile
+            && !(touch
                 && matches!(
                     s(&ui["input"]["kind"]),
                     "direction" | "hand" | "help" | "discovery"
@@ -457,7 +457,7 @@ impl BrowserUi {
         }
         let field = if self.model["input"]["kind"] == "text" {
             Some("prompt-text")
-        } else if b(&d["key_entry"]) && (!mobile || self.model["input"]["kind"] == "symbol") {
+        } else if b(&d["key_entry"]) && (self.pc_controls() || self.model["input"]["kind"] == "symbol") {
             Some("command-key")
         } else {
             None

@@ -217,7 +217,7 @@ impl BrowserUi {
             effects.push(json!({"kind":"hold-timer","id":id,"delay":500}));
             return;
         }
-        if (self.width < 700. || b(&self.view["coarse"]) || control.id == "touch-.")
+        if (!self.pc_controls() || control.id == "touch-.")
             && control.id.starts_with("touch-")
             && control.id.len() == 7
             && !control.disabled

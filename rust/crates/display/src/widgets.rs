@@ -301,6 +301,12 @@ impl Widgets {
     pub fn icon(&mut self, name: &str, r: Rect, color: &str) -> Rect {
         let size = r.w.min(r.h);
         let r = Rect::new(r.x + (r.w - size) / 2., r.y + (r.h - size) / 2., size, size);
+        if name == "settings-expand" {
+            let gear = size * 0.55;
+            self.icon("settings", Rect::new(r.x + (size - gear) / 2., r.y + (size - gear) / 2., gear, gear), color);
+            self.icon("expand", r, color);
+            return r;
+        }
         let path=match name {
             "heart"=>"M12 21 3.5 12.5C-2 7 5 0 12 7C19 0 26 7 20.5 12.5Z".into(),
             // Lucide Lab stairs (ISC); see licenses/lucide-lab/LICENSE.
@@ -416,6 +422,8 @@ impl Widgets {
             } else {
                 20.
             };
+            // Keep the full icon above the shortcut line without moving small icons.
+            let size = size.min(r.w).min((r.h - if hint.is_some() { 16. } else { 0. }).max(0.));
             self.icon(
                 icon,
                 Rect::new(r.x + (r.w - size) / 2., r.y + (r.h - size - if hint.is_some() { 14. } else { 0. }) / 2., size, size),
@@ -593,5 +601,70 @@ impl Widgets {
             ),
             "@scrollbar.thumb",
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn measure(text: &str, size: f64, _: bool, _: bool) -> TextSize {
+        TextSize { width: text.chars().count() as f64 * size / 2., ascent: 0., descent: size }
+    }
+
+    fn settings_expand(shortcut: Option<&str>) -> Widgets {
+        let mut widgets = Widgets::default();
+        widgets.control("settings-toggle", "Settings", Rect::new(334., 8., 48., 48.),
+            json!({"kind":"web","id":"settings"}),
+            ControlStyle { icon: Some("settings-expand"), icon_size: 40.,
+                shortcut: shortcut.map(str::to_owned), ..Default::default() }, measure);
+        widgets
+    }
+
+    #[test]
+    fn settings_expand_preserves_the_phone_icons_and_control() {
+        let widgets = settings_expand(None);
+        let mut expected = Widgets::default();
+        expected.icon("settings", Rect::new(347., 21., 22., 22.), "@button.text");
+        expected.icon("expand", Rect::new(338., 12., 40., 40.), "@button.text");
+        let paths = |widgets: &Widgets| widgets.commands.iter()
+            .filter(|command| command["op"] == "path").cloned().collect::<Vec<_>>();
+        assert_eq!(paths(&widgets), paths(&expected), "The shared icon retains both existing phone shapes and coordinates");
+        assert_eq!(widgets.icons, expected.icons);
+        assert_eq!(widgets.controls.len(), 1);
+        assert_eq!(widgets.controls[0].rect, Rect::new(334., 8., 48., 48.));
+        assert_eq!(widgets.controls[0].action, json!({"kind":"web","id":"settings"}));
+        assert!(widgets.controls[0].shortcut.is_none());
+    }
+
+    #[test]
+    fn settings_expand_moves_both_icons_with_the_keyboard_shortcut() {
+        let phone = settings_expand(None);
+        let keyboard = settings_expand(Some("O"));
+        assert_eq!(keyboard.icons.len(), 2, "Both parts share the control content rectangle");
+        assert_eq!(phone.icons.len(), 2);
+        let control = keyboard.controls[0].rect;
+        let hint_top = control.y + control.h - 15.;
+        for icon in &keyboard.icons {
+            let rect: Rect = serde_json::from_value(icon["rect"].clone()).unwrap();
+            assert!((rect.x + rect.w / 2. - 358.).abs() < 1e-8);
+            assert!((rect.y + rect.h / 2. - 25.).abs() < 1e-8);
+            assert!(rect.x >= control.x && rect.y >= control.y);
+            assert!(rect.x + rect.w <= control.x + control.w);
+            assert!(rect.y + rect.h <= hint_top, "The icon stays above its shortcut line");
+        }
+        assert_eq!(keyboard.icons[1]["rect"], json!(Rect::new(342., 9., 32., 32.)));
+        assert_eq!(keyboard.controls[0].shortcut.as_deref(), Some("O"));
+        assert!(keyboard.text_runs.iter().any(|run| run["text"] == "O"));
+    }
+
+    #[test]
+    fn settings_expand_fitting_preserves_existing_small_icon_geometry() {
+        let mut widgets = Widgets::default();
+        widgets.control("settings-toggle", "Settings", Rect::new(334., 8., 48., 48.),
+            json!({"kind":"web","id":"settings"}),
+            ControlStyle { icon: Some("settings"), icon_size: 22.,
+                shortcut: Some("O".into()), ..Default::default() }, measure);
+        assert_eq!(widgets.icons[0]["rect"], json!(Rect::new(347., 14., 22., 22.)));
     }
 }

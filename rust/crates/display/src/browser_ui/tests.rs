@@ -556,7 +556,7 @@ fn hidden_pad_uses_pc_overlay_or_phone_dialog_without_changing_direction_keys() 
             ("PageDown", "Numpad3", rogue_contract::RG_KEY_PAGE_DOWN),
         ] {
             let result = ui.event(json!({"type":"key","key":key,"code":code}));
-            assert!(array(&result["effects"]).iter().any(|effect| effect["kind"] == "send" && effect["key"] == raw));
+            assert!(array(&result["effects"]).iter().any(|effect| effect["kind"] == "send" && effect["key"] == if coarse {raw}else if key=="PageUp" {117}else{110}));
         }
         ui.set_context(m.clone()); // input synchronization must retain this projection
         assert_eq!(ui.model["frame"]["ui"]["window"].is_object(),coarse);
@@ -640,7 +640,7 @@ fn selection_tabs_cover_each_original_purpose_and_preserve_browse_preferences() 
                 assert!(array(&result["effects"]).iter().any(|e| e["kind"]=="send" && e["key"]==expected));
             }
             assert_eq!(ui.inventory_preference(),preference,"selection cannot persist over browsing");
-            let mut mobile=BrowserUi::new(measure);mobile.render(m,view(390.,844.));
+            let mut mobile=BrowserUi::new(measure);let mut phone_view=view(390.,844.);phone_view["coarse"]=json!(true);mobile.render(m,phone_view);
             assert!(!mobile.widgets.controls.iter().any(|c| c.id.starts_with("inventory-tab-")));
         }
     }
@@ -935,7 +935,7 @@ fn physical_directions_follow_selected_mode_without_changing_other_inputs() {
     }
     let mut m=shortcut_model();m["frame"]["ui"]["movement_direction"]=json!(true);
     ui.render(m,view(1400.,1000.));ui.mobile_movement=2;
-    assert_eq!(ui.event(json!({"type":"key","key":"ArrowRight"}))["effects"],send(RG_KEY_RIGHT));
+    assert_eq!(ui.event(json!({"type":"key","key":"ArrowRight"}))["effects"],send(108));
 }
 
 #[test]
@@ -1314,4 +1314,93 @@ fn binding_capture_treats_modified_enter_as_a_candidate_until_plain_enter_confir
         assert!(ui.binding_capture.is_none());
         assert_eq!(ui.command_bindings("game.search"),vec![keybindings::KeyBinding::from_event(&event).unwrap()]);
     }
+}
+
+
+#[test]
+fn responsive_pc_context_shortcut_tracks_the_resolved_command_and_explicit_override() {
+    for (width,coarse) in [(390.,false),(699.,false),(700.,false),(390.,true)] {
+        for (key,hint,surface,ascend,descend) in [(115,"s",1,false,false),(62,">",1,false,true),(60,"<",1,true,false),(44,",",17,false,false),(94,"^",7,false,false)] {
+            let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();let mut v=view(width,900.);v["coarse"]=json!(coarse);
+            m["frame"]["map_player_surface"]=json!({"tile":surface});m["frame"]["ui"]["map_controls"]["stairs"]=json!({"ascend":ascend,"descend":descend});
+            ui.render(m.clone(),v.clone());let form=ui.control_form();ui.controls_preferences.profile_mut(form).assignments[1]="web.context".into();
+            ui.render(m.clone(),v.clone());let id=if width>=700. && !coarse {"pc-inventory"}else{"touch-action-action.inventory"};
+            let c=ui.widgets.controls.iter().find(|c|c.id==id).unwrap().clone();assert_eq!(c.shortcut.as_deref(),if coarse {None}else{Some(hint)});
+            let mut effects=Vec::new();ui.activate(&c,&Value::Null,&mut effects);assert_eq!(effects,vec![json!({"kind":"send","key":key})]);
+            ui.controls_preferences.bindings.insert("web.context".into(),vec![keybindings::KeyBinding::plain("F20")]);
+            ui.render(m,v);let c=ui.widgets.controls.iter().find(|c|c.id==id).unwrap();assert_eq!(c.shortcut.as_deref(),if coarse {None}else{Some("F20")});
+        }
+    }
+}
+
+#[test]
+fn responsive_pc_direction_inactivates_every_background_web_control() {
+    fn alphas(out:&Value,text:&str)->Vec<f64> {
+        let mut stack=vec![1.];let mut found=Vec::new();
+        for c in array(&out["commands"]) {match s(&c["op"]) {
+            "save"|"clip"=>stack.push(stack.last().unwrap()*c["alpha"].as_f64().unwrap_or(1.)),"restore"=>{stack.pop();},
+            "text" if s(&c["text"])==text || s(&c["text"]).starts_with(&format!("{text})"))=>found.push(*stack.last().unwrap()),_=>{}
+        }}found
+    }
+    for width in [390.,699.,700.] {
+        let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();let v=view(width,900.);ui.render(m.clone(),v.clone());
+        let form=ui.control_form();for (slot,id) in ["web.commands","web.history","web.fullscreen","web.settings","web.controls","web.full-map"].iter().enumerate(){ui.controls_preferences.profile_mut(form).assignments[slot]=(*id).into();}
+        let normal=ui.render(m.clone(),v.clone());for key in ["C","M","G","O","V","p"] {let found=alphas(&normal,key);assert!(!found.is_empty(),"{key}");assert!(found.iter().all(|a|*a==1.));}
+        m["input"]=json!({"kind":"direction"});m["frame"]["ui"]["input"]=m["input"].clone();m["frame"]["ui"]["movement_direction"]=json!(true);m["frame"]["ui"]["map_controls"]=crate::game_window::map_controls(&m["frame"]["ui"],false);
+        let direction=ui.render(m,v);for key in ["C","M","G","O","V","p"] {let found=alphas(&direction,key);assert!(!found.is_empty(),"{key}");assert!(found.iter().all(|a|*a==0.45),"Background {key} at {width}: {found:?}");}
+        assert_eq!(ui.widgets.controls.len(),9);assert!(ui.widgets.controls.iter().all(|c|!c.disabled));
+        let mut effects=Vec::new();ui.activate_web(WebAction::Commands,&mut effects);assert!(!ui.commands_open&&!ui.mobile_operations);assert!(effects.is_empty());
+    }
+    let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();m["input"]=json!({"kind":"direction"});m["frame"]["ui"]["input"]=m["input"].clone();m["frame"]["ui"]["movement_direction"]=json!(true);m["frame"]["ui"]["map_controls"]=crate::game_window::map_controls(&m["frame"]["ui"],false);
+    let mut v=view(390.,900.);v["coarse"]=json!(true);ui.render(m,v);assert!(ui.widgets.controls.iter().any(|c|c.id=="settings-toggle"&&!c.disabled));assert!(!ui.widgets.controls.iter().any(|c|c.id=="mobile-full-map"||c.id=="mobile-operations"));
+}
+
+#[test]
+fn responsive_pc_keeps_key_editing_and_item_tabs_at_compact_width() {
+    let mut ui=BrowserUi::new(measure);let m=shortcut_model();
+    for width in [700.,699.,390.] {
+        ui.render(m.clone(),view(width,900.));ui.event(json!({"type":"key","key":"C"}));let out=ui.render(m.clone(),view(width,900.));
+        if width<700. {assert!(array(&out["commands"]).iter().any(|c|s(&c["text"])=="コマンド / キー"));}
+        assert!(ui.commands_open&&!ui.mobile_operations,"PC command list at {width}");
+        let id="command-bind-game.move-left-0";let c=ui.widgets.controls.iter().find(|c|c.id==id).unwrap();assert!(c.rect.w>=40.&&c.rect.h>=40.);
+        click(&mut ui,id);assert!(ui.binding_capture.is_some());ui.event(json!({"type":"key","key":"Escape"}));ui.event(json!({"type":"key","key":"Escape"}));
+        let selection=selection_model("action.call","callable",&["weapon","armor"]);let before=ui.inventory_preference();ui.render(selection.clone(),view(width,900.));
+        assert!(ui.widgets.controls.iter().any(|c|c.id=="inventory-tab-weapon"));assert!(ui.widgets.controls.iter().any(|c|c.id=="inventory-tab-armor"));
+        click(&mut ui,"inventory-tab-armor");ui.render(selection,view(width,900.));assert_eq!(ui.selection_tabs.tab,"armor");assert_eq!(ui.inventory_preference(),before);
+    }
+    let mut phone=BrowserUi::new(measure);let mut v=view(390.,900.);v["coarse"]=json!(true);phone.render(m.clone(),v.clone());phone.activate_web(WebAction::Commands,&mut Vec::new());phone.render(m,v.clone());assert!(phone.mobile_operations&&!phone.commands_open);
+    phone.mobile_operations=false;phone.render(selection_model("action.call","callable",&["weapon","armor"]),v);assert!(!phone.widgets.controls.iter().any(|c|c.id.starts_with("inventory-tab-")));
+}
+
+#[test]
+fn responsive_pc_retains_keyboard_log_help_and_reassigned_history_hint() {
+    for (width,coarse) in [(390.,false),(699.,false),(700.,false),(390.,true)] {
+        let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();let mut v=view(width,900.);v["coarse"]=json!(coarse);
+        m["entries"]=json!([{"source":"game","text":"Keyboard hint marker","mobile_keyboard_hint":true}]);
+        ui.controls_preferences.bindings.insert("web.history".into(),vec![keybindings::KeyBinding::plain("F20")]);
+        let out=ui.render(m.clone(),v.clone());let painted:Vec<_>=array(&out["commands"]).iter().filter(|c|c["op"]=="text").map(|c|s(&c["text"])).collect();
+        assert_eq!(painted.join(" ").contains("Keyboard hint marker"),!coarse,"width={width} texts={painted:?}");
+        let history=ui.widgets.controls.iter().find(|c|c.id=="history-open").unwrap();assert_eq!(history.shortcut.as_deref(),if coarse {None}else{Some("F20")});
+        if !coarse {ui.event(json!({"type":"key","key":"F20"}));assert!(ui.history_open);let out=ui.render(m.clone(),v.clone());assert!(array(&out["commands"]).iter().map(|c|s(&c["text"])).collect::<Vec<_>>().join(" ").contains("Keyboard hint marker"));ui.event(json!({"type":"key","key":"Escape"}));}
+        m["input"]=json!({"kind":"space"});m["frame"]["ui"]["input"]=m["input"].clone();m["frame"]["ui"]["mode"]=json!("help");m["frame"]["ui"]["lines"]=json!([{"id":"ui.help.entry","text":"Ctrl + R redraw marker","args":[{"value":"Ctrl + R"},{"value":"help.redraw"}]}]);m["frame"]["ui"]["window"]=crate::game_window::render(&m["frame"]["ui"],"ja");
+        let out=ui.render(m,v);assert_eq!(array(&out["commands"]).iter().map(|c|s(&c["text"])).collect::<Vec<_>>().join(" ").contains("redraw marker"),!coarse);
+    }
+}
+
+
+#[test]
+fn responsive_pc_mouse_hold_matches_wide_input_behavior() {
+    for (width,coarse) in [(390.,false),(700.,false),(390.,true)] {
+        let mut ui=BrowserUi::new(measure);let mut v=view(width,900.);v["coarse"]=json!(coarse);ui.render(shortcut_model(),v);
+        let c=ui.widgets.controls.iter().find(|c|c.id=="touch-h").unwrap().clone();
+        let out=ui.event(json!({"type":"down","id":1,"x":c.rect.x+c.rect.w/2.,"y":c.rect.y+c.rect.h/2.,"pointerType":"mouse","button":0,"primary":true}));
+        assert_eq!(array(&out["effects"]).iter().any(|e|e["kind"]=="send"),coarse);
+        assert_eq!(array(&out["effects"]).iter().any(|e|e["kind"]=="hold-timer"),coarse);
+    }
+}
+
+#[test]
+fn responsive_phone_direction_preserves_full_map_unavailability() {
+    let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();m["frame"]["ui"]["movement_direction"]=json!(true);let mut v=view(390.,900.);v["coarse"]=json!(true);ui.render(m,v);
+    assert!(!ui.web_available(WebAction::FullMap));assert!(ui.web_available(WebAction::Settings));let mut effects=Vec::new();ui.activate_web(WebAction::FullMap,&mut effects);assert!(!ui.mobile_full_map);assert!(effects.is_empty());
 }
