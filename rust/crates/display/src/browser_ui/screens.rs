@@ -174,7 +174,7 @@ impl BrowserUi {
                 for x in 0..n(&f["width"]) as usize {
                     let index = y * n(&f["width"]) as usize + x;
                     let glyph = s(&f["map_cells"]).get(index..index + 1).unwrap_or("");
-                    if glyph.is_empty() || glyph == " " {
+                    if glyph.is_empty() || glyph == " " || map_cell_display(&f,index)==MapCellDisplay::DarkFloor {
                         continue;
                     }
                     let px = map.x + x as f64 * size - cam.left;

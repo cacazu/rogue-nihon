@@ -250,6 +250,11 @@ pub fn plan(frame: &Value, camera: &Value, rect: Rect, ratio: f64, mode: &str) -
         let py = (((y - 1) as f64 * size - top) * ratio).round();
         let w = (((x + 1) as f64 * size - left) * ratio).round() - px;
         let h = ((y as f64 * size - top) * ratio).round() - py;
+        if map_cell_display(frame,y*width+x)==MapCellDisplay::DarkFloor {
+            commands.push(json!({"op":"rect","color":crate::widgets::MAP,
+                "rect":Rect::new(rect.x+px/ratio,rect.y+py/ratio,w/ratio,h/ratio)}));
+            continue;
+        }
         let mut layers = vec![base];
         if terrain.is_some() && ground != base {
             layers.push(ground);
@@ -526,4 +531,24 @@ mod animation_tests {
                 .any(|command| command["image"] == "actor.player.png")
         );
     }
+    #[test]
+    fn dark_memory_floor_stays_black_but_lit_memory_and_objects_stay_gray() {
+        for mode in ["tiles","pixels"] {
+            let mut f=sample_frame(mode);let width=11;
+            let mut tiles=vec![0;33];tiles[11..22].copy_from_slice(&[1,1,4,5,14,15,6,0,8,2,1]);
+            let mut visible=vec![false;33];visible[19]=true;visible[21]=true;
+            let mut current=vec![b' ';33];current[11..22].copy_from_slice(b" .-|*!% @#.");
+            f["width"]=json!(width);f["map_tiles"]=json!(tiles);f["map_visible"]=json!(visible);
+            f["map_current_cells"]=json!(String::from_utf8(current).unwrap());f["map_underlays"]=json!([]);f["map_animation"]=json!([]);
+            f["map_actors"]=json!([{"id":0,"x":8,"y":1,"glyph":64}]);
+            let commands=plan(&f,&json!({"size":32,"left":0,"top":0,"width":352,"height":32}),Rect::new(0.,0.,352.,32.),1.,mode);
+            assert!(!commands.iter().any(|c|c["op"]=="image"&&c["rect"]["x"]==0.),"C-erased remembered floor is map black");
+            for x in [0.,224.] {assert!(commands.iter().any(|c|c["op"]=="rect"&&c["rect"]["x"]==x&&c["color"]==crate::widgets::MAP));}
+            for x in [32.,64.,96.,128.,160.,192.] {
+                assert!(commands.iter().any(|c|c["op"]=="image"&&c["rect"]["x"]==x&&c["tint"]==crate::theme::Theme::default().color("@map.memory.tint")),"Remembered lit floor/walls/gold/item/stairs remain gray");
+            }
+            assert!(commands.iter().any(|c|c["op"]=="image"&&c["rect"]["x"]==320.&&c["tint"].is_null()),"Current floor keeps source colors");
+        }
+    }
+
 }

@@ -73,7 +73,11 @@ impl<'a> Map<'a> {
         map_unknown_mask(self.cells,self.width as usize,self.height as usize,p.0,p.1).unwrap_or(0)
     }
     fn examined(&self,p:Point,edge:u8) -> bool {
-        self.index(p).zip(self.checked.as_ref()).is_some_and(|(i,checked)|checked[i]==u16::from(edge))
+        self.index(p).zip(self.checked.as_ref()).is_some_and(|(i,checked)| {
+            // Revealing neighbours only shrinks the old unknown set. A visit
+            // is needed again only when an unconfirmed direction appears.
+            checked[i]!=MAP_UNCHECKED && u16::from(edge)&!checked[i]==0
+        })
     }
     fn reachable(&self,start:Point) -> Vec<(Point,usize)> {
         let Some(origin)=self.index(start) else {return Vec::new();};
@@ -218,7 +222,7 @@ impl AutoWalk {
             self.stop("pickup");return false;
         }
         // The game-side public-map observer keeps confirmed frontiers across ordinary
-        // movement, combat and restarts. Changed public patterns reopen them.
+        // movement, combat and restarts. Newly unknown directions reopen them.
         self.target=map.exploration_goal(here,self.target);
         if self.target.is_some() {
             self.exploration=Some(ExplorationPhase::Searching);
@@ -731,6 +735,43 @@ mod exploration_tests {
         assert_eq!(Map::new(&f).unwrap().exploration_goal((6,2),Some((6,2))),Some((1,2)),"After pickup the remaining item wins over a closer frontier");
         f["player"]["x"]=json!(1);f["map_cells"]=json!(["           ","-----------","|@....... |","-----------","           "].join(""));
         assert_eq!(Map::new(&f).unwrap().exploration_goal((1,2),Some((1,2))),Some((8,2)),"Only after the last reachable item is collected is a frontier selected");
+    }
+
+    #[test]
+    fn normal_adventure_doorway_does_not_return_to_corridor_after_room_reveal() {
+        // Five public positions exposed the old out/in detour. Entering the
+        // room removes unknown neighbours of the corridor (227 -> 35).
+        let case:Value=serde_json::from_str(include_str!("../../../../tests/data/autoexplore-normal-doorway.json")).unwrap();
+        let before:Vec<_>=case["before_rows"].as_array().unwrap().iter().map(|row|row.as_str().unwrap()).collect();
+        let entered:Vec<_>=case["entered_rows"].as_array().unwrap().iter().map(|row|row.as_str().unwrap()).collect();
+        let mut f=frame(&before,point(&case["before_player"]).unwrap());
+        for entry in case["checked"].as_array().unwrap() {
+            f["map_checked"][entry[0].as_u64().unwrap() as usize]=entry[1].clone();
+        }
+        let mut walk=AutoWalk::default();walk.start_explore(&f);
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_DOWN));
+        f["player"]=case["entered_player"].clone();f["map_cells"]=json!(entered.join(""));
+        let map=Map::new(&f).unwrap();
+        assert_eq!(map.frontier((19,10)),35);
+        assert_eq!(f["map_checked"][10*80+19],227);
+        assert_eq!(fire(&mut walk,&mut f,2),Some(RG_KEY_DOWN),"Continue into the newly revealed room instead of stepping back out");
+        assert_eq!(walk.snapshot()["target"],json!({"x":17,"y":14}));
+    }
+
+    #[test]
+    fn exploration_reopens_checked_position_only_for_new_unknown_directions() {
+        let mut f=frame(&["         ","---------","|@... . |","---------","         "],(1,2));
+        confirm(&mut f,(4,2));
+        let saved=Map::new(&f).unwrap().frontier((4,2));
+        assert_eq!(saved,2);
+        f["map_cells"]=json!(["         ","---------","|@..... |","---------","         "].join(""));
+        assert!(Map::new(&f).unwrap().examined((4,2),0),"Revealed neighbours do not require visiting the old position again");
+        f["map_cells"]=json!(["         ","---------","|@. ... |","---------","         "].join(""));
+        let map=Map::new(&f).unwrap();
+        assert_eq!(map.frontier((4,2)),1);
+        assert!(!map.examined((4,2),1),"A newly unknown direction still makes the position eligible");
+        f["map_checked"][2*9+4]=json!(MAP_UNCHECKED);
+        assert!(!Map::new(&f).unwrap().examined((4,2),0),"The unvisited sentinel never becomes a confirmed pattern");
     }
 
 }

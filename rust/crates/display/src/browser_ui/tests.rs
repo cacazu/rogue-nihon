@@ -1941,3 +1941,31 @@ fn phone_exploration_row_follows_the_real_pad_and_keeps_half_width_without_a_bow
         assert_eq!(ui.widgets.controls.iter().find(|c|c.id=="touch-explore").unwrap().rect,explore.rect);
     }}}
 }
+
+
+#[test]
+fn dark_memory_floor_and_overview_item_colors_share_pc_phone_display_policy() {
+    for width in [1400.,390.] {
+        let mut ui=BrowserUi::new(measure);let mut m=model();m["displayMode"]=json!("ascii");m["tileSize"]=json!(16);
+        m["frame"]["player"]=json!({"x":16,"y":10});m["frame"]["ui"]["mode"]=json!("game");
+        let mut cells=vec![b' ';1920];let mut current=cells.clone();let mut tiles=vec![0;1920];let mut visible=vec![false;1920];
+        for (x,glyph,tile) in [(9,b'.',1),(10,b'.',1),(11,b'|',5),(12,b'*',14),(13,b'%',6),(14,b'!',15),(16,b'@',8),(17,b'.',1)] {
+            cells[10*80+x]=glyph;current[10*80+x]=glyph;tiles[10*80+x]=tile;
+        }
+        current[10*80+9]=b' ';visible[10*80+16]=true;visible[10*80+17]=true;
+        m["frame"]["map_cells"]=json!(String::from_utf8(cells).unwrap());m["frame"]["map_current_cells"]=json!(String::from_utf8(current).unwrap());
+        m["frame"]["map_tiles"]=json!(tiles);m["frame"]["map_visible"]=json!(visible);
+        m["frame"]["map_actors"]=json!([{"id":0,"x":16,"y":10,"glyph":64}]);
+        let output=ui.render(m.clone(),view(width,900.));
+        let commands:Vec<_>=array(&output["commands"]).iter().filter(|c|c["palette"]=="map").collect();
+        assert_eq!(commands.iter().filter(|c|c["op"]=="text"&&c["text"]==".").count(),2,"ASCII hides only the C-erased floor");
+        let theme=crate::theme::Theme::default();
+        for glyph in ["|","*","%","!"] {assert!(commands.iter().any(|c|c["text"]==glyph&&c["color"]==theme.color("@map.memory")),"Normal memory objects remain gray");}
+        ui.mobile_full_map=true;let overview=ui.render(m,view(width,900.));
+        let commands:Vec<_>=array(&overview["commands"]).iter().filter(|c|c["palette"]=="map").collect();
+        let (item,stairs)=(theme.color("@map.overview.item"),theme.color("@map.overview.stairs"));
+        assert_eq!(commands.iter().filter(|c|c["op"]=="rect"&&c["color"]==item).count(),3,"Overview keeps gold, item and the item legend color");
+        assert_eq!(commands.iter().filter(|c|c["op"]=="rect"&&c["color"]==stairs).count(),2,"Overview keeps stairs and legend color");
+        assert_eq!(commands.iter().filter(|c|c["op"]=="rect"&&c["color"]==theme.color("@map.memory")).count(),2,"Only the remembered lit floor and wall are gray in this overview");
+    }
+}

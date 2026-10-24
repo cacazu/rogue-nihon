@@ -233,6 +233,7 @@ impl ObservedMap {
         {
             for key in [
                 "map_cells",
+                "map_current_cells",
                 "map_checked",
                 "map_visible",
                 "map_tiles",
@@ -271,6 +272,9 @@ impl ObservedMap {
                 let y = frame["player"]["y"].as_u64().unwrap();
                 cells[(y * u64::from(columns) + x) as usize] = b'@';
             }
+            // This accepted C game surface is kept separately from both the
+            // memory-composed map and later menu/window text.
+            frame["map_current_cells"]=json!(String::from_utf8_lossy(&cells));
             let raw_tiles = map_tiles::map(&cells, columns, rows, &self.effects).0;
             let visible: Vec<bool> = self.visibility.take().unwrap_or_else(|| vec![0;cells.len()])
                 .iter().zip(&cells).map(|(visible,glyph)| *visible==1 && *glyph!=b' ').collect();
@@ -735,6 +739,22 @@ mod tests {
         assert_ne!(ready["map_checked"][2*80+5],rogue_contract::MAP_UNCHECKED,"Restore-success journal observations confirm actual positions");
         assert_eq!(restored.memory_snapshot().unwrap()["checked"],ready["map_checked"]);
         assert_eq!(ready["map_checked"][2*80+6],rogue_contract::MAP_UNCHECKED,"Provisional marks never survive restore");
+    }
+
+    #[test]
+    fn current_public_map_survives_memory_merge_and_cached_menu_text() {
+        let mut map=ObservedMap::default();let index=2*80+3;
+        let mut raw=checked_scene(4,1);observe_positions(&mut map,4,7);
+        let first=map.present(raw.clone(),&json!({"mode":"game"}),"test");
+        assert_eq!(first["map_current_cells"].as_str().map(|cells|cells.as_bytes()[index]),Some(b'.'));
+        let mut cells=raw["cells"].as_str().unwrap().as_bytes().to_vec();cells[index]=b' ';raw["cells"]=json!(String::from_utf8(cells).unwrap());
+        observe_positions(&mut map,4,7);let dark=map.present(raw,&json!({"mode":"game"}),"test");
+        assert_eq!(dark["map_cells"].as_str().unwrap().as_bytes()[index],b'.');
+        assert_eq!(dark["map_current_cells"].as_str().map(|cells|cells.as_bytes()[index]),Some(b' '));
+        let mut overlay=frame();overlay["cells"]=json!("X".repeat(1920));
+        let menu=map.present(overlay,&json!({"mode":"inventory"}),"test");
+        assert_eq!(menu["map_current_cells"],dark["map_current_cells"],"Menu text cannot relight or erase the accepted public game surface");
+        assert_eq!(menu["map_cells"],dark["map_cells"]);
     }
 
 }

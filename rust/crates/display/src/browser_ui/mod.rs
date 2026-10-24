@@ -48,9 +48,22 @@ pub(crate) fn s(v: &Value) -> &str {
 pub(crate) fn n(v: &Value) -> f64 {
     v.as_f64().unwrap_or(0.)
 }
-pub(crate) fn map_cell_remembered(frame: &Value, index: usize) -> bool {
-    frame["map_visible"].get(index).and_then(Value::as_bool) == Some(false)
-        && frame["map_tiles"].get(index).and_then(Value::as_u64).is_some_and(|tile| tile!=0)
+#[derive(Clone,Copy,PartialEq,Eq)]
+pub(crate) enum MapCellDisplay { Unknown, DarkFloor, Remembered, Current }
+pub(crate) fn map_cell_display(frame: &Value,index: usize) -> MapCellDisplay {
+    let tile=frame["map_tiles"].get(index).and_then(Value::as_u64);
+    if tile==Some(0) {return MapCellDisplay::Unknown;}
+    if frame["map_visible"].get(index).and_then(Value::as_bool)==Some(false)
+        && tile.is_some() && !map_public_actor(frame,index) {
+        let current=frame["map_current_cells"].as_str().filter(|cells|
+            cells.is_ascii() && cells.len()==n(&frame["width"]) as usize*n(&frame["height"]) as usize);
+        if tile==Some(1) && current.is_some_and(|cells|cells.as_bytes().get(index)==Some(&b' ')) {
+            MapCellDisplay::DarkFloor
+        } else {MapCellDisplay::Remembered}
+    } else {MapCellDisplay::Current}
+}
+pub(crate) fn map_cell_remembered(frame: &Value,index: usize) -> bool {
+    matches!(map_cell_display(frame,index),MapCellDisplay::Remembered|MapCellDisplay::DarkFloor)
 }
 pub(crate) fn map_public_actor(frame: &Value, index: usize) -> bool {
     let width=frame["width"].as_u64().unwrap_or(0) as usize;
