@@ -193,6 +193,7 @@
     "hud.hunger.2": "Weak",
     "hud.hunger.3": "Faint",
     "panel.status": "Character status",
+    "explore.complete": "Exploration complete.",
     "notice.loading": "Loading…",
     "notice.restoring": "Loading…",
     "notice.save_pending": "Saving…",

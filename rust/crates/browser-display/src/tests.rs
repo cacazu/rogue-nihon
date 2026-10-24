@@ -772,3 +772,27 @@ fn exploration_controller_player_events_and_lifecycle_cancel_pending_steps() {
         assert_eq!(event(&mut c,action)["state"]["autowalk"]["active"],false);
     }
 }
+
+#[test]
+fn exploration_completion_controller_logs_once_before_return_and_without_a_stair_route() {
+    for stairs in [false,true] {
+        let mut c=exploration_controller();
+        let mut f=c.snapshot()["frame"].clone();
+        let mut cells=vec![b' ';80*24];
+        for x in 9..=15 {cells[9*80+x]=b'-';cells[11*80+x]=b'-';}
+        for x in 10..=14 {cells[10*80+x]=b'.';}
+        cells[10*80+9]=b'|';cells[10*80+15]=b'|';cells[10*80+10]=b'@';
+        if stairs {cells[10*80+14]=b'%';}
+        f["map_tiles"]=json!(cells.iter().map(|ch|rogue_display::map_tiles::glyph(*ch).unwrap()).collect::<Vec<_>>());
+        f["map_cells"]=json!(String::from_utf8(cells).unwrap());f["type"]=json!("frame");
+        c.request(json!({"type":"worker","generation":1,"data":f}));
+        let begun=event(&mut c,json!({"type":"invoke","id":"auto-explore"}));
+        let notices=begun["state"]["entries"].as_array().unwrap().iter().filter(|entry|entry["id"]=="explore.complete").collect::<Vec<_>>();
+        assert_eq!(notices.len(),1,"Completion is delivered even when scheduling returns no route");
+        assert_eq!(notices[0]["text"],"全て探索した");assert_eq!(notices[0]["source"],"system");
+        assert_eq!(begun["state"]["autowalk"]["active"],stairs);
+        let next=c.request(json!({"type":"worker","generation":1,"data":{"type":"input-request"}}));
+        assert_eq!(next["state"]["entries"].as_array().unwrap().iter().filter(|entry|entry["id"]=="explore.complete").count(),1);
+        assert!(!next["effects"].as_array().unwrap().iter().any(|e|e["kind"]=="queue"),"Completion consumes no original command");
+    }
+}

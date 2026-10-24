@@ -193,6 +193,7 @@
     "hud.hunger.2": "衰弱",
     "hud.hunger.3": "飢餓",
     "panel.status": "状態",
+    "explore.complete": "全て探索した",
     "notice.loading": "読み込み中…",
     "notice.restoring": "読み込み中…",
     "notice.save_pending": "保存処理中…",

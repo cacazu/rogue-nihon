@@ -157,7 +157,11 @@ impl Controller {
         }
         if self.waiting_for_request { return; }
         if !self.autowalk_available() { self.stop_autowalk("context"); return; }
-        if let Some(mut effect) = self.autowalk.schedule(&self.model["frame"],&self.input,number(&self.state["inputRequestCount"])) {
+        let scheduled=self.autowalk.schedule(&self.model["frame"],&self.input,number(&self.state["inputRequestCount"]));
+        if self.autowalk.take_exploration_complete() {
+            self.notice("explore.complete",json!({}),false);
+        }
+        if let Some(mut effect) = scheduled {
             effect["generation"] = self.model["generation"].clone();
             if self.autowalk.uses_run() {
                 let request=number(&self.state["inputRequestCount"]);

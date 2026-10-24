@@ -107,6 +107,13 @@ impl History {
 mod all_catalog {
     use super::*;
     #[test]
+    fn exploration_completion_notice_has_requested_text_in_both_languages() {
+        let mut catalog=Catalog::default();
+        assert_eq!(catalog.label("ja","explore.complete",&json!({})),"全て探索した");
+        assert_eq!(catalog.label("en","explore.complete",&json!({})),"Exploration complete.");
+        assert!(catalog.missing.is_empty());
+    }
+    #[test]
     fn all_catalog_ui_labels_and_missing_entries() {
         let mut catalog=Catalog::default();
         for language in ["ja","en"] {

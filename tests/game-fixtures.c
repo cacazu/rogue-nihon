@@ -205,6 +205,35 @@ void rg_test_apply_fixture(void)
                 strcmp(scenario,"door") && strcmp(scenario,"bolt") && strcmp(scenario,"blocked-called")) abort();
         }
         clear(); enter_room(&hero);
+    } else if (!strcmp(name,"autoexplore-loop-right") || !strcmp(name,"autoexplore-loop-left")) {
+        int x,y,right=!strcmp(name,"autoexplore-loop-right");
+        /* Fixed public memory of a loop: a nearby branch competes with a
+         * distant item. The opposite orientation rejects a fixed turn bias. */
+        for(y=1;y<NUMLINES-1;y++) for(x=0;x<NUMCOLS;x++) {
+            chat(y,x)=' ';flat(y,x)=F_REAL;
+        }
+        rooms[0].r_flags=ISGONE;proom=oldrp=&passages[0];
+        for(y=6;y<=14;y++) for(x=5;x<=23;x++) chat(y,x)='|';
+        for(y=8;y<=12;y++) for(x=10;x<=18;x++) if(y==8 || y==12 || x==10 || x==18) {
+            chat(y,x)=PASSAGE;flat(y,x)=F_REAL|F_PASS;
+        }
+        for(x=right?19:6;x<=(right?22:9);x++) {chat(8,x)=PASSAGE;flat(8,x)=F_REAL|F_PASS;}
+        hero.x=right?16:12;hero.y=12;oldpos=hero;
+        stairs.x=14;stairs.y=12;chat(stairs.y,stairs.x)=STAIRS;
+        object=new_item();object->o_type=FOOD;object->o_which=0;object->o_count=1;
+        object->o_pos.x=right?10:18;object->o_pos.y=8;attach(lvl_obj,object);chat(8,object->o_pos.x)=FOOD;
+        /* Published but unreachable item, and an unobserved region behind a
+         * secret wall, must not prevent reachable exploration completing. */
+        object=new_item();object->o_type=FOOD;object->o_which=1;object->o_count=1;
+        object->o_pos.x=30;object->o_pos.y=12;attach(lvl_obj,object);
+        chat(12,30)=FOOD;flat(12,30)=F_REAL|F_PASS;
+        chat(9,14)='|';flat(9,14)=0;chat(10,14)=FLOOR;
+        clear();
+        for(y=6;y<=14;y++) for(x=5;x<=23;x++) {
+            if((y==8 && (right?x>=19&&x<=22:x>=6&&x<=9)) || (y==10 && x==14)) continue;
+            mvaddch(y,x,chat(y,x));
+        }
+        mvaddch(12,30,FOOD);mvaddch(hero.y,hero.x,PLAYER);
     } else if (!strncmp(name, "autoexplore-", 12)) {
         int x,y,n;
         struct room *room=&rooms[0];
