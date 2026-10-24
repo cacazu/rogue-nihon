@@ -676,6 +676,7 @@ fn pc_log_heading_uses_only_the_current_public_cell_and_name_is_bounded() {
     let mut ui=BrowserUi::new(measure);let mut m=model();
     m["frame"]["ui"]["name"]=json!("長い名前".repeat(30));
     m["frame"]["map_tiles"]=json!(vec![0;80*24]);
+    m["frame"]["map_cells"]=json!(" ".repeat(80*24));
     for mode in ["ascii","tiles","pixels"] {
         m["displayMode"]=json!(mode);ui.render(m.clone(),view(1400.,1050.));
         assert!(ui.widgets.icons.iter().any(|i| i["name"]=="command-list"));
@@ -683,23 +684,28 @@ fn pc_log_heading_uses_only_the_current_public_cell_and_name_is_bounded() {
         ui.hover_point=Some((r.x+4.5*c.size-c.left,r.y+3.5*c.cell_h-c.top));
         let output=ui.render(m.clone(),view(1400.,1050.));
         let images:Vec<_>=array(&output["commands"]).iter().filter(|c| b(&c["logHeader"])).collect();
-        assert_eq!(images.len(),1);assert_eq!(images[0]["image"],"terrain.unexplored.png");
-        assert_eq!(images[0]["set"],if mode=="pixels" {"pixels"} else {"tiles"});
+        assert_eq!(images.len(),1);
+        if mode == "ascii" { assert_eq!(images[0]["op"],"text");assert_eq!(images[0]["text"]," "); }
+        else { assert_eq!(images[0]["image"],"terrain.unexplored.png");assert_eq!(images[0]["set"],mode); }
         assert!(ui.widgets.text_runs.iter().any(|r| s(&r["text"]).contains('…')));
         assert!(ui.widgets.text_runs.iter().any(|r| r["text"]=="暗闇"));
         // Changes in undisclosed data do not affect the selected public image.
         m["frame"]["hidden_monster"]=json!({"which":3});
         let output=ui.render(m.clone(),view(1400.,1050.));
-        assert_eq!(array(&output["commands"]).iter().find(|c| b(&c["logHeader"])).unwrap()["image"],"terrain.unexplored.png");
+        let header=array(&output["commands"]).iter().find(|c| b(&c["logHeader"])).unwrap();
+        assert_eq!(header[if mode=="ascii" {"text"} else {"image"}],if mode=="ascii" {" "} else {"terrain.unexplored.png"});
         m["frame"]["map_tiles"][4*80+4]=json!(15);
+        let mut cells=" ".repeat(80*24);cells.replace_range(4*80+4..4*80+5,"!");m["frame"]["map_cells"]=json!(cells);
         let output=ui.render(m.clone(),view(1400.,1050.));
-        assert_eq!(array(&output["commands"]).iter().find(|c| b(&c["logHeader"])).unwrap()["image"],"item.potion.png");
+        let header=array(&output["commands"]).iter().find(|c| b(&c["logHeader"])).unwrap();
+        assert_eq!(header[if mode=="ascii" {"text"} else {"image"}],if mode=="ascii" {"!"} else {"item.potion.png"});
         // A camera move under a stationary pointer resolves the newly pointed cell.
         ui.camera.as_mut().unwrap().left+=c.size;
         let output=ui.render(m.clone(),view(1400.,1050.));
-        assert_eq!(array(&output["commands"]).iter().find(|c| b(&c["logHeader"])).unwrap()["image"],"terrain.unexplored.png");
+        let header=array(&output["commands"]).iter().find(|c| b(&c["logHeader"])).unwrap();
+        assert_eq!(header[if mode=="ascii" {"text"} else {"image"}],if mode=="ascii" {" "} else {"terrain.unexplored.png"});
         assert!(array(&ui.event(json!({"type":"leave"}))["effects"]).is_empty());
-        assert!(ui.hover_point.is_none());m["frame"]["map_tiles"][4*80+4]=json!(0);
+        assert!(ui.hover_point.is_none());m["frame"]["map_tiles"][4*80+4]=json!(0);m["frame"]["map_cells"]=json!(" ".repeat(80*24));
     }
 }
 

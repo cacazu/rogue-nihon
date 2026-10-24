@@ -1,4 +1,4 @@
-//! UI color roles are data in web/themes.json; map colors are shared by all themes.
+//! UI and map palettes are data in web/themes.json; themes may override map colors.
 use serde::Deserialize;
 use serde_json::Value;
 use std::{collections::BTreeMap, sync::OnceLock};
@@ -17,6 +17,10 @@ struct Definition {
     id: String,
     label: String,
     monochrome_icons: bool,
+    #[serde(default)]
+    map_colors: Option<BTreeMap<String, String>>,
+    #[serde(default)]
+    image_tint: Option<String>,
     colors: BTreeMap<String, String>,
 }
 fn catalog() -> &'static Catalog {
@@ -41,7 +45,11 @@ fn catalog() -> &'static Catalog {
                 keys,
                 "Every theme defines the same roles"
             );
-            for color in theme.colors.values().chain(c.map_colors.values()) {
+            if let Some(map_colors) = &theme.map_colors {
+                assert_eq!(map_colors.keys().collect::<Vec<_>>(), c.map_colors.keys().collect::<Vec<_>>(), "Map overrides define every role");
+            }
+            for color in theme.colors.values().chain(c.map_colors.values())
+                .chain(theme.map_colors.iter().flat_map(|colors| colors.values())).chain(theme.image_tint.iter()) {
                 let hex = color.strip_prefix('#').expect("Hex theme color");
                 assert!(
                     matches!(hex.len(), 3 | 4 | 6 | 8)
@@ -85,8 +93,7 @@ impl Theme {
     }
     pub fn color<'a>(self, role: &'a str) -> &'a str {
         if let Some(key) = role.strip_prefix("@map.") {
-            catalog()
-                .map_colors
+            self.0.map_colors.as_ref().unwrap_or(&catalog().map_colors)
                 .get(key)
                 .expect("Map color role")
                 .as_str()
@@ -98,10 +105,7 @@ impl Theme {
     }
     /// Resolve only paint fields. User text and data beginning with @ stay intact.
     pub fn paint(self, command: &mut Value) {
-        let ui_text = command["op"] == "text"
-            && command["color"]
-                .as_str()
-                .is_some_and(|c| c.starts_with('@') && !c.starts_with("@map."));
+        let text = command["op"] == "text";
         for key in ["color", "fill", "stroke"] {
             if let Some(value) = command
                 .get(key)
@@ -119,8 +123,11 @@ impl Theme {
         {
             command["outline"]["color"] = self.color(&value).into();
         }
-        if ui_text && self.0.monochrome_icons {
+        if text && self.0.monochrome_icons {
             command["monochrome"] = true.into();
+        }
+        if command["op"] == "image" && let Some(tint) = &self.0.image_tint {
+            command["tint"] = tint.clone().into();
         }
     }
 }
@@ -137,13 +144,21 @@ mod tests {
         assert_eq!(green.color("@text.primary"), "#00ff66");
         for key in catalog().map_colors.keys() {
             let role = format!("@map.{key}");
-            assert_eq!(green.color(&role), Theme::default().color(&role));
+            assert_eq!(green.color(&role), if key=="background" {"#000000"} else {"#00ff66"});
         }
         let mut command =
             serde_json::json!({"op":"text","text":"@window.border","color":"@text.primary"});
         green.paint(&mut command);
         assert_eq!(command["text"], "@window.border");
         assert_eq!(command["monochrome"], true);
+        let mut map = serde_json::json!({"op":"text","text":"@","color":"@map.ascii.player"});
+        green.paint(&mut map);let once=map.clone();green.paint(&mut map);
+        assert_eq!(map,once);assert_eq!(map["monochrome"],true);
+        let mut image=serde_json::json!({"op":"image","image":"actor.png"});
+        green.paint(&mut image);let once=image.clone();green.paint(&mut image);
+        assert_eq!(image,once);assert_eq!(image["tint"],"#00ff66");
+        let mut image=serde_json::json!({"op":"image","image":"actor.png"});
+        Theme::default().paint(&mut image);assert!(image["tint"].is_null());
     }
     #[test]
     fn widget_and_screen_color_roles_are_all_defined_in_json() {

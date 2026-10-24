@@ -47,7 +47,7 @@ node tests/run.mjs --keep-artifacts --env ROGUE_MOBILE_WINDOWS_WASM=build/game-f
 | `repeat-direction-pad.mjs` | 繰返しの長押し・回数入力・原作20回反復、全6方向操作のパッド表示と取消、持ち物からの投射と杖、PCの方向入力、キーボードで狭まった入力画面 |
 | `mobile-context-history.mjs` | リストの除外と状況別ボタン、実アイテム拾得・罠の方向選択・階段昇降、PC/スマホの持ち物からアイテム履歴への遷移、配布Wasmの接続 |
 | `mobile-layout.mjs` | 共通設定行・連続ズーム・スマホのステータスと履歴・全体図の凡例・設定内の保存とファイル再開 |
-| `themes.mjs` | デフォルト／緑黒の実プルダウン操作、PC・390/320pxスマホ・日英・3表示方式、設定・HUD・履歴・持ち物・操作・詳細・入力・使用後・墓石・得点の配色、再読込・旧/不明設定、地図とC/RNGの不変。`item-use-fixtures.wasm` を使用 |
+| `themes.mjs` | デフォルト／緑黒の実プルダウン操作、PC・390/320pxスマホ・日英・3表示方式、設定・HUD・履歴・持ち物・操作・詳細・入力・使用後・墓石・得点の配色、再読込・旧/不明設定、地図の緑階調・原色復帰とC/RNGの不変。`--map-only` はPC・390pxの3方式・実画素・hoverだけを確認。`item-use-fixtures.wasm` を使用 |
 | `command-reference.mjs` | PCの設定横ボタン、日英・配色・3表示方式・狭い画面、ジャンル別のキー/処理2列表とWeb10操作の全件掲載、全件スクロール、背景入力遮断、所持品・方向・対象・命名・確認の待ちへの復帰、次ターンのC/RNG一致、スマホへの影響なし。`item-use-fixtures.wasm` を使用 |
 | `hud-widgets.mjs` | PC・スマホで共通の二段ステータス、HP/経験値ゲージ、列・色・文字縁、全数値ウィンドウ、クリック・タップ・Tab/Enter・Esc、全画面、日英・DPR・全表示方式、次コマンドまでのC/RNG |
 | `save-export.mjs` | ダウンロードした実ファイル、IndexedDBとの一致、取消、復元と次ターン |
@@ -63,7 +63,7 @@ node tests/run.mjs --keep-artifacts --env ROGUE_MOBILE_WINDOWS_WASM=build/game-f
 | `map-presentation.mjs` | 実Cのアイテム取得中の文字消去フレーム、弓の装備と左右への矢投射、各描画でのプレイヤー維持、正面素材の方向マークなし、設定プルダウンの実測幅・ベクター矢印・3方式の切替とC/RNG不変。スマホ390px・PCの両画像モード、英語320px。`--actors-only` / `--settings-only` で対象を限定し、`ROGUE_PRESENTATION_OUTPUT` で画像と記録の出力先を指定 |
 | `keyboard-repeat.mjs` | 両画像モード・アニメーションON/OFFで50ms間隔の移動キー連打を56回実行。実入力から各移動結果の表示までの遅延、描画時間、入力中に表示した処理結果を記録し、入力の停滞と表示のまとめ送りを検出する。テスト専用Wasmで計画生成・画素合成・転送・DOM更新の時間も記録する。`--cadence-only` はこの確認だけを実行。`--case=tiles-on` 等で対象を限定し、`--profile` を加えるとCDPのCPU profileを保存する。profile実行は計測負荷が増すため時間上限の合否判定を行わず、通常実行で性能を判定する。通常実行では、30ms間隔・14入力の長押しと連打をnative keydown/upで送り、解放後の停止と同じC/RNG状態も比較。`ROGUE_KEYBOARD_OUTPUT` で画像と記録の出力先を指定 |
 | `item-use-flows.mjs` | 原作で携行できる全80種類の主操作、各カテゴリの投擲・配置・名付け、空の杖・弱い状態・呪い・対象なし・指輪／杖の識別、PCのキー／方向ウィンドウ・スマホのタップ、後続入力・装備解除・次コマンドまでのC/RNG比較と、実Cが出した選択・方向・手・命名の質問がログに残らないこと。専用buildは `python tools/build.py --output-name item-use-fixtures --test-fixtures --keep-artifacts`。`ROGUE_ITEM_USE_WASM` で別名を指定、`--quick` は代表経路だけ実行 |
-| `item-use-keys.mjs` | 単品・複数品の物理 `*`／テンキー乗算、重複一覧ボタンの撤去、PC三表示の公開hover画像・名前・武器／投げる／落とすの対象タブ、全通常品物コマンドの共通候補窓と取消、使用品と識別対象の選択、方向・品物・識別対象・左右の手・命名の取消、ヘルプ・発見一覧、印字可能なASCII全95文字の物理キー入力とCでの消費。前項と同じ専用buildを使用。`ROGUE_ITEM_REFERENCE` を指定すると、同じ既存fixtureを持つ変更前buildとのC一覧処理も比較 |
+| `item-use-keys.mjs` | 単品・複数品の物理 `*`／テンキー乗算、重複一覧ボタンの撤去、PC三表示の公開hover文字／画像・名前（`--hover-only` でこの表示確認に限定）・武器／投げる／落とすの対象タブ、全通常品物コマンドの共通候補窓と取消、使用品と識別対象の選択、方向・品物・識別対象・左右の手・命名の取消、ヘルプ・発見一覧、印字可能なASCII全95文字の物理キー入力とCでの消費。前項と同じ専用buildを使用。`ROGUE_ITEM_REFERENCE` を指定すると、同じ既存fixtureを持つ変更前buildとのC一覧処理も比較 |
 | `item-prompt-history.mjs` | 配布用UI・通常Wasmだけでシード12345の水銀のワンドを取得して使用。PC・スマホと3表示方式で、使用後・取消後・次コマンド・履歴画面に回答済みの質問が残らないこと、直接操作で必要な品物選択が出ること、C/RNG不変を確認。`ROGUE_PROMPT_URL` で起動中の配信先も指定できる |
 | `input-ownership.mjs` | 通常build・seed 17の持ち物閲覧と装備、投擲方向の取消、UTF-8草稿保存と新Worker復元後の編集、空Enter・先頭 `-`・明示改名、入力journalとC/RNG状態、最新観測と足元操作候補 |
 | `ownership-boundaries.mjs` | 通常buildの保存・実書出し・新Worker復元と次ターン、実IndexedDB read完了の遅延とファイルimportの競合、無効・取消importで以前の保存bytesを保持、画像セットの重複応答 |

@@ -106,7 +106,24 @@
         "parameter.strength": "#00ff66",
         "parameter.modifier": "#00ff66",
         "parameter.charges": "#00ff66"
-      }
+      },
+      "map_colors": {
+        "background": "#000000",
+        "projectile.arrow": "#00ff66",
+        "ascii.player": "#00ff66",
+        "ascii.item": "#00ff66",
+        "ascii.terrain": "#00ff66",
+        "overview.player": "#00ff66",
+        "overview.stairs": "#00ff66",
+        "overview.enemy": "#00ff66",
+        "overview.wall": "#00ff66",
+        "overview.passage": "#00ff66",
+        "overview.floor": "#00ff66",
+        "overview.item": "#00ff66",
+        "detection.terrain": "#00ff66",
+        "detection.target": "#00ff66"
+      },
+      "image_tint": "#00ff66"
     }
   ]
 }

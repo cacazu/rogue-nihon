@@ -1,5 +1,5 @@
 // UI theme data and settings contract: docs/IMPLEMENTATION-ja.md.
-// Real C fixtures, actual keys/touch, persistence, and unchanged map/C/RNG.
+// Real C fixtures, actual keys/touch, palette changes, persistence, and unchanged C/RNG.
 import assert from 'node:assert/strict';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import path from 'node:path';
@@ -18,6 +18,7 @@ const runtime=await prepareBrowserRuntime(root),server=createPreviewServer();awa
 const browser=await loadPlaywright().chromium.launch({executablePath:browserExecutable(),headless:true,downloadsPath:runtime.downloadsPath});
 const worker=await readFile(path.join(root,'web/worker.js'),'utf8'),wasm=process.env.ROGUE_THEMES_WASM||path.join(root,'build/item-use-fixtures.wasm');
 const headers={'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'};
+const mapOnly=process.argv.includes('--map-only');
 const mapColors=new Set(Object.values(spec.map_colors));
 const report={checks:[],windows:[],errors:[]};let ctx,page,cfg,fixture,journal;
 const snap=()=>page.evaluate(()=>({state:__rogueUiAdapter.state,scene:__rogueBrowserTest.canvas,commands:__rogueBrowserTest.commands}));
@@ -52,6 +53,31 @@ async function start(){
  for(const [id,value]of[['name','ThemeCheck'],['seed','17']]){await tap(id);await page.keyboard.press('Control+a');await page.keyboard.insertText(value);}
  await tap('new-game');await page.waitForFunction(()=>__rogueBrowserTest.frame?.ui.window||__rogueBrowserTest.frame?.ui.input.kind==='command');await paint();
 }
+async function displayMode(mode){
+ await tap('settings-toggle');await tap('select-display-mode');await tap('select-display-mode-'+mode);
+ await page.waitForFunction(mode=>__rogueUiAdapter.state.displayMode===mode,mode);await tap('settings-close');await paint();
+}
+async function mapPixels(rect){
+ return page.evaluate(rect=>{const canvas=document.getElementById('rogue-canvas'),r=rect||__rogueBrowserTest.canvas.mapRect,ratio=canvas.width/canvas.getBoundingClientRect().width;
+  const bytes=Array.from(canvas.getContext('2d').getImageData(Math.ceil((r.x+2)*ratio),Math.ceil((r.y+2)*ratio),Math.floor((r.w-4)*ratio),Math.floor((r.h-4)*ratio)).data);
+  let visible=0,colored=0,offPalette=0;for(let i=0;i<bytes.length;i+=4){const [red,green,blue]=bytes.slice(i,i+3);if(red||green||blue)visible++;if(red>0&&red!==green)colored++;if(red!==0||Math.abs(blue-green*.4)>2)offPalette++;}
+  return {bytes,visible,colored,offPalette};},rect);
+}
+async function mapPaletteCases(){
+ // Put a real public item beside the player through ordinary C input.
+ await key('d');journal+='d';await wait('item');await key('f');journal+='f';await wait('command');await key('h');journal+='h';await wait('command');
+ for(const mode of ['ascii','tiles','pixels']){
+  await displayMode(mode);const before=await snap(),base=await mapPixels();assert.ok(base.visible>50,'Actual map pixels rendered');
+  if(mode!=='ascii'){assert.ok(base.colored>50,'Original artwork has visible color');const images=mapPaint(before,before.scene.mapRect).filter(c=>c.op==='image');for(const group of ['terrain.','actor.','item.'])assert.ok(images.some(c=>c.image.includes(group)),group+' is visible');}
+  await select('green-black');const green=await snap(),pixels=await mapPixels();assert.deepEqual(green.state.trace,before.state.trace,'Theme leaves C/RNG/input unchanged');assert.ok(pixels.visible>50);assert.equal(pixels.offPalette,0,'Actual map RGBA uses green shades');
+  for(const c of mapPaint(green,green.scene.mapRect)){if(c.op==='image')assert.equal(c.tint,'#00ff66');if(c.op==='text'){assert.equal(c.color,'#00ff66');assert.equal(c.monochrome,true);}}
+  if(!cfg.mobile){
+   const p=await page.evaluate(()=>{const f=__rogueBrowserTest.frame,s=__rogueBrowserTest.canvas,c=s.camera,r=s.mapRect;return f.map_tiles.map((tile,i)=>({tile,glyph:f.map_cells[i],x:r.x+(i%f.width+.5)*c.size-c.left,y:r.y+(Math.floor(i/f.width)-.5)*c.cellH-c.top})).find(p=>p.tile>=14&&p.tile<=22&&p.x>r.x&&p.x<r.x+r.w&&p.y>r.y&&p.y<r.y+r.h);});assert.ok(p,'Public item hover');const b=await page.locator('#rogue-canvas').boundingBox();await page.mouse.move(b.x+p.x,b.y+p.y);await paint();const header=(await snap()).commands.find(c=>c.logHeader);assert.ok(header);if(mode==='ascii'){assert.equal(header.text,p.glyph);assert.equal(header.color,'#00ff66');}else{assert.equal(header.set,mode);assert.equal(header.tint,'#00ff66');}const headerPixels=await mapPixels(header.rect||{x:header.x-2,y:header.y-2,w:26,h:26});assert.ok(headerPixels.visible>5,'Hovered item actually rendered');assert.equal(headerPixels.offPalette,0,'Actual hover RGBA uses green shades');
+  }
+  await capture('green-map-'+mode);await select('default');assert.deepEqual((await mapPixels()).bytes,base.bytes,'Default restores exact original map RGBA');assert.deepEqual((await snap()).state.trace,before.state.trace);report.checks.push({config:cfg.label,mode,mapPixels:pixels.visible});
+ }
+ await equivalent();
+}
 async function equivalent(){const expected=await runGame(wasm,{fixture,name:'ThemeCheck',seed:17,locale:cfg.lang,messagePaging:'log',text:journal});assert.deepEqual((await snap()).state.trace.words,expected.traces.at(-1).words);assert.equal((await snap()).state.trace.input_index,journal.length);}
 try{
  for(cfg of [
@@ -59,13 +85,14 @@ try{
   {label:'pc-en',lang:'en',mobile:false,width:900,height:800,mode:'ascii'},
   {label:'phone-ja',lang:'ja',mobile:true,width:390,height:844,mode:'tiles'},
   {label:'phone-en',lang:'en',mobile:true,width:320,height:720,mode:'pixels'},
- ]){
+ ].filter(c=>!mapOnly||['pc-ja','phone-ja'].includes(c.label))){
   fixture='inventory-all';journal='';ctx=await browser.newContext({viewport:{width:cfg.width,height:cfg.height},isMobile:cfg.mobile,hasTouch:cfg.mobile});
   await ctx.addInitScript(mode=>{if(!localStorage.getItem('rogue-map-display-v1'))localStorage.setItem('rogue-map-display-v1',JSON.stringify({version:1,mode,zoom:32,animation:false}));},cfg.mode);
   await ctx.route('**/web/worker.js',r=>r.fulfill({body:fixtureWorker(worker,fixture),contentType:'text/javascript',headers}));
   await ctx.route('**/build/game.wasm',r=>r.fulfill({path:wasm,contentType:'application/wasm',headers}));
   page=await ctx.newPage();page.setDefaultTimeout(15000);await installBrowserTestAdapter(page);page.on('pageerror',e=>report.errors.push(e.message));
   await page.goto('http://127.0.0.1:'+server.address().port+'/?trace=1&lang='+cfg.lang);await start();await wait('command');
+  if(mapOnly){await mapPaletteCases();await ctx.close();ctx=null;console.log('PASS map '+cfg.label);continue;}
   const initial=await capture('default-game');assert.equal(initial.state.theme,'default');const before=initial.state.trace,map=mapPaint(initial,initial.scene.mapRect);
   await tap('settings-toggle');
   const settings=(await snap()).scene,theme=settings.controls.find(c=>c.id==='select-theme'),display=settings.controls.find(c=>c.id==='select-display-mode');
@@ -81,7 +108,7 @@ try{
   }
   await tap('select-theme');await capture('default-dropdown');assert.equal((await snap()).scene.controls.filter(c=>c.id.startsWith('select-theme-')).length,spec.themes.length);
   await key('Escape');assert.equal((await snap()).state.theme,'default');await tap('settings-close');
-  await select('green-black');await capture('green-game');assert.deepEqual((await snap()).state.trace,before);assert.deepEqual(mapPaint(await snap(),initial.scene.mapRect),map,'Theme preserves map paint');
+  await select('green-black');await capture('green-game');assert.deepEqual((await snap()).state.trace,before);assert.notDeepEqual(mapPaint(await snap(),initial.scene.mapRect),map,'Green theme recolors map paint');
   const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('rogue-map-display-v1')));assert.equal(stored.theme,'green-black');assert.equal(stored.mode,cfg.mode);assert.equal(stored.animation,false);
   await tap('status-open');await capture('green-status');await tap('status-close');await tap('history-open');await capture('green-history');await tap('history-close');
   await key('i');journal+='i';await wait('space');await capture('green-inventory');await tap('item-c');await capture('green-actions');await tap('window-118');await capture('green-details');await tap('window-27');await tap('window-27');await tap('window-32');journal+=' ';await wait('command');

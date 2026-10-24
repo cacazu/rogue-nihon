@@ -181,13 +181,7 @@ impl BrowserUi {
                         py + size * 0.125,
                         TextStyle {
                             size: size * 0.75,
-                            color: if glyph == "@" {
-                                "@map.ascii.player"
-                            } else if "/!?=:)]*,".contains(glyph) {
-                                "@map.ascii.item"
-                            } else {
-                                "@map.ascii.terrain"
-                            },
+                            color: Self::map_glyph_color(glyph),
                             bold: false,
                             mono: true,
                         },
@@ -197,6 +191,11 @@ impl BrowserUi {
         }
         if !ascii { self.draw_projectiles(&f, map, cam); }
         self.widgets.end_clip();
+    }
+    fn map_glyph_color(glyph: &str) -> &'static str {
+        if glyph == "@" { "@map.ascii.player" }
+        else if "/!?=:)]*,".contains(glyph) { "@map.ascii.item" }
+        else { "@map.ascii.terrain" }
     }
     pub(super) fn constrain_camera(&mut self) {
         if let Some(c) = &mut self.camera {
@@ -243,8 +242,8 @@ impl BrowserUi {
     pub(super) fn draw_log(&mut self, r: Rect) {
         self.widgets.box_rect(r, PANEL, Some(LINE), 0.);
         let heading_image = !self.compact_layout() && !self.history_open;
-        let mode = if self.model["displayMode"] == "pixels" { "pixels" } else { "tiles" };
-        let manifest = tiles::manifest_ref(mode);
+        let mode = s(&self.model["displayMode"]).to_owned();
+        let manifest = tiles::manifest_ref(&mode);
         let entry = self.hover_point.and_then(|(px,py)| {
             if !self.map_rect.is_some_and(|r| r.contains(px,py)) { return None; }
             let cell = self.map_cell(px,py)?;
@@ -254,16 +253,25 @@ impl BrowserUi {
             let height = frame["height"].as_u64()? as usize;
             if x >= width || y == 0 || y >= height.saturating_sub(1) { return None; }
             let tile = frame["map_tiles"][y*width+x].as_u64()? as usize;
-            manifest["entries"].as_array()?.get(tile)
+            let entry=manifest["entries"].as_array()?.get(tile)?;
+            let glyph=s(&frame["map_cells"]).get(y*width+x..y*width+x+1).unwrap_or(" ");
+            Some((entry,glyph.to_owned()))
         });
-        let title = entry.map(|e| s(&e["labels"][s(&self.model["language"])])).filter(|label| !label.is_empty())
+        let title = entry.as_ref().map(|(e,_)| s(&e["labels"][s(&self.model["language"])])).filter(|label| !label.is_empty())
             .map(str::to_owned).unwrap_or_else(|| self.t("log.title"));
         if heading_image {
             let icon = Rect::new(r.x+12.,r.y+10.,24.,24.);
-            if let Some(entry) = entry {
+            if let Some((entry,glyph)) = entry {
                 self.widgets.box_rect(icon,PANEL,Some(LINE),0.);
-                self.widgets.commands.push(json!({"op":"image","set":mode,"image":entry["image"],
-                    "rect":Rect::new(icon.x+1.,icon.y+1.,22.,22.),"rotation":entry["rotation"],"pixelArt":mode=="pixels","logHeader":true}));
+                if mode == "ascii" {
+                    let size=18.;
+                    let width=(self.measure)(&glyph,size,false,true).width;
+                    self.widgets.commands.push(json!({"op":"text","text":glyph,"x":icon.x+(icon.w-width)/2.,"y":icon.y+3.,
+                        "size":size,"color":Self::map_glyph_color(&glyph),"mono":true,"bold":false,"logHeader":true}));
+                } else {
+                    self.widgets.commands.push(json!({"op":"image","set":mode,"image":entry["image"],
+                        "rect":Rect::new(icon.x+1.,icon.y+1.,22.,22.),"rotation":entry["rotation"],"pixelArt":mode=="pixels","logHeader":true}));
+                }
             } else { self.widgets.icon("command-list",icon,TEXT); }
         }
         let prefix = if heading_image { 32. } else { 0. };

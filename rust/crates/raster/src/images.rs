@@ -114,6 +114,14 @@ impl Image {
         }
         Self::from_rgba(width, height, rgba)
     }
+    fn tinted(&self, tint: [u8; 3]) -> Result<Self, String> {
+        let mut rgba=self.rgba.clone();
+        for pixel in rgba.chunks_exact_mut(4) {
+            let luminance=(u32::from(pixel[0])*54+u32::from(pixel[1])*183+u32::from(pixel[2])*19+128)/256;
+            for channel in 0..3 { pixel[channel]=((luminance*u32::from(tint[channel])+127)/255) as u8; }
+        }
+        Self::from_rgba(self.width,self.height,rgba)
+    }
     fn native_rotation(&self, degrees: f64, fit: bool) -> Result<Self, String> {
         if self.width != 32 || self.height != 32 || !degrees.is_finite() {
             return Err("Invalid native pixel image".into());
@@ -162,12 +170,14 @@ fn byte_count(width: u32, height: u32) -> Result<usize, String> {
 pub struct ImageSet {
     images: BTreeMap<String, Image>,
     rotated: BTreeMap<(String, u64, bool), Image>,
+    tinted: BTreeMap<(String, u64, bool, bool, [u8; 3]), Image>,
 }
 impl ImageSet {
     pub fn new(images: BTreeMap<String, Image>) -> Self {
         Self {
             images,
             rotated: BTreeMap::new(),
+            tinted: BTreeMap::new(),
         }
     }
     pub fn images(&self) -> usize {
@@ -210,7 +220,16 @@ impl ImageSet {
         rotation: f64,
         pixel_art: bool,
         fit: bool,
+        tint: Option<[u8; 3]>,
     ) -> Result<&Image, String> {
+        if let Some(tint) = tint {
+            let key=(name.to_owned(), if pixel_art {rotation.to_bits()} else {0},pixel_art,fit,tint);
+            if !self.tinted.contains_key(&key) {
+                let image=self.image(name,rotation,pixel_art,fit,None)?.tinted(tint)?;
+                self.tinted.insert(key.clone(),image);
+            }
+            return Ok(&self.tinted[&key]);
+        }
         if (rotation != 0. || fit) && pixel_art {
             let key = (name.to_owned(), rotation.to_bits(), fit);
             if !self.rotated.contains_key(&key) {
@@ -251,7 +270,8 @@ pub(crate) fn draw_image(
     let rotation = super::number(&command["rotation"]);
     let pixel_art = command["pixelArt"].as_bool().unwrap_or(false);
     let fit = command["fitRotation"] == true;
-    let image = set.image(super::text(&command["image"]), rotation, pixel_art, fit)?;
+    let tint=command["tint"].as_str().map(super::color).transpose()?.map(|[r,g,b,_]|[r,g,b]);
+    let image = set.image(super::text(&command["image"]), rotation, pixel_art, fit, tint)?;
     if fit && !pixel_art {
         let scale = std::f64::consts::FRAC_1_SQRT_2;
         x += w * (1.-scale)/2.; y += h * (1.-scale)/2.; w *= scale; h *= scale;
@@ -400,6 +420,24 @@ fn blit_opaque(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn theme_tint_preserves_luminance_alpha_geometry_cache_and_default_pixels() {
+        let mut pixels=vec![0;32*32*4];
+        for (i,pixel) in pixels.chunks_exact_mut(4).enumerate() { pixel.copy_from_slice(&[[255,255,255,255],[120,30,210,128],[0,0,0,255],[0,0,0,0]][i%4]); }
+        let mut set=ImageSet::new(BTreeMap::from([("actor".into(),Image::from_rgba(32,32,pixels).unwrap())]));
+        for pixel_art in [true,false] { for (rotation,fit) in [(0.,false),(90.,false),(45.,true)] {
+            let mut command=serde_json::json!({"image":"actor","pixelArt":pixel_art,"rotation":rotation,"fitRotation":fit,"flipX":true,"rect":{"x":0,"y":0,"w":64,"h":64}});
+            let original=set.rasterize(&command,64,64).unwrap();command["tint"]="#00ff66".into();
+            let tinted=set.rasterize(&command,64,64).unwrap();assert!(original!=tinted,"Tint changes the image pixels");
+            assert_eq!(tinted,set.rasterize(&command,64,64).unwrap());
+            for (source,target) in original.chunks_exact(4).zip(tinted.chunks_exact(4)) {
+                assert_eq!(source[3],target[3]);assert_eq!(target[0],0);assert!(target[1].abs_diff((u32::from(source[0])*54+u32::from(source[1])*183+u32::from(source[2])*19+128).wrapping_shr(8) as u8)<=2);
+                assert!(target[2].abs_diff((u32::from(target[1])*102/255) as u8)<=2);
+            }
+            command.as_object_mut().unwrap().remove("tint");assert_eq!(set.rasterize(&command,64,64).unwrap(),original);
+        } }
+    }
 
     #[test]
     fn fitted_projectiles_keep_all_sprite_corners_and_native_opaque_pixels() {

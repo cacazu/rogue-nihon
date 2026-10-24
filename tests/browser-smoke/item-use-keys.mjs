@@ -8,6 +8,7 @@ import {fixtureWorker} from './fixture-worker.mjs';import {runGame} from '../run
 const root=fileURLToPath(new URL('../../',import.meta.url)),wasm=path.resolve(root,process.env.ROGUE_ITEM_USE_WASM||'build/item-use-fixtures.wasm');
 const output=artifactDirectory(path.join(root,'tests/browser-smoke/output/item-use-keys'));await mkdir(output,{recursive:true});
 const worker=await readFile(path.join(root,'web/worker.js'),'utf8'),headers={'Cross-Origin-Embedder-Policy':'require-corp','Cross-Origin-Resource-Policy':'same-origin'};
+const hoverOnly=process.argv.includes('--hover-only');
 const report={checks:[],errors:[]},runtime=await prepareBrowserRuntime(root),server=createPreviewServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const browser=await loadPlaywright().chromium.launch({executablePath:browserExecutable(),headless:true,downloadsPath:runtime.downloadsPath});
 let page,context,fixture,mobile,mode,text,playerName;
@@ -39,6 +40,7 @@ async function listing(){
  s=await snap();assert.equal(s.state.input.kind,'item');assert.equal(s.state.input.id,'input.choose_item_list');assert.match(s.state.frame.ui.window.title,/一覧/);assert.ok(s.scene.controls.some(c=>c.id.startsWith('item-')));await compare('Original list returns to a selectable item window');
 }
 try{
+ if(!hoverOnly){
  for(const mode of ['pixels','tiles','ascii'])for(const mobile of [false,true]){
   await start({mode,mobile});await key('r');await wait('item');
   assert.ok(!(await snap()).scene.controls.some(c=>c.id==='window-42'),'Candidates need no duplicate list button');
@@ -62,21 +64,23 @@ try{
   await page.screenshot({path:path.join(output,mode+'-phone-hidden-pad.png')});
   await tap('window-108');text+='l';await wait('item');await key('Escape','\x1b');await wait('command');await key('.');await wait('command');await compare('Hidden phone pad falls back to the direction window');
  }
+ }
  // PC headers resolve the current public tile at the pointer on every repaint.
  for(const mode of ['pixels','tiles','ascii']){
   await start({mode,name:'長い名前の冒険者あいうえお'});const before=await snap();
   assert.ok(before.scene.text.includes(playerName),'PC name is above the gauges');
-  const publicCells=await page.evaluate(()=>{const f=__rogueBrowserTest.frame,s=__rogueBrowserTest.canvas,c=s.camera,r=s.mapRect;return f.map_tiles.map((tile,i)=>({tile,x:r.x+(i%f.width+.5)*c.size-c.left,y:r.y+(Math.floor(i/f.width)-.5)*c.cellH-c.top})).filter(p=>p.x>r.x+20&&p.x<r.x+r.w-20&&p.y>r.y+100&&p.y<r.y+r.h-20);});
+  const publicCells=await page.evaluate(()=>{const f=__rogueBrowserTest.frame,s=__rogueBrowserTest.canvas,c=s.camera,r=s.mapRect;return f.map_tiles.map((tile,i)=>({tile,glyph:f.map_cells[i],x:r.x+(i%f.width+.5)*c.size-c.left,y:r.y+(Math.floor(i/f.width)-.5)*c.cellH-c.top})).filter(p=>p.x>r.x+20&&p.x<r.x+r.w-20&&p.y>r.y+100&&p.y<r.y+r.h-20);});
   const manifest=JSON.parse(await readFile(path.join(root,'web/assets/'+(mode==='pixels'?'pixels-v2':'tiles')+'/manifest.json'),'utf8'));
   for(const dark of [true,false]){
    const p=publicCells.find(p=>dark?p.tile===0:p.tile!==0);assert.ok(p,'Public hover cell exists');
    const bounds=await page.locator('#rogue-canvas').boundingBox();await page.mouse.move(bounds.x+p.x,bounds.y+p.y);await paint();const current=await snap(),image=current.commands.find(c=>c.logHeader);
-   assert.equal(image.image,manifest.entries[p.tile].image);assert.equal(image.set,mode==='pixels'?'pixels':'tiles');
+   if(mode==='ascii'){assert.equal(image.op,'text');assert.equal(image.text,p.glyph);assert.equal(image.mono,true);}
+   else{assert.equal(image.op,'image');assert.equal(image.image,manifest.entries[p.tile].image);assert.equal(image.set,mode);assert.equal(image.pixelArt,mode==='pixels');}
    assert.ok(current.scene.text.includes(manifest.entries[p.tile].labels.ja));
    await page.screenshot({path:path.join(output,mode+'-pc-header-'+(dark?'dark':'public')+'.png')});
   }
   assert.deepEqual((await snap()).state.trace,before.state.trace,'Hover leaves all C/RNG observations unchanged');
-  for(const [command,tabs]of [['w',['weapon']],['t',['all']],['d',['all']]]){
+  if(!hoverOnly)for(const [command,tabs]of [['w',['weapon']],['t',['all']],['d',['all']]]){
    await key(command);if((await snap()).state.input.kind==='direction'){await key('l');}await wait('item');
    const s=await snap();assert.deepEqual(s.scene.controls.filter(c=>c.id.startsWith('inventory-tab-')).map(c=>c.id.slice(14)),tabs);
    assert.ok(!s.scene.controls.some(c=>c.id==='inventory-history'||c.id==='window-42'));
@@ -85,6 +89,7 @@ try{
   }
   await compare('PC public header, name, weapon/throw/drop tabs');
  }
+ if(!hoverOnly){
  // Every ordinary C item entry uses the same rows, tabs, and cancellation path.
  for(const mobile of [false,true]){
   await start({mobile,fixture:'plain'});
@@ -142,6 +147,7 @@ try{
    assert.deepEqual(a.traces,b.traces,'C list metadata preserves all original state/RNG checkpoints');report.checks.push({label:'Original pre-change C list flow',fixture,text:keys});
   }
  }
- assert.deepEqual(report.errors,[]);console.log(JSON.stringify({checks:report.checks.length,printableKeys:95,errors:report.errors,output}));
+ }
+ assert.deepEqual(report.errors,[]);console.log(JSON.stringify({checks:report.checks.length,printableKeys:hoverOnly?0:95,errors:report.errors,output}));
 }catch(e){report.failure=e.stack;report.last=await snap().catch(()=>null);await page?.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});throw e;}
 finally{await writeFile(path.join(output,'result.json'),JSON.stringify(report,null,2));await context?.close();await browser.close();await new Promise(r=>server.close(r));await runtime.dispose();}
