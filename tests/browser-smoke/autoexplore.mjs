@@ -74,10 +74,10 @@ try{
   assert.deepEqual(after.trace.words,reference.traces.at(-1).words,'Exploration matches exactly the same ordinary C movement and RNG');
   report[touch?'phonePath':'pcPath']=keys.join('');await shot(touch?'phone-complete':'pc-complete');
  });
- for(const side of ['right','left'])await check('loop '+side+' nearby branch beats distant item and sealed areas do not prevent completion',async()=>{
+ for(const side of ['right','left'])await check('loop '+side+' reachable item precedes nearby branch and sealed areas do not prevent completion',async()=>{
   await open('autoexplore-loop-'+side);const before=await snap();assert.equal(before.frame.map_cells[8*80+(side==='right'?19:9)],' ');
   await explore();await stopped('complete');const after=await stable(),positions=await page.evaluate(()=>__explorePositions);
-  assert.equal(positions[1].x,side==='right'?17:11,'First real move uses the short side toward the nearby branch');assert.equal(positions[1].y,12);
+  assert.equal(positions[1].x,side==='right'?15:13,'First real move takes the shortest public route toward the reachable item');assert.equal(positions[1].y,12);
   for(let x=side==='right'?19:6;x<=(side==='right'?22:9);x++)assert.notEqual(after.frame.map_cells[8*80+x],' ','The nearby branch is fully observed');
   assert.notEqual(after.frame.map_cells[8*80+(side==='right'?10:18)],':','The reachable distant item is eventually collected');
   assert.equal(after.frame.map_cells[12*80+30],':','The unreachable published item remains');assert.equal(after.frame.map_cells[9*80+14],'|','The reachable secret entrance remains an undiscovered wall');assert.equal(after.frame.map_cells[10*80+14],' ','The secret region remains unpublished');

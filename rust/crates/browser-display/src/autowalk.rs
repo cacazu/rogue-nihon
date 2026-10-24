@@ -94,14 +94,14 @@ impl<'a> Map<'a> {
         reached
     }
     fn exploration_goal(&self,start:Point,preferred:Option<Point>) -> Option<Point> {
-        // Items and observations compete by actual public-route distance.
-        // A distant item must not postpone information available one step away.
+        // Collect reachable public items first, choosing the shortest public route.
+        // Frontiers compete by route distance only when no item is reachable.
         self.reachable(start).into_iter().filter_map(|(p,distance)| {
             let item=self.item(p);
             let edge=self.frontier(p);
             let information=edge.count_ones();
             (item || p!=start && information>0 && !self.examined(p,edge))
-                .then_some((p,(distance,!item,std::cmp::Reverse(information),preferred!=Some(p))))
+                .then_some((p,(!item,distance,std::cmp::Reverse(information),preferred!=Some(p))))
         }).min_by_key(|(_,rank)|*rank).map(|(p,_)|p)
     }
     fn stairs_goal(&self,start:Point) -> Option<Point> {
@@ -564,10 +564,10 @@ mod exploration_tests {
         assert!(!walk.active());assert_eq!(walk.snapshot()["reason"],"complete");
     }
     #[test]
-    fn exploration_takes_near_information_before_a_distant_item() {
+    fn exploration_item_priority_collects_distant_item_before_near_frontier() {
         let mut f=frame(&["           ","-----------","|!....@.  |","-----------","           "],(6,2));
         let mut walk=AutoWalk::default();walk.start_explore(&f);
-        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_RIGHT),"The one-step frontier precedes the five-step item");
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_LEFT),"The reachable five-step item precedes the one-step frontier");
     }
     #[test]
     fn exploration_ranks_equal_distance_items_then_information_then_existing_goal() {
@@ -697,6 +697,40 @@ mod exploration_tests {
         let mut walk=AutoWalk::default();walk.start_explore(&f);
         assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_DOWN),"Collect the three-step scroll rather than return to the two-step already-observed door");
         assert_eq!(walk.snapshot()["target"],json!({"x":47,"y":13}));
+    }
+
+    #[test]
+    fn exploration_item_priority_uses_shortest_public_route_between_items() {
+        let mut f=frame(&["             ","-------------","|@.|!.......|","|..|........|","|...........|","|!..........|","-------------","             "],(1,2));
+        // The item at (4,2) is geometrically close but needs a public detour.
+        // The nearer reachable item remains eligible outside current sight.
+        f["map_visible"][5*13+1]=json!(false);
+        let mut walk=AutoWalk::default();walk.start_explore(&f);
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_DOWN));
+        assert_eq!(walk.snapshot()["target"],json!({"x":1,"y":5}));
+    }
+    #[test]
+    fn exploration_item_priority_without_items_uses_nearest_frontier() {
+        let mut f=frame(&["         ","---------","| .@..  |","---------","         "],(3,2));
+        let mut walk=AutoWalk::default();walk.start_explore(&f);
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_LEFT));
+        assert_eq!(walk.snapshot()["target"],json!({"x":2,"y":2}));
+    }
+    #[test]
+    fn exploration_item_priority_excludes_unreachable_items() {
+        let mut f=frame(&["           ","-----------","|!|@..  | |","-----------","           "],(3,2));
+        let mut walk=AutoWalk::default();walk.start_explore(&f);
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_RIGHT));
+        assert_eq!(walk.snapshot()["target"],json!({"x":5,"y":2}));
+    }
+    #[test]
+    fn exploration_item_priority_reselects_after_each_pickup_then_explores() {
+        let mut f=frame(&["           ","-----------","|!..@.!.. |","-----------","           "],(4,2));
+        assert_eq!(Map::new(&f).unwrap().exploration_goal((4,2),None),Some((6,2)));
+        f["player"]["x"]=json!(6);f["map_cells"]=json!(["           ","-----------","|!....@.. |","-----------","           "].join(""));
+        assert_eq!(Map::new(&f).unwrap().exploration_goal((6,2),Some((6,2))),Some((1,2)),"After pickup the remaining item wins over a closer frontier");
+        f["player"]["x"]=json!(1);f["map_cells"]=json!(["           ","-----------","|@....... |","-----------","           "].join(""));
+        assert_eq!(Map::new(&f).unwrap().exploration_goal((1,2),Some((1,2))),Some((8,2)),"Only after the last reachable item is collected is a frontier selected");
     }
 
 }
