@@ -84,7 +84,6 @@ impl BrowserUi {
         self.map_rect = Some(map);
         self.regions
             .insert("map".into(), Region { rect: map, max: 0. });
-        self.widgets.rect(map, MAP);
         if self.model["frame"].is_object() {
             self.draw_map(map);
         }
@@ -115,11 +114,23 @@ impl BrowserUi {
             self.draw_settings(game);
         }
     }
+    pub(super) fn with_map_palette(&mut self, draw: impl FnOnce(&mut Self)) {
+        let theme=self.widgets.theme;
+        let first=self.widgets.commands.len();
+        self.widgets.theme=crate::theme::Theme::default();
+        draw(self);
+        self.widgets.theme=theme;
+        for command in &mut self.widgets.commands[first..] { command["palette"]=json!("map"); }
+    }
     pub(super) fn draw_map(&mut self, map: Rect) {
+        self.with_map_palette(|ui|ui.widgets.rect(map,MAP));
         if self.mobile_full_map {
             self.draw_mobile_full_map(map);
             return;
         }
+        self.with_map_palette(|ui|ui.draw_map_contents(map));
+    }
+    fn draw_map_contents(&mut self, map: Rect) {
         let f = self.model["frame"].clone();
         let ascii = self.model["displayMode"] == "ascii";
         let size = if self.mobile_overview && (self.compact_layout()) {
@@ -708,6 +719,9 @@ impl BrowserUi {
         self.dialog_rect = Some(panel);
     }
     fn detection_map(&mut self, r: Rect) {
+        self.with_map_palette(|ui|ui.draw_detection_map(r));
+    }
+    fn draw_detection_map(&mut self, r: Rect) {
         let f = &self.model["frame"];
         let width = n(&f["width"]) as usize;
         let height = n(&f["height"]) as usize;
@@ -737,5 +751,36 @@ impl BrowserUi {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod palette_tests {
+    use super::*;
+    fn commands(theme: &str, mode: &str, kind: &str) -> Vec<Value> {
+        let measure=|text: &str,size: f64,_: bool,_: bool|TextSize{width:text.chars().count() as f64*size/2.,ascent:0.,descent:size};
+        let mut ui=BrowserUi::new(measure);
+        ui.model=json!({"language":"en","displayMode":mode,"tileSize":32,"frame":{"width":4,"height":4,"player":{"x":1,"y":1},
+            "map_cells":"     @!  .%     ","cells":"     @!  .%     ","map_tiles":[0,0,0,0,0,8,15,0,0,1,6,0,0,0,0,0]}});
+        ui.widgets.theme=crate::theme::Theme::named(theme);
+        let rect=Rect::new(0.,0.,200.,160.);
+        if kind=="detection" { ui.detection_map(rect); }
+        else { ui.mobile_full_map=kind=="overview";ui.draw_map(rect); }
+        ui.widgets.raw_text("Outside UI",0.,180.,TextStyle::new(18.,"@text.primary",false));
+        for command in &mut ui.widgets.commands { ui.widgets.theme.paint(command); }
+        ui.widgets.commands
+    }
+    #[test]
+    fn green_monitor_preserves_map_palette_and_restores_ui_theme_after_every_map() {
+        for kind in ["normal","overview","detection"] { for mode in ["ascii","tiles","pixels"] {
+            let normal=commands("default",mode,kind);let green=commands("green-black",mode,kind);
+            let map=|commands: Vec<Value>|commands.into_iter().filter(|c|c["palette"]=="map").collect::<Vec<_>>();
+            let before=map(normal);let after=map(green.clone());
+            assert!(!before.is_empty(),"Explicit map palette scope: {kind}/{mode}");
+            assert_eq!(before,after,"Map paint stays in the original palette: {kind}/{mode}");
+            let outside=green.iter().find(|c|c["text"]=="Outside UI").unwrap();
+            assert_eq!(outside["color"],"#00ff66");assert_eq!(outside["monochrome"],true);
+            assert!(after.iter().all(|c|c["tint"].is_null()&&c["monochrome"].is_null()));
+        } }
     }
 }

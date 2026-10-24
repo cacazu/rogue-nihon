@@ -58,7 +58,7 @@ async function displayMode(mode){
  await page.waitForFunction(mode=>__rogueUiAdapter.state.displayMode===mode,mode);await tap('settings-close');await paint();
 }
 async function mapPixels(rect){
- return page.evaluate(rect=>{const canvas=document.getElementById('rogue-canvas'),r=rect||__rogueBrowserTest.canvas.mapRect,ratio=canvas.width/canvas.getBoundingClientRect().width;
+ return page.evaluate(rect=>{const canvas=document.getElementById('rogue-canvas'),map=__rogueBrowserTest.canvas.mapRect,r=rect||{...map,y:map.y+92,h:map.h-92},ratio=canvas.width/canvas.getBoundingClientRect().width;
   const bytes=Array.from(canvas.getContext('2d').getImageData(Math.ceil((r.x+2)*ratio),Math.ceil((r.y+2)*ratio),Math.floor((r.w-4)*ratio),Math.floor((r.h-4)*ratio)).data);
   let visible=0,colored=0,offPalette=0;for(let i=0;i<bytes.length;i+=4){const [red,green,blue]=bytes.slice(i,i+3);if(red||green||blue)visible++;if(red>0&&red!==green)colored++;if(red!==0||Math.abs(blue-green*.4)>2)offPalette++;}
   return {bytes,visible,colored,offPalette};},rect);
@@ -69,8 +69,8 @@ async function mapPaletteCases(){
  for(const mode of ['ascii','tiles','pixels']){
   await displayMode(mode);const before=await snap(),base=await mapPixels();assert.ok(base.visible>50,'Actual map pixels rendered');
   if(mode!=='ascii'){assert.ok(base.colored>50,'Original artwork has visible color');const images=mapPaint(before,before.scene.mapRect).filter(c=>c.op==='image');for(const group of ['terrain.','actor.','item.'])assert.ok(images.some(c=>c.image.includes(group)),group+' is visible');}
-  await select('green-black');const green=await snap(),pixels=await mapPixels();assert.deepEqual(green.state.trace,before.state.trace,'Theme leaves C/RNG/input unchanged');assert.ok(pixels.visible>50);assert.equal(pixels.offPalette,0,'Actual map RGBA uses green shades');
-  for(const c of mapPaint(green,green.scene.mapRect)){if(c.op==='image')assert.equal(c.tint,'#00ff66');if(c.op==='text'){assert.equal(c.color,'#00ff66');assert.equal(c.monochrome,true);}}
+  await select('green-black');const green=await snap(),pixels=await mapPixels();assert.deepEqual(green.state.trace,before.state.trace,'Theme leaves C/RNG/input unchanged');assert.ok(pixels.visible>50);assert.deepEqual(pixels.bytes,base.bytes,'Green monitor keeps exact original map RGBA');assert.deepEqual(mapPaint(green,green.scene.mapRect),mapPaint(before,before.scene.mapRect),'Map commands retain their original palette');
+  for(const c of mapPaint(green,green.scene.mapRect)){assert.equal(c.tint,undefined);assert.equal(c.monochrome,undefined);}
   if(!cfg.mobile){
    const p=await page.evaluate(()=>{const f=__rogueBrowserTest.frame,s=__rogueBrowserTest.canvas,c=s.camera,r=s.mapRect;return f.map_tiles.map((tile,i)=>({tile,glyph:f.map_cells[i],x:r.x+(i%f.width+.5)*c.size-c.left,y:r.y+(Math.floor(i/f.width)-.5)*c.cellH-c.top})).find(p=>p.tile>=14&&p.tile<=22&&p.x>r.x&&p.x<r.x+r.w&&p.y>r.y&&p.y<r.y+r.h);});assert.ok(p,'Public item hover');const b=await page.locator('#rogue-canvas').boundingBox();await page.mouse.move(b.x+p.x,b.y+p.y);await paint();const header=(await snap()).commands.find(c=>c.logHeader);assert.ok(header);if(mode==='ascii'){assert.equal(header.text,p.glyph);assert.equal(header.color,'#00ff66');}else{assert.equal(header.set,mode);assert.equal(header.tint,'#00ff66');}const headerPixels=await mapPixels(header.rect||{x:header.x-2,y:header.y-2,w:26,h:26});assert.ok(headerPixels.visible>5,'Hovered item actually rendered');assert.equal(headerPixels.offPalette,0,'Actual hover RGBA uses green shades');
   }
@@ -108,7 +108,7 @@ try{
   }
   await tap('select-theme');await capture('default-dropdown');assert.equal((await snap()).scene.controls.filter(c=>c.id.startsWith('select-theme-')).length,spec.themes.length);
   await key('Escape');assert.equal((await snap()).state.theme,'default');await tap('settings-close');
-  await select('green-black');await capture('green-game');assert.deepEqual((await snap()).state.trace,before);assert.notDeepEqual(mapPaint(await snap(),initial.scene.mapRect),map,'Green theme recolors map paint');
+  await select('green-black');await capture('green-game');assert.deepEqual((await snap()).state.trace,before);assert.deepEqual(mapPaint(await snap(),initial.scene.mapRect),map,'Green monitor keeps original map paint');
   const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('rogue-map-display-v1')));assert.equal(stored.theme,'green-black');assert.equal(stored.mode,cfg.mode);assert.equal(stored.animation,false);
   await tap('status-open');await capture('green-status');await tap('status-close');await tap('history-open');await capture('green-history');await tap('history-close');
   await key('i');journal+='i';await wait('space');await capture('green-inventory');await tap('item-c');await capture('green-actions');await tap('window-118');await capture('green-details');await tap('window-27');await tap('window-27');await tap('window-32');journal+=' ';await wait('command');

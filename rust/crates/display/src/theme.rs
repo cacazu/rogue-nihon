@@ -104,7 +104,8 @@ impl Theme {
         }
     }
     /// Resolve only paint fields. User text and data beginning with @ stay intact.
-    pub fn paint(self, command: &mut Value) {
+    pub fn paint(mut self, command: &mut Value) {
+        if command["palette"] == "map" { self=Self::default(); }
         let text = command["op"] == "text";
         for key in ["color", "fill", "stroke"] {
             if let Some(value) = command

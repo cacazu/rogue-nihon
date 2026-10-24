@@ -18,6 +18,7 @@ impl BrowserUi {
         };
         self.camera = Some(camera);
         self.widgets.begin_clip(map);
+        self.with_map_palette(|ui| {
         for (index, glyph) in s(&frame["map_cells"]).bytes().enumerate() {
             let x = index % width as usize;
             let y = index / width as usize;
@@ -33,7 +34,7 @@ impl BrowserUi {
                 b'.' => "@map.overview.floor",
                 _ => "@map.overview.item",
             };
-            self.widgets.rect(
+            ui.widgets.rect(
                 Rect::new(
                     map.x + x as f64 * size - camera.left,
                     map.y + (y - 1) as f64 * size - camera.top,
@@ -47,12 +48,13 @@ impl BrowserUi {
         let player = &frame["player"];
         let px = map.x + n(&player["x"]) * size - camera.left + size / 2.;
         let py = map.y + (n(&player["y"]) - 1.) * size - camera.top + size / 2.;
-        self.widgets.box_rect(
+        ui.widgets.box_rect(
             Rect::new(px - 5., py - 5., 10., 10.),
             "transparent",
             Some("@map.overview.player"),
             0.,
         );
+        });
         let legend_y = map.y + map.h / 2. + height * size / 2. + 20.;
         let mut legend_x = map.x + 12.;
         for (id, color) in [
@@ -65,8 +67,7 @@ impl BrowserUi {
         {
             let label = self.t(id);
             let width = (self.measure)(&label, 17., false, false).width;
-            self.widgets
-                .rect(Rect::new(legend_x, legend_y + 8., 10., 10.), color);
+            self.with_map_palette(|ui|ui.widgets.rect(Rect::new(legend_x, legend_y + 8., 10., 10.), color));
             self.widgets.text_line(&label,
                 Rect::new(legend_x + 15., legend_y, width, 26.),
                 TextStyle::new(17., TEXT, false), false, self.measure);

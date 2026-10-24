@@ -47,7 +47,7 @@ node tests/run.mjs --keep-artifacts --env ROGUE_MOBILE_WINDOWS_WASM=build/game-f
 | `repeat-direction-pad.mjs` | 繰返しの長押し・回数入力・原作20回反復、全6方向操作のパッド表示と取消、持ち物からの投射と杖、PCの方向入力、キーボードで狭まった入力画面 |
 | `mobile-context-history.mjs` | リストの除外と状況別ボタン、実アイテム拾得・罠の方向選択・階段昇降、PC/スマホの持ち物からアイテム履歴への遷移、配布Wasmの接続 |
 | `mobile-layout.mjs` | 共通設定行・連続ズーム・スマホのステータスと履歴・全体図の凡例・設定内の保存とファイル再開 |
-| `themes.mjs` | デフォルト／緑黒の実プルダウン操作、PC・390/320pxスマホ・日英・3表示方式、設定・HUD・履歴・持ち物・操作・詳細・入力・使用後・墓石・得点の配色、再読込・旧/不明設定、地図の緑階調・原色復帰とC/RNGの不変。`--map-only` はPC・390pxの3方式・実画素・hoverだけを確認。`item-use-fixtures.wasm` を使用 |
+| `themes.mjs` | デフォルト／緑黒の実プルダウン操作、PC・390/320pxスマホ・日英・3表示方式、設定・HUD・履歴・持ち物・操作・詳細・入力・使用後・墓石・得点の配色、再読込・旧/不明設定、緑配色でも地図の元色を保持する実画素・UIとhoverの緑・C/RNGの不変。`--map-only` はPC・390pxの3方式・実画素・hoverだけを確認。`item-use-fixtures.wasm` を使用 |
 | `command-reference.mjs` | PCの設定横ボタン、日英・配色・3表示方式・狭い画面、ジャンル別のキー/処理2列表とWeb10操作の全件掲載、全件スクロール、背景入力遮断、所持品・方向・対象・命名・確認の待ちへの復帰、次ターンのC/RNG一致、スマホへの影響なし。`item-use-fixtures.wasm` を使用 |
 | `hud-widgets.mjs` | PC・スマホで共通の二段ステータス、HP/経験値ゲージ、列・色・文字縁、全数値ウィンドウ、クリック・タップ・Tab/Enter・Esc、全画面、日英・DPR・全表示方式、次コマンドまでのC/RNG |
 | `save-export.mjs` | ダウンロードした実ファイル、IndexedDBとの一致、取消、復元と次ターン |
