@@ -195,8 +195,9 @@ mod tests {
             let (mut ui,_,_)=assigned_ui(phone);
             let c=ui.widgets.controls.iter().find(|c|c.id==if phone {"touch-action-action.inventory"}else{"pc-inventory"}).unwrap().clone();
             let x=c.rect.x+c.rect.w/2.;let y=c.rect.y+c.rect.h/2.;
-            ui.event(json!({"type":"down","id":9,"x":x,"y":y,"button":0,"primary":true,"pointerType":"mouse"}));
-            let out=ui.event(json!({"type":"hold-tick","id":9}));
+            let down=ui.event(json!({"type":"down","id":9,"x":x,"y":y,"button":0,"primary":true,"pointerType":"mouse"}));
+            let token=array(&down["effects"]).iter().find(|e|e["kind"]=="hold-timer").unwrap()["token"].clone();
+            let out=ui.event(json!({"type":"hold-tick","id":9,"token":token}));
             assert!(ui.mobile_repeat_open,"Assigned Repeat supports its count gesture");
             assert!(!array(&out["effects"]).iter().any(|e|e["kind"]=="send"));
             let out=ui.event(json!({"type":"up","id":9,"x":x,"y":y,"captured":true,"pointerType":"mouse"}));

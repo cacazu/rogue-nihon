@@ -88,6 +88,8 @@ pub struct BrowserUi {
     binding_capture: Option<keybindings::BindingCapture>,
     direction_origin: Option<direction_overlay::DirectionOrigin>,
     keyboard_dispatch: bool,
+    hold_nonce: u64,
+    movement_presses: std::collections::BTreeSet<String>,
     controls_editor: Option<controls_editor::ControlEditor>,
     dock_targets: Vec<controls_editor::DockTarget>,
     view: Value,
@@ -152,7 +154,6 @@ impl BrowserUi {
         self.sync_direction_window();
         if generation_changed || !self.wait_available() {
             self.stop_hold();
-            self.gestures.wait_key.clear();
         }
     }
     fn sync_direction_window(&mut self) {
@@ -174,6 +175,8 @@ impl BrowserUi {
             binding_capture: None,
             direction_origin: None,
             keyboard_dispatch: false,
+            hold_nonce: 0,
+            movement_presses: Default::default(),
             controls_editor: None,
             dock_targets: Vec::new(),
             view: Value::Null,

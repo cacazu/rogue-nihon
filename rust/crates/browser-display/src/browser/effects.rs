@@ -183,9 +183,10 @@ impl Browser {
                 }
                 let weak = Rc::downgrade(self);
                 let pointer = effect["id"].clone();
+                let token = effect["token"].clone();
                 let callback = Closure::new(move || {
                     if let Some(host) = weak.upgrade() {
-                        if let Err(e) = host.event(json!({"type":"hold-tick","id":pointer}), None) {
+                        if let Err(e) = host.event(json!({"type":"hold-tick","id":pointer,"token":token}), None) {
                             error(e);
                         }
                     }

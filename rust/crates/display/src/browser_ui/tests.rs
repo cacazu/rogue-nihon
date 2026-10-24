@@ -738,21 +738,20 @@ fn death_tombstone_wraps_public_content_and_does_not_restyle_rankings() {
 
 #[test]
 fn repeated_wait_keys_pause_until_release_cancellation_or_another_action() {
-    let mut m = model(); m["input"] = json!({"kind":"command"});
+    let mut m = model(); m["input"] = json!({"kind":"command"});m["inputRequests"]=json!(1);
     let mut ui = BrowserUi::new(measure); ui.render(m.clone(), view(1240.,900.));
     for (key,code) in [(".","Period"),("5","Numpad5"),("Clear","Numpad5")] {
-        ui.event(json!({"type":"key","key":key,"code":code}));
+        let first=ui.event(json!({"type":"key","key":key,"code":code}));let timer=held_timer(&first);
         assert!(!ui.wait_held(), "Single wait keeps its usual animation");
-        let r = ui.event(json!({"type":"key","key":key,"code":code,"repeat":true}));
-        assert!(r["effects"].as_array().unwrap().iter().any(|e|e["key"] == (46 | rogue_contract::RG_EVENT_REPEAT)));
-        assert!(ui.wait_held());
-        ui.event(json!({"type":"keyup","key":"Shift","code":"ShiftLeft"}));
-        assert!(ui.wait_held());
-        ui.event(json!({"type":"keyup","key":key,"code":code}));
-        assert!(!ui.wait_held());
+        assert!(held_sends(&ui.event(json!({"type":"key","key":key,"code":code,"repeat":true}))).is_empty());
+        assert!(!ui.wait_held(),"OS repeat does not start the hold early");
+        m["inputRequests"]=json!(n(&m["inputRequests"])+1.);ui.set_context(m.clone());
+        assert_eq!(held_sends(&held_tick(&mut ui,&timer)),vec![u64::from(46|rogue_contract::RG_EVENT_REPEAT)]);assert!(ui.wait_held());
+        ui.event(json!({"type":"keyup","key":"Shift","code":"ShiftLeft"}));assert!(ui.wait_held());
+        ui.event(json!({"type":"keyup","key":key,"code":code}));assert!(!ui.wait_held());
         for cancel in [json!({"type":"cancel"}),json!({"type":"key","key":"l"})] {
-            ui.event(json!({"type":"key","key":key,"code":code,"repeat":true}));
-            assert!(ui.wait_held()); ui.event(cancel); assert!(!ui.wait_held());
+            let timer=held_timer(&ui.event(json!({"type":"key","key":key,"code":code})));
+            held_tick(&mut ui,&timer);assert!(ui.wait_held());ui.event(cancel);assert!(!ui.wait_held());
         }
     }
 }
@@ -1389,18 +1388,21 @@ fn pad_hold_shares_start_repeat_and_release_across_pointer_modes() {
         let mut m=shortcut_model();m["inputRequests"]=json!(10);ui.render(m.clone(),v.clone());
         let c=ui.widgets.controls.iter().find(|c|c.id=="touch-h").unwrap().clone();let x=c.rect.x+c.rect.w/2.;let y=c.rect.y+c.rect.h/2.;
         let down=ui.event(json!({"type":"down","id":1,"x":x,"y":y,"pointerType":pointer,"button":0,"primary":true}));
+        let timer=held_timer(&down);
+        ui.event(json!({"type":"down","id":2,"x":x,"y":y,"pointerType":"touch","button":0,"primary":false,"captured":true}));
+        assert!(ui.holding(1),"An ignored second pointer cannot end the primary pad hold");
         assert_eq!(array(&down["effects"]).iter().filter(|e|e["kind"]=="send"&&e["key"]==104).count(),1,"{width} {pointer}");
         assert!(array(&down["effects"]).iter().any(|e|e["kind"]=="hold-timer"&&e["delay"]==350));
-        let pending=ui.event(json!({"type":"hold-tick","id":1}));
+        let pending=held_tick(&mut ui,&timer);
         assert!(!array(&pending["effects"]).iter().any(|e|e["kind"]=="send"),"An unfinished C input cannot repeat");
         m["inputRequests"]=json!(11);ui.render(m.clone(),v.clone());
-        let repeat=ui.event(json!({"type":"hold-tick","id":1}));
+        let repeat=held_tick(&mut ui,&timer);
         assert_eq!(array(&repeat["effects"]).iter().filter(|e|e["kind"]=="send"&&e["key"]==(104|rogue_contract::RG_EVENT_REPEAT)).count(),1);
         assert!(array(&repeat["effects"]).iter().any(|e|e["kind"]=="hold-timer"&&e["delay"]==100));
         let up=ui.event(json!({"type":"up","id":1,"x":x,"y":y,"pointerType":pointer,"captured":true}));
         assert!(!array(&up["effects"]).iter().any(|e|e["kind"]=="send"),"Release must not add a second activation");
         m["inputRequests"]=json!(12);ui.render(m,v);
-        assert!(array(&ui.event(json!({"type":"hold-tick","id":1}))["effects"]).is_empty());
+        assert!(array(&held_tick(&mut ui,&timer)["effects"]).is_empty());
         assert!(ui.captured_ids().is_empty());
     }
 }
@@ -1410,7 +1412,7 @@ fn pad_hold_stops_on_cancel_leave_and_prompt() {
     for stop in ["cancel","move-out","leave","prompt"] {
         let mut ui=BrowserUi::new(measure);let v=view(390.,900.);let mut m=shortcut_model();m["inputRequests"]=json!(10);ui.render(m.clone(),v.clone());
         let c=ui.widgets.controls.iter().find(|c|c.id=="touch-l").unwrap().clone();let x=c.rect.x+c.rect.w/2.;let y=c.rect.y+c.rect.h/2.;
-        ui.event(json!({"type":"down","id":1,"x":x,"y":y,"pointerType":"mouse","button":0,"primary":true}));
+        let down=ui.event(json!({"type":"down","id":1,"x":x,"y":y,"pointerType":"mouse","button":0,"primary":true}));let timer=held_timer(&down);
         assert!(ui.holding(1), "The stop boundary starts with an active pad hold");
         match stop {
             "cancel"=>{ui.event(json!({"type":"cancel","id":1}));},
@@ -1419,7 +1421,7 @@ fn pad_hold_stops_on_cancel_leave_and_prompt() {
             _=>{m["input"]=json!({"kind":"direction"});m["frame"]["ui"]["input"]=m["input"].clone();m["frame"]["ui"]["movement_direction"]=json!(true);},
         }
         m["inputRequests"]=json!(11);ui.render(m,v);
-        assert!(!array(&ui.event(json!({"type":"hold-tick","id":1}))["effects"]).iter().any(|e|e["kind"]=="send"),"{stop}");
+        assert!(!array(&held_tick(&mut ui,&timer)["effects"]).iter().any(|e|e["kind"]=="send"),"{stop}");
     }
 }
 
@@ -1519,4 +1521,93 @@ fn adventure_view_reset_restores_operation_defaults_without_changing_preferences
     assert_eq!(ui.scrolls["log"],0.);
     assert_eq!(ui.inventory_preference(),json!({"version":1,"tab":"all","positions":{},"horizontal":0.}));
     assert_eq!(ui.control_preferences(),controls);assert_eq!(ui.model,settings);
+}
+
+fn held_timer(out:&Value)->Value {array(&out["effects"]).iter().find(|e|e["kind"]=="hold-timer").expect("Movement starts the shared hold timer").clone()}
+fn held_tick(ui:&mut BrowserUi,timer:&Value)->Value {ui.event(json!({"type":"hold-tick","id":timer["id"],"token":timer["token"]}))}
+fn held_sends(out:&Value)->Vec<u64> {array(&out["effects"]).iter().filter(|e|e["kind"]=="send").filter_map(|e|e["key"].as_u64()).collect()}
+#[test]
+fn keyboard_hold_uses_pad_timing_and_completed_request_gate() {
+    let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();m["inputRequests"]=json!(10);ui.render(m.clone(),view(1240.,900.));
+    let first=ui.event(json!({"type":"key","key":"l","code":"KeyL"}));assert_eq!(held_sends(&first),vec![108]);
+    for _ in 0..20 {assert!(held_sends(&ui.event(json!({"type":"key","key":"l","code":"KeyL","repeat":true}))).is_empty(),"OS repeat cannot add movement or restart the timer");}
+    let timer=held_timer(&first);assert_eq!(timer["delay"],350);
+    let waiting=held_tick(&mut ui,&timer);assert!(held_sends(&waiting).is_empty());assert_eq!(held_timer(&waiting)["delay"],100);
+    m["inputRequests"]=json!(11);ui.set_context(m.clone());let next=held_tick(&mut ui,&timer);assert_eq!(held_sends(&next),vec![108|u64::from(rogue_contract::RG_EVENT_REPEAT)]);
+    assert!(held_sends(&held_tick(&mut ui,&timer)).is_empty());ui.event(json!({"type":"keyup","key":"l","code":"KeyL"}));m["inputRequests"]=json!(12);ui.set_context(m);assert!(held_sends(&held_tick(&mut ui,&timer)).is_empty());
+}
+#[test]
+fn keyboard_hold_old_press_and_prompt_repeats_cannot_take_over_a_new_hold() {
+    let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();m["inputRequests"]=json!(1);ui.render(m.clone(),view(1240.,900.));
+    let old=held_timer(&ui.event(json!({"type":"key","key":"l","code":"KeyL"})));
+    let current=held_timer(&ui.event(json!({"type":"key","key":"j","code":"KeyJ"})));
+    assert!(held_sends(&ui.event(json!({"type":"key","key":"l","code":"KeyL","repeat":true}))).is_empty());ui.event(json!({"type":"keyup","key":"l","code":"KeyL"}));
+    m["inputRequests"]=json!(2);ui.set_context(m.clone());assert!(held_sends(&held_tick(&mut ui,&old)).is_empty());assert_eq!(held_sends(&held_tick(&mut ui,&current)),vec![106|u64::from(rogue_contract::RG_EVENT_REPEAT)]);
+    m["input"]=json!({"kind":"direction"});m["frame"]["ui"]["movement_direction"]=json!(true);ui.set_context(m.clone());assert!(held_sends(&ui.event(json!({"type":"key","key":"j","code":"KeyJ","repeat":true}))).is_empty());ui.event(json!({"type":"keyup","key":"j","code":"KeyJ"}));
+    let choice=ui.event(json!({"type":"key","key":"k","code":"KeyK"}));assert_eq!(held_sends(&choice),vec![107]);assert!(!array(&choice["effects"]).iter().any(|e|e["kind"]=="hold-timer"));
+    m["input"]=json!({"kind":"command"});m["frame"]["ui"]["movement_direction"]=json!(false);ui.set_context(m);
+    assert!(held_sends(&ui.event(json!({"type":"key","key":"k","code":"KeyK","repeat":true}))).is_empty());ui.event(json!({"type":"keyup","key":"k","code":"KeyK"}));
+    assert_eq!(held_sends(&ui.event(json!({"type":"key","key":"s","code":"KeyS","repeat":true}))).len(),1,"Unrelated command repetition is unchanged");
+}
+#[test]
+fn keyboard_hold_preserves_resolved_direction_modes_and_stops_with_modifiers_or_context() {
+    use rogue_contract::*;
+    for (event,mode,expected) in [(json!({"key":"l","code":"KeyL"}),0,108),(json!({"key":"ArrowRight","code":"ArrowRight"}),1,76),(json!({"key":"3","code":"Numpad3"}),2,u64::from(RG_KEY_PAGE_DOWN|RG_EVENT_CTRL)),(json!({"key":"U","code":"KeyU","shiftKey":true}),0,u64::from(85|RG_EVENT_SHIFT)),(json!({"key":"l","code":"KeyL","ctrlKey":true}),0,u64::from(108|RG_EVENT_CTRL)),(json!({"key":"F8","code":"F8"}),0,108)] {
+        let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();m["inputRequests"]=json!(1);ui.render(m.clone(),view(1240.,900.));ui.mobile_movement=mode;
+        if event["key"]=="F8" {ui.controls_preferences.bindings.insert("game.move-right".into(),vec![keybindings::KeyBinding::plain("F8")]);}
+        let mut key=event.clone();key["type"]=json!("key");let out=ui.event(key);assert_eq!(held_sends(&out),vec![expected],"{event}");let timer=held_timer(&out);m["inputRequests"]=json!(2);ui.set_context(m.clone());assert_eq!(held_sends(&held_tick(&mut ui,&timer)),vec![expected|u64::from(RG_EVENT_REPEAT)],"{event}");
+        let stop=if event["ctrlKey"]==true {json!({"type":"keyup","key":"Control","code":"ControlLeft"})}else if event["shiftKey"]==true {json!({"type":"keyup","key":"Shift","code":"ShiftLeft"})}else {json!({"type":"cancel"})};ui.event(stop);m["inputRequests"]=json!(3);ui.set_context(m);assert!(held_sends(&held_tick(&mut ui,&timer)).is_empty());
+    }
+}
+
+#[test]
+fn keyboard_hold_context_stops_and_same_source_stale_tick_cannot_restart() {
+    for boundary in ["settings","generation","scope","cancel"] {
+        let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();m["inputRequests"]=json!(1);ui.render(m.clone(),view(1240.,900.));
+        let old=held_timer(&ui.event(json!({"type":"key","key":"l","code":"KeyL"})));
+        match boundary {
+            "settings"=>{m["settingsOpen"]=json!(true);ui.set_context(m.clone());},
+            "generation"=>{m["generation"]=json!(2);ui.set_context(m.clone());},
+            "scope"=>{ui.event(json!({"type":"key","key":"C","code":"KeyC"}));ui.render(m.clone(),view(1240.,900.));},
+            _=>{ui.event(json!({"type":"cancel"}));},
+        }
+        m["settingsOpen"]=json!(false);m["inputRequests"]=json!(2);ui.set_context(m.clone());assert!(held_sends(&held_tick(&mut ui,&old)).is_empty(),"{boundary}");
+        assert!(held_sends(&ui.event(json!({"type":"key","key":"l","code":"KeyL","repeat":true}))).is_empty());
+        ui.event(json!({"type":"keyup","key":"l","code":"KeyL"}));ui.commands_open=false;ui.render(m.clone(),view(1240.,900.));
+        let current=held_timer(&ui.event(json!({"type":"key","key":"l","code":"KeyL"})));m["inputRequests"]=json!(3);ui.set_context(m);
+        assert!(held_sends(&held_tick(&mut ui,&old)).is_empty());assert_eq!(held_sends(&held_tick(&mut ui,&current)).len(),1);
+    }
+}
+
+#[test]
+fn keyboard_hold_fresh_native_press_retires_a_latch_after_a_missed_release() {
+    let mut ui=BrowserUi::new(measure);ui.render(shortcut_model(),view(1240.,900.));
+    ui.event(json!({"type":"key","key":"h","code":"KeyH"}));ui.event(json!({"type":"cancel"}));
+    let fresh=ui.event(json!({"type":"key","key":"h","code":"KeyH","native":"name"}));assert_eq!(fresh["consumed"],false);
+    let repeat=ui.event(json!({"type":"key","key":"h","code":"KeyH","native":"name","repeat":true}));
+    assert_eq!(repeat["consumed"],false,"Fresh native typing must not inherit an old movement latch");assert!(array(&repeat["effects"]).is_empty());
+}
+
+#[test]
+fn keyboard_hold_latch_is_handled_before_editor_interpretation() {
+    let mut ui=BrowserUi::new(measure);ui.render(shortcut_model(),view(1240.,900.));
+    ui.event(json!({"type":"key","key":"ArrowDown","code":"ArrowDown"}));
+    ui.open_controls_editor(controls_editor::EditMode::Assignment);
+    ui.regions.insert("control-picker".into(),Region{rect:Rect::new(0.,0.,100.,100.),max:1000.});ui.scrolls.insert("control-picker".into(),0.);
+    ui.event(json!({"type":"key","key":"ArrowDown","code":"ArrowDown","repeat":true}));assert_eq!(ui.scrolls["control-picker"],0.,"Old movement repeats cannot become editor navigation");
+    ui.event(json!({"type":"keyup","key":"ArrowDown","code":"ArrowDown"}));
+    ui.event(json!({"type":"key","key":"ArrowDown","code":"ArrowDown"}));assert_eq!(ui.scrolls["control-picker"],80.);
+    ui.event(json!({"type":"key","key":"ArrowDown","code":"ArrowDown","repeat":true}));assert_eq!(ui.scrolls["control-picker"],160.,"A fresh editor navigation press keeps normal OS repetition");
+}
+
+#[test]
+fn keyboard_hold_pointer_leave_and_old_release_do_not_end_keyboard_movement() {
+    for stop in ["leave","up","cancel"] {
+        let mut ui=BrowserUi::new(measure);let mut m=shortcut_model();m["inputRequests"]=json!(1);ui.render(m.clone(),view(1240.,900.));
+        let c=ui.widgets.controls.iter().find(|c|c.id=="touch-h").unwrap().clone();let x=c.rect.x+c.rect.w/2.;let y=c.rect.y+c.rect.h/2.;
+        ui.event(json!({"type":"down","id":1,"x":x,"y":y,"pointerType":"mouse","button":0,"primary":true}));
+        let timer=held_timer(&ui.event(json!({"type":"key","key":"l","code":"KeyL"})));
+        ui.event(json!({"type":stop,"id":1,"x":x,"y":y,"pointerType":"mouse","captured":true}));
+        m["inputRequests"]=json!(2);ui.set_context(m);assert_eq!(held_sends(&held_tick(&mut ui,&timer)),vec![108|u64::from(rogue_contract::RG_EVENT_REPEAT)],"{stop} belongs to the old pointer source");
+    }
 }

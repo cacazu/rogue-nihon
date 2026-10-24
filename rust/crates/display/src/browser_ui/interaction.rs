@@ -99,7 +99,7 @@ impl BrowserUi {
         }
     }
     fn cancel_pointer(&mut self, clear_hover: bool, effects: &mut Vec<Value>) {
-        self.stop_hold();
+        self.stop_pointer_hold();
         if let Some(drag) = self.drag.take() {
             effects.push(json!({"kind":"release","id":drag.id}));
         }
@@ -210,6 +210,11 @@ impl BrowserUi {
         let y = n(&event["y"]);
         let id = event["id"].as_i64().unwrap_or(0);
         let mouse = event["pointerType"] == "mouse";
+        // Physical ownership is independent of the UI that interprets a key.
+        if event["type"]=="keyup" {self.release_keyboard_hold(&event);}
+        if event["type"]=="key" && self.suppress_held_repeat(&event) {
+            return json!({"consumed":true,"effects":effects,"diagnostics":self.diagnostics()});
+        }
         if let Some(consumed)=self.controls_editor_event(&event,&mut effects) {
             return json!({"consumed":consumed,"effects":effects,"diagnostics":self.diagnostics()});
         }
@@ -221,7 +226,7 @@ impl BrowserUi {
             "raw-key" => return json!({"raw":raw_key(&event),"diagnostics":self.diagnostics()}),
             "center" => self.center_key.clear(),
             "cancel" => {
-                self.gestures.wait_key.clear();
+                if event["id"].is_null() {self.stop_hold();}
                 if event["id"].is_null() || self.drag.as_ref().is_some_and(|d| d.id == id) {
                     self.cancel_pointer(true, &mut effects);
                 }
@@ -229,15 +234,15 @@ impl BrowserUi {
                     self.widgets.focus.clear();
                 }
             }
-            "leave" => { self.stop_hold(); self.widgets.hover.clear(); self.hover_point = None; },
+            "leave" => { self.stop_pointer_hold(); self.widgets.hover.clear(); self.hover_point = None; },
             "down" => {
-                self.gestures.wait_key.clear();
                 if self.drag.is_some() && !b(&event["captured"]) {
                     self.cancel_pointer(true, &mut effects);
                 }
                 if n(&event["button"]) != 0. || event["primary"] == false || self.drag.is_some() {
                     consumed = event["pointerType"] == "touch";
                 } else {
+                    self.stop_hold();
                     consumed = true;
                     let hit = self.hit(x, y);
                     if !hit.as_ref().is_some_and(|c| c.id.starts_with("hud-")) {
@@ -361,7 +366,7 @@ impl BrowserUi {
                                 }
                             }
                             if drag.moved || !drag.hit.as_ref().is_some_and(|c| c.rect.contains(x, y)) {
-                                self.stop_hold();
+                                self.stop_pointer_hold();
                             }
                             self.drag = Some(drag);
                         }
@@ -433,25 +438,13 @@ impl BrowserUi {
             }
             "key" => {
                 self.stop_hold();
-                self.gestures.wait_key.clear();
-                if self.command_ready() || event["key"]=="Escape" {self.direction_origin=None;}
+                let command=self.command_ready();
+                let direction=b(&self.model["frame"]["ui"]["movement_direction"]);
+                if command || event["key"]=="Escape" {self.direction_origin=None;}
                 self.keyboard_dispatch=true;
                 consumed = self.key_event(&event, &mut effects);
                 self.keyboard_dispatch=false;
-                if b(&event["repeat"]) && self.model["input"]["kind"] == "command"
-                    && effects.iter().any(|effect| effect["kind"] == "send"
-                        && effect["key"].as_u64().is_some_and(|key|
-                            key as u32 & !RG_EVENT_REPEAT == u32::from(b'.'))) {
-                    self.gestures.wait_key = if s(&event["code"]).is_empty() {
-                        s(&event["key"]).into()
-                    } else { s(&event["code"]).into() };
-                }
-            }
-            "keyup" => {
-                if self.gestures.wait_key == s(&event["code"])
-                    || self.gestures.wait_key == s(&event["key"]) {
-                    self.gestures.wait_key.clear();
-                }
+                self.start_keyboard_hold(&event,command,direction,&mut effects);
             }
             _ => {}
         }
