@@ -1,10 +1,11 @@
 //! Read-only projection of the original C player flags, never inferred from UI.
-use rogue_contract::{RG_FLAG_AMULET, RG_FLAG_LEVITATING};
+use rogue_contract::{RG_FLAG_AMULET, RG_FLAG_BLIND, RG_FLAG_LEVITATING};
 use serde::Serialize;
 
 #[derive(Clone, Copy, Default, Serialize)]
 pub struct PlayerState {
     pub amulet: bool,
+    pub blind: bool,
     pub levitating: bool,
 }
 
@@ -12,6 +13,7 @@ impl PlayerState {
     pub fn from_snapshot(flags: u32) -> Self {
         Self {
             amulet: flags & RG_FLAG_AMULET != 0,
+            blind: flags & RG_FLAG_BLIND != 0,
             levitating: flags & RG_FLAG_LEVITATING != 0,
         }
     }
@@ -33,6 +35,7 @@ mod tests {
             let state = PlayerState::from_snapshot(flags);
             assert_eq!(state.amulet, amulet);
             assert_eq!(state.levitating, levitating);
+            assert_eq!(state.blind,flags & RG_FLAG_BLIND != 0);
         }
     }
 }

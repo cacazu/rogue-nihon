@@ -194,9 +194,13 @@ impl Envelope {
                 .as_object()
                 .ok_or("invalid saved presentation")?;
             let memory_valid=object.get("map_memory").is_none_or(|memory| {
-                memory.as_object().is_some_and(|object| object.len()==2)
+                memory.as_object().is_some_and(|object| object.len()==2
+                    || object.len()==3 && object.contains_key("checked"))
                     && memory["level"].as_u64().zip(memory["cells"].as_str())
                         .is_some_and(|(level,cells)| rogue_contract::valid_map_memory(level,cells))
+                    && memory.get("checked").is_none_or(|checked|
+                        serde_json::from_value::<Vec<u16>>(checked.clone()).ok()
+                            .is_some_and(|checked|rogue_contract::valid_map_checked(&checked,80,24)))
             });
             if !memory_valid || !(object.len() == 4 || object.len() == 5 && object.contains_key("map_memory"))
                 || !["lines", "input", "history", "last_message"]
@@ -381,6 +385,26 @@ mod tests {
         assert!(hex_decode("f").is_err());
         assert!(Envelope::new(1, "Rogue".into(), &[1], vec![128], 1).is_err());
     }
+    #[test]
+    fn checked_map_save_roundtrip_accepts_legacy_and_rejects_invalid_patterns() {
+        let mut view=serde_json::json!({"lines":[],"input":null,"history":[],"last_message":null,
+            "map_memory":{"level":1,"cells":" ".repeat(1920)}});
+        assert!(Envelope::new_with_presentation(7,"Player".into(),&[1],vec![],0,view.clone()).is_ok());
+        let mut checked=vec![rogue_contract::MAP_UNCHECKED;1920];checked[163]=129;
+        view["map_memory"]["checked"]=serde_json::json!(checked);
+        let saved=Envelope::new_with_presentation(7,"Player".into(),&[1],vec![],0,view.clone()).unwrap();
+        assert_eq!(Envelope::parse(&saved.bytes().unwrap()).unwrap().presentation["map_memory"],view["map_memory"]);
+        let valid=view["map_memory"]["checked"].clone();
+        for invalid in [serde_json::json!([]),serde_json::json!(vec![256u16;1919]),
+            serde_json::json!(vec![257u16;1920]),serde_json::json!(vec![-1i32;1920]),
+            serde_json::json!(vec![0u16;1920]),serde_json::Value::Null] {
+            view["map_memory"]["checked"]=invalid;
+            assert!(Envelope::new_with_presentation(7,"Player".into(),&[1],vec![],0,view.clone()).is_err());
+        }
+        view["map_memory"]["checked"]=valid;view["map_memory"]["extra"]=serde_json::json!(true);
+        assert!(Envelope::new_with_presentation(7,"Player".into(),&[1],vec![],0,view).is_err());
+    }
+
 }
 
 mod bevy_plugin;

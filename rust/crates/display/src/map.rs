@@ -44,8 +44,9 @@ pub struct ObservedMap {
     terrain: Vec<u8>,
     visibility: Option<Vec<u8>>,
     memory: Vec<u8>,
+    checked: Vec<u16>,
     memory_level: Option<u32>,
-    pending_memory: Option<(u32, Vec<u8>)>,
+    pending_memory: Option<(u32, Vec<u8>, Vec<u16>)>,
     restore_ready: bool,
     actors: Vec<Value>,
     actor_events: Vec<(u64, u32, &'static str)>,
@@ -81,16 +82,22 @@ impl ObservedMap {
         self.visibility = (visible.len() == (COLUMNS*ROWS) as usize && visible.iter().all(|value| *value <= 1)).then_some(visible);
     }
     pub fn memory_snapshot(&self) -> Option<Value> {
-        if self.restore_ready && let Some((level,cells))=&self.pending_memory {
-            return Some(json!({"level":level,"cells":String::from_utf8_lossy(cells)}));
+        if self.restore_ready && let Some((level,cells,checked))=&self.pending_memory {
+            return Some(json!({"level":level,"cells":String::from_utf8_lossy(cells),"checked":checked}));
         }
         self.memory_level.zip((self.memory.len() == (COLUMNS*ROWS) as usize).then_some(&self.memory))
-            .map(|(level,cells)| json!({"level":level,"cells":String::from_utf8_lossy(cells)}))
+            .map(|(level,cells)| json!({"level":level,"cells":String::from_utf8_lossy(cells),"checked":self.checked}))
     }
     pub fn restore_memory(&mut self, memory: &Value) {
         self.pending_memory = memory["level"].as_u64().zip(memory["cells"].as_str())
             .filter(|(level,cells)| rogue_contract::valid_map_memory(*level,cells))
-            .map(|(level,cells)| (level as u32,cells.as_bytes().to_vec()));
+            .and_then(|(level,cells)| {
+                let checked=if memory.get("checked").is_some() {
+                    serde_json::from_value::<Vec<u16>>(memory["checked"].clone()).ok()?
+                } else {vec![rogue_contract::MAP_UNCHECKED;(COLUMNS*ROWS) as usize]};
+                rogue_contract::valid_map_checked(&checked,COLUMNS as usize,ROWS as usize)
+                    .then(||(level as u32,cells.as_bytes().to_vec(),checked))
+            });
     }
     /// C has successfully loaded its checkpoint. Startup's provisional screen
     /// cannot consume the pending memory before this explicit success signal.
@@ -226,6 +233,7 @@ impl ObservedMap {
         {
             for key in [
                 "map_cells",
+                "map_checked",
                 "map_visible",
                 "map_tiles",
                 "map_tile_ids",
@@ -270,10 +278,11 @@ impl ObservedMap {
                 let level = frame["stats"]["level"].as_u64().and_then(|level| u32::try_from(level).ok());
                 if self.memory.len() != cells.len() || self.memory_level != level {
                     self.memory = vec![b' ';cells.len()];
+                    self.checked = vec![rogue_contract::MAP_UNCHECKED;cells.len()];
                     self.memory_level = level;
                 }
-                if self.restore_ready && let Some((saved_level,memory)) = self.pending_memory.take() {
-                    if Some(saved_level) == level { self.memory = memory; }
+                if self.restore_ready && let Some((saved_level,memory,checked)) = self.pending_memory.take() {
+                    if Some(saved_level) == level { self.memory = memory; self.checked = checked; }
                 }
                 for index in columns as usize..(cells.len()-columns as usize) {
                     let glyph = cells[index];
@@ -295,6 +304,20 @@ impl ObservedMap {
                     if cells[index] == b' ' { cells[index] = self.memory[index]; }
                 }
             }
+            // Record every accepted public observation, including the frame
+            // which makes exploration stop for an enemy. Blind visits and a
+            // restore's provisional startup screen do not confirm a frontier.
+            if ui["mode"]=="game" && ui["player_state"]["blind"]!=true
+                && !(self.replaying_actors && !self.restore_ready)
+                && self.actors.iter().any(|actor| actor["id"]==0
+                    && actor["x"]==frame["player"]["x"] && actor["y"]==frame["player"]["y"]) {
+                let x=frame["player"]["x"].as_u64().unwrap() as i32;
+                let y=frame["player"]["y"].as_u64().unwrap() as i32;
+                if let Some(mask)=rogue_contract::map_unknown_mask(&cells,columns as usize,rows as usize,x,y) {
+                    self.checked[y as usize*columns as usize+x as usize]=u16::from(mask);
+                }
+            }
+            frame["map_checked"]=json!(self.checked);
             let (tiles, unknown) = map_tiles::map(&cells, columns, rows, &self.effects);
             frame["map_visible"] = json!(visible);
             let underlays: Vec<Value> = self
@@ -460,7 +483,8 @@ mod tests {
         assert_eq!(before["map_cells"].as_str().unwrap().as_bytes()[index],b' ');
         map.restore_ready();
         map.present(raw.clone(),&json!({"mode":"inventory"}),"test");
-        assert_eq!(map.memory_snapshot(),Some(memory.clone()),"An immediate checkpoint retains pending restored memory");
+        let mut expected_memory=memory.clone();expected_memory["checked"]=json!(vec![rogue_contract::MAP_UNCHECKED;80*24]);
+        assert_eq!(map.memory_snapshot(),Some(expected_memory),"An immediate checkpoint retains pending restored memory");
         let restored=map.present(raw.clone(),&json!({"mode":"game"}),"test");
         assert_eq!(restored["map_cells"].as_str().unwrap().as_bytes()[index],b'.');
         map.observe_actor(ActorObservation::Reset(9));
@@ -663,4 +687,54 @@ mod tests {
             assert_eq!(map.frame(), Some(&original));
         }
     }
+    fn checked_scene(x:u32, level:u32) -> Value {
+        let mut raw=frame();raw["stats"]=json!({"level":level});raw["player"]=json!({"x":x,"y":2});
+        let mut cells=vec![b' ';80*24];for px in 2..=7 {cells[2*80+px]=b'.';}
+        cells[2*80+x as usize]=b'@';cells[2*80+7]=b'Z';
+        raw["cells"]=json!(String::from_utf8(cells).unwrap());raw
+    }
+    fn observe_checked(map:&mut ObservedMap,x:u32,level:u32,blind:bool)->Value {
+        observe_positions(map,x as i32,7);
+        let mut terrain=vec![255;80*24];terrain[2*80+x as usize]=b'.';map.terrain(terrain);
+        map.present(checked_scene(x,level),&json!({"mode":"game","player_state":{"blind":blind}}),"test")
+    }
+    #[test]
+    fn checked_observations_cover_manual_movement_and_enemy_stop_before_planning() {
+        let mut map=ObservedMap::default();let index=2*80+3;
+        // No AutoWalk invocation is involved; this enemy-bearing frame is
+        // recorded before any browser can decide to stop exploration.
+        let first=observe_checked(&mut map,3,1,false);
+        let mask=rogue_contract::map_unknown_mask(first["map_cells"].as_str().unwrap().as_bytes(),80,24,3,2).unwrap();
+        assert_eq!(first["map_checked"][index],mask);
+        observe_checked(&mut map,4,1,false);
+        let mut raw=checked_scene(4,1);let mut cells=raw["cells"].as_str().unwrap().as_bytes().to_vec();cells[3*80+3]=b'.';raw["cells"]=json!(String::from_utf8(cells).unwrap());
+        observe_positions(&mut map,4,7);let changed=map.present(raw,&json!({"mode":"game"}),"test");
+        assert_eq!(changed["map_checked"][index],mask,"New knowledge does not pretend the old position was visited again");
+        assert_ne!(rogue_contract::map_unknown_mask(changed["map_cells"].as_str().unwrap().as_bytes(),80,24,3,2),Some(mask));
+        let revisited=observe_checked(&mut map,3,1,false);
+        assert_ne!(revisited["map_checked"][index],mask,"A real revisit confirms the new public pattern");
+        let cached=map.present(frame(),&json!({"mode":"inventory"}),"test");assert_eq!(cached["map_checked"],revisited["map_checked"]);
+    }
+    #[test]
+    fn checked_observations_preserve_same_level_teleports_but_clear_levels_and_new_games() {
+        let mut map=ObservedMap::default();let first=observe_checked(&mut map,3,1,false);
+        map.observe_actor(ActorObservation::Reset(9));let teleported=observe_checked(&mut map,6,1,false);
+        assert_eq!(teleported["map_checked"][2*80+3],first["map_checked"][2*80+3]);
+        let next=observe_checked(&mut map,6,2,false);assert_eq!(next["map_checked"][2*80+3],rogue_contract::MAP_UNCHECKED);
+        let fresh=observe_checked(&mut ObservedMap::default(),6,1,false);assert_eq!(fresh["map_checked"][2*80+3],rogue_contract::MAP_UNCHECKED);
+    }
+    #[test]
+    fn checked_observations_skip_blind_visits_and_provisional_restore_then_save_together() {
+        let mut original=ObservedMap::default();observe_checked(&mut original,3,1,false);
+        let blind=observe_checked(&mut original,5,1,true);assert_eq!(blind["map_checked"][2*80+5],rogue_contract::MAP_UNCHECKED);
+        let memory=original.memory_snapshot().unwrap();
+        let mut restored=ObservedMap::default();restored.restore_memory(&memory);restored.observe_actor(ActorObservation::Replay(true));
+        let provisional=observe_checked(&mut restored,6,1,false);assert_eq!(provisional["map_checked"][2*80+6],rogue_contract::MAP_UNCHECKED);
+        restored.restore_ready();let ready=observe_checked(&mut restored,5,1,false);
+        assert_eq!(ready["map_checked"][2*80+3],memory["checked"][2*80+3]);
+        assert_ne!(ready["map_checked"][2*80+5],rogue_contract::MAP_UNCHECKED,"Restore-success journal observations confirm actual positions");
+        assert_eq!(restored.memory_snapshot().unwrap()["checked"],ready["map_checked"]);
+        assert_eq!(ready["map_checked"][2*80+6],rogue_contract::MAP_UNCHECKED,"Provisional marks never survive restore");
+    }
+
 }

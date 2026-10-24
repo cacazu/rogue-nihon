@@ -1,7 +1,7 @@
 //! Public-route walking, or one permission per original C run boundary.
 use rogue_contract::*;
 use serde_json::{Value, json};
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::VecDeque;
 
 pub(crate) const STEP_DELAY_MS: u32 = 100;
 pub(crate) const RUN_DELAY_MS: u32 = 30;
@@ -17,7 +17,7 @@ fn point(v: &Value) -> Option<Point> {
     }
     Some((coordinate(&v["x"])?,coordinate(&v["y"])?))
 }
-struct Map<'a> { frame: &'a Value, cells: &'a [u8], width: i32, height: i32 }
+struct Map<'a> { frame: &'a Value, cells: &'a [u8], width: i32, height: i32, checked: Option<Vec<u16>> }
 impl<'a> Map<'a> {
     fn new(frame: &'a Value) -> Option<Self> {
         let width = i32::try_from(frame["width"].as_u64()?).ok()?;
@@ -25,7 +25,11 @@ impl<'a> Map<'a> {
         let cells = frame["map_cells"].as_str()?.as_bytes();
         (width > 0 && width <= 80 && height > 2 && height <= 24
             && cells.len() == (width*height) as usize && cells.is_ascii())
-            .then_some(Self { frame, cells, width, height })
+            .then(|| {
+                let checked=serde_json::from_value::<Vec<u16>>(frame["map_checked"].clone()).ok()
+                    .filter(|checked|valid_map_checked(checked,width as usize,height as usize));
+                Self {frame,cells,width,height,checked}
+            })
     }
     fn index(&self, p: Point) -> Option<usize> {
         (p.0 >= 0 && p.0 < self.width && p.1 > 0 && p.1 < self.height-1)
@@ -65,8 +69,11 @@ impl<'a> Map<'a> {
             || point(&self.frame["player"])==Some(p)
                 && matches!(self.frame["map_player_surface"]["tile"].as_u64(),Some(14..=22))
     }
-    fn frontier(&self,p:Point) -> [bool;8] {
-        DIRECTIONS.map(|(dx,dy,_)|self.index((p.0+dx,p.1+dy)).is_some_and(|i|self.cells[i]==b' '))
+    fn frontier(&self,p:Point) -> u8 {
+        map_unknown_mask(self.cells,self.width as usize,self.height as usize,p.0,p.1).unwrap_or(0)
+    }
+    fn examined(&self,p:Point,edge:u8) -> bool {
+        self.index(p).zip(self.checked.as_ref()).is_some_and(|(i,checked)|checked[i]==u16::from(edge))
     }
     fn reachable(&self,start:Point) -> Vec<(Point,usize)> {
         let Some(origin)=self.index(start) else {return Vec::new();};
@@ -86,14 +93,14 @@ impl<'a> Map<'a> {
         }
         reached
     }
-    fn exploration_goal(&self,start:Point,examined:&BTreeMap<Point,[bool;8]>,preferred:Option<Point>) -> Option<Point> {
+    fn exploration_goal(&self,start:Point,preferred:Option<Point>) -> Option<Point> {
         // Items and observations compete by actual public-route distance.
         // A distant item must not postpone information available one step away.
         self.reachable(start).into_iter().filter_map(|(p,distance)| {
             let item=self.item(p);
             let edge=self.frontier(p);
-            let information=edge.iter().filter(|unknown|**unknown).count();
-            (item || information>0 && examined.get(&p)!=Some(&edge))
+            let information=edge.count_ones();
+            (item || p!=start && information>0 && !self.examined(p,edge))
                 .then_some((p,(distance,!item,std::cmp::Reverse(information),preferred!=Some(p))))
         }).min_by_key(|(_,rank)|*rank).map(|(p,_)|p)
     }
@@ -143,7 +150,6 @@ pub(crate) struct AutoWalk {
     exploration: Option<ExplorationPhase>,
     completion_announced: bool,
     completion_pending: bool,
-    examined: BTreeMap<Point,[bool;8]>,
     pickup_attempt: Option<Point>,
     mode: u32,
     running: bool,
@@ -160,7 +166,6 @@ impl AutoWalk {
         self.exploration = None;
         self.completion_announced = false;
         self.completion_pending = false;
-        self.examined.clear();
         self.pickup_attempt = None;
         self.running = false;
         self.expected = None;
@@ -192,6 +197,7 @@ impl AutoWalk {
         self.stop("replaced");
         self.reason="unreachable";
         let Some(map)=Map::new(frame) else {return;};
+        if map.checked.is_none() {return;}
         let Some(enemy)=map.visible_enemy() else {return;};
         if enemy {self.reason="enemy";return;}
         let Some(here)=point(&frame["player"]).filter(|p|map.index(*p).is_some()) else {return;};
@@ -200,7 +206,7 @@ impl AutoWalk {
     }
     fn check_exploration(&mut self,frame:&Value) -> bool {
         if self.exploration.is_none() {return true;}
-        match Map::new(frame).and_then(|map|map.visible_enemy()) {
+        match Map::new(frame).filter(|map|map.checked.is_some()).and_then(|map|map.visible_enemy()) {
             Some(false)=>true,
             Some(true)=>{self.stop("enemy");false},
             None=>{self.stop("unreachable");false},
@@ -211,10 +217,9 @@ impl AutoWalk {
         if self.pickup_attempt.take()==Some(here) && map.item(here) {
             self.stop("pickup");return false;
         }
-        // Only the local unknown-neighbour pattern is remembered. New public
-        // terrain can reopen an examined frontier; moving @ never changes it.
-        self.examined.insert(here,map.frontier(here));
-        self.target=map.exploration_goal(here,&self.examined,self.target);
+        // The game-side public-map observer keeps confirmed frontiers across ordinary
+        // movement, combat and restarts. Changed public patterns reopen them.
+        self.target=map.exploration_goal(here,self.target);
         if self.target.is_some() {
             self.exploration=Some(ExplorationPhase::Searching);
             return true;
@@ -486,9 +491,17 @@ mod exploration_tests {
         let width=rows[0].len();
         json!({"width":width,"height":rows.len(),"map_actor_epoch":1,
             "player":{"x":player.0,"y":player.1},"map_cells":rows.join(""),
+            "map_checked":vec![MAP_UNCHECKED;width*rows.len()],
             "map_visible":vec![true;width*rows.len()],"map_actors":[],"ui":{"mode":"game"}})
     }
-    fn fire(walk:&mut AutoWalk,f:&Value,request:u64)->Option<u32> {
+    fn confirm(f:&mut Value,p:Point) {
+        let map=Map::new(f).unwrap();let index=map.index(p).unwrap();let mask=map.frontier(p);
+        f["map_checked"][index]=json!(mask);
+    }
+    fn fire(walk:&mut AutoWalk,f:&mut Value,request:u64)->Option<u32> {
+        // Synthetic frames stand in for the C-side public observer in these
+        // planner tests. Production receives this knowledge from ObservedMap.
+        confirm(f,point(&f["player"]).unwrap());
         let command=json!({"kind":"command"});
         let timer=walk.schedule(f,&command,request)?;
         walk.tick(f,&command,request,timer["token"].as_u64().unwrap())
@@ -497,27 +510,27 @@ mod exploration_tests {
     fn exploration_prioritizes_known_items_and_uses_the_existing_single_timer() {
         let mut f=frame(&["       ","|.....|","|@.!..|","|... .|","       "],(1,2));
         let mut walk=AutoWalk::default();walk.start_explore(&f);
-        assert_eq!(fire(&mut walk,&f,1),Some(RG_KEY_RIGHT));
-        assert!(fire(&mut walk,&f,1).is_none());
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_RIGHT));
+        assert!(fire(&mut walk,&mut f,1).is_none());
         f["player"]["x"]=json!(2);
-        assert_eq!(fire(&mut walk,&f,2),Some(RG_KEY_RIGHT));
+        assert_eq!(fire(&mut walk,&mut f,2),Some(RG_KEY_RIGHT));
         f["player"]["x"]=json!(3);f["map_cells"]=json!("       |.....||..@..||... .|       ");
-        assert!(fire(&mut walk,&f,3).is_some(),"Other public frontiers are still explored");
+        assert!(fire(&mut walk,&mut f,3).is_some(),"Other public frontiers are still explored");
         walk.stop("input");assert!(!walk.active());
     }
     #[test]
     fn exploration_never_walks_unknown_cells_and_stops_on_uncollected_items() {
         let mut f=frame(&["     ","|@! |","     "],(1,1));
         let mut walk=AutoWalk::default();walk.start_explore(&f);
-        assert_eq!(fire(&mut walk,&f,1),Some(RG_KEY_RIGHT));
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_RIGHT));
         f["player"]["x"]=json!(2);f["map_cells"]=json!("     |.@ |     ");
         f["map_player_surface"]=json!({"tile":15});
-        assert_eq!(fire(&mut walk,&f,2),Some(44),"Retry pickup once after automatic pickup failed");
-        assert_eq!(fire(&mut walk,&f,3),None);assert_eq!(walk.snapshot()["reason"],"pickup");
+        assert_eq!(fire(&mut walk,&mut f,2),Some(44),"Retry pickup once after automatic pickup failed");
+        assert_eq!(fire(&mut walk,&mut f,3),None);assert_eq!(walk.snapshot()["reason"],"pickup");
         assert!(!walk.active());
-        walk.start_explore(&f);assert_eq!(fire(&mut walk,&f,4),Some(44),"Explicit restart retries after manual inventory changes");
+        walk.start_explore(&f);assert_eq!(fire(&mut walk,&mut f,4),Some(44),"Explicit restart retries after manual inventory changes");
         f["map_player_surface"]=json!({"tile":1});
-        assert_eq!(fire(&mut walk,&f,5),None);assert_eq!(walk.snapshot()["reason"],"complete");
+        assert_eq!(fire(&mut walk,&mut f,5),None);assert_eq!(walk.snapshot()["reason"],"complete");
     }
     #[test]
     fn exploration_checks_visible_actors_on_start_and_before_queued_step() {
@@ -536,48 +549,48 @@ mod exploration_tests {
     fn exploration_replans_when_new_public_terrain_reveals_another_branch() {
         let mut f=frame(&["       ","|@..  |","       "],(1,1));
         let mut walk=AutoWalk::default();walk.start_explore(&f);
-        assert_eq!(fire(&mut walk,&f,1),Some(RG_KEY_RIGHT));
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_RIGHT));
         f["player"]["x"]=json!(2);f["map_cells"]=json!("       |.@.  |       ");
-        assert_eq!(fire(&mut walk,&f,2),Some(RG_KEY_RIGHT));
+        assert_eq!(fire(&mut walk,&mut f,2),Some(RG_KEY_RIGHT));
         f["player"]["x"]=json!(3);f["map_cells"]=json!("       |..@.!|       ");
-        assert_eq!(fire(&mut walk,&f,3),Some(RG_KEY_RIGHT));
+        assert_eq!(fire(&mut walk,&mut f,3),Some(RG_KEY_RIGHT));
         f["player"]["x"]=json!(4);
-        assert_eq!(fire(&mut walk,&f,4),Some(RG_KEY_RIGHT));
+        assert_eq!(fire(&mut walk,&mut f,4),Some(RG_KEY_RIGHT));
         f["player"]["x"]=json!(5);f["map_cells"]=json!("       |....@|       ");
         for request in 5..30 {
-            let Some(key)=fire(&mut walk,&f,request) else {break;};
+            let Some(key)=fire(&mut walk,&mut f,request) else {break;};
             f["player"]["x"]=json!(f["player"]["x"].as_i64().unwrap()+if key==RG_KEY_LEFT {-1}else{1});
         }
         assert!(!walk.active());assert_eq!(walk.snapshot()["reason"],"complete");
     }
     #[test]
     fn exploration_takes_near_information_before_a_distant_item() {
-        let f=frame(&["           ","-----------","|!....@.  |","-----------","           "],(6,2));
+        let mut f=frame(&["           ","-----------","|!....@.  |","-----------","           "],(6,2));
         let mut walk=AutoWalk::default();walk.start_explore(&f);
-        assert_eq!(fire(&mut walk,&f,1),Some(RG_KEY_RIGHT),"The one-step frontier precedes the five-step item");
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_RIGHT),"The one-step frontier precedes the five-step item");
     }
     #[test]
     fn exploration_ranks_equal_distance_items_then_information_then_existing_goal() {
-        let f=frame(&["         ","---------","| .@!...|","---------","         "],(3,2));
+        let mut f=frame(&["         ","---------","| .@!...|","---------","         "],(3,2));
         let mut walk=AutoWalk::default();walk.start_explore(&f);
-        assert_eq!(fire(&mut walk,&f,1),Some(RG_KEY_RIGHT),"An item wins at equal walking distance");
-        let f=frame(&["         ","---------","| .@.   |","---------","         "],(3,2));
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_RIGHT),"An item wins at equal walking distance");
+        let mut f=frame(&["         ","---------","| .@.   |","---------","         "],(3,2));
         let mut walk=AutoWalk::default();walk.start_explore(&f);
         walk.target=Some((4,2));
-        assert_eq!(fire(&mut walk,&f,1),Some(RG_KEY_RIGHT),"An equally useful existing goal wins over direction order");
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_RIGHT),"An equally useful existing goal wins over direction order");
     }
     #[test]
     fn exploration_completion_returns_to_the_nearest_reachable_stairs_and_never_descends() {
         let mut f=frame(&["           ","-----------","|%..@.%|! |","-----------","           "],(4,2));
         let mut walk=AutoWalk::default();walk.start_explore(&f);
-        assert_eq!(fire(&mut walk,&f,1),Some(RG_KEY_RIGHT));
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_RIGHT));
         assert_eq!(walk.snapshot()["returning"],true);
         f["player"]["x"]=json!(5);
-        assert_eq!(fire(&mut walk,&f,2),Some(RG_KEY_RIGHT));
+        assert_eq!(fire(&mut walk,&mut f,2),Some(RG_KEY_RIGHT));
         f["player"]["x"]=json!(6);f["map_player_surface"]=json!({"tile":6});
-        assert_eq!(fire(&mut walk,&f,3),None);
+        assert_eq!(fire(&mut walk,&mut f,3),None);
         assert_eq!(walk.snapshot()["reason"],"complete");assert!(!walk.active());
-        assert_eq!(fire(&mut walk,&f,4),None,"Stairs are never activated automatically");
+        assert_eq!(fire(&mut walk,&mut f,4),None,"Stairs are never activated automatically");
     }
     #[test]
     fn exploration_completion_without_reachable_stairs_or_on_stairs_emits_no_input() {
@@ -585,7 +598,7 @@ mod exploration_tests {
             let mut f=frame(&["       ","-------",row,"-------","       "],(2,2));
             f["map_player_surface"]=json!({"tile":surface});
             let mut walk=AutoWalk::default();walk.start_explore(&f);
-            assert_eq!(fire(&mut walk,&f,1),None);assert_eq!(walk.snapshot()["reason"],"complete");
+            assert_eq!(fire(&mut walk,&mut f,1),None);assert_eq!(walk.snapshot()["reason"],"complete");
             assert!(walk.take_exploration_complete());assert!(!walk.take_exploration_complete());
         }
     }
@@ -594,51 +607,51 @@ mod exploration_tests {
         let mut f=frame(&["         ","---------","|@...%. |","---------","         "],(1,2));
         let mut walk=AutoWalk::default();walk.start_explore(&f);
         // The unchanged blank next to the known dead end has already been examined.
-        walk.examined.insert((6,2),Map::new(&f).unwrap().frontier((6,2)));
-        assert_eq!(fire(&mut walk,&f,1),Some(RG_KEY_RIGHT));
+        confirm(&mut f,(6,2));
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_RIGHT));
         assert_eq!(walk.snapshot()["returning"],true);
         f["player"]["x"]=json!(2);f["map_cells"]=json!("         ---------|!@..%. |---------         ");
-        assert_eq!(fire(&mut walk,&f,2),Some(RG_KEY_LEFT),"A newly public item interrupts the return path");
+        assert_eq!(fire(&mut walk,&mut f,2),Some(RG_KEY_LEFT),"A newly public item interrupts the return path");
         f["player"]["x"]=json!(1);f["map_cells"]=json!("         ---------|@...%. |---------         ");
-        assert_eq!(fire(&mut walk,&f,3),Some(RG_KEY_RIGHT));
+        assert_eq!(fire(&mut walk,&mut f,3),Some(RG_KEY_RIGHT));
         assert_eq!(walk.snapshot()["returning"],true);
         f["map_cells"]=json!("         ---------|@A..%. |---------         ");
         f["map_actors"]=json!([{"id":9,"x":2,"y":2,"glyph":65}]);
-        assert_eq!(fire(&mut walk,&f,4),None);assert_eq!(walk.snapshot()["reason"],"enemy");
+        assert_eq!(fire(&mut walk,&mut f,4),None);assert_eq!(walk.snapshot()["reason"],"enemy");
     }
 
     #[test]
     fn exploration_distance_precedes_information_and_information_precedes_goal_stability() {
-        let f=frame(&["         ","---------","|@!.... |","---------","         "],(1,2));
+        let mut f=frame(&["         ","---------","|@!.... |","---------","         "],(1,2));
         let mut walk=AutoWalk::default();walk.start_explore(&f);
-        assert_eq!(fire(&mut walk,&f,1),Some(RG_KEY_RIGHT),"A nearby item precedes a distant frontier");
-        let f=frame(&["         ","---------","|.... ..|","| .@. ..|","|.......|","---------","         "],(3,3));
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_RIGHT),"A nearby item precedes a distant frontier");
+        let mut f=frame(&["         ","---------","|.... ..|","| .@. ..|","|.......|","---------","         "],(3,3));
         let mut walk=AutoWalk::default();walk.start_explore(&f);walk.target=Some((2,3));
-        assert_eq!(fire(&mut walk,&f,1),Some(RG_KEY_RIGHT),"At equal distance a frontier revealing more neighbors replaces the left goal");
-        let f=frame(&["         ","---------","| .@..  |","---------","         "],(3,2));
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_RIGHT),"At equal distance a frontier revealing more neighbors replaces the left goal");
+        let mut f=frame(&["         ","---------","| .@..  |","---------","         "],(3,2));
         let mut walk=AutoWalk::default();walk.start_explore(&f);walk.target=Some((5,2));
-        assert_eq!(fire(&mut walk,&f,1),Some(RG_KEY_LEFT),"A one-step frontier wins over a two-step existing goal");
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_LEFT),"A one-step frontier wins over a two-step existing goal");
     }
     #[test]
     fn exploration_completion_event_is_once_per_run_and_abort_discards_pending_notice() {
         let mut f=frame(&["         ","---------","|@...%. |","---------","         "],(1,2));
         let mut walk=AutoWalk::default();walk.start_explore(&f);
-        walk.examined.insert((6,2),Map::new(&f).unwrap().frontier((6,2)));
-        assert_eq!(fire(&mut walk,&f,1),Some(RG_KEY_RIGHT));
+        confirm(&mut f,(6,2));
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_RIGHT));
         assert!(walk.take_exploration_complete());assert!(!walk.take_exploration_complete());
         f["player"]["x"]=json!(2);f["map_cells"]=json!("         ---------|!@..%. |---------         ");
-        assert_eq!(fire(&mut walk,&f,2),Some(RG_KEY_LEFT));
+        assert_eq!(fire(&mut walk,&mut f,2),Some(RG_KEY_LEFT));
         assert!(!walk.take_exploration_complete());
         f["player"]["x"]=json!(1);f["map_cells"]=json!("         ---------|@...%. |---------         ");
-        assert_eq!(fire(&mut walk,&f,3),Some(RG_KEY_RIGHT));
+        assert_eq!(fire(&mut walk,&mut f,3),Some(RG_KEY_RIGHT));
         assert!(!walk.take_exploration_complete(),"A return interrupted by new loot does not announce twice");
         walk.stop("input");
-        walk.start_explore(&f);walk.examined.insert((6,2),Map::new(&f).unwrap().frontier((6,2)));
+        walk.start_explore(&f);confirm(&mut f,(6,2));
         assert!(walk.schedule(&f,&json!({"kind":"command"}),4).is_some());
         walk.stop("input");assert!(!walk.take_exploration_complete(),"Abort cannot leak an undelivered completion");
-        let f=frame(&["       ","-------","|.@.| |","-------","       "],(2,2));
+        let mut f=frame(&["       ","-------","|.@.| |","-------","       "],(2,2));
         for request in [5,6] {
-            walk.start_explore(&f);assert_eq!(fire(&mut walk,&f,request),None);
+            walk.start_explore(&f);assert_eq!(fire(&mut walk,&mut f,request),None);
             assert!(walk.take_exploration_complete());assert!(!walk.take_exploration_complete());
         }
     }
@@ -646,7 +659,7 @@ mod exploration_tests {
     fn exploration_return_keeps_diagonal_corners_and_manual_timer_cancellation() {
         let mut f=frame(&["       ","-------","|@|...|","||.%..|","-------","       "],(1,2));
         let mut walk=AutoWalk::default();walk.start_explore(&f);
-        assert_eq!(fire(&mut walk,&f,1),None,"A stair behind an inaccessible diagonal corner is unreachable");
+        assert_eq!(fire(&mut walk,&mut f,1),None,"A stair behind an inaccessible diagonal corner is unreachable");
         assert!(walk.take_exploration_complete());
         f=frame(&["       ","-------","|@..%.|","-------","       "],(1,2));
         walk.start_explore(&f);let command=json!({"kind":"command"});
@@ -660,13 +673,30 @@ mod exploration_tests {
     fn exploration_return_reopens_when_new_public_terrain_changes_an_examined_frontier() {
         let mut f=frame(&["         ","---------","|@...%. |","|       |","---------","         "],(1,2));
         let mut walk=AutoWalk::default();walk.start_explore(&f);
-        for x in 1..=6 {walk.examined.insert((x,2),Map::new(&f).unwrap().frontier((x,2)));}
-        assert_eq!(fire(&mut walk,&f,1),Some(RG_KEY_RIGHT));assert_eq!(walk.snapshot()["returning"],true);
+        for x in 1..=6 {confirm(&mut f,(x,2));}
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_RIGHT));assert_eq!(walk.snapshot()["returning"],true);
         assert!(walk.take_exploration_complete());
         f["player"]["x"]=json!(2);f["map_cells"]=json!(["         ","---------","|.@..%. |","| .     |","---------","         "].join(""));
-        assert!(fire(&mut walk,&f,2).is_some());
+        assert!(fire(&mut walk,&mut f,2).is_some());
         assert_eq!(walk.snapshot()["returning"],false,"New public floor reopens exploration during the stair return");
         assert_ne!(walk.snapshot()["target"],json!({"x":5,"y":2}));assert!(!walk.take_exploration_complete());
+    }
+
+    #[test]
+    fn normal_adventure_restarted_exploration_collects_scroll_before_retracing_known_door() {
+        // Captured from the normal distributed game, after combat and potion
+        // pickup. The nearby door and corridor were already stood on publicly.
+        let case:Value=serde_json::from_str(include_str!("../../../../tests/data/autoexplore-normal-potion.json")).unwrap();
+        let rows:Vec<_>=case["rows"].as_array().unwrap().iter().map(|row|row.as_str().unwrap()).collect();
+        let mut f=frame(&rows,point(&case["player"]).unwrap());
+        let mut checked=vec![256u16;80*24];
+        for entry in case["checked"].as_array().unwrap() {
+            checked[entry[0].as_u64().unwrap() as usize]=entry[1].as_u64().unwrap() as u16;
+        }
+        f["map_checked"]=json!(checked);
+        let mut walk=AutoWalk::default();walk.start_explore(&f);
+        assert_eq!(fire(&mut walk,&mut f,1),Some(RG_KEY_DOWN),"Collect the three-step scroll rather than return to the two-step already-observed door");
+        assert_eq!(walk.snapshot()["target"],json!({"x":47,"y":13}));
     }
 
 }

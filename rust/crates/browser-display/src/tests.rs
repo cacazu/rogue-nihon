@@ -732,6 +732,7 @@ fn exploration_controller() -> Controller {
     let cells=String::from_utf8(cells).unwrap();
     c.request(json!({"type":"worker","generation":1,"data":{"type":"frame","width":80,"height":24,
         "cells":cells,"map_cells":cells,"map_tiles":tiles,"map_visible":vec![true;80*24],
+        "map_checked":vec![rogue_contract::MAP_UNCHECKED;80*24],
         "map_tile_ids":&rogue_display::map_tiles::IDS[..],"map_unknown_glyphs":[],
         "player":{"x":10,"y":10},"map_actor_epoch":1,"map_actor_step":0,
         "map_actors":[{"id":0,"x":10,"y":10,"glyph":64}],"map_actor_events":[],

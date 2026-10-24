@@ -44,6 +44,7 @@ Cとリンクする `rogue-layers` は独立lib testから除外します。ゲ�
 | タイル語彙・画像・重ね順 | `tests/tiles.test.mjs`、`pixels.test.mjs`、`graphics-beams.test.mjs` |
 | 実ゲーム・locale差・保存継続 | `tests/game-regression.test.mjs`、`game-ui.test.mjs`、`game-localization.test.mjs`、`game-more-localization.test.mjs`、`game-log-paging.test.mjs` |
 | PCの品物先行・終了待ち | `tests/item-first.test.mjs` と `tests/quit-flow.test.mjs`。品物先行の使用・取消・新instance保存継続と、Q肯定時の得点表示・死亡／勝利の意味待ちを実Cで検査。通常buildとfixture buildを先に用意する |
+| 通常生成地図の確認済み境界・保存・C状態保持 | `tests/map-checked.test.mjs`。通常 `game.wasm` の新規開始と新instance復元を確認し、`ROGUE_CHECKED_BEFORE` に変更前の通常Wasmを指定すると同じ入力のC画面・状態・RNGを比較。探索選択の通常冒険回帰データは `tests/data/autoexplore-normal-potion.json` |
 | 公開地図の記憶・現在視界・保存境界 | `tests/map-memory.test.mjs`。変更前fixture Wasmを `ROGUE_MAP_MEMORY_BEFORE` に指定し、同じ消費済み入力のC状態・RNG・原画面を比較。未指定時は変更前比較のみ明示skip |
 | 自動探索・操作・地図記憶の実ブラウザー | `tests/browser-smoke/autoexplore.mjs`、`autoexplore-controls.mjs`、`map-memory.mjs`。先に通常・fixture・browser-testの生成物を用意し、[ブラウザー手順](browser-smoke/README-ja.md)から対象を選択 |
 | 自動移動のCイベントと原作状態 | `tests/autowalk.test.mjs`。比較する変更前fixture Wasmを `ROGUE_AUTOWALK_BEFORE` へ指定。未指定時は変更前比較のみ明示skip |
