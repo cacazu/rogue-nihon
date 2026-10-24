@@ -226,8 +226,10 @@ impl Animator {
     pub fn interrupt(&mut self) -> bool {
         let mut changed = self.flights.interrupt();
         for actor in self.actors.values_mut() {
-            changed |= actor.chosen != State::Idle;
-            actor.finish_action();
+            if matches!(actor.chosen, State::Attack | State::Hurt) {
+                changed = true;
+                actor.finish_action();
+            }
         }
         changed
     }
@@ -684,6 +686,26 @@ mod tests {
         for (time, expected) in [(10., ("move", 0)), (130., ("move", 1)), (250., ("move", 2)), (370., ("idle", 0))] {
             assert_eq!(pose(&a.sample(time, "tiles")), expected, "at {time}ms");
         }
+    }
+    #[test]
+    fn walking_input_acceptance_keeps_the_display_until_a_confirmed_action() {
+        let mut a = animator();
+        a.observe(&frame(1, 0, false, json!([])), 0.).unwrap();
+        a.sample(0., "tiles");
+        a.observe(&frame(2, 1, false, json!([event(1, "move")])), 10.).unwrap();
+        assert_eq!(pose(&a.sample(10., "tiles")), ("move", 0));
+        let changed = a.interrupt();
+        assert_eq!(pose(&a.sample(110., "tiles")), ("move", 0));
+        assert!(!changed, "Input acceptance alone does not end or redraw a walk");
+        assert_eq!(pose(&a.sample(130., "tiles")), ("move", 1));
+        assert_eq!(pose(&a.sample(250., "tiles")), ("move", 2));
+        assert_eq!(pose(&a.sample(370., "tiles")), ("idle", 0), "Input acceptance cannot extend the action lifetime");
+        a.observe(&frame(3, 2, false, json!([event(2, "move")])), 400.).unwrap();
+        assert_eq!(pose(&a.sample(400., "tiles")), ("move", 0));
+        a.interrupt();
+        assert_eq!(pose(&a.sample(450., "tiles")), ("move", 0));
+        a.observe(&frame(4, 2, false, json!([])), 460.).unwrap();
+        assert_eq!(pose(&a.sample(460., "tiles")), ("idle", 0));
     }
     #[test]
     fn consecutive_walk_events_keep_the_move_phase_until_a_nonmove_action() {
