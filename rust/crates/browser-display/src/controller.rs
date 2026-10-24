@@ -495,8 +495,9 @@ impl Controller {
         } else {
             "Player".into()
         };
+        self.field("command-key", json!({"value":""}));
         self.inventory_lifetime.start(restore);
-        if !restore { self.ui.reset_inventory_view(); }
+        if !restore { self.ui.reset_adventure_view(); }
         self.retire_saves();
         self.effects.push(json!({"kind":"worker-stop"}));
         self.model["generation"] = json!(number(&self.model["generation"]) + 1);
@@ -1519,5 +1520,44 @@ mod inventory_lifetime_tests {
             let mut c=boot(json!({"version":2,"active":view("potion"),"saved":slot("old",view("food")),"legacy":null}));complete(&mut c,SaveOperation::Load,true,missing);restored(&mut c);
             assert_eq!(c.ui.inventory_preference(),json!({"version":1,"tab":"all","positions":{},"horizontal":0.}),"Missing slot UI cannot adopt another adventure's active view");
         }
+    }
+}
+
+#[cfg(test)]
+mod adventure_boundary_tests {
+    use super::*;
+    fn measure(text:&str,size:f64,_bold:bool,_mono:bool)->rogue_display::widgets::TextSize {rogue_display::widgets::TextSize{width:text.len() as f64*size,ascent:0.,descent:size}}
+    fn prepared()->Controller {
+        let mut c=Controller::new(measure);c.environment=json!({"isolated":true});
+        c.inputs=json!({"name":{"value":"Keep name"},"seed":{"value":"17"},"command-key":{"value":"Z"}});
+        c.model["running"]=json!(true);c.model["topOpen"]=json!(false);c.model["input"]=json!({"kind":"command"});
+        c.model["frame"]=json!({"width":80,"height":24,"player":{"x":10,"y":10},"ui":{"mode":"game","input":{"kind":"command"}}});
+        c.ui.render(c.model.clone(),json!({"width":1240,"height":800,"inputs":c.inputs}));
+        c.ui.event(json!({"type":"key","key":"g"}));c
+    }
+    fn movement(c:&mut Controller)->Value {
+        let mut model=c.model.clone();model["running"]=json!(true);model["topOpen"]=json!(false);model["starting"]=json!(false);
+        model["frame"]=json!({"width":80,"height":24,"player":{"x":10,"y":10},"ui":{"mode":"game","input":{"kind":"command"}}});
+        c.ui.render(model,json!({"width":1240,"height":800,"inputs":c.inputs}));
+        c.ui.event(json!({"type":"key","key":"l"}))["effects"].clone()
+    }
+    #[test]
+    fn adventure_boundary_new_resets_mode_restore_preserves_it_and_both_clear_native_draft() {
+        for restore in [false,true] {
+            let mut c=prepared();assert_eq!(movement(&mut c)[0]["key"],76);
+            c.start(restore);
+            assert_eq!(movement(&mut c)[0]["key"],if restore {76}else{108});
+            assert_eq!(c.inputs["command-key"]["value"],"");
+            assert!(c.effects.iter().any(|e|e["kind"]=="field"&&e["id"]=="command-key"&&e["properties"]["value"]==""),"The actual native input is cleared too");
+            assert_eq!(c.inputs["name"]["value"],"Keep name");assert_eq!(c.inputs["seed"]["value"],"17");
+        }
+    }
+    #[test]
+    fn adventure_boundary_invalid_start_and_same_adventure_keep_unsent_draft_and_mode() {
+        for invalid in ["seed","name","isolation","composition"] {
+            let mut c=prepared();match invalid {"seed"=>c.inputs["seed"]["value"]=json!("-1"),"name"=>c.inputs["name"]["value"]=json!("bad\nname"),"isolation"=>c.environment["isolated"]=json!(false),_=>c.composing=true}
+            c.start(false);assert_eq!(c.inputs["command-key"]["value"],"Z","{invalid}");assert_eq!(movement(&mut c)[0]["key"],76,"{invalid}");
+        }
+        let mut c=prepared();c.request(json!({"type":"event","event":{"type":"hover","x":0,"y":0}}));assert_eq!(c.inputs["command-key"]["value"],"Z");
     }
 }

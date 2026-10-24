@@ -129,6 +129,15 @@ pub struct BrowserUi {
     selection_context: String,
 }
 impl BrowserUi {
+    /// Begin a new adventure without changing player preferences.
+    pub fn reset_adventure_view(&mut self) {
+        self.reset_inventory_view();
+        self.mobile_movement = 0;
+        self.mobile_full_map = false;
+        self.mobile_overview = false;
+        self.follow_log = true;
+        self.scrolls.insert("log".into(), 0.);
+    }
     pub(super) fn pc_controls(&self)->bool {!b(&self.view["coarse"])}
     pub(super) fn compact_layout(&self)->bool {self.width<700. || !self.pc_controls()}
     /// Synchronize host lifecycle observations before an input event, even when

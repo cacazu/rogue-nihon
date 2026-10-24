@@ -1503,3 +1503,20 @@ fn search_unification_editor_clears_changed_role_and_restores_the_default_role()
     let draft=serde_json::to_value(&ui.controls_editor.as_ref().unwrap().draft).unwrap();assert_eq!(draft["assignments"][2],"game.search");assert_eq!(draft["contextual_search"],json!([]));
     ui.render(m,v);let c=ui.widgets.controls.iter().find(|c|c.id=="controls-default").unwrap().clone();ui.editor_activate(&c,&mut Vec::new());let draft=serde_json::to_value(&ui.controls_editor.as_ref().unwrap().draft).unwrap();assert_eq!(draft["assignments"][2],"game.search");assert_eq!(draft["contextual_search"],json!([2]));
 }
+
+#[test]
+fn adventure_view_reset_restores_operation_defaults_without_changing_preferences() {
+    let mut ui=BrowserUi::new(measure);ui.model=model();
+    ui.mobile_movement=2;ui.mobile_full_map=true;ui.mobile_overview=true;
+    ui.follow_log=false;ui.scrolls.insert("log".into(),120.);
+    ui.load_inventory_preference(r#"{"version":1,"tab":"food","positions":{"food":90},"horizontal":30}"#);
+    ui.load_control_preferences(r#"{"version":1,"bindings":{"game.search":[{"key":"F8"}]}}"#);
+    let controls=ui.control_preferences();let settings=ui.model.clone();
+    ui.reset_adventure_view();
+    assert_eq!(ui.movement_key(108),108,"A new adventure starts walking, not running");
+    assert!(!ui.mobile_full_map && !ui.mobile_overview,"A new map uses its normal view");
+    assert!(ui.follow_log,"New adventure messages follow the latest entry");
+    assert_eq!(ui.scrolls["log"],0.);
+    assert_eq!(ui.inventory_preference(),json!({"version":1,"tab":"all","positions":{},"horizontal":0.}));
+    assert_eq!(ui.control_preferences(),controls);assert_eq!(ui.model,settings);
+}
