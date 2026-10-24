@@ -65,7 +65,8 @@ impl Browser {
         self: &Rc<Self>,
         bytes: Option<Vec<u8>>,
         remove: bool,
-    ) -> impl std::future::Future<Output = Result<Option<Vec<u8>>, JsValue>> + use<> {
+        inventory: Value,
+    ) -> impl std::future::Future<Output = Result<(Option<Vec<u8>>, Value), JsValue>> + use<> {
         // Reserve the order synchronously, before spawn_local can start any IO.
         // A consumed/dead save's deletion must follow every older write, and a
         // later autosave must follow that deletion even when opening DB is slow.
@@ -77,7 +78,7 @@ impl Browser {
             if let Some(previous) = previous {
                 let _ = JsFuture::from(previous).await;
             }
-            let result = host.save_transaction(bytes, remove).await;
+            let result = host.save_transaction(bytes, remove, inventory).await;
             let _ = release.unwrap().call0(&JsValue::NULL);
             result
         }
@@ -86,7 +87,14 @@ impl Browser {
         self: &Rc<Self>,
         bytes: Option<Vec<u8>>,
         remove: bool,
-    ) -> Result<Option<Vec<u8>>, JsValue> {
+        mut inventory: Value,
+    ) -> Result<(Option<Vec<u8>>, Value), JsValue> {
+        if bytes.is_some() {
+            let crypto=Reflect::get(&self.window,&JsValue::from_str("crypto"))?;
+            let uuid:Function=Reflect::get(&crypto,&JsValue::from_str("randomUUID"))?.dyn_into()?;
+            let token=uuid.call0(&crypto)?.as_string().ok_or_else(||JsValue::from_str("Save token unavailable"))?;
+            inventory["token"]=json!(token);
+        }
         let database: IdbDatabase = JsFuture::from(self.database()?).await?.dyn_into()?;
         *self.connection.borrow_mut() = Some(database.clone());
         let mode = if bytes.is_some() || remove {
@@ -106,6 +114,11 @@ impl Browser {
         } else {
             store.get(&JsValue::from_str("manual"))?
         };
+        // UI identity and save bytes commit or abort together without changing the C payload.
+        let inventory_key=JsValue::from_str("manual.inventory");
+        let inventory_request=if remove {store.delete(&inventory_key)?;None}
+            else if bytes.is_some() {store.put_with_key(&JsValue::from_str(&inventory.to_string()),&inventory_key)?;None}
+            else {Some(store.get(&inventory_key)?)};
         let mut callbacks: Option<(Callback, Callback)> = None;
         let wait = Promise::new(&mut |resolve, reject| {
             let ok = Closure::new(move |_: Event| {
@@ -131,15 +144,13 @@ impl Browser {
         transaction.set_onabort(None);
         drop(callbacks);
         result?;
-        if bytes.is_some() || remove {
-            return Ok(bytes);
-        }
-        let stored = request.result()?;
-        Ok(if stored.is_undefined() || stored.is_null() {
-            None
-        } else {
-            Some(Uint8Array::new(&stored).to_vec())
-        })
+        if bytes.is_some() {return Ok((bytes,inventory));}
+        if remove {return Ok((None,Value::Null));}
+        let stored=request.result()?;
+        let bytes=if stored.is_undefined() || stored.is_null() {None}else{Some(Uint8Array::new(&stored).to_vec())};
+        let inventory=inventory_request.unwrap().result()?.as_string()
+            .and_then(|raw|serde_json::from_str::<Value>(&raw).ok()).unwrap_or(Value::Null);
+        Ok((bytes,inventory))
     }
     pub(super) fn download(&self, effect: &Value) -> Result<(), JsValue> {
         let bytes = self.saved.borrow();

@@ -302,14 +302,14 @@ impl Browser {
                 } else {
                     None
                 };
-                let pending_io = self.save_io(bytes, operation == "save-delete");
+                let pending_io = self.save_io(bytes, operation == "save-delete",effect["inventory"].clone());
                 wasm_bindgen_futures::spawn_local(async move {
-                    let result = pending_io.await.map(|bytes| {
+                    let result = pending_io.await.map(|(bytes,inventory)| {
                         let length = bytes.as_ref().map_or(0, Vec::len);
                         let extra = if operation == "save-write" {
-                            json!({"length":length})
+                            json!({"length":length,"inventory":inventory})
                         } else {
-                            json!({"bytes":bytes,"length":length})
+                            json!({"bytes":bytes,"length":length,"inventory":inventory})
                         };
                         if operation != "save-delete" {
                             host.candidates

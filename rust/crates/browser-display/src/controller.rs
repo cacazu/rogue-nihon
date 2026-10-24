@@ -40,6 +40,7 @@ pub struct Controller {
     assets_error: bool,
     saves: SaveOperations,
     inventory_preference_cache: String,
+    inventory_lifetime: crate::inventory_lifetime::InventoryLifetime,
     control_preference_cache: String,
 }
 impl Controller {
@@ -75,6 +76,7 @@ impl Controller {
             assets_error: false,
             saves: SaveOperations::default(),
             inventory_preference_cache: String::new(),
+            inventory_lifetime: Default::default(),
             control_preference_cache: String::new(),
         }
     }
@@ -280,6 +282,7 @@ impl Controller {
         self.draft_dirty = false;
         self.composing = false;
         self.restore_pending = false;
+        self.inventory_lifetime.cancel_restore();
         self.last_level = None;
         self.autosave_due = false;
         self.return_after_save = false;
@@ -492,6 +495,8 @@ impl Controller {
         } else {
             "Player".into()
         };
+        self.inventory_lifetime.start(restore);
+        if !restore { self.ui.reset_inventory_view(); }
         self.retire_saves();
         self.effects.push(json!({"kind":"worker-stop"}));
         self.model["generation"] = json!(number(&self.model["generation"]) + 1);
@@ -772,6 +777,8 @@ impl Controller {
                 self.state["inputRequestCount"] =
                     json!(number(&self.state["inputRequestCount"]) + 1);
                 if self.restore_pending {
+                    let view=self.inventory_lifetime.restored();self.ui.reset_inventory_view();
+                    if let Some(view)=view {self.ui.load_inventory_preference(&view.to_string());}
                     self.restore_pending = false;
                     self.discard_save();
                 }
@@ -800,7 +807,7 @@ impl Controller {
             }
             "save" if !self.session_ended => {
                 let pending = self.save_operation(SaveOperation::Write);
-                self.effects.push(json!({"kind":"save-write","request":pending.request,"generation":pending.generation,"bytes":data["bytes"]}));
+                self.effects.push(json!({"kind":"save-write","request":pending.request,"generation":pending.generation,"bytes":data["bytes"],"inventory":{"version":1,"view":self.ui.inventory_preference()}}));
             }
             "outcome" => {
                 if data["code"].as_i64().is_some_and(|code| code >= 0) { self.end_session(); }
@@ -907,6 +914,7 @@ impl Controller {
                 if ok {
                     if let Some(length) = self.validate_save(&r["bytes"]) {
                         self.saved(&r["request"], length);
+                        self.inventory_lifetime.stage_restore(&r["inventory"]);
                         self.start(true);
                     } else {
                         self.save_candidate(&r["request"], false);
@@ -934,6 +942,7 @@ impl Controller {
                     self.model["saved"] = json!(length > 0);
                     if operation == "load" {
                         if flag(&self.model["saved"]) {
+                            self.inventory_lifetime.stage_restore(&r["inventory"]);
                             self.start(true);
                         } else {
                             self.model["starting"] = json!(false);
@@ -960,6 +969,7 @@ impl Controller {
             "save-write" => {
                 self.model["savePending"] = json!(false);
                 if ok {
+                    self.inventory_lifetime.committed(&r["inventory"]);
                     self.saved(&r["request"], number(&r["length"]) as usize);
                     self.model["saved"] = json!(true);
                     self.notice("notice.saved", json!({}), false);
@@ -977,6 +987,7 @@ impl Controller {
                 }
             }
             "save-delete" => {
+                if ok {self.inventory_lifetime.deleted();}
                 if !ok {
                     self.log(r["error"].clone());
                     self.notice(if text(&r["error"]).contains("Save database blocked") { "error.storage_blocked" } else { "error.save" }, json!({}), true);
@@ -1134,8 +1145,10 @@ impl Controller {
                 self.environment = r["environment"].clone();
                 self.ui.load_control_preferences(text(&r["controlsPreference"]));
                 self.control_preference_cache = self.ui.control_preferences().to_string();
-                self.ui.load_inventory_preference(text(&r["inventoryPreference"]));
-                self.inventory_preference_cache = self.ui.inventory_preference().to_string();
+                let (lifetime,active)=crate::inventory_lifetime::InventoryLifetime::load(text(&r["inventoryPreference"]));
+                self.inventory_lifetime=lifetime;
+                if let Some(active)=active {self.ui.reset_inventory_view();self.ui.load_inventory_preference(&active.to_string());}
+                self.inventory_preference_cache=self.inventory_lifetime.storage(self.ui.inventory_preference()).to_string();
                 let p = preference(text(&r["preference"]));
                 self.model["language"] = json!(if self.environment["parameters"]["lang"] == "en" {
                     "en"
@@ -1370,7 +1383,9 @@ impl Controller {
             self.control_preference_cache.clone_from(&control_preference);
             self.effects.push(json!({"kind":"storage-write","key":"rogue-controls-v1","value":control_preference}));
         }
-        let inventory_preference = self.ui.inventory_preference().to_string();
+        let active_inventory=self.ui.inventory_preference();
+        self.inventory_lifetime.observe(&active_inventory);
+        let inventory_preference=self.inventory_lifetime.storage(active_inventory).to_string();
         if inventory_preference != self.inventory_preference_cache {
             self.inventory_preference_cache.clone_from(&inventory_preference);
             self.effects.push(json!({"kind":"storage-write","key":"rogue-inventory-view-v1","value":inventory_preference}));
@@ -1445,5 +1460,64 @@ mod target_run_tests {
         c.sync_model();
         assert_eq!(c.model["input"]["kind"],"command");
         assert_eq!(c.input["kind"],"run-boundary");
+    }
+}
+
+#[cfg(test)]
+mod inventory_lifetime_tests {
+    use super::*;
+    fn measure(text:&str,size:f64,_bold:bool,_mono:bool)->rogue_display::widgets::TextSize {rogue_display::widgets::TextSize{width:text.len() as f64*size,ascent:0.,descent:size}}
+    fn view(tab:&str)->Value {json!({"version":1,"tab":tab,"positions":{"food":120.},"horizontal":70.})}
+    fn slot(token:&str,view:Value)->Value {json!({"version":1,"token":token,"view":view})}
+    fn boot(raw:Value)->Controller {let mut c=Controller::new(measure);c.request(json!({"type":"boot","inventoryPreference":raw.to_string(),"environment":{"isolated":true,"parameters":{}}}));c}
+    fn stored(c:&mut Controller)->Value {c.request(json!({"type":"event","event":{"type":"inventory-audit"}}));serde_json::from_str(&c.inventory_preference_cache).unwrap()}
+    fn complete(c:&mut Controller,operation:SaveOperation,ok:bool,inventory:Value)->Value {
+        let generation=number(&c.model["generation"]);let pending=c.saves.begin(operation,generation);
+        let bytes=rogue_platform::Envelope::new(17,"Inventory".into(),&[1],vec![],0).unwrap().bytes().unwrap();
+        c.request(json!({"type":"api","operation":operation.name(),"ok":ok,"generation":generation,"request":pending.request,"bytes":bytes,"length":bytes.len(),"inventory":inventory,"error":"aborted"}))
+    }
+    fn restored(c:&mut Controller) {let generation=number(&c.model["generation"]);c.request(json!({"type":"worker","generation":generation,"data":{"type":"input-request"}}));}
+    #[test]
+    fn inventory_lifetime_new_adventure_resets_only_after_validation() {
+        for invalid in ["seed","name","isolation","composition"] {
+            let mut c=boot(view("food"));let before=c.ui.inventory_preference();
+            match invalid {"seed"=>c.inputs["seed"]["value"]=json!("-1"),"name"=>c.inputs["name"]["value"]=json!("bad\nname"),"isolation"=>c.environment["isolated"]=json!(false),_=>c.composing=true}
+            c.start(false);assert_eq!(c.ui.inventory_preference(),before,"{invalid}");assert_eq!(c.model["generation"],0);
+        }
+        let mut c=boot(view("food"));c.ui.load_control_preferences(r#"{"version":1,"bindings":{"game.search":[{"key":"F8"}]}}"#);let controls=c.ui.control_preferences();c.model["tileSize"]=json!(48);c.start(false);
+        assert_eq!(c.ui.inventory_preference(),json!({"version":1,"tab":"all","positions":{},"horizontal":0.}));assert_eq!(c.ui.control_preferences(),controls);assert_eq!(c.model["tileSize"],48);
+        assert_eq!(stored(&mut c)["active"]["tab"],"all");
+    }
+    #[test]
+    fn inventory_lifetime_restore_applies_slot_view_only_after_c_success() {
+        for success in [false,true] {
+            let mut c=boot(view("potion"));complete(&mut c,SaveOperation::Load,true,slot("A",view("food")));
+            assert_eq!(c.ui.inventory_preference()["tab"],"potion","Reading valid bytes is not a successful C restore");
+            if success {restored(&mut c);assert_eq!(c.ui.inventory_preference()["tab"],"food");}
+            else {let generation=number(&c.model["generation"]);c.request(json!({"type":"worker","generation":generation,"data":{"type":"error","text":"restore failed"}}));assert_eq!(c.ui.inventory_preference()["tab"],"potion");}
+        }
+        let mut c=boot(view("potion"));complete(&mut c,SaveOperation::Load,false,slot("A",view("food")));assert_eq!(c.ui.inventory_preference()["tab"],"potion");
+    }
+    #[test]
+    fn inventory_lifetime_save_slot_tracks_its_owner_and_keeps_latest_view() {
+        let mut c=boot(json!({"version":2,"active":view("food"),"saved":slot("A",view("food")),"legacy":null}));c.start(false);
+        complete(&mut c,SaveOperation::Write,false,slot("B",view("all")));assert_eq!(stored(&mut c)["saved"]["token"],"A");
+        let generation=number(&c.model["generation"]);let stale=c.saves.begin(SaveOperation::Write,generation);c.return_top();c.start(false);
+        c.request(json!({"type":"api","operation":"save-write","ok":true,"generation":generation,"request":stale.request,"length":100,"inventory":slot("stale",view("potion"))}));assert_eq!(stored(&mut c)["saved"]["token"],"A");
+        complete(&mut c,SaveOperation::Write,true,slot("B",view("all")));c.ui.load_inventory_preference(&view("food").to_string());let same=stored(&mut c);assert_eq!(same["saved"]["token"],"B");assert_eq!(same["saved"]["view"]["tab"],"food");
+        c.return_top();c.start(false);let new=stored(&mut c);assert_eq!(new["active"]["tab"],"all");assert_eq!(new["saved"]["view"]["tab"],"food");
+        let mut reload=boot(new);complete(&mut reload,SaveOperation::Load,true,slot("B",view("all")));restored(&mut reload);assert_eq!(reload.ui.inventory_preference()["tab"],"food","Latest view wins over the earlier save-time snapshot");
+        complete(&mut reload,SaveOperation::Delete,false,Value::Null);assert_eq!(stored(&mut reload)["saved"]["token"],"B");
+        complete(&mut reload,SaveOperation::Delete,true,Value::Null);assert!(stored(&mut reload)["saved"].is_null());assert_eq!(reload.ui.inventory_preference()["tab"],"food");
+    }
+    #[test]
+    fn inventory_lifetime_legacy_save_view_survives_a_new_unsaved_adventure() {
+        let mut c=boot(view("food"));c.start(false);let saved=stored(&mut c);assert_eq!(saved["active"]["tab"],"all");assert_eq!(saved["legacy"]["tab"],"food");
+        let mut reload=boot(saved);complete(&mut reload,SaveOperation::Load,true,Value::Null);restored(&mut reload);assert_eq!(reload.ui.inventory_preference()["tab"],"food");
+        let mut c=boot(json!({"version":2,"active":view("potion"),"saved":slot("old",view("food")),"legacy":null}));complete(&mut c,SaveOperation::Load,true,slot("other",view("scroll")));restored(&mut c);assert_eq!(c.ui.inventory_preference()["tab"],"scroll","A mismatched local token cannot supply another slot's view");
+        for missing in [Value::Null,json!({"version":1,"token":"","view":view("food")})] {
+            let mut c=boot(json!({"version":2,"active":view("potion"),"saved":slot("old",view("food")),"legacy":null}));complete(&mut c,SaveOperation::Load,true,missing);restored(&mut c);
+            assert_eq!(c.ui.inventory_preference(),json!({"version":1,"tab":"all","positions":{},"horizontal":0.}),"Missing slot UI cannot adopt another adventure's active view");
+        }
     }
 }

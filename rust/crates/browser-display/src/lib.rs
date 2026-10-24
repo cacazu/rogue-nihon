@@ -7,6 +7,7 @@ mod log_visibility;
 mod policies;
 mod save_loading;
 mod save_operations;
+mod inventory_lifetime;
 #[cfg(test)]
 mod tests;
 use controller::Controller;

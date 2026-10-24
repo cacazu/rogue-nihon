@@ -41,6 +41,7 @@ impl BrowserUi {
     pub(super) fn list_tabs_mut(&mut self) -> &mut InventoryTabs {
         if self.item_selection_visible() { &mut self.selection_tabs } else { &mut self.inventory_tabs }
     }
+    pub fn reset_inventory_view(&mut self) { self.inventory_tabs=InventoryTabs::default(); }
     pub fn inventory_preference(&self) -> Value {
         json!({"version":1,"tab":self.inventory_tabs.tab,"positions":self.inventory_tabs.positions,"horizontal":self.inventory_tabs.horizontal})
     }
