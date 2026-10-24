@@ -1389,13 +1389,55 @@ fn responsive_pc_retains_keyboard_log_help_and_reassigned_history_hint() {
 
 
 #[test]
-fn responsive_pc_mouse_hold_matches_wide_input_behavior() {
-    for (width,coarse) in [(390.,false),(700.,false),(390.,true)] {
-        let mut ui=BrowserUi::new(measure);let mut v=view(width,900.);v["coarse"]=json!(coarse);ui.render(shortcut_model(),v);
-        let c=ui.widgets.controls.iter().find(|c|c.id=="touch-h").unwrap().clone();
-        let out=ui.event(json!({"type":"down","id":1,"x":c.rect.x+c.rect.w/2.,"y":c.rect.y+c.rect.h/2.,"pointerType":"mouse","button":0,"primary":true}));
-        assert_eq!(array(&out["effects"]).iter().any(|e|e["kind"]=="send"),coarse);
-        assert_eq!(array(&out["effects"]).iter().any(|e|e["kind"]=="hold-timer"),coarse);
+fn pad_hold_shares_start_repeat_and_release_across_pointer_modes() {
+    for (width,coarse,pointer) in [(1240.,false,"mouse"),(390.,false,"mouse"),(390.,true,"touch")] {
+        let mut ui=BrowserUi::new(measure);let mut v=view(width,900.);v["coarse"]=json!(coarse);
+        let mut m=shortcut_model();m["inputRequests"]=json!(10);ui.render(m.clone(),v.clone());
+        let c=ui.widgets.controls.iter().find(|c|c.id=="touch-h").unwrap().clone();let x=c.rect.x+c.rect.w/2.;let y=c.rect.y+c.rect.h/2.;
+        let down=ui.event(json!({"type":"down","id":1,"x":x,"y":y,"pointerType":pointer,"button":0,"primary":true}));
+        assert_eq!(array(&down["effects"]).iter().filter(|e|e["kind"]=="send"&&e["key"]==104).count(),1,"{width} {pointer}");
+        assert!(array(&down["effects"]).iter().any(|e|e["kind"]=="hold-timer"&&e["delay"]==350));
+        let pending=ui.event(json!({"type":"hold-tick","id":1}));
+        assert!(!array(&pending["effects"]).iter().any(|e|e["kind"]=="send"),"An unfinished C input cannot repeat");
+        m["inputRequests"]=json!(11);ui.render(m.clone(),v.clone());
+        let repeat=ui.event(json!({"type":"hold-tick","id":1}));
+        assert_eq!(array(&repeat["effects"]).iter().filter(|e|e["kind"]=="send"&&e["key"]==(104|rogue_contract::RG_EVENT_REPEAT)).count(),1);
+        assert!(array(&repeat["effects"]).iter().any(|e|e["kind"]=="hold-timer"&&e["delay"]==100));
+        let up=ui.event(json!({"type":"up","id":1,"x":x,"y":y,"pointerType":pointer,"captured":true}));
+        assert!(!array(&up["effects"]).iter().any(|e|e["kind"]=="send"),"Release must not add a second activation");
+        m["inputRequests"]=json!(12);ui.render(m,v);
+        assert!(array(&ui.event(json!({"type":"hold-tick","id":1}))["effects"]).is_empty());
+        assert!(ui.captured_ids().is_empty());
+    }
+}
+
+#[test]
+fn pad_hold_stops_on_cancel_leave_and_prompt() {
+    for stop in ["cancel","move-out","leave","prompt"] {
+        let mut ui=BrowserUi::new(measure);let v=view(390.,900.);let mut m=shortcut_model();m["inputRequests"]=json!(10);ui.render(m.clone(),v.clone());
+        let c=ui.widgets.controls.iter().find(|c|c.id=="touch-l").unwrap().clone();let x=c.rect.x+c.rect.w/2.;let y=c.rect.y+c.rect.h/2.;
+        ui.event(json!({"type":"down","id":1,"x":x,"y":y,"pointerType":"mouse","button":0,"primary":true}));
+        assert!(ui.holding(1), "The stop boundary starts with an active pad hold");
+        match stop {
+            "cancel"=>{ui.event(json!({"type":"cancel","id":1}));},
+            "move-out"=>{ui.event(json!({"type":"move","id":1,"x":c.rect.x-12.,"y":y,"pointerType":"mouse","buttons":1,"captured":true}));},
+            "leave"=>{ui.event(json!({"type":"leave"}));},
+            _=>{m["input"]=json!({"kind":"direction"});m["frame"]["ui"]["input"]=m["input"].clone();m["frame"]["ui"]["movement_direction"]=json!(true);},
+        }
+        m["inputRequests"]=json!(11);ui.render(m,v);
+        assert!(!array(&ui.event(json!({"type":"hold-tick","id":1}))["effects"]).iter().any(|e|e["kind"]=="send"),"{stop}");
+    }
+}
+
+#[test]
+fn pad_hold_direction_choice_remains_a_single_release_activation() {
+    for (width,coarse,pointer) in [(1240.,false,"mouse"),(390.,false,"mouse"),(390.,true,"touch")] {
+        let mut ui=BrowserUi::new(measure);let mut v=view(width,900.);v["coarse"]=json!(coarse);let mut m=shortcut_model();m["input"]=json!({"kind":"direction"});m["frame"]["ui"]["input"]=m["input"].clone();m["frame"]["ui"]["movement_direction"]=json!(true);m["frame"]["ui"]["map_controls"]=crate::game_window::map_controls(&m["frame"]["ui"],false);ui.render(m,v);
+        let c=ui.widgets.controls.iter().find(|c|c.id=="touch-l").unwrap().clone();let x=c.rect.x+c.rect.w/2.;let y=c.rect.y+c.rect.h/2.;
+        let down=ui.event(json!({"type":"down","id":1,"x":x,"y":y,"pointerType":pointer,"button":0,"primary":true}));
+        assert!(!array(&down["effects"]).iter().any(|e|matches!(s(&e["kind"]),"send"|"hold-timer")));
+        let up=ui.event(json!({"type":"up","id":1,"x":x,"y":y,"pointerType":pointer,"captured":true}));
+        assert_eq!(array(&up["effects"]).iter().filter(|e|e["kind"]=="send"&&e["key"]==108).count(),1);
     }
 }
 

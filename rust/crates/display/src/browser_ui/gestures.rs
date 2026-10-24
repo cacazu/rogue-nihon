@@ -217,8 +217,7 @@ impl BrowserUi {
             effects.push(json!({"kind":"hold-timer","id":id,"delay":500}));
             return;
         }
-        if (!self.pc_controls() || control.id == "touch-.")
-            && control.id.starts_with("touch-")
+        if control.id.starts_with("touch-")
             && control.id.len() == 7
             && !control.disabled
             && self.model["input"]["kind"] == "command"

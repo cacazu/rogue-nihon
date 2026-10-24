@@ -229,7 +229,7 @@ impl BrowserUi {
                     self.widgets.focus.clear();
                 }
             }
-            "leave" => { self.widgets.hover.clear(); self.hover_point = None; },
+            "leave" => { self.stop_hold(); self.widgets.hover.clear(); self.hover_point = None; },
             "down" => {
                 self.gestures.wait_key.clear();
                 if self.drag.is_some() && !b(&event["captured"]) {
